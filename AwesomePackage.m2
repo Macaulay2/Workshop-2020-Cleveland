@@ -1,8 +1,8 @@
 -- -*- coding: utf-8 -*-
 newPackage(
-	"PackageTemplate",
+	"AwesomePackage",
     	Version => "1.0", 
-    	Date => "April 28, 2005",
+    	Date => "May 11, 2020",
     	Authors => {
 	     {Name => "Jane Doe", Email => "doe@math.uiuc.edu"}
 	     },
