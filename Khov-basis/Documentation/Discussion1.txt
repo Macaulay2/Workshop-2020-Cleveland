@@ -13,7 +13,8 @@ Project:
 
 Homework:
      1. Read main loop in sagbieng.m2 and try to explain it (perhaps in terms of an example)
+     2. Documented example of screws
 
      Michael: 1.
-     Tim:
-     Elise: 
+     Tim:     2.
+     Elise:   1.
