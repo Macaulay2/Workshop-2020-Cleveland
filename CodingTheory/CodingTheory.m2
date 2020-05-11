@@ -9,17 +9,28 @@ newPackage(
 	     },
     	HomePage => "https://academic.csuohio.edu/h_lopez/",
     	Headline => "a package for coding theory in M2",
-	AuxiliaryFiles => false -- set to true if package comes with auxiliary files,
+	AuxiliaryFiles => false, -- set to true if package comes with auxiliary files,
 	Configuration => {},
         DebuggingMode => false,
 	PackageImports => { },
         PackageExports => { }
-        ), x -> x =!= null)
+	)
 
 -- Any symbols or functions that the user is to have access to
 -- must be placed in one of the following two lists
 
-export {"firstFunction", "secondFunction", "MyOption"}
+export {
+    -- toy functions as examples
+    "firstFunction",
+    "secondFunction",
+    "MyOption",
+    -- Types and Constructors
+    "LinearCode",
+    "AmbientModule",
+    "Generators",
+    "Code"
+    -- Methods
+    }
 exportMutable {}
 
 firstFunction = method(TypicalValue => String)
@@ -54,6 +65,31 @@ secondFunction(ZZ,List) := o -> (m,n) -> (
 -- Use this section to add basic types and
 -- constructors for error correcting codes
  
+LinearCode = new Type of HashTable
+linearCode = method(Options => {})
+
+
+linearCode(Ring,ZZ,List) := LinearCode => opts -> (R,n,L) -> (
+    -- sample (possible) constructor for a linear code
+    -- input: ring, ambient dimension, list of generating codewords
+    -- outputs: module given by span of elements in L
+    
+    -- ambient module R^n:
+    S := R^n;
+    
+    
+    new LinearCode from {
+	symbol AmbientModule => S,
+	symbol Generators => apply(L, v-> vector(v)),
+	symbol Code => image transpose matrix apply(L, v-> vector(v))
+	}
+    
+    )
+
+net LinearCode := c -> (
+     "Code: " | net c.Code
+     )
+toString LinearCode := c -> toString c.Generators
  
 ------------------------------------------
 ------------------------------------------
@@ -86,7 +122,7 @@ document {
 	Outputs => {
 		String => {}
 		},
-	"This function is provided by the package ", TO PackageTemplate, ".",
+	"This function is provided by the package ", TO CodingTheory, ".",
 	EXAMPLE {
 		"firstFunction 1",
 		"firstFunction 0"
@@ -95,7 +131,7 @@ document {
 document {
 	Key => secondFunction,
 	Headline => "a silly second function",
-	"This function is provided by the package ", TO PackageTemplate, "."
+	"This function is provided by the package ", TO CodingTheory, "."
 	}
 document {
 	Key => (secondFunction,ZZ,ZZ),
@@ -119,7 +155,7 @@ document {
      Headline => "optional argument specifying a level",
      TT "MyOption", " -- an optional argument used to specify a level",
      PARA{},
-     "This symbol is provided by the package ", TO PackageTemplate, "."
+     "This symbol is provided by the package ", TO CodingTheory, "."
      }
 document {
      Key => [secondFunction,MyOption],
@@ -154,7 +190,7 @@ end
 
 installPackage "CodingTheory"
 installPackage("CodingTheory", RemakeAllDocumentation=>true)
-check PackageTemplate
+check CodingTheory
 
 -- Local Variables:
 -- compile-command: "make -C $M2BUILDDIR/Macaulay2/packages PACKAGES=CodingTheory pre-install"
