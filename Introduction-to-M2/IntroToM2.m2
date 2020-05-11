@@ -2,6 +2,8 @@
 -- Introduction to M2
 --#######################
 --
+-- You can find the best tutorial in the Macaulay2 documentation.
+--
 --#######################
 -- Running M2 in Terminal
 -- 
@@ -10,6 +12,20 @@
 restart  
 R = ZZ/101[x,y,z]
 I = ideal"x2,y3,z4"
+J = ideal(x^2,y^3,z^4)
+I==J
+
+g = gens gb I
+listOfGens = flatten g
+C  = res I2
+D = C.dd
+D#1
+betti C
+
+?map
+S = ZZ/101[t]
+phi = map(S,R,{t^2,t^3,t^4})
+ker phi
 
 -- If you need a package you can just load one
 
@@ -23,8 +39,8 @@ viewHelp Visualize
 
 f = n -> (
 	if n == 1
-	then "Hello, World!"
-	else "D'oh!"  -- missing semi colon
+	then return "Hello, World!"
+	else return "D'oh!"; 
 	
 	for i from 0 to 10 do (
 	    print i
@@ -39,6 +55,7 @@ f = n -> (
 -- Close terminal (and Emacs). 
 --
 -- 1. Open Emacs and create a new file called `test.m2` (remeber where you saved it!)
+--    `CTR + x, CTRL + f`
 -- 2. Now type `CTRL + x, 3` (This is done in two steps. First type `CTRL + x` at the 
 --    same time, then type `3`. Your screen should split into two windows.
 -- 3. Use your mouse to activate the window for `test.m2` (`CTRL + x, o` for non-mouse 
@@ -181,7 +198,7 @@ viewHelp(apply)
 
 L = apply(10, l -> l) 
 L -- List from 0 to 10
-
+L#1
 
 
 
@@ -221,10 +238,12 @@ viewHelp sort -- Look for `sort(List)`
 viewHelp BasicList -- all functions you can run on a list
 
 -- your method
-myDegree = method()
+myDegree = method(TypicalValue => List)
 myDegree (Ideal, ZZ) := List => (I, n) -> (
-    
-    -- your code here. Write and test this in `whatever.m2`
+     
+    --#####
+    --# your code here. Write and test this in `whatever.m2`
+    --#####    
     
     )
 
