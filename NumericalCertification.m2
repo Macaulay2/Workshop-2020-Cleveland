@@ -82,9 +82,14 @@ sqabsForGaussianRational(RingElement) := x -> (
     sub((coefficient(var, x))^2, rationalRing) + sub((x - var * coefficient(var, x))^2, rationalRing)
     )
 
+
+
 pointNorm = method()
 pointNorm(Point) := x -> (
-    coordinateList := x#Coordinates;
+    pointNorm matrix x
+    )
+pointNorm(Matrix) := x -> (
+    coordinateList := flatten entries x;
     -- returns the square of the norm
     R := ring first coordinateList;
     if precision R =!= infinity then (
@@ -147,16 +152,22 @@ polySysNorm(PolySystem) := f -> (
 
 newtonOper = method()
 newtonOper(PolySystem, Point) := (f, x) -> (
+    newtonOper(f, matrix x)
+    )
+newtonOper(PolySystem, Matrix) := (f, x) -> (
     jacOfPoly := jacobian f;
     evalJac := evaluate(jacOfPoly, x);
     inverseOfJac := inverse(evalJac);
     evalSys := evaluate(f, x);
-    point {transpose (matrix x) - inverseOfJac * evalSys}
+    point {transpose x - inverseOfJac * evalSys}
     )
     
 
 
 computeConstants = method() --computes alpha^2 beta^2 gamma^2
+computeConstants(PolySystem, Matrix) := (f, x) -> (
+    computeConstants(f, point x)
+    )
 computeConstants(PolySystem, Point) := (f, x) -> (
     eqs := equations f;
     J := evaluate(jacobian f, x);
@@ -201,6 +212,9 @@ computeConstants(PolySystem, Point) := (f, x) -> (
 
 
 certifySolution = method() -- returns null if not successful, (alpha,beta,gamma) if alpha-certified 
+certifySolution(PolySystem, Matrix) := (f, x) -> (
+    computeConstants(f, point x)
+    )
 certifySolution(PolySystem, Point) := (f, x) -> (
     alpha := first computeConstants(f,x);
     -- check: alpha < (13-3*sqrt(17))/4
@@ -208,6 +222,9 @@ certifySolution(PolySystem, Point) := (f, x) -> (
     )
 
 certifyDistinctSoln = method()
+certifyDistinctSoln(PolySystem, Matrix, Matrix) := (f, x1, x2) -> (
+    certifyDistinctSoln(f, point x1, point x2)
+    )
 certifyDistinctSoln(PolySystem, Point, Point) := (f, x1, x2) -> (
     R := coefficientRing ring f;
     if precision R =!= infinity then (
@@ -238,6 +255,9 @@ certifyDistinctSoln(PolySystem, Point, Point) := (f, x1, x2) -> (
 
 
 certifyRealSoln = method()
+certifyRealSoln(PolySystem, Matrix) := (f, x) -> (
+    computeConstants(f, point x)
+    )
 certifyRealSoln(PolySystem, Point) := (f, x) -> (
     (alpha, beta, gamma) := computeConstants(f,x);
     R := coefficientRing ring f;
