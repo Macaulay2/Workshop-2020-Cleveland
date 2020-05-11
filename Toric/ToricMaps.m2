@@ -478,7 +478,7 @@ doc ///
         the class of all torus-equivariant maps between normal toric varieties
     Description
         Text
-            Let $X$ and $Y$ be normal toric varieties whose underlying tices
+            Let $X$ and $Y$ be normal toric varieties whose underlying lattices
 	    are $N_X$ and $N_Y$ respectively.  A toric map is a morphism $f :
 	    X \to Y$ that induces a morphism of algebraic groups $g : T_X \to
 	    T_Y$ such that $f$ is $T_X$-equivariant with respect to the
