@@ -771,6 +771,30 @@ doc ///
 ///
 
 
+doc ///
+    Key
+        (inducedMap, ToricMap)
+    Headline
+        compute the induced map of rings for a toric map
+    Usage
+        inducedMap f
+    Inputs
+        f : ToricMap
+	    a map between toric varieties
+    Outputs
+        : RingMap 
+	    induced map of rings for f
+    Description
+        Text
+	    Given a toric map, there is an induced map between
+	    the homogeneous coordinate rings. This function returns
+	    that map.
+	Example PP1 = toricProjectiveSpace 1
+	    f = map(PP1, PP1, 1)
+	    inducedMap f
+///
+
+
 ------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
 -- TESTS
@@ -1012,7 +1036,7 @@ restart
 installPackage "ToricMaps"
 check ToricMaps
 
-
+viewHelp ToricMaps
 
 
 ------------------------------------------------------------------------------
