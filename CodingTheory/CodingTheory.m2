@@ -87,6 +87,18 @@ linearCode(Ring,ZZ,List) := LinearCode => opts -> (R,n,L) -> (
     
     )
 
+linearCode(ZZ,ZZ,ZZ,List) := LinearCode => opts -> (p,q,n,L) -> (
+    -- Constructor for codes over Galois fields
+    -- input: prime p, exponent q, dimension n, list of generating codewords L
+    -- output module given by span of elements in L
+    
+    -- Galois Field:
+    R := GF(p,q);
+    
+    linearCode(R,n,L)
+    
+    )
+
 net LinearCode := c -> (
      "Code: " | net c.Code
      )
