@@ -135,13 +135,18 @@ topMinimalPrimesIP = method(
     );
 topMinimalPrimesIP (MonomialIdeal) := o -> I -> (
     if I == monomialIdeal(1_(ring I)) then return I;
-    if not isSquareFree I then I = polarize I;
+    R := null;
+    squarefree := isSquareFree I;
+    if not squarefree then (
+      R = ring I;
+      I = polarize I;
+    );
     k := if o.KnownDim >= 0 then o.KnownDim else dimensionIP(I);
-    (dir, zimplFile, solFile, errorFile, detailsFile) := tempDirectoryAndFiles("comps");        
+    (dir, zimplFile, solFile, errorFile, detailsFile) := tempDirectoryAndFiles("comps");
     zimplFile << degreeIPFormulation(I, k) << close;
-    run(concatenate("(",ScipPath, 
+    run(concatenate("(",ScipPath,
 	    " -c 'set emphasis counter'",
-	    " -c 'set constraints countsols collect TRUE'",     	    
+	    " -c 'set constraints countsols collect TRUE'",
 	    " -c 'read ", zimplFile,
 	    "' -c 'count'",
 	    " -c 'write allsolutions ",
@@ -152,8 +157,9 @@ topMinimalPrimesIP (MonomialIdeal) := o -> I -> (
 	    " 2>",
 	    errorFile));
     printStatement({zimplFile, solFile, errorFile, "Minimal primes of codim "|k, dir});
-    readAllPrimes(solFile, ring I)
-    )
+    L := readAllPrimes(solFile, ring I);
+    if squarefree then L else unPolarizeSome(L, R)
+)
 
 ----------------------
 -- internal methods --
@@ -318,6 +324,47 @@ tempDirectoryAndFiles (String) := (bname) -> (
     makeDirectory(dir);
     (dir, dir|"/"|bname|".zpl", dir|"/"|bname|".sol", dir|"/"|bname|".errors", dir|"/"|bname|".details")
 )
+
+
+
+
+
+---------------------
+-- un-polarization --
+---------------------
+
+firstIndexOf := first@@last@@baseName;    --This is a function that takes z_{i,j,k,...} and maps it to i
+                                          --baseName: turns the variable into an IndexedVariable
+                                          --last: an IndexedVariable is a list where the last element is the index list
+                                          --first: we want to get the first index of each variable
+lastIndexOf := last@@last@@baseName;      --This function finds the lastIndex of a variable
+
+
+unPolarize = method();
+unPolarize (MonomialIdeal, Ring) := (I, R) -> (
+  --This reverses the effect of polarize.
+  --I is the ideal we wish to unpolarize.
+  --R is the ring that we want to map I too.
+
+  polarizedVariables := (ring I)_*;         --This gets all the variable names in I.
+  substitutions := polarizedVariables / (   --We get a list of all the substitutions.
+    v -> v => R_(firstIndexOf v)            --All the substitutions look like z_{i, j} => R_i.
+                                            --first@@indices would not work because z_{i,j} is not the ith variable in the ring containing I
+  );
+  substitute(I, substitutions)              --Finally, we apply all these substitutions to I.
+)
+
+
+unPolarizeSome = method();
+unPolarizeSome (List, Ring) := (L, R) -> (
+  --This applies unPolarize to the ideals in L where all the last indices are 0.
+  for I in L list (                                     --loop through the list
+    if not all(I_*, zero@@lastIndexOf) then continue;   --If one of the last indices is zero, we skip this and go to the next ideal and add nothing.
+    unPolarize(I, R)                                    --Otherwise, we unPolarize the ideal and add it to the list
+  )
+)
+
+
 
 -------------------
 -- documentation --
