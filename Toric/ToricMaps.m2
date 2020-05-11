@@ -519,7 +519,7 @@ doc ///
 	    $T_X$-action on $Y$ induced by $g$. This method returns $X$.	    
        	Text
 	    This example illustrates that the projection from the Hirzebruch
-	    surface H2 to P^1 is proper.	    
+	    surface H2 to the projective line PP1.	    
     	Example  
 	   H2 = hirzebruchSurface 2
            PP1 = toricProjectiveSpace 1
