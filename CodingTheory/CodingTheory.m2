@@ -67,8 +67,8 @@ secondFunction(ZZ,List) := o -> (m,n) -> (
 -- constructors for error correcting codes
  
 LinearCode = new Type of HashTable
-linearCode = method(Options => {})
 
+linearCode = method(Options => {})
 
 linearCode(Ring,ZZ,List) := LinearCode => opts -> (R,n,L) -> (
     -- sample (possible) constructor for a linear code
@@ -77,8 +77,7 @@ linearCode(Ring,ZZ,List) := LinearCode => opts -> (R,n,L) -> (
     
     -- ambient module R^n:
     S := R^n;
-    
-    
+     
     new LinearCode from {
 	symbol AmbientModule => S,
 	symbol Generators => apply(L, v-> vector(v)),
