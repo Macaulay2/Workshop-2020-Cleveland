@@ -18,5 +18,6 @@ Instructions labeled negative are likely unnecessary for up-to-date versions of 
     if this fails, then try
     installPackage("SubalgebraBases",FileName=>"<path to package>")
 
-3) Check with needsPackage "SubalgebraBases"
+3) Check with running
+   needsPackage "SubalgebraBases"
     
