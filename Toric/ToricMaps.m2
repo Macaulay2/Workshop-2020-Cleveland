@@ -612,21 +612,6 @@ doc ///
 
 doc ///
     Key
- 	(source, ToricMap)
-    Headline
-    	source -- source of a map of normal toric varieties
-    Usage
-    	source f
-    Description
-    	Text
-    	   Gives the source of a map of toric varieties.
-    SeeAlso
-    	(target, ToricMap)
-///	         
-
-
-doc ///
-    Key
 	(target, ToricMap)
     Headline
     	target -- target of a map of normal toric varieties
