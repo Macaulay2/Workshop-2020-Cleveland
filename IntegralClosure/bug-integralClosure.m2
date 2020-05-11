@@ -1,27 +1,48 @@
-debug needsPackage "IntegralClosure"
-integralClosure(Ideal, ZZ) := opts -> (I,D) ->(
+needsPackage "IntegralClosure"
+integralClosure(Ideal, RingElement, ZZ) := opts -> (I,a,D) ->(
     S:= ring I;
+    if a % I != 0 then error "The ring element should be an element of the ideal.";
+    if ((ideal 0_S):a) != 0 then error "The given ring element must be a nonzerodivisor of the ring.";
     z:= local z;
     w:= local w;
-    Reesi := (flattenRing reesAlgebra(I,Variable =>z))_0;
+    Reesi := (flattenRing reesAlgebra(I,a,Variable =>z))_0;
     Rbar := integralClosure(Reesi, opts, Variable => w);
     zIdeal := ideal(map(Rbar,Reesi))((vars Reesi)_{0..numgens I -1});
     zIdealD := module zIdeal^D;
---    RbarPlus := ideal(vars Rbar)_{0..numgens Rbar - numgens S-1};
---    RbarPlusD := module RbarPlus^D;
     L := prepend(D,toList(degreeLength S:null));
     RbarPlusD :=image basisOfDegreeD(L,Rbar); --all gens of first-degree D.
     gD := matrix inducedMap(RbarPlusD, zIdealD);
-    --     MM=(RbarPlus^D/(RbarPlus^(D+1)));
     mapback := map(S,Rbar, matrix{{numgens Rbar-numgens S:0_S}}|(vars S), DegreeMap => d -> drop(d, 1));
     M := coker mapback presentation RbarPlusD;
     ID := I^D;
-    f := map(M, module ID, mapback gD);
-    extendIdeal(ID,f)
+    phi := map(M, module ID, mapback gD);
+error();
+    extendIdeal(ID,a^D,phi)
     )
 
-    
+     findGrade2Ideal = method()
+     findGrade2Ideal Module := Ideal => M -> (
+          --finds the unique grade 2 ideal isomorphic to M, if there is one.
+          psi:=syz transpose presentation M;
+          trim ideal psi)
 
+     extendIdeal = method()
+     extendIdeal(Ideal, RingElement, Matrix) := Ideal => (I,a,f) -> (
+          --input: f: (module I) --> M, an inclusion from an ideal to a module that is isomorphic
+          --to an ideal J containing I.
+	  --a is an element of I that is a nzd in R.
+          --output: generators of J, so that f becomes the inclusion I subset J.
+	  --note f^{-1}(aM) = aJ
+	  --answer is aJ:a
+          M:=target f;
+          iota:= matrix f;
+	  map(M,cover(a*M), inducedMap(M,a*M));
+--missing stuff!
+          trim ideal psi)
+  
+integralClosure(Ideal,ZZ) := (I,D) -> integralClosure(I, I_0, D)
+integralClosure(Ideal,RingElement) := (I,a) -> integralClosure(I, a, 1)
+integralClosure(Ideal) := I -> integralClosure(I, I_0, 1)
 
     
 --basisOfDegreeD (List,Module)
@@ -57,7 +78,7 @@ needs "bug-integralClosure.m2"
 S=ZZ/32003[a,b,c,d,e,f]
 I=ideal(a*b*d,a*c*e,b*c*f,d*e*f);
 trim(J=I^2)
-K=integralClosure(I,2) -- integral closure of J = I^2
+K=integralClosure(I,I_0,2) -- integral closure of J = I^2
 --time K' = integralClosure(I^2)  -- how long does this take?
 F=ideal(a*b*c*d*e*f);
 gens(F^2)%J^2 -- so F satisfies X^2-m, with m\in J^2.
