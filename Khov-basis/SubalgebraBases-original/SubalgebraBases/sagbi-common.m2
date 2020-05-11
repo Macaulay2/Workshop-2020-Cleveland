@@ -1,5 +1,6 @@
 debug Core
 
+-- ?????
 gbDone = (G) -> (rawStatus1 raw G == 6)
 
 gbIsDone = (m) -> (
@@ -14,6 +15,7 @@ Matrix % Ideal := (f,I) -> (
           f % g)
      else f % gb I)
 
+-- inscrutable
 setMonomialOrderFlag = (R) -> (
      tempflag := 0;
      temp := (monoid R).Options.MonomialOrder;
@@ -26,6 +28,7 @@ setMonomialOrderFlag = (R) -> (
      else if temp === RevLex then (tempflag = 5);
      tempflag)
 
+-- modifying monomial order in auxialiary ring for subduction computations
 appendElimination = (monorder, nold, nnew) -> (
      -- returns a monomial order
      append(monorder, Weights=>nold:1)
