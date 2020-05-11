@@ -16,6 +16,7 @@ integralClosure(Ideal, RingElement, ZZ) := opts -> (I,a,D) ->(
     M := coker mapback presentation RbarPlusD;
     ID := I^D;
     phi := map(M, module ID, mapback gD);
+    assert(isHomogeneous phi);
 error();
     extendIdeal(ID,a^D,phi)
     )
@@ -27,17 +28,20 @@ error();
           trim ideal psi)
 
      extendIdeal = method()
-     extendIdeal(Ideal, RingElement, Matrix) := Ideal => (I,a,f) -> (
+     extendIdeal(Ideal, RingElement, Matrix) := Ideal => (I,a,phi) -> (
           --input: f: (module I) --> M, an inclusion from an ideal to a module that is isomorphic
           --to an ideal J containing I.
 	  --a is an element of I that is a nzd in R.
           --output: generators of J, so that f becomes the inclusion I subset J.
 	  --note f^{-1}(aM) = aJ
 	  --answer is aJ:a
-          M:=target f;
-          iota:= matrix f;
-	  map(M,cover(a*M), inducedMap(M,a*M));
---missing stuff!
+          M = target phi;
+	  aJ =trim ideal ker(inducedMap(M/(a*M), M)*phi);
+	  trim(aJ:a);
+          iota = matrix phi;
+	  phi1 = map(M,cover(a*M), inducedMap(M,a*M));
+	  psi = phi1//phi;
+--missing stuff
           trim ideal psi)
   
 integralClosure(Ideal,ZZ) := (I,D) -> integralClosure(I, I_0, D)
@@ -58,7 +62,7 @@ basisOfDegreeD({2,null}, S)
 ///
 
 basisOfDegreeD = method()
-basisOfDegreeD (List,Ring) := (L,R) ->(
+basisOfDegreeD (List,Ring) := Matrix => (L,R) ->(
     --assumes degrees of R are non-negative
     --change to a heft value sometime.
     PL := positions(L, d-> d=!=null);    
@@ -68,7 +72,8 @@ basisOfDegreeD (List,Ring) := (L,R) ->(
     kk := ultimate(coefficientRing, R);
     R1 := kk(monoid[PVars,Degrees =>PDegs]);
     back := map(R,R1,PVars);
-    back basis(L_PL, R1)
+    g = back basis(L_PL, R1);
+    map(target g,,g)
     )
 end--
 
@@ -79,6 +84,7 @@ S=ZZ/32003[a,b,c,d,e,f]
 I=ideal(a*b*d,a*c*e,b*c*f,d*e*f);
 trim(J=I^2)
 K=integralClosure(I,I_0,2) -- integral closure of J = I^2
+extendIdeal(ID,I_0^2,phi)
 --time K' = integralClosure(I^2)  -- how long does this take?
 F=ideal(a*b*c*d*e*f);
 gens(F^2)%J^2 -- so F satisfies X^2-m, with m\in J^2.
