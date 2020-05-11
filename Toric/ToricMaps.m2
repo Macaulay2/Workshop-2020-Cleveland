@@ -575,6 +575,63 @@ doc ///
 
 doc ///
     Key
+        (map, NormalToricVariety, NormalToricVariety, Matrix)
+    Headline 
+    	make torus-equivariant map between normal toric varieties
+    Usage 
+        f = map(Y, X, g)
+    Inputs 
+        Y : NormalToricVariety
+	    the target of the map
+	X : NormalToricVariety
+	    the source of the map
+	g : Matrix
+	    over the integers
+	Degree => 
+	    used
+	DegreeLift =>   
+	    used
+	DegreeMap =>
+	    used
+    Outputs 
+        f : ToricMap
+    Description
+        Text
+	    Let $X$ and $Y$ be normal toric varieties whose underlying
+	    lattices are $N_X$ and $N_Y$ respectively.  Every toric map 
+	    $f : X \to Y$ corresponds to a unique map $g : N_X \to N_Y$ of
+	    lattices such that, for any cone $\sigma$ in the fan of $X$, there
+	    is a cone in the fan of $Y$ that contains the image $g(\sigma)$.	
+    	    Given the target, the source, and the matrix representing lattice
+    	    map, this method creates the corresponding toric map.
+    	Text
+	    This first example constructs the projection from the Hirzebruch
+	    surface {\tt H2} to the projective line {\tt PP1}.
+    	Example  
+	   H2 = hirzebruchSurface 2
+           PP1 = toricProjectiveSpace 1
+           f = map(PP1,H2,matrix{{1,0}})
+	   assert isWellDefined f
+    	   assert isProper f
+	Text
+	    This example illustrates that the map from the blow-up of the origin of 
+	    affine 2-space to affine 2-space is proper.
+	Example
+	   AA2 = affineSpace 2;
+	   max AA2
+	   BlO = toricBlowup({0,1}, AA2)
+	   f  = map(AA2, BlO, 1)
+           isProper(f)
+    Caveat
+        This method assumes that given matrix does determine a map between the
+        toric varieties.  One can verify this by using 
+	@TO (isWellDefined, ToricMap)@.
+    SeeAlso
+        (isComplete, NormalToricVariety)
+/// 
+
+doc ///
+    Key
     	isProper
         (isProper, ToricMap)
     Headline 
