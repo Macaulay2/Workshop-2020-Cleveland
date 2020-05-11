@@ -7,23 +7,54 @@ integralClosure(Ideal, ZZ) := opts -> (I,D) ->(
     Rbar := integralClosure(Reesi, opts, Variable => w);
     zIdeal := ideal(map(Rbar,Reesi))((vars Reesi)_{0..numgens I -1});
     zIdealD := module zIdeal^D;
-    RbarPlus := ideal(vars Rbar)_{0..numgens Rbar - numgens S-1};
-    RbarPlusD := module RbarPlus^D;
+--    RbarPlus := ideal(vars Rbar)_{0..numgens Rbar - numgens S-1};
+--    RbarPlusD := module RbarPlus^D;
+    L := prepend(D,toList(degreeLength S:null));
+    RbarPlusD :=image basisOfDegreeD(L,Rbar); --all gens of first-degree D.
     gD := matrix inducedMap(RbarPlusD, zIdealD);
     --     MM=(RbarPlus^D/(RbarPlus^(D+1)));
     mapback := map(S,Rbar, matrix{{numgens Rbar-numgens S:0_S}}|(vars S), DegreeMap => d -> drop(d, 1));
     M := coker mapback presentation RbarPlusD;
     ID := I^D;
     f := map(M, module ID, mapback gD);
-    error "debug me";
     extendIdeal(ID,f)
     )
 
+    
+
+
+    
+--basisOfDegreeD (List,Module)
+--basisOfDegreeD (List,Ideal)
+
+///
+R = ZZ/101[a,b,c,Degrees=>{{1,1,0},{1,0,0},{0,0,2}}]
+L = {2,2,null}
+basisOfDegreeD({2,null,2}, S)
+
+S = ZZ/101[vars(0..10), Degrees => {{2, 6}, {1, 3}, {1, 3}, {1, 3}, {1, 3}, {0, 1}, {0, 1}, {0, 1}, {0, 1}, {0, 1}, {0, 1}}]
+basisOfDegreeD({2,null}, S)
+///
+
+basisOfDegreeD = method()
+basisOfDegreeD (List,Ring) := (L,R) ->(
+    --assumes degrees of R are non-negative
+    --change to a heft value sometime.
+    PL := positions(L, d-> d=!=null);    
+    PV := positions(degrees R, D->any(PL,i->D#i > 0));
+    PVars := (gens R)_PV;
+    PDegs := PVars/degree/(D->D_PL);
+    kk := ultimate(coefficientRing, R);
+    R1 := kk(monoid[PVars,Degrees =>PDegs]);
+    back := map(R,R1,PVars);
+    back basis(L_PL, R1)
+    )
 end--
 
 restart
 needs "bug-integralClosure.m2"
-R=ZZ/32003[a,b,c,d,e,f]
+
+S=ZZ/32003[a,b,c,d,e,f]
 I=ideal(a*b*d,a*c*e,b*c*f,d*e*f);
 trim(J=I^2)
 K=integralClosure(I,2) -- integral closure of J = I^2
@@ -32,6 +63,10 @@ F=ideal(a*b*c*d*e*f);
 gens(F^2)%J^2 -- so F satisfies X^2-m, with m\in J^2.
 assert(isSubset(F, K)) -- F should be contained in the integral closure.
 assert(K != J)
+
+R = Rbar
+L = {2,null}
+
 
 
 isSubset(F,K)==false -- but should be true
