@@ -308,12 +308,16 @@ isProper (ToricMap,ZZ) := Boolean => (f, flag) -> (
 
 
 isFibration = method()
--- We're not convinced this work. It seems to be based on:
--- 1) Page 133 of Cox, Little, Schenck, which says that if a map of integer lattices is surjective, then it's *locally* a fibration
+-- We're not convinced this work. It seems to be based on: 1) Page 133
+-- of Cox, Little, Schenck, which says that if a map of integer
+-- lattices is surjective, then it's *locally* a fibration
 -- https://www.mimuw.edu.pl/~jarekw/pragmatic2010/CoxLittleSchenckJan2010.pdf
--- 2) Stackexchange discussion which gives a characterization of surjective maps of integer lattices
+-- 2) Stackexchange discussion which gives a characterization of
+-- surjective maps of integer lattices
 -- https://math.stackexchange.com/questions/132689/elementary-proof-that-if-a-is-a-matrix-map-from-mathbbzm-to-mathbb-zn
---There may be a way to fix this, based on Cox, Little, Schenck chapter 7, but it needs work.
+-- There may be a way to fix this, based on Cox, Little, Schenck
+-- chapter 7, but it needs work.
+
 isFibration ToricMap := Boolean => f -> 1 == minors(dim target f, matrix f)
 
 isDominant = method()
@@ -575,6 +579,36 @@ doc ///
 
 doc ///
     Key
+	(source, ToricMap)
+    Headline
+    	source -- source of a map of normal toric varieties
+    Usage
+    	source f
+    Description
+    	Text
+    	   Gives the source of a map of toric varieties.
+    SeeAlso
+    	(target, ToricMap)
+///	         
+
+
+doc ///
+    Key
+	(target, ToricMap)
+    Headline
+    	target -- target of a map of normal toric varieties
+    Usage
+    	target f
+    Description
+    	Text
+    	   Gives the target of a map of toric varieties.
+    SeeAlso
+    	(source, ToricMap)
+///	         
+
+    
+doc ///
+    Key
     	isProper
         (isProper, ToricMap)
     Headline 
@@ -593,6 +627,7 @@ doc ///
 	    $f_N : N_X \to N_Y$ of lattices, this is equivalent to the
 	    preimage of the support of the target fan under $f_N$ being equal
 	    to the support of the source fan.
+
     	Text
 	    This example illustrates that the projection from the Hirzebruch
 	    surface H2 to P^1 is proper.	    
