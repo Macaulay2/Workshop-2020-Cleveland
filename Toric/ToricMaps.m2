@@ -1,6 +1,6 @@
 -- -*- coding: utf-8 -*-
 ------------------------------------------------------------------------------
--- Copyright 2017-2019 Gregory G. Smith
+-- Copyright 2017-2020 Gregory G. Smith
 --
 -- This program is free software: you can redistribute it and/or modify it
 -- under the terms of the GNU General Public License as published by the Free
@@ -30,13 +30,17 @@ newPackage(
       Email => "jchen@math.berkeley.edu", 
       HomePage => "https://math.berkeley.edu/~jchen"},
       {
+      Name => "Michael Loper",
+      Email => "loper012@umn.edu",
+      HomePage => "https://www.math.umn.edu/~loper012"},  
+      {
+      Name => "Julie Rana",
+      Email => "ranaj@lawrence.edu",
+      HomePage => "https://sites.google.com/site/jranamath"},  
+      {
       Name => "Gregory G. Smith", 
       Email => "ggsmith@mast.queensu.ca", 
       HomePage => "https://www.mast.queensu.ca/~ggsmith"},
-      {
-      Name => "Michael Loper",
-      Email => "loper012@umn.edu",
-      HomePage => "https://www.math.umn.edu/~loper012"},
       {
       Name => "Elise Walker",
       Email => "walkere@math.tamu.edu",
@@ -45,10 +49,6 @@ newPackage(
       Name => "Weikun Wang",
       Email => "wwang888@math.umd.edu",
       HomePage => "https://wangweikun.com"},
-      {
-      Name => "Julie Rana",
-      Email => "ranaj@lawrence.edu",
-      HomePage => "https://sites.google.com/site/jranamath"},
       {
       Name => "Thomas Yahl",
       Email => "thomasjyahl@tamu.edu",
@@ -171,8 +171,7 @@ isWellDefined ToricMap := Boolean => f -> (
     if not instance(f.source, NormalToricVariety) then (
 	if debugLevel > 0 then (
 	    << "-- expected `source' to be a NormalToricVariety" << endl);
-	return false
-	);
+	return false	);
     if not instance(f.target, NormalToricVariety) then (
 	if debugLevel > 0 then (
 	    << "-- expected `target' to be a NormalToricVariety" << endl);
@@ -449,37 +448,81 @@ doc ///
     Key
         ToricMaps
     Headline
-        the class of torus-equivariant maps between normal toric varieties
+        routines for working with torus-equivariant maps between normal toric varieties
     Description
         Text
-	    A morphism of normal toric varieties $X \to X'$ corresponds to a map 
-	    of lattices $N \to N'$ where the fans of $X$ and $X'$ are contained in
-	    $N$ and $N'$ respectively. To specify a map of normal toric varieties,
-	    the target and source normal toric varieties need to be specificied
-	    as well as a matrix which maps $N$ into $N'$.
+            Let $X$ and $Y$ be normal toric varieties whose underlying tices
+	    are $N_X$ and $N_Y$ respectively.  A toric map is a morphism $f :
+	    X \to Y$ that induces a morphism of algebraic groups $g : T_X \to
+	    T_Y$ such that $f$ is $T_X$-equivariant with respect to the
+	    $T_X$-action on $Y$ induced by $g$.  Every toric map $f : X \to Y$
+	    corresponds to a unique linear map from the rational vector space
+	    containing the fan of $X$ to the rational vector space containing
+	    the fan of $Y$.  Moreover, this linear map induces a map $f_N :
+	    N_X \to N_Y$ between the underlying lattices such that, for every
+	    cone $\sigma$ in the fan of $X$, there is a cone in the fan of $Y$
+	    that contains the image $f_N(\sigma)$.
+
+    	    This {\em Macaulay2} package is designed to introduce and develop
+    	    toric maps.  When it stablizes, we expect it to be merged into the
+    	    larger {\em NormalToricVarieties} package.
+	    
     SeeAlso
         NormalToricVariety
 ///
 
 doc ///
     Key
+        ToricMap
+    Headline
+        the class of all torus-equivariant maps between normal toric varieties
+    Description
+        Text
+            Let $X$ and $Y$ be normal toric varieties whose underlying tices
+	    are $N_X$ and $N_Y$ respectively.  A toric map is a morphism $f :
+	    X \to Y$ that induces a morphism of algebraic groups $g : T_X \to
+	    T_Y$ such that $f$ is $T_X$-equivariant with respect to the
+	    $T_X$-action on $Y$ induced by $g$.  Every toric map $f : X \to Y$
+	    corresponds to a unique linear map from the rational vector space
+	    containing the fan of $X$ to the rational vector space containing
+	    the fan of $Y$.  Moreover, this linear map induces a map $f_N :
+	    N_X \to N_Y$ between the underlying lattices such that, for every
+	    cone $\sigma$ in the fan of $X$, there is a cone in the fan of $Y$
+	    that contains the image $f_N(\sigma)$.
+	    
+	    To specify a map of normal toric varieties, the target and source
+	    normal toric varieties need to be specificied as well as a matrix
+	    which maps $N_X$ into $N_Y$.	    
+    SeeAlso
+        NormalToricVariety
+	(isWellDefined, ToricMap)
+///
+
+undocumented { (net,ToricMap) }
+
+doc ///
+    Key
         (isWellDefined, ToricMap)
     Headline 
-        checks if a toric map is well defined 
+        whether a toric map is well defined 
     Usage 
         isWellDefined f
     Inputs 
         f : ToricMap
-	    a map between toric varieties
     Outputs 
         : Boolean 
-	    returns true if the map is well defined; false if not
+	    that is true if the underlying linear map determines a toric map
     Description
-        Text
-	    This function checks that a toric map $f$ of varieties is well
-	    defined by checking that the dimensions of the matrix match the
-	    dimension of the lattices and checking that the image of each
-	    maximal cone is contained in a maximal cone of the target fan.
+        Text	
+	    Let $X$ and $Y$ be normal toric varieties whose underlying
+	    lattices are $N_X$ and $N_Y$ respectively.  Every toric map 
+	    $f : X \to Y$ corresponds to a unique map $f_N : N_X \to N_Y$ of
+	    lattices such that, for any cone $\sigma$ in the fan of $X$, there
+	    is a cone in the fan of $Y$ that contains the image $f_N(\sigma)$.	
+	    This method determines whether the underlying map of lattices
+	    defines a toric map by checking that the image of each maximal
+	    cone from the source fan is contained in a maximal cone of the
+	    target fan.
     	Text
             The first example illustrates the projection from the Hirzebruch
             surface to the projective line is well defined.
@@ -487,7 +530,7 @@ doc ///
 	    FF2 = hirzebruchSurface 2;
             PP1 = toricProjectiveSpace 1;
             f = map(PP1, FF2, matrix{{1,0}})
-    	    isWellDefined f 
+    	    assert isWellDefined f 
 	Text
 	    The second example illustrates two attempts to define a toric map
 	    from the projective plane to a weighted projective space. The
@@ -498,9 +541,32 @@ doc ///
 	    PP2 = toricProjectiveSpace 2
 	    WP112 = weightedProjectiveSpace {1,1,2}
 	    g = map(WP112, PP2, 1)
-	    isWellDefined g 
+	    assert not isWellDefined g 
 	    f = map(WP112, PP2, matrix{{1,0},{0,2}})
-            isWellDefined f	   
+            assert isWellDefined f	   
+    	Text
+            This method also checks that the following aspects of the data
+            structure:	    
+	Text
+    	    @UL {
+	        {"the underlying ", TO HashTable, " has the expected keys,
+	    	    namely ", TT "source", ", ", TT "target", ", ", 
+		    TT "matrix", ", and ", TT "cache", ","},
+       	        {"the value of the ", TT "source", " key is a ", 
+		    TO NormalToricVariety, ","},
+       	        {"the value of the ", TT "target", " key is a ", 
+		    TO NormalToricVariety, ","},
+       	        {"the value of the ", TT "matrix", " key is a ", 
+		    TO Matrix, ","},
+       	        {"the underling ring of the ", TT "matrix", " is ", 
+		    TO ZZ, ","},
+       	        {"the rank of the source of the ", TT "matrix", " equal
+		    dimension of the ", TT "source", " variety,"},
+       	        {"the rank of the target of the ", TT "matrix", " equal
+		    dimension of the ", TT "target", " variety,"},		    
+                {"the value of the ", TT "cache", " key is a ", 
+		    TO CacheTable, "."}
+	    }@	    
     SeeAlso
     	(hirzebruchSurface, ZZ)
         (toricProjectiveSpace, ZZ)
@@ -509,32 +575,34 @@ doc ///
 
 doc ///
     Key
+    	isProper
         (isProper, ToricMap)
     Headline 
-        checks if a toric map is proper
+        whether a toric map is proper
     Usage 
         isProper f
     Inputs 
         f:ToricMap
-	    a map between toric varieties
     Outputs 
         :Boolean 
-	    returns true if the map is proper; false if not
+	    that is true if the map is proper
     Description
         Text
-            A map f of varieties is proper if it is universally closed. 
-	    Letting f be a map of toric varieties and f' the corresponding map of lattices, the map f is
-	    proper if and only if the preimage of the support of the target fan under f' is the support 
-	    of the source fan. 
+	    A morphism of varieties is proper if it is universally closed.
+	    For a toric map $f : X \to Y$ corresponding to the map 
+	    $f_N : N_X \to N_Y$ of lattices, this is equivalent to the
+	    preimage of the support of the target fan under $f_N$ being equal
+	    to the support of the source fan.
     	Text
-            This example illustrates that the projection from the Hirzebruch surface H2 to P^1 is proper.
+	    This example illustrates that the projection from the Hirzebruch
+	    surface H2 to P^1 is proper.	    
     	Example  
 	   H2 = hirzebruchSurface 2
            PP1 = toricProjectiveSpace 1
            f = map(PP1,H2,matrix{{1,0}})
-    	   isProper(f)
+    	   assert isProper(f)
 	Text
-	    This example illustrates that the map from the  blow-up of the origin of 
+	    This example illustrates that the map from the blow-up of the origin of 
 	    affine 2-space to affine 2-space is proper.
 	Example
 	   AA2 = affineSpace 2;
