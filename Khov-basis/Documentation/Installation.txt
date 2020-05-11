@@ -11,7 +11,7 @@ Instructions labeled negative are likely unnecessary for up-to-date versions of 
 0) Open M2
 
 1) If the M2 package is not in M2/M2/Macaulay2/packages/SubalgebraBases, add the path to M2.  Do this with
-    path = append(path,"<path to package>")
+    path = prepend(path,"<path to package>")
 
 2) If the M2 package is already on the path, try 
     installPackage("SubalgebraBases")
@@ -19,5 +19,8 @@ Instructions labeled negative are likely unnecessary for up-to-date versions of 
     installPackage("SubalgebraBases",FileName=>"<path to package>")
 
 3) Check with running
-   needsPackage "SubalgebraBases"
+   installedPackages()
+
+4) To uninstall run
+   uninstallPackage("SubalgebraBases")
     
