@@ -17,7 +17,7 @@ integralClosure(Ideal, RingElement, ZZ) := opts -> (I,a,D) ->(
     ID := I^D;
     phi := map(M, module ID, mapback gD);
     assert(isHomogeneous phi);
-error();
+--error();
     extendIdeal(ID,a^D,phi)
     )
 
@@ -37,13 +37,17 @@ error();
 	  --answer is aJ:a
           M = target phi;
 	  aJ =trim ideal ker(inducedMap(M/(a*M), M)*phi);
-	  trim(aJ:a);
+	  J = trim(aJ:a)
+	  )
+-*
+--bits of old code:      
+	  return J;
           iota = matrix phi;
 	  phi1 = map(M,cover(a*M), inducedMap(M,a*M));
 	  psi = phi1//phi;
---missing stuff
           trim ideal psi)
-  
+*-
+
 integralClosure(Ideal,ZZ) := (I,D) -> integralClosure(I, I_0, D)
 integralClosure(Ideal,RingElement) := (I,a) -> integralClosure(I, a, 1)
 integralClosure(Ideal) := I -> integralClosure(I, I_0, 1)
@@ -84,7 +88,10 @@ S=ZZ/32003[a,b,c,d,e,f]
 I=ideal(a*b*d,a*c*e,b*c*f,d*e*f);
 trim(J=I^2)
 K=integralClosure(I,I_0,2) -- integral closure of J = I^2
-extendIdeal(ID,I_0^2,phi)
+K == J+ideal"abcdef"
+--works on this example!
+
+Ibar = extendIdeal(ID,I_0^2,phi)
 --time K' = integralClosure(I^2)  -- how long does this take?
 F=ideal(a*b*c*d*e*f);
 gens(F^2)%J^2 -- so F satisfies X^2-m, with m\in J^2.
@@ -93,24 +100,3 @@ assert(K != J)
 
 R = Rbar
 L = {2,null}
-
-
-
-isSubset(F,K)==false -- but should be true
-K==J -- true, but should be false: K should be larger -- should contain F.
-
-viewHelp integralClosure
-apply (10, i->gens(F^i)%(J^i))
-
-restart
-R=QQ[a,b,c,d]
-I=ideal"ab,ac,ad,bc,bd,cd"
-integralClosure (I,2)
-F = ideal"abcd"
-gens(F^2) % I^4
-
-trim(J=I^2)
-K=integralClosure(I,2)
-
-
--- Mike playing:
