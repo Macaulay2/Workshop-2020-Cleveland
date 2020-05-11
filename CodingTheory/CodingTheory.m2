@@ -28,6 +28,7 @@ export {
     "LinearCode",
     "linearCode",
     "AmbientModule",
+    "BaseField",
     "Generators",
     "Code"
     -- Methods
@@ -70,17 +71,40 @@ LinearCode = new Type of HashTable
 
 linearCode = method(Options => {})
 
-linearCode(Ring,ZZ,List) := LinearCode => opts -> (R,n,L) -> (
-    -- sample (possible) constructor for a linear code
-    -- input: ring, ambient dimension, list of generating codewords
-    -- outputs: module given by span of elements in L
+linearCode(Module,List) := LinearCode => opts -> (S,L) -> (
+    -- constructor for a linear code
+    -- input: ambient vector space/module S, list of generating codewords
+    -- outputs: submodule given by span of elements in L
     
-    -- ambient module R^n:
-    S := R^n;
+    if not isField(S.ring) then print "Warning: Codes over non-fields unstable.";
+    
+    
+    -- note: need to add checks that the codewords live in the ambient module
      
     new LinearCode from {
 	symbol AmbientModule => S,
-	symbol Generators => apply(L, v-> vector(v)),
+	symbol BaseField => S.ring,
+	symbol Generators => L,
+	symbol Code => image transpose matrix apply(L, v-> vector(v)),
+	symbol cache => {}
+	}
+    
+    )
+
+linearCode(GaloisField,ZZ,List) := LinearCode => opts -> (F,n,L) -> (
+    -- input: field, ambient dimension, list of generating codewords
+    -- outputs: module given by span of elements in L
+    
+    -- ambient module F^n:
+    S := F^n;
+    
+    -- note: need to add checks that the codewords live in the ambient module
+     
+    new LinearCode from {
+	symbol AmbientModule => S,
+	symbol BaseField => F,
+	 -- need to coerce generators into *this* GF(p,q):
+	symbol Generators => apply(L, codeword -> apply(codeword, entry -> sub(entry,F))),
 	symbol Code => image transpose matrix apply(L, v-> vector(v)),
 	symbol cache => {}
 	}
@@ -96,6 +120,26 @@ linearCode(ZZ,ZZ,ZZ,List) := LinearCode => opts -> (p,q,n,L) -> (
     R := GF(p,q);
     
     linearCode(R,n,L)
+    
+    )
+
+
+linearCode(Module,Module) := LinearCode => opts -> (S,V) -> (
+    -- constructor for a linear code
+    -- input: ambient vector space/module S, submodule V of S
+    -- outputs: submodule V
+    
+    if not isField(S.ring) then print "Warning: Codes over non-fields unstable.";
+  
+    -- note: need to add checks that the codewords live in the ambient module
+     
+    new LinearCode from {
+	symbol AmbientModule => S,
+	symbol BaseField => S.ring,
+	symbol Generators => V.gens,
+	symbol Code => V,
+	symbol cache => {}
+	}
     
     )
 
