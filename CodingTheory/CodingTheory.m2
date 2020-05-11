@@ -82,7 +82,8 @@ linearCode(Ring,ZZ,List) := LinearCode => opts -> (R,n,L) -> (
     new LinearCode from {
 	symbol AmbientModule => S,
 	symbol Generators => apply(L, v-> vector(v)),
-	symbol Code => image transpose matrix apply(L, v-> vector(v))
+	symbol Code => image transpose matrix apply(L, v-> vector(v)),
+	symbol cache => {}
 	}
     
     )
