@@ -1,13 +1,14 @@
 -- -*- coding: utf-8 -*-
 newPackage(
-	"PackageTemplate",
+	"Invariants",
     	Version => "1.0", 
-    	Date => "April 28, 2005",
+    	Date => "May 12, 2020",
     	Authors => {
-	     {Name => "Jane Doe", Email => "doe@math.uiuc.edu"}
+	     {Name => "Luigi Ferraro", Email => "ferrarl@wfu.edu",
+	      HomePage => "http://users.wfu.edu/ferrarl/"}
 	     },
-    	HomePage => "http://www.math.uiuc.edu/~doe/",
-    	Headline => "an example Macaulay2 package",
+    	Headline => "Computing Invariants for Tori and Abelian Groups",
+	DebuggingMode => true,
 	AuxiliaryFiles => false -- set to true if package comes with auxiliary files
     	)
 
@@ -41,9 +42,9 @@ secondFunction(ZZ,List) := o -> (m,n) -> (
 
 beginDocumentation()
 document { 
-	Key => PackageTemplate,
+	Key => Invariants,
 	Headline => "an example Macaulay2 package",
-	EM "PackageTemplate", " is an example package which can
+	EM "Invariants", " is an example package which can
 	be used as a template for user packages."
 	}
 document {
@@ -56,7 +57,7 @@ document {
 	Outputs => {
 		String => {}
 		},
-	"This function is provided by the package ", TO PackageTemplate, ".",
+	"This function is provided by the package ", TO Invariants, ".",
 	EXAMPLE {
 		"firstFunction 1",
 		"firstFunction 0"
@@ -65,7 +66,7 @@ document {
 document {
 	Key => secondFunction,
 	Headline => "a silly second function",
-	"This function is provided by the package ", TO PackageTemplate, "."
+	"This function is provided by the package ", TO Invariants, "."
 	}
 document {
 	Key => (secondFunction,ZZ,ZZ),
@@ -89,7 +90,7 @@ document {
      Headline => "optional argument specifying a level",
      TT "MyOption", " -- an optional argument used to specify a level",
      PARA{},
-     "This symbol is provided by the package ", TO PackageTemplate, "."
+     "This symbol is provided by the package ", TO Invariants, "."
      }
 document {
      Key => [secondFunction,MyOption],
@@ -122,10 +123,13 @@ end
 -- package.  None of it will be executed when the file is loaded,
 -- because loading stops when the symbol "end" is encountered.
 
-installPackage "PackageTemplate"
-installPackage("PackageTemplate", RemakeAllDocumentation=>true)
-check PackageTemplate
+restart
+uninstallPackage "Invariants"
+installPackage "Invariants"
+--installPackage("Invariants", RemakeAllDocumentation=>true)
+check Invariants
 
 -- Local Variables:
--- compile-command: "make -C $M2BUILDDIR/Macaulay2/packages PACKAGES=PackageTemplate pre-install"
+-- compile-command: "make -C $M2BUILDDIR/Macaulay2/packages PACKAGES=Invariants pre-install"
 -- End:
+
