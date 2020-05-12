@@ -1,23 +1,30 @@
 newPackage(
   "AlgebraicOptimization",
   Version => "0.1", 
-  Date => "1",
-  Authors => {{Name => "a", 
-  Email => "b", 
-  HomePage => "c"}},
-  Headline => "a",
+  Date => "May 12, 2020",
+  Authors => {
+    {Name => "Marc Harkonen", 
+    Email => "harkonen@gatech.edu", 
+    HomePage => "https://people.math.gatech.edu/~mharkonen3/"},
+    {Name => "Your name here",
+    Email => "Your email here",
+    HomePage => "Your page here"}
+  },
+  Headline => "A package for algebraic optimization",
   DebuggingMode => true,
   PackageImports => {"Elimination"}
 )
 
-export {}
+export {
+  "projectiveDual"
+}
 
 -- Code here
 
-computeDualVariety = method(Options => {}); -- Maybe options are needed?
+projectiveDual = method(Options => {}); -- Maybe options are needed?
 -- (Alg. 5.1 in SIAM book)
 -- Takes homogeneous ideal as input, returns ideal of dual of the projective variety
-computeDualVariety Ideal := Ideal => opts -> I -> (
+projectiveDual Ideal := Ideal => opts -> I -> (
   if not isHomogeneous I then error("Ideal has to be homogeneous");
   c := codim I;
   jacI := transpose jacobian I;
@@ -36,7 +43,7 @@ computeDualVariety Ideal := Ideal => opts -> I -> (
 TEST ///
 S = QQ[x_0..x_2]
 I = ideal(x_2^2-x_0^2+x_1^2)
-dualI = computeDualVariety(I)
+dualI = projectiveDual(I)
 S = ring dualI
 assert( dualI == ideal(S_0^2 - S_1^2 - S_2^2)) 
 ///
@@ -48,46 +55,50 @@ assert( dualI == ideal(S_0^2 - S_1^2 - S_2^2))
 beginDocumentation()
 
 -- template for package documentation
---  doc ///
---  Key
---    AlgebraicOptimization
---  Headline
---    TODO
---  Description
---    Text
---      Todo
---    Example
---      todo
---  Caveat
---  SeeAlso
---  ///
+doc ///
+Key
+  AlgebraicOptimization
+Headline
+  Package for algebraic optimization
+Description
+  Text
+    Todo
+  Example
+    todo
+Caveat
+SeeAlso
+///
 
 
 -- template for function documentation
---  doc ///
---  Key
+doc ///
+Key
+  projectiveDual
+  (projectiveDual, Ideal)
+Headline
+  Compute projective dual
+--Usage
+--  todo
+--Inputs
+--  a: todo
+--Outputs
+--  b: todo
+--Consequences
+--  asd
+--Description
+--  Text
 --    todo
---  Headline
+--  Example
 --    todo
---  Usage
+--  Code
 --    todo
---  Inputs
+--  Pre
 --    todo
---  Outputs
---    todo
---  Consequences
---    todo
---  Description
---    Text
---      todo
---    Example
---      todo
---    Code
---      todo
---    Pre
---  Caveat
---  SeeAlso
---  ///
+--Caveat
+--  todo
+--SeeAlso
+--  todo
+///
 
   TEST ///
   -- test code and assertions here
