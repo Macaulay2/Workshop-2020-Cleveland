@@ -77,19 +77,25 @@ Key
   (projectiveDual, Ideal)
 Headline
   Compute projective dual
---Usage
---  todo
---Inputs
---  a: todo
---Outputs
---  b: todo
+Usage
+  projectiveDual(I)
+Inputs
+  I:
+    a homogeneous @TO2{Ideal, "ideal"}@
+Outputs
+  :Ideal
+    the projective dual of {\tt I}
 --Consequences
 --  asd
---Description
---  Text
---    todo
---  Example
---    todo
+Description
+  Text
+    Compute the projective dual of a homogeneous ideal.
+    For example, the snippet below shows that the dual of a circle is a circle.
+
+  Example
+    S = QQ[x_0..x_2]
+    I = ideal(x_2^2-x_0^2+x_1^2)
+    projectiveDual(I)
 --  Code
 --    todo
 --  Pre
