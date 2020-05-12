@@ -1,0 +1,26 @@
+First time installation instructions:
+
+Instructions labeled negative are likely unnecessary for up-to-date versions of M2.
+
+-2) Make sure that you have Macaulay2 version at least 1.15.  There is a bug in previous versions (prior to David Cox retirement conference).
+
+-1) Get the M2 package files from the git repository: 
+    https://github.com/Macaulay2/M2/tree/master/M2/Macaulay2/packages/SubalgebraBases .
+    If these files are already in M2/M2/Macaulay2/packages/SubalgebraBases, you can skip this step.
+
+0) Open M2
+
+1) If the M2 package is not in M2/M2/Macaulay2/packages/SubalgebraBases, add the path to M2.  Do this with
+    path = prepend(path,"<path to package>")
+
+2) If the M2 package is already on the path, try 
+    installPackage("SubalgebraBases")
+    if this fails, then try
+    installPackage("SubalgebraBases",FileName=>"<path to package>")
+
+3) Check with running
+   installedPackages()
+
+4) To uninstall run
+   uninstallPackage("SubalgebraBases")
+    
