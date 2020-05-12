@@ -25,11 +25,11 @@ powersList2(List) := List => opts -> userList -> (
 
 powersList3 = method(TypicalValue => List, Options => {myPower => 2})
 powersList3(List) := List => opts -> userList -> (
-    local mutantList; local l;
+    --local mutantList; local l;
     
-    mutantList = new MutableList from userList; -- allows you to change elements of  list
+    mutantList := new MutableList from userList; -- allows you to change elements of  list
     
-    l = #mutantList;
+    l := #mutantList;
     for i from 0 to l-1 do (    
 	mutantList#i = (mutantList#i)^(opts.myPower);
 	);
