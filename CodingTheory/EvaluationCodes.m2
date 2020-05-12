@@ -50,7 +50,7 @@ evaluationCode(Ring,List,Matrix) := EvaluationCode => opts -> (F,P,M) -> (
 	}
     )
    
-------------This an example of a evaluation code----------------------------------------
+------------This an example of an evaluation code----------------------------------------
 loadPackage "NormalToricVarieties"
 loadPackage "NAGtypes"
 d=2
