@@ -318,8 +318,11 @@ isFibration = method()
 -- https://math.stackexchange.com/questions/132689/elementary-proof-that-if-a-is-a-matrix-map-from-mathbbzm-to-mathbb-zn
 -- There may be a way to fix this, based on Cox, Little, Schenck
 -- chapter 7, but it needs work.
+-- 
+-- We follow proposition 2.1 in DMM 
 
-isFibration ToricMap := Boolean => f -> 1 == minors(dim target f, matrix f)
+isFibration ToricMap := Boolean => f -> (
+    isProper f and  1 == minors(dim target f, matrix f))
 
 isDominant = method()
 isDominant ToricMap := Boolean => f -> (rank matrix f == dim target f)
@@ -817,6 +820,46 @@ doc ///
            isProper(f)
     SeeAlso
         (isComplete, NormalToricVariety)
+/// 
+
+
+--Finding the right spot
+doc ///
+    Key
+    	isFibration
+        (isFibration, ToricMap)
+    Headline 
+        whether a toric map is a fibration
+    Usage 
+        isFibration f
+    Inputs 
+        f:ToricMap
+    Outputs 
+        :Boolean 
+	    that is true if the map is a fibration
+    Description
+        Text
+	    A proper morphism $f : X\to Y$ is a fibration if $f_*(OO_X) = OO_Y$.
+	    A proper toric map is a fibration if and only if the underlying map
+	    of lattices is a surjection.
+	Text
+	    The first example shows that the projection from the first
+	    Hirzebruch surface to the projective line is a fibration.
+	Example
+	    X = hirzebruchSurface 1;
+	    Y = toricProjectiveSpace 1;
+	    f = map(Y,X,matrix{{1,0}})
+	    isFibration f
+	Text
+	    Here is an example of a proper map which is not a fibration.
+	Example
+	    Z = weightedProjectiveSpace {1,1,2};
+	    g = map(Z,X,matrix{{1,0},{0,-2}})
+	    isWellDefined g
+	    isFibration g
+	    isProper g
+    SeeAlso
+        (isProper, ToricMap)
 /// 
 
 doc ///
