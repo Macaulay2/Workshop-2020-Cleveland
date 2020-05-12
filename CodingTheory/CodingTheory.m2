@@ -32,6 +32,8 @@ export {
     "BaseField",
     "Generators",
     "Code",
+    -- Families of Codes
+    "cyclicCode",
     -- Methods
     "field",
     "vectorSpace",
@@ -157,8 +159,6 @@ linearCode(Module,Module) := LinearCode => opts -> (S,V) -> (
     -- outputs: code defined by submodule V
     
     if not isField(S.ring) then print "Warning: Codes over non-fields unstable.";
-  
-    -- note: need to add checks that the codewords live in the ambient module
      
     new LinearCode from {
 	symbol AmbientModule => S,
@@ -184,6 +184,7 @@ net LinearCode := c -> (
      )
 toString LinearCode := c -> toString c.Generators
 
+
 ------------------------------------------
 ------------------------------------------
 -- Binary Operations
@@ -193,6 +194,63 @@ toString LinearCode := c -> toString c.Generators
 -- equality of linear codes
 LinearCode == LinearCode := (C,D) -> ( C.Code == D.Code ) 
 
+
+
+
+------------------------------------------
+------------------------------------------
+-- Families of Codes
+------------------------------------------
+------------------------------------------
+
+-- Use this section to add methods that 
+-- construct families of codes
+
+cyclicCode = method(TypicalValue => LinearCode)
+
+cyclicCode(List) := LinearCode => v -> (
+    -- constructs a cyclic code from a 
+    -- vector of elements in some field F:
+    
+    -- check that type of entries in vector
+    -- all live in the same field (or can be
+    -- coerced to live in the same field)
+    baseField := class v_0;
+    
+    try {
+	-- attempt to coerce all entries into
+	-- same field, if necessary:
+	newV := apply(v, entry -> sub(entry,baseField));
+	} else {
+	-- otherwise, throw error:
+	error "Elements of input cannot be coerced into same field.";
+	};
+    
+    -- produce cyclic matrix for code:
+    ndim := # newV;
+    
+    cyclicMat := apply(toList(0..ndim-1), i -> apply(toList(0..ndim-1),j -> newV_((j-i)%ndim)));
+    
+    linearCode(baseField,cyclicMat)
+    
+    )
+
+cyclicCode(GaloisField,List) := LinearCode => (F,v) -> (
+    -- use this method to coerce all entries
+    -- of v into the same base field before
+    -- producing cyclic code
+    
+    -- coerce all elements of v into the desired field:
+    -- (e.g. {0,1,1,0,1} by default is a list in ZZ,
+    -- but this would convert to GF(2))
+    
+    newV := apply(v, entry -> sub(entry,F));
+    
+    cyclicCode(newV)
+    
+    )
+
+ 
 
 ------------------------------------------
 ------------------------------------------
@@ -213,6 +271,7 @@ field = method(TypicalValue => Ring)
 field LinearCode := Ring => C -> (
     return C.BaseField
     )
+ 
 
 --input: A linear code C
 --output: The vector space spanned by the generators of C
@@ -257,7 +316,7 @@ size LinearCode := ZZ => C -> (
     )
 
 
-dualCode = method()
+dualCode = method(TypicalValue => LinearCode)
 dualCode(LinearCode) := LinearCode => C -> (
     -- creates dual code to code C
     -- defn: the dual C^ is the code given by all c'
@@ -265,7 +324,7 @@ dualCode(LinearCode) := LinearCode => C -> (
     linearCode(dual cokernel gens C.Code)
     )
 
-alphabet = method()
+alphabet = method(TypicalValue => List)
 alphabet(LinearCode) := List => C -> (
     -- "a" is the multiplicative generator of the
     -- field that code C is over
@@ -279,7 +338,7 @@ alphabet(LinearCode) := List => C -> (
     
     )
 
-generic = method()
+generic = method(TypicalValue => LinearCode)
 generic(LinearCode) := LinearCode => C -> (
     linearCode(C.AmbientModule)
     )
@@ -426,22 +485,3 @@ check CodingTheory
 -- compile-command: "make -C $M2BUILDDIR/Macaulay2/packages PACKAGES=CodingTheory pre-install"
 -- End:
 
--- Branden's Tests
-restart
-
-
-restart
-uninstallPackage"CodingTheory"
-restart
-installPackage"CodingTheory"
-viewHelp"CodingTheory"
-
-restart
-needsPackage"CodingTheory"
-R = ZZ/5
-S = R^1
-L = {{1,1,1},{1,2,3}}
-C = linearCode(S,L)
-peek C
-
--- End Branden's Tests

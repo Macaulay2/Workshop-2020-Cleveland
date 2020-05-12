@@ -229,8 +229,9 @@ isProper ToricMap := Boolean => f -> (
     rayMatrixX := transpose matrix rays X;
     rayMatrixY := transpose matrix rays Y;
     A := matrix f;
-    --based on the idea that the map should be proper if and only if all torus invariant curves in X are                              
-    --PP^1 or are contained in the torus invariant curves of Y.
+    --based on the idea that the map should be proper if and only if
+    --all torus invariant curves in X are PP^1 or are contained in the
+    --torus invariant curves of Y.
     for tau in max Y do (
 	--dimension of tau cap image A and computing potential cones over tau
 	d := dim Y - rank (gens ker transpose A | gens ker transpose rayMatrixY_tau);
@@ -308,12 +309,16 @@ isProper (ToricMap,ZZ) := Boolean => (f, flag) -> (
 
 
 isFibration = method()
--- We're not convinced this work. It seems to be based on:
--- 1) Page 133 of Cox, Little, Schenck, which says that if a map of integer lattices is surjective, then it's *locally* a fibration
+-- We're not convinced this work. It seems to be based on: 1) Page 133
+-- of Cox, Little, Schenck, which says that if a map of integer
+-- lattices is surjective, then it's *locally* a fibration
 -- https://www.mimuw.edu.pl/~jarekw/pragmatic2010/CoxLittleSchenckJan2010.pdf
--- 2) Stackexchange discussion which gives a characterization of surjective maps of integer lattices
+-- 2) Stackexchange discussion which gives a characterization of
+-- surjective maps of integer lattices
 -- https://math.stackexchange.com/questions/132689/elementary-proof-that-if-a-is-a-matrix-map-from-mathbbzm-to-mathbb-zn
---There may be a way to fix this, based on Cox, Little, Schenck chapter 7, but it needs work.
+-- There may be a way to fix this, based on Cox, Little, Schenck
+-- chapter 7, but it needs work.
+
 isFibration ToricMap := Boolean => f -> 1 == minors(dim target f, matrix f)
 
 isDominant = method()
@@ -451,7 +456,7 @@ doc ///
         routines for working with torus-equivariant maps between normal toric varieties
     Description
         Text
-            Let $X$ and $Y$ be normal toric varieties whose underlying tices
+            Let $X$ and $Y$ be normal toric varieties whose underlying lattices
 	    are $N_X$ and $N_Y$ respectively.  A toric map is a morphism $f :
 	    X \to Y$ that induces a morphism of algebraic groups $g : T_X \to
 	    T_Y$ such that $f$ is $T_X$-equivariant with respect to the
@@ -478,7 +483,7 @@ doc ///
         the class of all torus-equivariant maps between normal toric varieties
     Description
         Text
-            Let $X$ and $Y$ be normal toric varieties whose underlying tices
+            Let $X$ and $Y$ be normal toric varieties whose underlying lattices
 	    are $N_X$ and $N_Y$ respectively.  A toric map is a morphism $f :
 	    X \to Y$ that induces a morphism of algebraic groups $g : T_X \to
 	    T_Y$ such that $f$ is $T_X$-equivariant with respect to the
@@ -512,24 +517,129 @@ doc ///
     	    that is the source of the map f
     Description
         Text
-            Let $X$ and $Y$ be normal toric varieties whose underlying tices
+            Let $X$ and $Y$ be normal toric varieties whose underlying lattices
 	    are $N_X$ and $N_Y$ respectively.  A toric map is a morphism $f :
 	    X \to Y$ that induces a morphism of algebraic groups $g : T_X \to
 	    T_Y$ such that $f$ is $T_X$-equivariant with respect to the
 	    $T_X$-action on $Y$ induced by $g$. This method returns $X$.	    
        	Text
-	    This example illustrates that the projection from the Hirzebruch
-	    surface H2 to P^1 is proper.	    
+	    We illustrate how to access this basic feature of a toric map with
+	    the projection from the Hirzebruch surface {\tt X} to the
+	    projective line {\tt Y}.
     	Example  
-	   H2 = hirzebruchSurface 2
-           PP1 = toricProjectiveSpace 1
-           f = map(PP1,H2,matrix{{1,0}})
-     	   source f
-	   assert(source f === H2)       	   
+	    X = hirzebruchSurface 2;
+            Y = toricProjectiveSpace 1;
+            f = map(Y, X, matrix {{1, 0}})
+     	    source f
+	    assert (source f === X)   
+	Text
+	    The number of columns in the underlying matrix must equal the
+	    dimension of the source.
+	Example
+	    assert (numColumns matrix f == dim X)
     SeeAlso
-        NormalToricVariety
+        (target, ToricMap)    
 	(isWellDefined, ToricMap)
+        (matrix, ToricMap)    	
+        (map, NormalToricVariety, NormalToricVariety, Matrix)    		
 ///
+
+doc ///
+    Key
+	(target, ToricMap)
+    Headline 
+    	gets the target of the map
+    Usage
+    	Y = target f
+    Inputs
+    	f : ToricMap
+    Outputs
+    	Y : NormalToricVariety
+    	    that is the target of the map f	
+    Description	    
+        Text
+            Let $X$ and $Y$ be normal toric varieties whose underlying lattices
+	    are $N_X$ and $N_Y$ respectively.  A toric map is a morphism $f :
+	    X \to Y$ that induces a morphism of algebraic groups $g : T_X \to
+	    T_Y$ such that $f$ is $T_X$-equivariant with respect to the
+	    $T_X$-action on $Y$ induced by $g$. This method returns $Y$.	    
+       	Text
+	    We illustrate how to access this basic feature of a toric map with
+	    the projection from the Hirzebruch surface {\tt X} to the
+	    projective line {\tt Y}.
+    	Example  
+	    X = hirzebruchSurface 2;
+            Y = toricProjectiveSpace 1;
+            f = map(Y, X, matrix {{1, 0}})
+     	    target f
+	    assert (target f === Y)   
+	Text
+	    The number of rows in the underlying matrix must equal the
+	    dimension of the target.
+	Example
+	    assert (numRows matrix f == dim Y)
+    SeeAlso
+        (source, ToricMap)    
+	(isWellDefined, ToricMap)
+        (matrix, ToricMap)    	
+        (map, NormalToricVariety, NormalToricVariety, Matrix)    		    
+///	  
+
+doc ///
+    Key
+	(matrix, ToricMap)
+    Headline 
+    	gets the underlying map of lattices for a toric map
+    Usage
+    	g = matrix f
+    Inputs
+    	f : ToricMap
+	Degree =>
+	    unused
+    Outputs
+    	g : Matrix
+    	    over the @TO2 (ZZ, "integers")@
+    Description	    
+        Text
+            Let $X$ and $Y$ be normal toric varieties whose underlying lattices
+	    are $N_X$ and $N_Y$ respectively.  A toric map is a morphism $f :
+	    X \to Y$ that induces a morphism of algebraic groups $g : T_X \to
+	    T_Y$ such that $f$ is $T_X$-equivariant with respect to the
+	    $T_X$-action on $Y$ induced by $g$.  Every toric map $f : X \to Y$
+	    corresponds to a unique linear map from the rational vector space
+	    containing the fan of $X$ to the rational vector space containing
+	    the fan of $Y$.  Moreover, this linear map induces a map $g :
+	    N_X \to N_Y$ between the underlying lattices such that, for every
+	    cone $\sigma$ in the fan of $X$, there is a cone in the fan of $Y$
+	    that contains the image $g(\sigma)$.  This method returns $g$.
+       	Text
+	    We illustrate how to access this basic feature of a toric map with
+	    the projection from the Hirzebruch surface {\tt X} to the
+	    projective line {\tt Y}.
+    	Example  
+	    X = hirzebruchSurface 2;
+            Y = toricProjectiveSpace 1;
+            f = map(Y, X, matrix {{1, 0}})
+     	    g = matrix f
+	Text
+	    The number of rows in the underlying matrix must equal the
+	    dimension of the target and the number of columns must equal the
+	    dimension of the source.	    
+	Example
+	    assert (numColumns g == dim X)
+	    assert (numRows g == dim Y)	    
+	Text
+	    The output display for toric maps is inherited the underlying map
+	    of lattices.
+	Example
+	    code (net, ToricMap)
+    SeeAlso
+        (source, ToricMap)    
+        (target, ToricMap)    		
+	(isWellDefined, ToricMap)
+        (map, NormalToricVariety, NormalToricVariety, Matrix)    		    
+///	         
+
 
 undocumented { (net,ToricMap) }
 
@@ -606,6 +716,67 @@ doc ///
         (weightedProjectiveSpace, List)
 ///
 
+
+    
+doc ///
+    Key
+        (map, NormalToricVariety, NormalToricVariety, Matrix)
+    Headline 
+    	make torus-equivariant map between normal toric varieties
+    Usage 
+        f = map(Y, X, g)
+    Inputs 
+        Y : NormalToricVariety
+	    the target of the map
+	X : NormalToricVariety
+	    the source of the map
+	g : Matrix
+	    over the integers
+	Degree => 
+	    used
+	DegreeLift =>   
+	    used
+	DegreeMap =>
+	    used
+    Outputs 
+        f : ToricMap
+    Description
+        Text
+	    Let $X$ and $Y$ be normal toric varieties whose underlying
+	    lattices are $N_X$ and $N_Y$ respectively.  Every toric map 
+	    $f : X \to Y$ corresponds to a unique map $g : N_X \to N_Y$ of
+	    lattices such that, for any cone $\sigma$ in the fan of $X$, there
+	    is a cone in the fan of $Y$ that contains the image $g(\sigma)$.	
+    	    Given the target, the source, and the matrix representing lattice
+    	    map, this method creates the corresponding toric map.
+    	Text
+	    This first example constructs the projection from the Hirzebruch
+	    surface {\tt H2} to the projective line {\tt PP1}.
+    	Example  
+	   H2 = hirzebruchSurface 2
+           PP1 = toricProjectiveSpace 1
+           f = map(PP1,H2,matrix{{1,0}})
+	   assert isWellDefined f
+    	   assert isProper f
+	Text
+	    This example illustrates that the map from the blow-up of the origin of 
+	    affine 2-space to affine 2-space is proper.
+	Example
+	   AA2 = affineSpace 2;
+	   max AA2
+	   BlO = toricBlowup({0,1}, AA2)
+	   f  = map(AA2, BlO, 1)
+           isProper(f)
+    Caveat
+        This method assumes that given matrix does determine a map between the
+        toric varieties.  One can verify this by using 
+	@TO (isWellDefined, ToricMap)@.
+    SeeAlso
+        (isComplete, NormalToricVariety)
+/// 
+
+undocumented {(isProper, ToricMap, ZZ)}
+
 doc ///
     Key
     	isProper
@@ -626,6 +797,7 @@ doc ///
 	    $f_N : N_X \to N_Y$ of lattices, this is equivalent to the
 	    preimage of the support of the target fan under $f_N$ being equal
 	    to the support of the source fan.
+
     	Text
 	    This example illustrates that the projection from the Hirzebruch
 	    surface H2 to P^1 is proper.	    
@@ -690,6 +862,31 @@ doc ///
            pullback(f, DAA2)
     SeeAlso
         (entries, ToricDivisor)
+///
+
+
+doc ///
+    Key
+        (inducedMap, ToricMap)
+    Headline
+        compute the induced map of rings for a toric map
+    Usage
+        inducedMap f
+    Inputs
+        f : ToricMap
+	    a map between toric varieties
+    Outputs
+        : RingMap 
+	    induced map of rings for f
+    Description
+        Text
+	    Given a toric map, there is an induced map between
+	    the homogeneous coordinate rings. This function returns
+	    that map.
+	Example 
+	    PP1 = toricProjectiveSpace 1
+	    f = map(PP1, PP1, 1)
+	    inducedMap f
 ///
 
 
@@ -934,7 +1131,7 @@ restart
 installPackage "ToricMaps"
 check ToricMaps
 
-
+viewHelp ToricMaps
 
 
 ------------------------------------------------------------------------------
