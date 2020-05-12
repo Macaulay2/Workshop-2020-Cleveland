@@ -167,8 +167,8 @@ topMinimalPrimesIP (MonomialIdeal) := o -> I -> (
 
 degreeIPFormulation = method();
 degreeIPFormulation (List, ZZ, ZZ) := (A, n, knownDim) -> (
-    concatenate(dimensionIPFormulation(A, n),"\n",
-	"subto dim: sum <i> in N: X[i] == "|toString(knownDim)|";")
+    concatenate(codimensionIPFormulation(A, n),"\n",
+	"subto dim: sum <i> in N: X[i] == "|toString(n - knownDim)|";")
     )
 degreeIPFormulation (MonomialIdeal, ZZ) := (I, knownDim) -> (
     degreeIPFormulation(monIdealToSupportSets(I), #gens ring I, knownDim)
@@ -186,20 +186,6 @@ codimensionIPFormulation (List, ZZ) := (A, n) -> (
 )
 codimensionIPFormulation (MonomialIdeal) := (I) -> (
     codimensionIPFormulation(monIdealToSupportSets I, #gens ring I)
-    )
-
-dimensionIPFormulation = method();
-dimensionIPFormulation (List, ZZ) := (A, n) -> (
-    concatenate({"set N := {0 .. ",toString(n-1),"};\n",
-        "var X[N] binary;\n","maximize obj: sum <i> in N: X[i];\n",
-        demark("\n", for i from 0 to #A-1 list(
-	concatenate({"subto constraint",toString(i),": ",
-	demark("+",apply(A#i, e -> "X["|toString(e)|"]")),
-	" <= ",toString(#(A#i)-1)|";"})))
-    })
-)
-dimensionIPFormulation (MonomialIdeal) := (I) -> (
-    dimensionIPFormulation(monIdealToSupportSets I, #gens ring I)
     )
 
 hilbertIPFormulation = method(
@@ -301,7 +287,7 @@ readAllPrimes (String, Ring) := (solFile, R) -> (
 	ln -> (
 	    l := drop(separate(",",ln), 1);
 	    l = drop(l, -1);
-	    monomialIdeal for i from 0 to #l-1 list if value(l#i)==0 then mons#i else continue
+	    monomialIdeal for i from 0 to #l-1 list if value(l#i)==1 then mons#i else continue
 	    )
 	)
     )
