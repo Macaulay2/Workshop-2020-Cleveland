@@ -30,8 +30,10 @@ export {
     "AmbientModule",
     "BaseField",
     "Generators",
-    "Code"
+    "Code",
     -- Methods
+    "dualCode",
+    "alphabet"
     }
 exportMutable {}
 
@@ -174,7 +176,21 @@ dualCode(LinearCode) := LinearCode => C -> (
     -- defn: the dual C^ is the code given by all c'
     -- such that c'.c == 0 for all c in C.
     linearCode(dual cokernel gens C.Code)
-    ) 
+    )
+
+alphabet = method()
+alphabet(LinearCode) := List => C -> (
+    -- "a" is the multiplicative generator of the
+    -- field that code C is over
+    a := C.BaseField.generators_0;
+    
+    -- take 0, and compute non-zero elements of C.BaseField:
+    alphaB := {sub(0,C.BaseField)} | apply(toList(1..(C.BaseField.order-1)), i-> a^i);
+    
+    -- return this alphabet:
+    alphaB    
+    
+    )
  
 
 beginDocumentation()
