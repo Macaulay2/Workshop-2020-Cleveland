@@ -5,19 +5,20 @@ integralClosure(Ideal, RingElement, ZZ) := opts -> (I,a,D) -> (
     if ((ideal 0_S):a) != 0 then error "The given ring element must be a nonzerodivisor of the ring.";
     z := local z;
     w := local w;
-    Reesi := (flattenRing reesAlgebra(I,a,Variable =>z))_0;
+    Reesi := (flattenRing reesAlgebra(I,a,Variable => z))_0;
     Rbar := integralClosure(Reesi, opts, Variable => w);
     zIdeal := ideal(map(Rbar,Reesi))((vars Reesi)_{0..numgens I -1});
     zIdealD := module zIdeal^D;
     L := prepend(D,toList(degreeLength S:null));
-    RbarPlusD :=image basisOfDegreeD(L,Rbar); --all gens of first-degree D.
+    RbarPlusD := image basisOfDegreeD(L,Rbar); --all gens of first-degree D.
     gD := matrix inducedMap(RbarPlusD, zIdealD);
     mapback := map(S,Rbar, matrix{{numgens Rbar-numgens S:0_S}}|(vars S), DegreeMap => d -> drop(d, 1));
     M := coker mapback presentation RbarPlusD;
     ID := I^D;
+    ID = (ideal mingens I)^D;
     phi := map(M, module ID, mapback gD);
     assert(isHomogeneous phi);
---error();
+--    error "debug me";
     extendIdeal(ID,a^D,phi)
     )
 
@@ -42,6 +43,18 @@ extendIdeal(Ideal, RingElement, Matrix) := Ideal => (I,a,phi) -> (
     J
     )
 
+extendIdeal(Ideal, Matrix) := Ideal => (I, phi) -> (
+    --input: f: (module I) --> M, an inclusion from an ideal 
+    --           to a module that is isomorphic to an ideal J containing I.
+    --output: generators of J, so that f becomes the inclusion I subset J.
+    inc := transpose gens I;
+    phi0 := transpose matrix phi;
+    assert(target inc == target phi0);
+    sz := syz transpose presentation target phi;
+    assert(source phi0 == target sz);
+    preimageInc := inc // (phi0 * sz);
+    ideal (sz * preimageInc)
+    )
 -*
 --bits of old code:      
 	  return J;
@@ -93,7 +106,7 @@ S=ZZ/32003[a,b,c,d,e,f]
 I=ideal(a*b*d,a*c*e,b*c*f,d*e*f);
 trim(J=I^2)
 K=integralClosure(I,I_0,2) -- integral closure of J = I^2
-assert(K == J+ideal"abcdef") --works on this example!
+assert(K == J+ideal"abcdef") --doesn't work yet on this example!
 
 Ibar = extendIdeal(ID,I_0^2,phi)
 --time K' = integralClosure(I^2)  -- how long does this take?
@@ -104,3 +117,25 @@ assert(K != J)
 
 R = Rbar
 L = {2,null}
+
+-- stopped at extendIdeal.
+-- Let's figure out the lift.
+isWellDefined phi -- false!! This is the first order of business.
+extendIdeal(ID, phi)
+sz = syz transpose presentation M -- this is the answer in this example.
+ff = ((transpose matrix phi) * sz)
+
+inc = transpose gens source phi
+transpose matrix phi
+(inc // ff)
+source phi
+target phi
+
+-- One possible bug:
+L = reesIdeal(I,I_0,Variable => z)
+g = map(ring I, ring L, (gens I))
+g L -- nonzero!!
+last (flattenRing ring L)
+oo L
+
+reesAlgebra(I, I_0, Variable => getSymbol "z")
