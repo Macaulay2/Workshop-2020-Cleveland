@@ -33,9 +33,19 @@ primaryInvariants (Matrix, PolynomialRing) := List => (W, R) -> (
     U := new MutableHashTable from S;
     local v, local m, local v', local u;
     nonemptyU := select(keys U, w -> #(U#w) > 0);
+    --iteration := 0; --step by step printing
     while  #nonemptyU > 0 do(
 	v = first nonemptyU;
 	m = first (U#v);
+	-- Uncomment lines in step by step printing to see steps
+	-- Note: there is one such line before the while loop
+	--print("\n"|"Iteration "|toString(iteration)|".\n"); --step by step printing
+    	--print(net("    Weights: ")|net(W)); --step by step printing
+	--print("\n"|"    Set U of weights/monomials:\n"); --step by step printing
+	--print(net("    ")|net(pairs select(hashTable pairs U,l->l!= {}))); --step by step printing
+	--print("\n"|"    Set S of weights/monomials:\n"); --step by step printing
+	--print(net("    ")|net(pairs select(hashTable pairs S,l->l!= {}))); --step by step printing
+	--iteration = iteration + 1; --step by step printing
 	scan(n, i -> (
         u := m*R_i;
         v' := v + W_i;
