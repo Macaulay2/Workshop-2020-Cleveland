@@ -23,6 +23,13 @@ fieldExtension(Ring, Ring, List) := o -> (S1, R1, l1) -> (
     f1 := map(L1, K1);
     return map(S1, R1, append(l1, f1(K1_0)))
 )
+
+--this function should change the coefficient ring of R1 to K1 
+fieldExtension(PolynomialRing, Ring) := opts -> (R1, K1) -> (
+	if (not isField(K1)) then error "fieldExtension:  Expected the second argument to be a field."; --maybe we don't want this.
+	M1 := monoid R1;
+	return (K1(M1));
+);
    
 -- A function with an optional argument
 secondFunction = method(
