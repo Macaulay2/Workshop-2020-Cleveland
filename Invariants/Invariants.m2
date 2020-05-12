@@ -7,6 +7,8 @@ newPackage(
 	     {Name => "Luigi Ferraro", Email => "ferrarl@wfu.edu",
 	      HomePage => "http://users.wfu.edu/ferrarl/"}
 	     },
+	     {Name => "Federico Galetto", Email => "f.galetto@csuohio.edu", HomePage => "https://math.galetto.org"}
+	     },
     	Headline => "Computing Invariants for Tori and Abelian Groups",
 	DebuggingMode => true,
 	AuxiliaryFiles => false -- set to true if package comes with auxiliary files
