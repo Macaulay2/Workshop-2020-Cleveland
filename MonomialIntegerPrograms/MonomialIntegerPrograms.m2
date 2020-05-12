@@ -26,7 +26,8 @@ export {
     "BoundGenerators",
     "FirstBetti",
     "GradedBettis",
-    "KnownDim"
+    "KnownDim",
+    "minimalPrimesIP"
     }
 exportMutable {
     "ScipPrintLevel"
@@ -45,9 +46,12 @@ print("Current value of ScipPrintLevel is 1.")
 -------------
 
 codimensionIP = method();
-codimensionIP (MonomialIdeal) := I -> (
+codimensionIP (MonomialIdeal) := (I) -> codimensionIPInternal(I, "");
+
+codimensionIPInternal = method();
+codimensionIPInternal (MonomialIdeal, String) := (I, extraconstraints) -> (
     (dir, zimplFile, solFile, errorFile, detailsFile) := tempDirectoryAndFiles("codim");
-    zimplFile << codimensionIPFormulation(I) << close;
+    zimplFile << codimensionIPFormulation(I) << extraconstraints << close;
     run(concatenate("(",ScipPath, 
 	    " -c 'read ", zimplFile,
 	    "' -c 'optimize'",
@@ -61,9 +65,13 @@ codimensionIP (MonomialIdeal) := I -> (
     )
 
 dimensionIP = method();
-dimensionIP (MonomialIdeal) := I -> (
+dimensionIP (MonomialIdeal) := (I) -> dimensionIPInternal(I, "");
+
+dimensionIPInternal = method();
+dimensionIPInternal (MonomialIdeal, String) := (I, extraconstraints) -> (
     n := numgens ring I;
-    n - codimensionIP(I)
+    cd := codimensionIPInternal(I, extraconstraints);
+    if cd >= infinity then -1 else n - cd
     )
 
 degreeIP = method( 
@@ -131,9 +139,13 @@ monomialIdealsWithHilbertFunction (List, Ring) := o -> (D, R) -> (
     )
 
 topMinimalPrimesIP = method(
+  Options => {KnownDim => -1}
+);
+topMinimalPrimesIP (MonomialIdeal) := o -> I -> topMinimalPrimesIPInternal(I, "", o);
+topMinimalPrimesIPInternal = method(
     Options => {KnownDim => -1}
     );
-topMinimalPrimesIP (MonomialIdeal) := o -> I -> (
+topMinimalPrimesIPInternal (MonomialIdeal, String) := o -> (I, extraconstraints) -> (
     if I == monomialIdeal(1_(ring I)) then return I;
     R := null;
     squarefree := isSquareFree I;
@@ -141,9 +153,9 @@ topMinimalPrimesIP (MonomialIdeal) := o -> I -> (
       R = ring I;
       I = polarize I;
     );
-    k := if o.KnownDim >= 0 then o.KnownDim else dimensionIP(I);
+    k := if o.KnownDim >= 0 then o.KnownDim else dimensionIPInternal(I, extraconstraints);
     (dir, zimplFile, solFile, errorFile, detailsFile) := tempDirectoryAndFiles("comps");
-    zimplFile << degreeIPFormulation(I, k) << close;
+    zimplFile << degreeIPFormulation(I, k) << extraconstraints << close;
     run(concatenate("(",ScipPath,
 	    " -c 'set emphasis counter'",
 	    " -c 'set constraints countsols collect TRUE'",
@@ -164,6 +176,7 @@ topMinimalPrimesIP (MonomialIdeal) := o -> I -> (
 ----------------------
 -- internal methods --
 ----------------------
+
 
 degreeIPFormulation = method();
 degreeIPFormulation (List, ZZ, ZZ) := (A, n, knownDim) -> (
@@ -280,6 +293,7 @@ readAllMonomialIdeals (String, Ring) := (solFile, R) -> (
 readAllPrimes = method()
 readAllPrimes (String, Ring) := (solFile, R) -> (
     n := numgens R;
+    if not fileExists solFile then return {};
     L := lines get solFile;
     mons := apply(select("X#([[:digit:]]+)", L#0), a -> R_(value substring(a, 2)));
     L = drop(L, 1);
@@ -295,7 +309,8 @@ readAllPrimes (String, Ring) := (solFile, R) -> (
 readScipSolution = method();
 readScipSolution (String) := solFile -> (
     solContents := get solFile;
-    value first select(///objective value.[[:space:]]+([[:digit:]]+)///, ///\1///, solContents)
+    allSolutions := select(///objective value.[[:space:]]+([[:digit:]]+)///, ///\1///, solContents);
+    if #allSolutions > 0 then value first allSolutions else infinity
 )
 
 readScipCount = method();
@@ -348,6 +363,42 @@ unPolarizeSome (List, Ring) := (L, R) -> (
     if not all(I_*, zero@@lastIndexOf) then continue;   --If one of the last indices is zero, we skip this and go to the next ideal and add nothing.
     unPolarize(I, R)                                    --Otherwise, we unPolarize the ideal and add it to the list
   )
+)
+
+
+----------------------
+-- allMinimalPrimes --
+----------------------
+
+
+ignorePrimesConstraints = method();
+ignorePrimesConstraints (List) := (L) -> (
+  concatenate(apply(#L, i -> (
+    Ai := index \ first entries mingens(L#i);
+    concatenate{
+      "\nsubto ignore",
+      toString(i),
+      ": ",
+      demark("+",apply(Ai, e -> "X["|toString(e)|"]")),
+      " <= ",
+      toString(#Ai - 1),
+      ";"
+    }
+  )))
+)
+
+minimalPrimesIP = method();
+minimalPrimesIP (MonomialIdeal) := I -> (
+  collectedPrimes := {};
+  while true do (
+    print collectedPrimes;
+    extraconstraints := ignorePrimesConstraints(collectedPrimes);
+    print(extraconstraints);
+    newPrimes := topMinimalPrimesIPInternal(I, extraconstraints);
+    if #newPrimes == 0 then break;
+    collectedPrimes = collectedPrimes | newPrimes;
+  );
+  collectedPrimes
 )
 
 
