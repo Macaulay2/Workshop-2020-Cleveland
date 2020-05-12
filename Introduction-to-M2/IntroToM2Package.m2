@@ -1,12 +1,13 @@
 newPackage(
-        "IntroToM2Package",
+        "IntroToM2Package", --Same name as the filename
 	Version => "1.0", 
 	Date => "May 12, 2020",
 	Authors => {
+	    {Name => "Jane Doe", Email => "jane.doe@m2.edu", HomePage => "https://janedoem2.github.io/"},
 	    {Name => "Jane Doe", Email => "jane.doe@m2.edu", HomePage => "https://janedoem2.github.io/"}
 	    },
 	Headline => "A Sample Package",
-	DebuggingMode => true
+	DebuggingMode => true -- help debug during dev time. Turn to false at deployment
         )
 
 
@@ -17,9 +18,12 @@ export{
     -- Methods
     "powersList1",
     "powersList2",
-    "powersList3",        
+    "powersList3",  -- this is an internal method now.      
     "myDegree"
     }
+
+-- list of needed packages. 
+needsPackage"Depth"
 
 -----------------------------------------------------------
 -----------------------------------------------------------
@@ -143,7 +147,7 @@ assert( {} == myDegree(J,2))
 beginDocumentation()
 
 document { 
-  Key => IntroToM2Package,
+  Key => IntroToM2Package, -- same as filename
   Headline => "A package for packages",
    
    PARA {
@@ -177,7 +181,7 @@ document {
 
 
 
-doc ///
+doc /// -- creating a page of documentation
    Key
        myDegree
        (myDegree, Ideal, ZZ)
@@ -301,6 +305,7 @@ path = {"~/GitHub/Workshop-2020-Cleveland/"}|path
 
 uninstallPackage"IntroToM2Package"
 loadPackage"IntroToM2Package"
+check"IntroToM2Package" -- runs all the tests you created. 
 
 restart
 uninstallPackage"IntroToM2Package"
@@ -311,5 +316,28 @@ check"IntroToM2Package"
    
 
 -- TEST DOWN HERE WITH F11
-
 L = apply(15,l -> l+1)
+
+
+
+
+
+viewHelp HashTable
+
+X = new MutableHashTable
+peek X
+scan(0 .. 30, i -> X#i = i^2)
+X#11
+
+
+
+
+
+
+
+
+
+
+
+
+
