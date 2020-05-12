@@ -49,4 +49,33 @@ evaluationCode(Ring,List,Matrix) := EvaluationCode => opts -> (F,P,M) -> (
 	symbol Code => image G
 	}
     )
-
+   
+------------This an example of a evaluation code----------------------------------------
+loadPackage "NormalToricVarieties"
+loadPackage "NAGtypes"
+d=2
+q=2
+S=3
+F_2=GF 2-- Galois fiel
+---------------------Defining  points in the Fano plane-----
+A=affineSpace(S, CoefficientRing => F_2, Variable => y)
+aff=rays A
+matrix aff
+--------------Points in Fano plane------------------
+LL=apply(apply(toList (set(0..q-1))^**(S)-(set{0})^**(3),toList),x -> (matrix aff)*vector deepSplice x)
+X=apply(LL,x->flatten entries x)
+------------------Defining the ring and the vector space of  homogeneous polynomials with degree 2----------------------------------
+R=F_2[vars(0..2)]
+LE=apply(apply(toList (set(0..q-1))^**(hilbertFunction(2,R))-(set{0})^**(hilbertFunction(2,R)),toList),x -> basis(2,R)*vector deepSplice x)
+Poly=apply(LE,x-> entries x)
+-----------------------for each point p_k in Fano plane exists a polynomial f_i s.t f_i(p_k)not=0 ---------------------------------------
+f={b^2,c^2,a^2,a^2,b^2,a^2,a^2}
+----------------------------Using the package  numerial algebraic geometry----------------------------------
+Polynum=apply(0..length LE-1, x->polySystem{LE#x#0})
+PolyDem=apply(f,x->polySystem{x})
+XX=apply(X,x->point{x})
+---------------------Reed-Muller-type code of order 2------------------------------------------
+C_d=apply(Polynum,y->apply(0..length f -1,x->(flatten entries evaluate(y,XX#x))#0/(flatten entries evaluate(PolyDem#x,XX#x))#0))
+   
+    
+------------------------------------------------------------------------------------------------------------------------------
