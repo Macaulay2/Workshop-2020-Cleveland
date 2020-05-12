@@ -889,6 +889,37 @@ doc ///
 	    inducedMap f
 ///
 
+doc ///
+    Key
+    	(symbol *, ToricMap, ToricMap)
+    Headline
+    	compute the composition of two toric maps
+    Usage
+    	g * f
+    Inputs
+    	f : ToricMap
+	    a map between toric varieties
+	g : ToricMap
+	    a map between toric varieties
+    Outputs
+    	: ToricMap
+	    the composition g*f from source f to target g
+    Description
+    	Text
+	    Given two maps with the target of f equal to the source of
+	    g, this function returns the toric map from source f to
+	    target g that is the composition of g and f.
+	Example
+	    PP1 = toricProjectiveSpace 1
+	    X = PP1**PP1
+	    Y = toricBlowup({0,2}, X)
+	    f= map(X,Y,1)
+	    g = map(PP1,X,matrix{{1,0}})
+    	    h=g*f
+	    source h
+	    target h
+///	
+    	
 
 ------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
