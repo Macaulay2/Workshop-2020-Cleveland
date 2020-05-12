@@ -402,7 +402,7 @@ unPolarize (MonomialIdeal, Ring) := (I, R) -> (
     v -> v => R_(firstIndexOf v)            --All the substitutions look like z_{i, j} => R_i.
                                             --first@@indices would not work because z_{i,j} is not the ith variable in the ring containing I
   );
-  substitute(I, substitutions)              --Finally, we apply all these substitutions to I.
+  monomialIdeal substitute(I, substitutions)              --Finally, we apply all these substitutions to I.
 )
 
 
@@ -411,7 +411,7 @@ unPolarizeSome (List, Ring) := (L, R) -> (
   --This applies unPolarize to the ideals in L where all the last indices are 0.
   for I in L list (                                     --loop through the list
     if not all(I_*, zero@@lastIndexOf) then continue;   --If one of the last indices is zero, we skip this and go to the next ideal and add nothing.
-    unPolarize(I, R)                                    --Otherwise, we unPolarize the ideal and add it to the list
+    monomialIdeal unPolarize(I, R)                                    --Otherwise, we unPolarize the ideal and add it to the list
   )
 )
 
@@ -888,86 +888,64 @@ doc ///
 TEST /// --dim and codim
 R = QQ[x_1..x_10];
 I = monomialIdeal(x_1*x_4*x_7^3,x_1^2*x_8^3,x_1*x_2*x_8^2*x_9,x_1*x_4^2*x_9^2,x_1*x_7^2*x_9^2);
-assert(
-    codimensionIP(I) == codim I
-    )
-assert(
-    dimensionIP(I) == dim I
-    )
+assert(codimensionIP(I) == codim I)
+assert(dimensionIP(I) == dim I)
 J = monomialIdeal(x_3^2*x_5*x_6*x_8,x_4^4*x_9,x_7^2*x_8^2*x_9,x_4*x_5*x_8*x_9^2,x_2^2*x_4*x_10^2);
-assert(
-    codimensionIP(J) == codim J
-    )
-assert(
-    dimensionIP(J) == dim J
-    )
+assert(codimensionIP(J) == codim J)
+assert(dimensionIP(J) == dim J)
 K = monomialIdeal(x_4^5,x_2*x_3*x_5^2*x_7,x_2*x_5*x_7^3,x_2*x_3^2*x_7*x_8,x_1^4*x_9,x_4*x_6*x_8*x_9^2,x_1*x_4^3*x_10,x_1^2*x_5*x_6*x_10,x_3^3*x_7*x_10,x_1^2*x_7*x_9*x_10,x_1*x_5*x_8*x_10^2,x_2*x_7*x_8*x_10^2,x_3^2*x_10^3,x_3*x_9*x_10^3);
-assert(
-    codimensionIP(K) == codim K
-    )
-assert(
-    dimensionIP(K) == dim K
-    )
+assert(codimensionIP(K) == codim K)
+assert(dimensionIP(K) == dim K)
 ///
 
 TEST /// --degree 
 R = QQ[x_1..x_10];
 I = monomialIdeal(x_1*x_4*x_7^3,x_1^2*x_8^3,x_1*x_2*x_8^2*x_9,x_1*x_4^2*x_9^2,x_1*x_7^2*x_9^2);
-assert(
-    degreeIP(I) == degree I
-    )
+assert(degreeIP(I) == degree I)
 J = monomialIdeal(x_3^2*x_5*x_6*x_8,x_4^4*x_9,x_7^2*x_8^2*x_9,x_4*x_5*x_8*x_9^2,x_2^2*x_4*x_10^2);
-assert(
-    degreeIP(J) == degree J
-    )
+assert(degreeIP(J) == degree J)
 K = monomialIdeal(x_4^5,x_2*x_3*x_5^2*x_7,x_2*x_5*x_7^3,x_2*x_3^2*x_7*x_8,x_1^4*x_9,x_4*x_6*x_8*x_9^2,x_1*x_4^3*x_10,x_1^2*x_5*x_6*x_10,x_3^3*x_7*x_10,x_1^2*x_7*x_9*x_10,x_1*x_5*x_8*x_10^2,x_2*x_7*x_8*x_10^2,x_3^2*x_10^3,x_3*x_9*x_10^3);
-assert(
-    degreeIP K == degree K
-    )
+assert(degreeIP K == degree K)
 ///
 
 TEST /// --hilbert
 R=QQ[x,y,z];
-assert(
-    #monomialIdealsWithHilbertFunction({1,2,1,0},R)==9
-    )
-assert(
-    #monomialIdealsWithHilbertFunction({1,3,4,2,1,0},R)==156
-    )
+assert(#monomialIdealsWithHilbertFunction({1,2,1,0},R)==9)
+assert(#monomialIdealsWithHilbertFunction({1,3,4,2,1,0},R)==156)
 R=QQ[x,y,z,w];
-assert(
-    #monomialIdealsWithHilbertFunction({1,4,3,1,0},R)==244
-    )
-assert(
-    all(monomialIdealsWithHilbertFunction({1,4,10,19,31},R), I -> numgens I == 1)
-    )
+assert(#monomialIdealsWithHilbertFunction({1,4,3,1,0},R)==244)
+assert(all(monomialIdealsWithHilbertFunction({1,4,10,19,31},R), I -> numgens I == 1))
 ///
 
 TEST /// --top min primes
 R = QQ[x,y,z,w,v];
 I = monomialIdeal(x*y*w, x*z*v, y*x, y*z*v);
-assert(
-    set(topMinimalPrimesIP(I))===set(minimalPrimes I)
-    )
+assert(set(topMinimalPrimesIP(I))===set(minimalPrimes I))
 J = monomialIdeal(x^2*y*w^3*z, x*y*z*w*v, y*x^8*v, y^5*z*v, x^10, z^10, v^10);
-assert(
-    topMinimalPrimesIP(J) == {monomialIdeal(x,z,v)}
-    )
+assert(topMinimalPrimesIP(J) == {monomialIdeal(x,z,v)})
 K = monomialIdeal(x^2*y*w^3*z, x*y*z*w*v, y*x^8*v, y^5*z*v, y*x^10, v*z^10, w*v^10);
-assert(
-    set(topMinimalPrimesIP(K))===set(select(minimalPrimes(K), p -> 3 == dim p))
-    )
+assert(set(topMinimalPrimesIP(K))===set(select(minimalPrimes(K), p -> 3 == dim p)))
 L = monomialIdeal(y^12, x*y^3, z*w^3, z*v*y^10, z*x^10, v*z^10, w*v^10, y*v*x*z*w);
-assert(
-    set(topMinimalPrimesIP(L))===set(select(minimalPrimes(L), p -> 2 == dim p))    
-    )
+assert(set(topMinimalPrimesIP(L))===set(select(minimalPrimes(L), p -> 2 == dim p)))
 ///
 
- 
+TEST /// --min primes
+R = QQ[x,y,z,w,v];
+I = monomialIdeal(x*y*w, x*z*v, y*x, y*z*v);
+assert(set(minimalPrimesIP I) === set(minimalPrimes I))
+J = monomialIdeal(x^2*y*w^3*z, x*y*z*w*v, y*x^8*v, y^5*z*v, x^10, z^10, v^10);
+assert(set(minimalPrimesIP J) === set(minimalPrimes J) )
+K = monomialIdeal(x^2*y*w^3*z, x*y*z*w*v, y*x^8*v, y^5*z*v, y*x^10, v*z^10, w*v^10);
+assert(set(minimalPrimesIP K) === set(minimalPrimes K) )
+L = monomialIdeal(y^12, x*y^3, z*w^3, z*v*y^10, z*x^10, v*z^10, w*v^10, y*v*x*z*w);
+assert(set(minimalPrimesIP L) === set(minimalPrimes L) )
+///
 
 end--
 
 restart
-installPackage("MonomialIntegerPrograms")
+uninstallPackage("MonomialIntegerPrograms")
+installPackage("MonomialIntegerPrograms", MakeDocumentation => true)
 viewHelp("sample session in Monomial Integer Programs")
 needsPackage("MonomialIntegerPrograms")
+check("MonomialIntegerPrograms")
