@@ -134,7 +134,7 @@ document {
 
 uninstallPackage "SubalgebraBases"
 restart
-pathToPackage = "/home/tim/R/Workshop-2020-Cleveland/Khov-basis/SubalgebraBases-original/SubalgebraBases.m2"
+pathToPackage = "/home/tim/R/Workshop-2020-Cleveland/Khov-basis/SubalgebraBases-working/SubalgebraBases.m2"
 installPackage(
     "SubalgebraBases",
     FileName=>pathToPackage,
