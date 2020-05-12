@@ -35,12 +35,13 @@ export {
     -- Methods
     "field",
     "vectorSpace",
-    "codeDim",
-    "codeLength",
+    --"codeDim",
+    --"codeLength",
     "ambientSpace",
     "informationRate",
     "dualCode",
-    "alphabet"
+    "alphabet",
+    "generic"
     }
 exportMutable {}
 
@@ -162,7 +163,7 @@ linearCode(Module,Module) := LinearCode => opts -> (S,V) -> (
     new LinearCode from {
 	symbol AmbientModule => S,
 	symbol BaseField => S.ring,
-	symbol Generators => V.gens,
+	symbol Generators => try V.gens then V.gens else gens V,
 	symbol Code => V,
 	symbol cache => {}
 	}
@@ -200,14 +201,14 @@ toString LinearCode := c -> toString c.Generators
 --description: Given a linear code, the function returns the field C is a code over
 field = method(TypicalValue => Ring)
 field LinearCode := Ring => C -> (
-    return ring(C.AmbientModule);
+    return C.BaseField
     )
 
 --input: A linear code C
 --output: The vector space spanned by the generators of C
 vectorSpace = method(TypicalValue => Module)
 vectorSpace LinearCode := Module => C -> (
-    return C.Code;
+    return C.Code
     )
 
 --input: A linear code C
@@ -220,23 +221,31 @@ ambientSpace LinearCode := Module => C -> (
 --input: A linear code C
 --output: The vector space dimension of the ambient vector space 
 --C is a subspace of
-length LinearCode := Number => C -> (
-    return rank(C.AmbientModule);
+length LinearCode := ZZ  => C -> (
+    return rank(C.AmbientModule)
     )
 
 --input: A linear code C
 --output: The vector space dimension of the subspace given by the
 --span of the generators of C
-dim LinearCode := Number => C -> (
-    return length C.Generators;
+dim LinearCode := ZZ => C -> (
+    --return length C.Generators; (generating set may not be minimal)
+    return rank generators C.Code
     )
 
 --input: A linear code C
 --output: The ratio (dim C)/(length C)
-informationRate = method(TypicalValue => Number)
-informationRate LinearCode := Number => C -> (
+informationRate = method(TypicalValue => QQ)
+informationRate LinearCode := QQ => C -> (
     return (dim C)/(length C);
     )
+
+--input: A linear code C
+--output: the number of codewords in C
+size LinearCode := ZZ => C -> (
+    return (dim C)^(C.BaseField.order)
+    )
+
 
 dualCode = method()
 dualCode(LinearCode) := LinearCode => C -> (
@@ -258,6 +267,11 @@ alphabet(LinearCode) := List => C -> (
     -- return this alphabet:
     alphaB    
     
+    )
+
+generic = method()
+generic(LinearCode) := LinearCode => C -> (
+    linearCode(C.AmbientModule)
     )
 
 
