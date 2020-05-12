@@ -391,7 +391,7 @@ pullback (ToricMap, ToricDivisor) := ToricDivisor => (f, D) -> (
 	-- find a maximal cone containing the image of each ray
 	maxConeIndex := position(maxCones, 
 	    sigma -> all(flatten entries(outerNormals(Y, sigma) * imageRho), b -> b <= 0));
-	-- see Proposition 6.1.20 in Cox-Little-Schenck
+	-- see Thm 4.2.12.b and Prop 6.2.7 in Cox-Little-Schenck (6.1.20 in the preprint)
 	((transpose imageRho * cartierData_(maxConeIndex))_(0,0)) * X_i
 	)
     )
@@ -641,7 +641,7 @@ doc ///
             PP1 = toricProjectiveSpace 1;
 	    X = PP1 ** PP1;
             f = map(PP1, X, matrix{{1,0}})
-	    assert isWellDefined f
+      	    assert isWellDefined f
     	    D = toricDivisor({1,1}, PP1)
 	    pullback(f, D)
 	Text
