@@ -74,7 +74,7 @@ linearCode = method(Options => {})
 linearCode(Module,List) := LinearCode => opts -> (S,L) -> (
     -- constructor for a linear code
     -- input: ambient vector space/module S, list of generating codewords
-    -- outputs: submodule given by span of elements in L
+    -- outputs: code defined by submodule given by span of elements in L
     
     if not isField(S.ring) then print "Warning: Codes over non-fields unstable.";
     
@@ -93,7 +93,7 @@ linearCode(Module,List) := LinearCode => opts -> (S,L) -> (
 
 linearCode(GaloisField,ZZ,List) := LinearCode => opts -> (F,n,L) -> (
     -- input: field, ambient dimension, list of generating codewords
-    -- outputs: module given by span of elements in L
+    -- outputs: code defined by module given by span of elements in L
     
     -- ambient module F^n:
     S := F^n;
@@ -114,7 +114,7 @@ linearCode(GaloisField,ZZ,List) := LinearCode => opts -> (F,n,L) -> (
 linearCode(ZZ,ZZ,ZZ,List) := LinearCode => opts -> (p,q,n,L) -> (
     -- Constructor for codes over Galois fields
     -- input: prime p, exponent q, dimension n, list of generating codewords L
-    -- output module given by span of elements in L
+    -- output: code defined by module given by span of elements in L
     
     -- Galois Field:
     R := GF(p,q);
@@ -127,7 +127,7 @@ linearCode(ZZ,ZZ,ZZ,List) := LinearCode => opts -> (p,q,n,L) -> (
 linearCode(Module,Module) := LinearCode => opts -> (S,V) -> (
     -- constructor for a linear code
     -- input: ambient vector space/module S, submodule V of S
-    -- outputs: submodule V
+    -- outputs: code defined by submodule V
     
     if not isField(S.ring) then print "Warning: Codes over non-fields unstable.";
   
@@ -140,6 +140,15 @@ linearCode(Module,Module) := LinearCode => opts -> (S,V) -> (
 	symbol Code => V,
 	symbol cache => {}
 	}
+    
+    )
+
+linearCode(Module) := LinearCode => opts -> V -> (
+    -- constructor for a linear code
+    -- input: some submodule V of S
+    -- outputs: code defined by submodule V
+    
+    linearCode(ambient V, V)
     
     )
 
@@ -158,6 +167,14 @@ toString LinearCode := c -> toString c.Generators
 -- act on codes. Should use this section for
 -- writing methods to convert between 
 -- different Types of codes
+
+dualCode = method()
+dualCode(LinearCode) := LinearCode => C -> (
+    -- creates dual code to code C
+    -- defn: the dual C^ is the code given by all c'
+    -- such that c'.c == 0 for all c in C.
+    linearCode(dual cokernel gens C.Code)
+    ) 
  
 
 beginDocumentation()
