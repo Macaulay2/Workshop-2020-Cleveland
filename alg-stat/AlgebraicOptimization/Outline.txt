@@ -1,0 +1,28 @@
+--The following file sketches the structure of the package. 
+
+Algebraic Optimization
+
+	maximum likelihood estimation
+	Euclidean distance degrees
+
+	Numerical KKT conditions
+	Symbolic methodsaev
+
+
+Using Lagrange multipliers, and the observation that...
+
+Example 1.1
+ED Critical Ideal (equation 2.1)
+
+Lemma 2.1. ED degree is well defined
+
+Example 2.5
+
+Example 2.7 
+
+
+1. Document Marc's function
+2. Work through Example 5.24 
+3. Use Theorem 5.23 to determine the degree of of an algebraic optimization problem
+
+
