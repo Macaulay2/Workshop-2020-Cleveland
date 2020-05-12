@@ -29,8 +29,10 @@ export {
     "linearCode",
     "AmbientModule",
     "Generators",
-    "Code"
+    "Code",
     -- Methods
+    "coefVec",
+    "getGoppaParity"
     }
 exportMutable {}
 
@@ -109,6 +111,74 @@ toString LinearCode := c -> toString c.Generators
 -- Methods
 ------------------------------------------
 ------------------------------------------
+
+
+-- Returns the coefficient vector of a finite field element,
+-- viewed as a polynomial in the primitive element.
+coefVec = method(TypicalValue => List)
+coefVec (RingElement) := elt -> (
+    R := ring(elt);
+    alpha := (ambient R)_0;
+    p := char R;
+    pows := for i from 0 to p list(alpha^i);
+    (M,C) := coefficients(lift(elt, ambient R), Monomials => pows);
+    return vector flatten entries C;
+    )
+
+-*
+Generates a parity check matrix for the Goppa code given by goppaPoly and defSet. 
+Based off of this implemenation from SageMath:
+https://github.com/sagemath/sage/blob/6db1a26f5e25ac32752e1151514e3e38c7bde98c/src/sage/coding/goppa_code.py#L38
+
+Example:  
+
+R = GF(2^3)
+a = (vars R)_(0,0)
+L = {0_R}|(for i from 0 to q - 2 list(a^i))
+G = a^2 + a + 1
+getGoppaParity(G, L)
+*-
+
+getGoppaParity = method(TypicalValue => LinearCode)
+getGoppaParity (RingElement, List) := (goppaPoly, defSet) -> (
+                    
+    n := length(defSet);
+    R := ring(goppaPoly);
+    G := lift(goppaPoly, ambient R);
+    d := first degree G;
+    alpha := first gens ring(G);
+    D := defSet;
+
+    for i from 0 to length defSet-1 do(
+	if (sub(G, {alpha => defSet#i})) == 0_(ambient R) then(
+	    error "defSet cannot contain zeroes of goppaPoly."
+	    );
+	);
+    
+    h := for i from 0 to n-1 list(
+	val := (sub(G, {alpha => D#i}))^(-1);
+	coefVec(val)
+	);
+    
+    bottom := for t from 1 to d-1 list(
+    	for i from 0 to n-1 list(
+	    val := (sub(G, {alpha => D#i}))^(-1);
+	    val = val*((D#i)^t);
+	    coefVec(val)
+	    )
+    	);    
+    
+    mat := {h} | bottom;
+    mat = apply(mat, block -> matrix block);
+    mat = fold((a,b)-> a || b, mat);
+
+    return new LinearCode from {
+	symbol AmbientModule => R,
+	symbol Generators => apply(entries mat, v-> vector(v)),
+	symbol Code => image mat
+	};
+    );
+
 
 -- Use this section to add methods that
 -- act on codes. Should use this section for
