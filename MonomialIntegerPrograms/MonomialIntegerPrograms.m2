@@ -147,7 +147,8 @@ topMinimalPrimesIP (MonomialIdeal) := o -> I -> (
         sub(polarize monomialIdeal p, polarizedRing)
       ));
     );
-    ignorecontraints := ignorePrimesConstraints(ignorePrimes);
+    ignorecontraints := ignorePrimesConstraints(ignorePrimes, squarefree);
+    print(ignorecontraints);
     
     k := if o.KnownDim >= 0 then o.KnownDim else dimensionIPWithConstraints(I, ignorecontraints);
     (dir, zimplFile, solFile, errorFile, detailsFile) := tempDirectoryAndFiles("comps");
@@ -320,21 +321,40 @@ tempDirectoryAndFiles (String) := (bname) -> (
 )
 
 
+firstIndexOf := first@@last@@baseName;    --This is a function that takes z_{i,j,k,...} and maps it to i
+                                          --baseName: turns the variable into an IndexedVariable
+                                          --last: an IndexedVariable is a list where the last element is the index list
+                                          --first: we want to get the first index of each variable
+lastIndexOf := last@@last@@baseName;      --This function finds the lastIndex of a variable
+
+
+
 ignorePrimesConstraints = method();
-ignorePrimesConstraints (List) := (L) -> (
+ignorePrimesConstraints (List, Boolean) := (L, squarefree) -> (
   concatenate(apply(#L, i -> (
-    Ai := index \ first entries mingens(L#i);
-    concatenate{
-      "\nsubto ignore",
+    primeVars := first entries mingens(L#i);
+    sumBound := #primeVars - 1;
+    
+    if not squarefree then (
+      polarizedVariables := (ring(L#i))_*;
+      varindices := firstIndexOf \ primeVars;
+      primeVars = select(polarizedVariables, v->member(firstIndexOf v, varindices));
+    );
+    
+    concatenate(
+      "\n",
+      "subto ignore",
       toString(i),
       ": ",
-      demark("+",apply(Ai, e -> "X["|toString(e)|"]")),
+      demark("+", apply(primeVars, e -> "X["|toString(index e)|"]")),
       " <= ",
-      toString(#Ai - 1),
+      toString(sumBound),
       ";"
-    }
+    )
   )))
 )
+
+
 
 
 codimensionIPWithConstraints = method();
@@ -366,11 +386,6 @@ dimensionIPWithConstraints (MonomialIdeal, String) := (I, constraints) -> (
 -- un-polarization --
 ---------------------
 
-firstIndexOf := first@@last@@baseName;    --This is a function that takes z_{i,j,k,...} and maps it to i
-                                          --baseName: turns the variable into an IndexedVariable
-                                          --last: an IndexedVariable is a list where the last element is the index list
-                                          --first: we want to get the first index of each variable
-lastIndexOf := last@@last@@baseName;      --This function finds the lastIndex of a variable
 
 
 unPolarize = method();
