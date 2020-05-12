@@ -33,7 +33,8 @@ export {
     "Generators",
     "Code",
     -- Families of Codes
-    "cyclicCode",
+    "cyclicMatrix",
+    "quasiCyclicCode",
     -- Methods
     "field",
     "vectorSpace",
@@ -179,6 +180,21 @@ linearCode(Module) := LinearCode => opts -> V -> (
     
     )
 
+linearCode(Matrix) := LinearCode => opts -> M -> (
+    -- constructor for a linear code
+    -- input: a generating matrix for a code
+    -- output: code defined by the columns of M
+    
+    new LinearCode from {
+	symbol AmbientModule => M.target,
+	symbol BaseField => M.ring,
+	symbol Generators => entries transpose M,
+	symbol Code => image M,
+	symbol cache => {}
+	}
+    
+    )
+
 net LinearCode := c -> (
      "Code: " | net c.Code
      )
@@ -194,50 +210,65 @@ toString LinearCode := c -> toString c.Generators
 -- Use this section to add methods that 
 -- construct families of codes
 
-cyclicCode = method(TypicalValue => LinearCode)
-
-cyclicCode(List) := LinearCode => v -> (
-    -- constructs a cyclic code from a 
-    -- vector of elements in some field F:
+------------------------------------------------------
+-- Added helper functions to produce cyclic matrices:
+------------------------------------------------------
+cyclicMatrix = method(TypicalValue => Matrix)
+cyclicMatrix(List) := Matrix => v -> (
+    -- constructs the cyclic matrix with first
+    -- row given by v
     
-    -- check that type of entries in vector
-    -- all live in the same field (or can be
-    -- coerced to live in the same field)
-    baseField := class v_0;
+    -- calculate number of rows/columns:
+    ndim := # v;
+    
+    -- produce cyclic matrix of right-shifts with
+    -- first row given by v:
+    matrix(apply(toList(0..ndim-1), i -> apply(toList(0..ndim-1),j -> v_((j-i)%ndim))))
+    
+    )
+
+cyclicMatrix(GaloisField,List) := Matrix => (F,v) -> (
+    -- constructs the cyclic matrix with first
+    -- row given by v, coercing elements into F:
     
     try {
 	-- attempt to coerce all entries into
 	-- same field, if necessary:
-	newV := apply(v, entry -> sub(entry,baseField));
+	newV := apply(v, entry -> sub(entry,F));
 	} else {
 	-- otherwise, throw error:
 	error "Elements of input cannot be coerced into same field.";
-	};
+	}; 
     
-    -- produce cyclic matrix for code:
-    ndim := # newV;
-    
-    cyclicMat := apply(toList(0..ndim-1), i -> apply(toList(0..ndim-1),j -> newV_((j-i)%ndim)));
-    
-    linearCode(baseField,cyclicMat)
+    cyclicMatrix(newV) 
     
     )
 
-cyclicCode(GaloisField,List) := LinearCode => (F,v) -> (
-    -- use this method to coerce all entries
-    -- of v into the same base field before
-    -- producing cyclic code
+
+quasiCyclicCode = method(TypicalValue => LinearCode)
+
+quasiCyclicCode(GaloisField,List) := LinearCode => (F,V) -> (
+        
+    -- produce cyclic matrices with each v in V as first row:
+    cyclicMatrixList := apply(V, v-> cyclicMatrix(F,v)); 
     
-    -- coerce all elements of v into the desired field:
-    -- (e.g. {0,1,1,0,1} by default is a list in ZZ,
-    -- but this would convert to GF(2))
+    -- vertically concatenate all of the codewords in blocks
+    -- of our quasi-cyclic code:
     
-    newV := apply(v, entry -> sub(entry,F));
-    
-    cyclicCode(newV)
+    linearCode(fold((m1,m2) -> m1 || m2, cyclicMatrixList))
     
     )
 
+quasiCyclicCode(List) := LinearCode => V -> (
+    -- constructs a cyclic code from a 
+    -- list of lists of  elements in some field F:
+    
+    -- check field that elements live over:
+    baseField := class V_0_0;
+    
+    try quasiCyclicCode(baseField,V) else error "Entries not over a field."
+    
+    )
  
 ------------------------------------------
 ------------------------------------------
@@ -328,6 +359,12 @@ alphabet(LinearCode) := List => C -> (
 generic = method(TypicalValue => LinearCode)
 generic(LinearCode) := LinearCode => C -> (
     linearCode(C.AmbientModule)
+    )
+
+parityCheck = method(TypicalValue => Matrix)
+
+parityCheck(LinearCode) := Matrix => C -> (
+    
     )
 
 
