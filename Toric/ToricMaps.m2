@@ -516,7 +516,7 @@ doc ///
     	    that is the source of the map f
     Description
         Text
-            Let $X$ and $Y$ be normal toric varieties whose underlying tices
+            Let $X$ and $Y$ be normal toric varieties whose underlying lattices
 	    are $N_X$ and $N_Y$ respectively.  A toric map is a morphism $f :
 	    X \to Y$ that induces a morphism of algebraic groups $g : T_X \to
 	    T_Y$ such that $f$ is $T_X$-equivariant with respect to the
@@ -526,16 +526,16 @@ doc ///
 	    the projection from the Hirzebruch surface {\tt X} to the
 	    projective line {\tt Y}.
     	Example  
-	   X = hirzebruchSurface 2;
-           Y = toricProjectiveSpace 1;
-           f = map(Y, X, matrix {{1, 0}})
-     	   source f
-	   assert (source f === X)   
+	    X = hirzebruchSurface 2;
+            Y = toricProjectiveSpace 1;
+            f = map(Y, X, matrix {{1, 0}})
+     	    source f
+	    assert (source f === X)   
 	Text
 	    The number of columns in the underlying matrix must equal the
 	    dimension of the source.
 	Example
-	    assert (rank source matrix f == dim source f)
+	    assert (numColumns matrix f == dim X)
     SeeAlso
         (target, ToricMap)    
 	(isWellDefined, ToricMap)
@@ -557,30 +557,85 @@ doc ///
     	    that is the target of the map f	
     Description	    
         Text
-            Let $X$ and $Y$ be normal toric varieties whose underlying tices
+            Let $X$ and $Y$ be normal toric varieties whose underlying lattices
 	    are $N_X$ and $N_Y$ respectively.  A toric map is a morphism $f :
 	    X \to Y$ that induces a morphism of algebraic groups $g : T_X \to
 	    T_Y$ such that $f$ is $T_X$-equivariant with respect to the
-	    $T_X$-action on $Y$ induced by $g$. This method returns $X$.	    
+	    $T_X$-action on $Y$ induced by $g$. This method returns $Y$.	    
        	Text
 	    We illustrate how to access this basic feature of a toric map with
 	    the projection from the Hirzebruch surface {\tt X} to the
 	    projective line {\tt Y}.
     	Example  
-	   X = hirzebruchSurface 2;
-           Y = toricProjectiveSpace 1;
-           f = map(Y, X, matrix {{1, 0}})
-     	   target f
-	   assert (target f === Y)   
+	    X = hirzebruchSurface 2;
+            Y = toricProjectiveSpace 1;
+            f = map(Y, X, matrix {{1, 0}})
+     	    target f
+	    assert (target f === Y)   
 	Text
 	    The number of rows in the underlying matrix must equal the
 	    dimension of the target.
 	Example
-	    assert (rank source matrix f == dim source f)
+	    assert (numRows matrix f == dim Y)
     SeeAlso
         (source, ToricMap)    
 	(isWellDefined, ToricMap)
         (matrix, ToricMap)    	
+        (map, NormalToricVariety, NormalToricVariety, Matrix)    		    
+///	  
+
+doc ///
+    Key
+	(matrix, ToricMap)
+    Headline 
+    	gets the underlying map of lattices for a toric map
+    Usage
+    	g = matrix f
+    Inputs
+    	f : ToricMap
+	Degree =>
+	    unused
+    Outputs
+    	g : Matrix
+    	    over the @TO2 (ZZ, "integers")@
+    Description	    
+        Text
+            Let $X$ and $Y$ be normal toric varieties whose underlying lattices
+	    are $N_X$ and $N_Y$ respectively.  A toric map is a morphism $f :
+	    X \to Y$ that induces a morphism of algebraic groups $g : T_X \to
+	    T_Y$ such that $f$ is $T_X$-equivariant with respect to the
+	    $T_X$-action on $Y$ induced by $g$.  Every toric map $f : X \to Y$
+	    corresponds to a unique linear map from the rational vector space
+	    containing the fan of $X$ to the rational vector space containing
+	    the fan of $Y$.  Moreover, this linear map induces a map $g :
+	    N_X \to N_Y$ between the underlying lattices such that, for every
+	    cone $\sigma$ in the fan of $X$, there is a cone in the fan of $Y$
+	    that contains the image $g(\sigma)$.  This method returns $g$.
+       	Text
+	    We illustrate how to access this basic feature of a toric map with
+	    the projection from the Hirzebruch surface {\tt X} to the
+	    projective line {\tt Y}.
+    	Example  
+	    X = hirzebruchSurface 2;
+            Y = toricProjectiveSpace 1;
+            f = map(Y, X, matrix {{1, 0}})
+     	    g = matrix f
+	Text
+	    The number of rows in the underlying matrix must equal the
+	    dimension of the target and the number of columns must equal the
+	    dimension of the source.	    
+	Example
+	    assert (numColumns g == dim X)
+	    assert (numRows g == dim Y)	    
+	Text
+	    The output display for toric maps is inherited the underlying map
+	    of lattices.
+	Example
+	    code (net, ToricMap)
+    SeeAlso
+        (source, ToricMap)    
+        (target, ToricMap)    		
+	(isWellDefined, ToricMap)
         (map, NormalToricVariety, NormalToricVariety, Matrix)    		    
 ///	         
 
