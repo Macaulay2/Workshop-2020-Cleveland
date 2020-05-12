@@ -5,7 +5,8 @@ newPackage(
     	Date => "May 11, 2020",
     	Authors => {
 	     {Name => "Hiram Lopez", Email => "h.lopezvaldez@csuohio.edu"},
-	     {Name => "Gwyn Whieldon", Email => "gwyn.whieldon@gmail.com"}
+	     {Name => "Gwyn Whieldon", Email => "gwyn.whieldon@gmail.com"},
+	     {Name => "Taylor Ball", Email => "trball13@gmail.com"}
 	     },
     	HomePage => "https://academic.csuohio.edu/h_lopez/",
     	Headline => "a package for coding theory in M2",
