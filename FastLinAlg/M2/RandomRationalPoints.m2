@@ -13,8 +13,29 @@ newPackage(
 
 -- Any symbols or functions that the user is to have access to
 -- must be placed in one of the following two lists
-export {"firstFunction", "secondFunction", "MyOption"}
+export {"randomPoint", "fieldElements", "firstFunction", "secondFunction", "MyOption", "GenericProjection", "NumPointsToCheck"}
 exportMutable {}
+
+randomPoint = method(Options => {NumPointsToCheck => 10, GenericProjection => false})
+
+randomPoint(Ideal) := opts -> (I1) -> (
+	gensList := first entries gens I1;
+	elementList := fieldElements(coefficientRing(ring I1));
+	i := 0;
+	flag := false; --this flag gets set if we found a point
+	local randomPt; --this is a list of values in our field
+	while (i < opts.NumPointsToCheck) do (
+		--do some checking to see if some random point is actually in the variety.
+		i = i+1;	
+	);
+	if (flag == true) then
+	(
+		return randomPoint;
+	)
+	else (
+		return null;
+	);
+);
 
 
 --this function was taken directly from an internal function in RationalPoints.m2 by Nathaniel Stapleton
