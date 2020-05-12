@@ -87,8 +87,8 @@ sagbiEngine = (Gens, maxnloops, printlevel) -> (
 	  gbJ := tgbJ#1;
 	  if printlevel > 0 then 
 	    << "    gb comp done in " << tgbJ#0 << " seconds" << endl;
-	  -- spairs = time mingens ideal selectInSubring(1, gens gbJ);
-	  spairs := submatrixByDegrees(selectInSubring(1, gens gbJ), d);
+	  spairs := time submatrixByDegrees(mingens ideal selectInSubring(1, gens gbJ), d);
+	  --spairs := submatrixByDegrees(selectInSubring(1, gens gbJ), d);
 	  if printlevel > 1 then
 	    << "spairs = " << transpose spairs << endl;
 	  tGmap := timing Gmap(spairs);
