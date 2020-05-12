@@ -498,6 +498,39 @@ doc ///
 	(isWellDefined, ToricMap)
 ///
 
+doc ///
+    Key
+        (source, ToricMap)
+    Headline
+        gets the source of the map
+    Usage
+    	X = source f
+    Inputs
+    	f : ToricMap
+    Outputs
+    	X : NormalToricVariety
+    	    that is the source of the map f
+    Description
+        Text
+            Let $X$ and $Y$ be normal toric varieties whose underlying tices
+	    are $N_X$ and $N_Y$ respectively.  A toric map is a morphism $f :
+	    X \to Y$ that induces a morphism of algebraic groups $g : T_X \to
+	    T_Y$ such that $f$ is $T_X$-equivariant with respect to the
+	    $T_X$-action on $Y$ induced by $g$. This method returns $X$.	    
+       	Text
+	    This example illustrates that the projection from the Hirzebruch
+	    surface H2 to P^1 is proper.	    
+    	Example  
+	   H2 = hirzebruchSurface 2
+           PP1 = toricProjectiveSpace 1
+           f = map(PP1,H2,matrix{{1,0}})
+     	   source f
+	   assert(source f === H2)       	   
+    SeeAlso
+        NormalToricVariety
+	(isWellDefined, ToricMap)
+///
+
 undocumented { (net,ToricMap) }
 
 doc ///

@@ -29,6 +29,7 @@ export {
     "LinearCode",
     "linearCode",
     "AmbientModule",
+    "BaseField",
     "Generators",
     "Code",
     -- Methods
@@ -37,7 +38,9 @@ export {
     "codeDim",
     "codeLength",
     "ambientSpace",
-    "informationRate"
+    "informationRate",
+    "dualCode",
+    "alphabet"
     }
 exportMutable {}
 
@@ -74,35 +77,104 @@ secondFunction(ZZ,List) := o -> (m,n) -> (
 -- constructors for error correcting codes
  
 LinearCode = new Type of HashTable
+
 linearCode = method(Options => {})
 
-
-linearCode(Ring,ZZ,List) := LinearCode => opts -> (R,n,L) -> (
-    -- sample (possible) constructor for a linear code
-    -- input: ring, ambient dimension, list of generating codewords
-    -- outputs: module given by span of elements in L
+linearCode(Module,List) := LinearCode => opts -> (S,L) -> (
+    -- constructor for a linear code
+    -- input: ambient vector space/module S, list of generating codewords
+    -- outputs: code defined by submodule given by span of elements in L
     
-    -- ambient module R^n:
-    S := R^n;
+    if not isField(S.ring) then print "Warning: Codes over non-fields unstable.";
     
-    
+    -- note: check that codewords can be coerced into the ambient module and
+    -- have the correct dimensions:
+    try {
+	newL := apply(L, codeword -> apply(codeword, entry -> sub(entry,S.ring)));
+	    } else {
+	error "Elements in L do not live in base field of S.";
+	    };
+     
     new LinearCode from {
 	symbol AmbientModule => S,
-	symbol Generators => apply(L, v-> vector(v)),
-	symbol Code => image transpose matrix apply(L, v-> vector(v))
+	symbol BaseField => S.ring,
+	symbol Generators => newL,
+	symbol Code => image matrix apply(newL, v-> vector(v)),
+	symbol cache => {}
 	}
+    
+    )
+
+linearCode(GaloisField,ZZ,List) := LinearCode => opts -> (F,n,L) -> (
+    -- input: field, ambient dimension, list of generating codewords
+    -- outputs: code defined by module given by span of elements in L
+    
+    -- ambient module F^n:
+    S := F^n;
+    
+    --verify all tuples in generating set L have same length:
+    if not all(L, codeword -> #codeword == #L_0) then error "Codewords not of same length.";
+     
+    new LinearCode from {
+	symbol AmbientModule => S,
+	symbol BaseField => F,
+	 -- need to coerce generators into *this* GF(p,q):
+	symbol Generators => apply(L, codeword -> apply(codeword, entry -> sub(entry,F))),
+	symbol Code => image matrix apply(L, v-> vector(v)),
+	symbol cache => {}
+	}
+    
+    )
+
+linearCode(GaloisField,List) := LinearCode => opts -> (F,L) -> (
+    -- input: field, list of generating codewords
+    -- outputs: code defined by module given by span of elements in L
+    
+    -- calculate length of code via elements of L:
+    n := # L_0;
+        
+    linearCode(F,n,L)
     
     )
 
 linearCode(ZZ,ZZ,ZZ,List) := LinearCode => opts -> (p,q,n,L) -> (
     -- Constructor for codes over Galois fields
     -- input: prime p, exponent q, dimension n, list of generating codewords L
-    -- output module given by span of elements in L
+    -- output: code defined by module given by span of elements in L
     
     -- Galois Field:
     R := GF(p,q);
     
     linearCode(R,n,L)
+    
+    )
+
+
+linearCode(Module,Module) := LinearCode => opts -> (S,V) -> (
+    -- constructor for a linear code
+    -- input: ambient vector space/module S, submodule V of S
+    -- outputs: code defined by submodule V
+    
+    if not isField(S.ring) then print "Warning: Codes over non-fields unstable.";
+  
+    -- note: need to add checks that the codewords live in the ambient module
+     
+    new LinearCode from {
+	symbol AmbientModule => S,
+	symbol BaseField => S.ring,
+	symbol Generators => V.gens,
+	symbol Code => V,
+	symbol cache => {}
+	}
+    
+    )
+
+linearCode(Module) := LinearCode => opts -> V -> (
+    -- constructor for a linear code
+    -- input: some submodule V of S
+    -- outputs: code defined by submodule V
+    
+    linearCode(ambient V, V)
     
     )
 
@@ -164,16 +236,57 @@ informationRate = method(TypicalValue => Number)
 informationRate LinearCode := Number => C -> (
     return (dim C)/(length C);
     )
+dualCode = method()
+dualCode(LinearCode) := LinearCode => C -> (
+    -- creates dual code to code C
+    -- defn: the dual C^ is the code given by all c'
+    -- such that c'.c == 0 for all c in C.
+    linearCode(dual cokernel gens C.Code)
+    )
+
+alphabet = method()
+alphabet(LinearCode) := List => C -> (
+    -- "a" is the multiplicative generator of the
+    -- field that code C is over
+    a := C.BaseField.generators_0;
+    
+    -- take 0, and compute non-zero elements of C.BaseField:
+    alphaB := {sub(0,C.BaseField)} | apply(toList(1..(C.BaseField.order-1)), i-> a^i);
+    
+    -- return this alphabet:
+    alphaB    
+    
+    )
 
 beginDocumentation()
 document { 
 	Key => CodingTheory,
 	Headline => "a package for coding theory in M2",
-	EM "CodingTheory", " is a package to provide both
+	PARA {
+	    EM "CodingTheory", " is a package to provide both
 	basic coding theory objects and routines, and methods
 	for computing invariants of codes using commutative 
 	algebra techniques.."
+	},
+        
+	PARA { "This package currently provides constructors for
+	linear codes, evaluation codes, and a few methods for each."
 	}
+	}
+    
+document {
+    Key => {linearCode, (linearCode,Module), (linearCode,GaloisField,List), (linearCode,Module,List)},
+    Headline => "linear code constructors",
+    Usage => "linearCode(V)\nlinearCode(F,L)\nlinearCode(F,n,L)\nlinearCode(S,V)",
+    "These constructors are provided by the package ", TO CodingTheory, ".",
+    EXAMPLE {
+	"F = GF(2,4);codeLen = 7;codeDim = 3;",
+        "L = apply(toList(1..codeDim),j-> apply(toList(1..codeLen),i-> random(F))); VerticalList(L)",
+	"C = linearCode(F,L)"
+	}
+    }
+    
+
 document {
 	Key => {firstFunction, (firstFunction,ZZ)},
 	Headline => "a silly first function",
