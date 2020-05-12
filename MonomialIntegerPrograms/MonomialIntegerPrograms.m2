@@ -26,7 +26,8 @@ export {
     "BoundGenerators",
     "FirstBetti",
     "GradedBettis",
-    "KnownDim"
+    "KnownDim",
+    "IgnorePrimes"
     }
 exportMutable {
     "ScipPrintLevel"
@@ -131,19 +132,26 @@ monomialIdealsWithHilbertFunction (List, Ring) := o -> (D, R) -> (
     )
 
 topMinimalPrimesIP = method(
-    Options => {KnownDim => -1}
+    Options => {KnownDim => -1, IgnorePrimes => {}}
     );
 topMinimalPrimesIP (MonomialIdeal) := o -> I -> (
     if I == monomialIdeal(1_(ring I)) then return I;
     R := null;
     squarefree := isSquareFree I;
+    ignorePrimes := o.IgnorePrimes;
     if not squarefree then (
       R = ring I;
       I = polarize I;
+      polarizedRing := ring I;
+      ignorePrimes = apply(ignorePrimes, p ->(
+        sub(polarize monomialIdeal p, polarizedRing)
+      ));
     );
-    k := if o.KnownDim >= 0 then o.KnownDim else dimensionIP(I);
+    ignorecontraints := ignorePrimesConstraints(ignorePrimes);
+    
+    k := if o.KnownDim >= 0 then o.KnownDim else dimensionIPWithConstraints(I, ignorecontraints);
     (dir, zimplFile, solFile, errorFile, detailsFile) := tempDirectoryAndFiles("comps");
-    zimplFile << degreeIPFormulation(I, k) << close;
+    zimplFile << degreeIPFormulation(I, k) << ignorecontraints << close;
     run(concatenate("(",ScipPath,
 	    " -c 'set emphasis counter'",
 	    " -c 'set constraints countsols collect TRUE'",
@@ -311,6 +319,45 @@ tempDirectoryAndFiles (String) := (bname) -> (
     (dir, dir|"/"|bname|".zpl", dir|"/"|bname|".sol", dir|"/"|bname|".errors", dir|"/"|bname|".details")
 )
 
+
+ignorePrimesConstraints = method();
+ignorePrimesConstraints (List) := (L) -> (
+  concatenate(apply(#L, i -> (
+    Ai := index \ first entries mingens(L#i);
+    concatenate{
+      "\nsubto ignore",
+      toString(i),
+      ": ",
+      demark("+",apply(Ai, e -> "X["|toString(e)|"]")),
+      " <= ",
+      toString(#Ai - 1),
+      ";"
+    }
+  )))
+)
+
+
+codimensionIPWithConstraints = method();
+codimensionIPWithConstraints (MonomialIdeal, String) := (I, constraints) -> (
+    (dir, zimplFile, solFile, errorFile, detailsFile) := tempDirectoryAndFiles("codim");
+    zimplFile << codimensionIPFormulation(I) << constraints << close;
+    run(concatenate("(",ScipPath, 
+	    " -c 'read ", zimplFile,
+	    "' -c 'optimize'",
+	    " -c 'display solution ",
+	    "' -c quit;) 1>",
+	    solFile,
+	    " 2>",
+	    errorFile));
+    printStatement({zimplFile, solFile, errorFile, "Codim", dir});
+    readScipSolution(solFile)
+    )
+
+dimensionIPWithConstraints = method();
+dimensionIPWithConstraints (MonomialIdeal, String) := (I, constraints) -> (
+    n := numgens ring I;
+    n - codimensionIPWithConstraints(I, constraints)
+    )
 
 
 
