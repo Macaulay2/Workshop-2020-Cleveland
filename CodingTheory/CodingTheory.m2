@@ -5,7 +5,8 @@ newPackage(
     	Date => "May 11, 2020",
     	Authors => {
 	     {Name => "Hiram Lopez", Email => "h.lopezvaldez@csuohio.edu"},
-	     {Name => "Gwyn Whieldon", Email => "gwyn.whieldon@gmail.com"}
+	     {Name => "Gwyn Whieldon", Email => "gwyn.whieldon@gmail.com"},
+	     {Name => "Taylor Ball", Email => "trball13@gmail.com"}
 	     },
     	HomePage => "https://academic.csuohio.edu/h_lopez/",
     	Headline => "a package for coding theory in M2",
@@ -32,6 +33,12 @@ export {
     "Generators",
     "Code",
     -- Methods
+    "field",
+    "vectorSpace",
+    "codeDim",
+    "codeLength",
+    "ambientSpace",
+    "informationRate",
     "dualCode",
     "alphabet"
     }
@@ -187,6 +194,50 @@ toString LinearCode := c -> toString c.Generators
 -- writing methods to convert between 
 -- different Types of codes
 
+ 
+--input: A linear code C
+--output: The field C is a code over
+--description: Given a linear code, the function returns the field C is a code over
+field = method(TypicalValue => Ring)
+field LinearCode := Ring => C -> (
+    return ring(C.AmbientModule);
+    )
+
+--input: A linear code C
+--output: The vector space spanned by the generators of C
+vectorSpace = method(TypicalValue => Module)
+vectorSpace LinearCode := Module => C -> (
+    return C.Code;
+    )
+
+--input: A linear code C
+--output: The ambient vector space the code is a subspace of
+ambientSpace = method(TypicalValue => Module)
+ambientSpace LinearCode := Module => C -> (
+    return C.AmbientModule
+    )
+
+--input: A linear code C
+--output: The vector space dimension of the ambient vector space 
+--C is a subspace of
+length LinearCode := Number => C -> (
+    return rank(C.AmbientModule);
+    )
+
+--input: A linear code C
+--output: The vector space dimension of the subspace given by the
+--span of the generators of C
+dim LinearCode := Number => C -> (
+    return length C.Generators;
+    )
+
+--input: A linear code C
+--output: The ratio (dim C)/(length C)
+informationRate = method(TypicalValue => Number)
+informationRate LinearCode := Number => C -> (
+    return (dim C)/(length C);
+    )
+
 dualCode = method()
 dualCode(LinearCode) := LinearCode => C -> (
     -- creates dual code to code C
@@ -208,7 +259,7 @@ alphabet(LinearCode) := List => C -> (
     alphaB    
     
     )
- 
+
 
 beginDocumentation()
 document { 
