@@ -1,27 +1,28 @@
 -- -*- coding: utf-8 -*-
 newPackage(
 	"SwitchingFields",
-    	Version => "1.0", 
-    	Date => "April 28, 2005",
+    	Version => "0.1", 
+    	Date => "May 11, 2020",
     	Authors => {
-	     {Name => "Jane Doe", Email => "doe@math.uiuc.edu"}
+	     {Name => "Zhan Jiang", Email => "zoeng@umich.edu"}
 	     },
-    	HomePage => "http://www.math.uiuc.edu/~doe/",
+    	HomePage => "http://www-personal.umich.edu/~zoeng/",
     	Headline => "an example Macaulay2 package",
 	AuxiliaryFiles => false -- set to true if package comes with auxiliary files
     	)
 
 -- Any symbols or functions that the user is to have access to
 -- must be placed in one of the following two lists
-export {"firstFunction", "secondFunction", "MyOption"}
+export {"fieldExtension", "secondFunction", "MyOption"}
 exportMutable {}
 
-firstFunction = method(TypicalValue => String)
-firstFunction ZZ := String => n -> (
-	if n == 1
-	then "Hello, World!"
-	else "D'oh!"	
-	)
+fieldExtension = method(Options => {})
+fieldExtension(Ring, Ring, List) := o -> (S1, R1, l1) -> (
+    K1 := coefficientRing R1;
+    L1 := coefficientRing S1;
+    f1 := map(L1, K1);
+    return map(S1, R1, append(l1, f1(K1_0)))
+)
    
 -- A function with an optional argument
 secondFunction = method(
@@ -46,22 +47,30 @@ document {
 	EM "SwitchingFields", " is an example package which can
 	be used as a template for user packages."
 	}
+
 document {
-	Key => {firstFunction, (firstFunction,ZZ)},
-	Headline => "a silly first function",
-	Usage => "firstFunction n",
+	Key => fieldExtension,
+	Headline => "prototype",
+	"This function is provided by the package ", TO SwitchingFields, "."
+	}
+document {
+	Key => (fieldExtension, Ring, Ring, List),
+	Headline => "prototype2",
+	Usage => "fieldExtension(S, R, l)",
 	Inputs => {
-		"n" => ZZ => {}
-		},
+	     "S" => {"Ring"},
+	     "R" => {"Ring"},
+	     "l" => {"List"}
+	     },
 	Outputs => {
-		String => {}
-		},
-	"This function is provided by the package ", TO SwitchingFields, ".",
+	     {"Ring Map"}
+	},
 	EXAMPLE {
-		"firstFunction 1",
-		"firstFunction 0"
+	    "fieldExtension(GF(64)[y], GF(8)[x], {y})"
 		}
 	}
+
+
 document {
 	Key => secondFunction,
 	Headline => "a silly second function",
@@ -110,7 +119,7 @@ document {
 	  }
      }
 TEST ///
-  assert(firstFunction 1 === "Hello, World!")
+f := fieldExtension(GF(64)[y], GF(8)[x], {y})
   assert(secondFunction(1,3) === 4)
   assert(secondFunction(1,3,MyOption=>5) === 9)
 ///
