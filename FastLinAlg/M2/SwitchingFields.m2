@@ -2,12 +2,12 @@
 newPackage(
 	"SwitchingFields",
     	Version => "0.1", 
-    	Date => "May 11, 2020",
+    	Date => "May 12, 2020",
     	Authors => {
 	     {Name => "Zhan Jiang", Email => "zoeng@umich.edu", HomePage => "http://www-personal.umich.edu/~zoeng/"},
 	     {Name => "Sarasij Maitra", Email => "sm3vg@virginia.edu", HomePage => "https://people.virginia.edu/~sm3vg"}
 	     },
-    	Headline => "an example Macaulay2 package",
+    	Headline => "Switch Base Fields and Obtain Natural Maps",
 	AuxiliaryFiles => false -- set to true if package comes with auxiliary files
     	)
 
@@ -77,9 +77,11 @@ switchFieldMap(Ring, Ring, List) := RingMap => opts -> (r1, r2, k1) ->(
 beginDocumentation()
 document { 
     Key => SwitchingFields,
-    Headline => "a Macaulay2 package",
-    EM "SwitchingFields", " is an example package which can
-	be used as a template for user packages."
+    Headline => "Switch Base Fields and Obtain Natural Maps",
+    EM "SwitchingFields", " is a package that helps to switch the field of 
+    coefficients of a given ring, to another given field via 
+    the ", EM "natural", " map between these fields.
+	"
 }
 
 doc ///
@@ -89,7 +91,7 @@ doc ///
     Headline
         prototype: This function is provided by the package  TO SwitchingFields.
     Usage
-        fieldBaseChange(L, K)
+        fieldExtension(L, K)
     Inputs
     	K:GaloisField
 	    a finite field
@@ -99,18 +101,18 @@ doc ///
         :RingMap
 	    the natural ring map K -> L
     Description
-        Text  
-       	    Some words to say things. You can even use LaTeX $R = k[x,y,z]$. 
+        --Text  
+       	   -- Some words to say things. You can even use LaTeX $R = k[x,y,z]$. 
 
         Example
             K = GF(8)
      	    L = GF(64)
 	    fieldExtension(K,L)
 	   
-        Text
-       	    More words, but don't forget to indent. 
+        --Text
+       	   -- More words, but don't forget to indent. 
 	   
-    SeeAlso
+   -- SeeAlso
     
     Caveat
     
@@ -133,20 +135,20 @@ doc ///
         :Sequence
 	    a ring R  otimes L K and a ring map R -> R otimes L K
     Description
-        Text  
-       	    Some words to say things. You can even use LaTeX $R = k[x,y,z]$. 
+        --Text  
+       	   -- Some words to say things. You can even use LaTeX $R = k[x,y,z]$. 
 
         Example
             R = GF(8)[x,y,z]/(x*y-z^2)
      	    K = GF(64)
 	    fieldBaseChange(R,K)
 	   
-        Text
-       	    More words, but don't forget to indent. 
+        --Text
+       	   -- More words, but don't forget to indent. 
 	   
-    SeeAlso
+    --SeeAlso
     
-    Caveat
+    --Caveat
     
 ///
 
@@ -164,13 +166,13 @@ doc ///
 	S:Ring
 	    a ring with a GaloisField Y as its coefficientRing
 	L:List
-	    a list which is used to map from S to R
+	    a list defining the map  S -> R
     Outputs
         :RingMap
-	    the natural ring map from S to R
+	    the natural ring map  S -> R
     Description
-        Text  
-       	    Some words to say things. You can even use LaTeX $R = k[x,y,z]$. 
+     -- Text  
+       --   Some words to say things. You can even use LaTeX $R = k[x,y,z]$. 
 
         Example
             R = GF(64)[x,y,z]/(x*y-z^2)
@@ -178,19 +180,22 @@ doc ///
 	    L = {x}
 	    switchFieldMap(R,S,L)
 	   
-        Text
-       	    More words, but don't forget to indent. 
+        --Text
+       	   -- More words, but don't forget to indent. 
 	   
-    SeeAlso
+    --SeeAlso
     
-    Caveat
+    --Caveat
     
 ///
 
 
-
+----- TESTS -----
 TEST ///
 (T,f) := fieldBaseChange(GF(8)[y], GF(64))
+///
+
+TEST ///
 g := switchFieldMap(GF(64)[x,y,z]/(x*y-z^2), GF(8)[a],{x})
 ///
   
