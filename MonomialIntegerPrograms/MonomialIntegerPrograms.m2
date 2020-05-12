@@ -28,6 +28,7 @@ export {
     "FirstBetti",
     "GradedBettis",
     "KnownDim",
+    "IgnorePrimes",
     "TallyTables"
     }
 exportMutable {
@@ -159,19 +160,28 @@ monomialIdealsWithHilbertFunction (List, Ring) := o -> (D, R) -> (
     )
 
 topMinimalPrimesIP = method(
-    Options => {KnownDim => -1}
+    Options => {KnownDim => -1, IgnorePrimes => {}}
     );
 topMinimalPrimesIP (MonomialIdeal) := o -> I -> (
     if I == monomialIdeal(1_(ring I)) then return I;
     R := null;
     squarefree := isSquareFree I;
+    ignorePrimes := o.IgnorePrimes;
     if not squarefree then (
       R = ring I;
       I = polarize I;
+      polarizedRing := ring I;
+      ignorePrimes = apply(ignorePrimes, p ->(
+        sub(polarize monomialIdeal p, polarizedRing)
+      ));
     );
-    k := if o.KnownDim >= 0 then o.KnownDim else dimensionIP(I);
+    ignorecontraints := ignorePrimesConstraints(ignorePrimes, squarefree);
+    print(ignorecontraints);
+    
+    k := if o.KnownDim >= 0 then o.KnownDim else dimensionIPWithConstraints(I, ignorecontraints);
+    if k === null then return {};
     (dir, zimplFile, solFile, errorFile, detailsFile) := tempDirectoryAndFiles("comps");
-    zimplFile << degreeIPFormulation(I, k) << close;
+    zimplFile << degreeIPFormulation(I, k) << ignorecontraints << close;
     run(concatenate("(",ScipPath,
 	    " -c 'set emphasis counter'",
 	    " -c 'set constraints countsols collect TRUE'",
@@ -195,8 +205,8 @@ topMinimalPrimesIP (MonomialIdeal) := o -> I -> (
 
 degreeIPFormulation = method();
 degreeIPFormulation (List, ZZ, ZZ) := (A, n, knownDim) -> (
-    concatenate(dimensionIPFormulation(A, n),"\n",
-	"subto dim: sum <i> in N: X[i] == "|toString(knownDim)|";")
+    concatenate(codimensionIPFormulation(A, n),"\n",
+	"subto dim: sum <i> in N: X[i] == "|toString(n - knownDim)|";")
     )
 degreeIPFormulation (MonomialIdeal, ZZ) := (I, knownDim) -> (
     degreeIPFormulation(monIdealToSupportSets(I), #gens ring I, knownDim)
@@ -214,20 +224,6 @@ codimensionIPFormulation (List, ZZ) := (A, n) -> (
 )
 codimensionIPFormulation (MonomialIdeal) := (I) -> (
     codimensionIPFormulation(monIdealToSupportSets I, #gens ring I)
-    )
-
-dimensionIPFormulation = method();
-dimensionIPFormulation (List, ZZ) := (A, n) -> (
-    concatenate({"set N := {0 .. ",toString(n-1),"};\n",
-        "var X[N] binary;\n","maximize obj: sum <i> in N: X[i];\n",
-        demark("\n", for i from 0 to #A-1 list(
-	concatenate({"subto constraint",toString(i),": ",
-	demark("+",apply(A#i, e -> "X["|toString(e)|"]")),
-	" <= ",toString(#(A#i)-1)|";"})))
-    })
-)
-dimensionIPFormulation (MonomialIdeal) := (I) -> (
-    dimensionIPFormulation(monIdealToSupportSets I, #gens ring I)
     )
 
 hilbertIPFormulation = method(
@@ -329,7 +325,7 @@ readAllPrimes (String, Ring) := (solFile, R) -> (
 	ln -> (
 	    l := drop(separate(",",ln), 1);
 	    l = drop(l, -1);
-	    monomialIdeal for i from 0 to #l-1 list if value(l#i)==0 then mons#i else continue
+	    monomialIdeal for i from 0 to #l-1 list if value(l#i)==1 then mons#i else continue
 	    )
 	)
     )
@@ -337,7 +333,8 @@ readAllPrimes (String, Ring) := (solFile, R) -> (
 readScipSolution = method();
 readScipSolution (String) := solFile -> (
     solContents := get solFile;
-    value first select(///objective value.[[:space:]]+([[:digit:]]+)///, ///\1///, solContents)
+    allSolutions := select(///objective value.[[:space:]]+([[:digit:]]+)///, ///\1///, solContents);
+    if #allSolutions == 0 then null else value first allSolutions
 )
 
 readScipCount = method();
@@ -354,6 +351,65 @@ tempDirectoryAndFiles (String) := (bname) -> (
 )
 
 
+firstIndexOf := first@@last@@baseName;    --This is a function that takes z_{i,j,k,...} and maps it to i
+                                          --baseName: turns the variable into an IndexedVariable
+                                          --last: an IndexedVariable is a list where the last element is the index list
+                                          --first: we want to get the first index of each variable
+lastIndexOf := last@@last@@baseName;      --This function finds the lastIndex of a variable
+
+
+
+ignorePrimesConstraints = method();
+ignorePrimesConstraints (List, Boolean) := (L, squarefree) -> (
+  concatenate(apply(#L, i -> (
+    primeVars := first entries mingens(L#i);
+    sumBound := #primeVars - 1;
+    
+    if not squarefree then (
+      polarizedVariables := (ring(L#i))_*;
+      varindices := firstIndexOf \ primeVars;
+      primeVars = select(polarizedVariables, v->member(firstIndexOf v, varindices));
+    );
+    
+    concatenate(
+      "\n",
+      "subto ignore",
+      toString(i),
+      ": ",
+      demark("+", apply(primeVars, e -> "X["|toString(index e)|"]")),
+      " <= ",
+      toString(sumBound),
+      ";"
+    )
+  )))
+)
+
+
+
+
+codimensionIPWithConstraints = method();
+codimensionIPWithConstraints (MonomialIdeal, String) := (I, constraints) -> (
+    (dir, zimplFile, solFile, errorFile, detailsFile) := tempDirectoryAndFiles("codim");
+    zimplFile << codimensionIPFormulation(I) << constraints << close;
+    run(concatenate("(",ScipPath, 
+	    " -c 'read ", zimplFile,
+	    "' -c 'optimize'",
+	    " -c 'display solution ",
+	    "' -c quit;) 1>",
+	    solFile,
+	    " 2>",
+	    errorFile));
+    printStatement({zimplFile, solFile, errorFile, "Codim", dir});
+    readScipSolution(solFile)
+)
+
+dimensionIPWithConstraints = method();
+dimensionIPWithConstraints (MonomialIdeal, String) := (I, constraints) -> (
+    n := numgens ring I;
+    cdim := codimensionIPWithConstraints(I, constraints);
+    if cdim === null then null else (n - cdim)
+)
+
 
 
 
@@ -361,11 +417,6 @@ tempDirectoryAndFiles (String) := (bname) -> (
 -- un-polarization --
 ---------------------
 
-firstIndexOf := first@@last@@baseName;    --This is a function that takes z_{i,j,k,...} and maps it to i
-                                          --baseName: turns the variable into an IndexedVariable
-                                          --last: an IndexedVariable is a list where the last element is the index list
-                                          --first: we want to get the first index of each variable
-lastIndexOf := last@@last@@baseName;      --This function finds the lastIndex of a variable
 
 
 unPolarize = method();
