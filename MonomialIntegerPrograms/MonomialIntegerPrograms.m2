@@ -351,7 +351,7 @@ unPolarize (MonomialIdeal, Ring) := (I, R) -> (
     v -> v => R_(firstIndexOf v)            --All the substitutions look like z_{i, j} => R_i.
                                             --first@@indices would not work because z_{i,j} is not the ith variable in the ring containing I
   );
-  substitute(I, substitutions)              --Finally, we apply all these substitutions to I.
+  monomialIdeal substitute(I, substitutions)              --Finally, we apply all these substitutions to I.
 )
 
 
@@ -360,7 +360,7 @@ unPolarizeSome (List, Ring) := (L, R) -> (
   --This applies unPolarize to the ideals in L where all the last indices are 0.
   for I in L list (                                     --loop through the list
     if not all(I_*, zero@@lastIndexOf) then continue;   --If one of the last indices is zero, we skip this and go to the next ideal and add nothing.
-    unPolarize(I, R)                                    --Otherwise, we unPolarize the ideal and add it to the list
+    monomialIdeal unPolarize(I, R)                                    --Otherwise, we unPolarize the ideal and add it to the list
   )
 )
 
@@ -917,6 +917,6 @@ assert(
 end--
 
 restart
-installPackage("MonomialIntegerPrograms")
+installPackage("MonomialIntegerPrograms", MakeDocumentation => true)
 viewHelp("sample session in Monomial Integer Programs")
 needsPackage("MonomialIntegerPrograms")
