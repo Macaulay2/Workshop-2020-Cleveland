@@ -183,7 +183,17 @@ net LinearCode := c -> (
      "Code: " | net c.Code
      )
 toString LinearCode := c -> toString c.Generators
- 
+
+------------------------------------------
+------------------------------------------
+-- Binary Operations
+------------------------------------------
+------------------------------------------
+
+-- equality of linear codes
+LinearCode == LinearCode := (C,D) -> ( C.Code == D.Code ) 
+
+
 ------------------------------------------
 ------------------------------------------
 -- Methods
@@ -273,6 +283,34 @@ generic = method()
 generic(LinearCode) := LinearCode => C -> (
     linearCode(C.AmbientModule)
     )
+
+
+
+------------------------------------------
+------------------------------------------
+-- Tests
+------------------------------------------
+------------------------------------------
+
+-- Equality Test
+TEST ///
+F = GF(2)
+codeLen = 10
+codeDim = 4
+L = apply(toList(1..codeDim),j-> apply(toList(1..codeLen),i-> random(F)))
+H = L|L
+C = linearCode(F,codeLen,H)
+D = linearCode(F,codeLen,L)
+assert( C == D)
+///
+
+
+
+------------------------------------------
+------------------------------------------
+-- Documentation
+------------------------------------------
+------------------------------------------
 
 
 beginDocumentation()
@@ -387,3 +425,23 @@ check CodingTheory
 -- Local Variables:
 -- compile-command: "make -C $M2BUILDDIR/Macaulay2/packages PACKAGES=CodingTheory pre-install"
 -- End:
+
+-- Branden's Tests
+restart
+
+
+restart
+uninstallPackage"CodingTheory"
+restart
+installPackage"CodingTheory"
+viewHelp"CodingTheory"
+
+restart
+needsPackage"CodingTheory"
+R = ZZ/5
+S = R^1
+L = {{1,1,1},{1,2,3}}
+C = linearCode(S,L)
+peek C
+
+-- End Branden's Tests
