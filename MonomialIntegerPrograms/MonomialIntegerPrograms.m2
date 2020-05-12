@@ -18,6 +18,7 @@ newPackage (
 -- exports --
 -------------
 export {
+    "allBettiTablesWithHilbertFunction",
     "codimensionIP",    
     "degreeIP",
     "dimensionIP",
@@ -26,7 +27,8 @@ export {
     "BoundGenerators",
     "FirstBetti",
     "GradedBettis",
-    "KnownDim"
+    "KnownDim",
+    "TallyTables"
     }
 exportMutable {
     "ScipPrintLevel"
@@ -43,6 +45,8 @@ print("Current value of ScipPrintLevel is 1.")
 -------------
 -- methods --
 -------------
+
+
 
 codimensionIP = method();
 codimensionIP (MonomialIdeal) := I -> (
@@ -95,6 +99,29 @@ degreeIP (MonomialIdeal) := o -> I -> (
     readScipCount(solFile)
     )
 
+allBettiTablesWithHilbertFunction = method(
+    Options => {
+	TallyTables => false,
+	BoundGenerators => -1,
+	FirstBetti => "",
+	GradedBettis => ""
+	}
+    );
+
+allBettiTablesWithHilbertFunction (List, Ring) := o -> (D, R) -> (
+    M := monomialIdealsWithHilbertFunction(D, R, 
+	BoundGenerators => o.BoundGenerators, 
+	FirstBetti => o.FirstBetti, 
+	GradedBettis => o.GradedBettis);
+    if o.TallyTables then(
+	tally apply(M, m -> betti res m)
+	)
+    else(
+	unique apply(M, m -> betti res m)
+	)
+    )
+    
+
 monomialIdealsWithHilbertFunction = method(
     Options => {
 	BoundGenerators => -1,
@@ -102,6 +129,7 @@ monomialIdealsWithHilbertFunction = method(
 	GradedBettis => ""
 	}
     );
+
 monomialIdealsWithHilbertFunction (List, Ring) := o -> (D, R) -> (
     if not isHF D then error(
 	"impossible values for a Hilbert function! Make sure your Hilbert function corresponds to the QUOTIENT of a homogeneous ideal"
@@ -860,6 +888,20 @@ assert(degreeIP K == degree K)
 TEST /// --hilbert
 R=QQ[x,y,z];
 assert(#monomialIdealsWithHilbertFunction({1,2,1,0},R)==9)
+assert(#monomialIdealsWithHilbertFunction({1,3,4,2,1,0},R)==156)
+R=QQ[x,y,z,w];
+assert(#monomialIdealsWithHilbertFunction({1,4,3,1,0},R)==244)
+assert(all(monomialIdealsWithHilbertFunction({1,4,10,19,31},R), I -> numgens I == 1))
+///
+
+TEST /// --bettis
+R=QQ[x,y,z];
+allBettiTablesWithHilbertFunction({1,2,1,0}, R)
+allBettiTablesWithHilbertFunction({1,2,1,0}, R, TallyTables => true)
+
+allBettiTablesWithHilbertFunction({1,2,1,0}, R)
+allBettiTablesWithHilbertFunction({1,2,1,0}, R, TallyTables => true)
+
 assert(#monomialIdealsWithHilbertFunction({1,3,4,2,1,0},R)==156)
 R=QQ[x,y,z,w];
 assert(#monomialIdealsWithHilbertFunction({1,4,3,1,0},R)==244)
