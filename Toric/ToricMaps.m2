@@ -348,26 +348,27 @@ isInterior (NormalToricVariety,List,Matrix) := Boolean => (X,sigma,rho) -> (
 
 --isSurjective is running, needs tested
 isSurjective ToricMap := Boolean => (f) -> (
-targetCones := reverse flatten drop(values orbits target f, -1);
-sourceCones := flatten drop(values orbits source f, -1);
-interiorSourceCones := {};
-for sigma in sourceCones do(
-  interiorSourceCones = append(interiorSourceCones, sum( (rays source f)_sigma));
-);
-imageSourceCones := {};
-for sigma in interiorSourceCones do (
-   imageSourceCones = append(imageSourceCones, ((matrix f) * (transpose matrix{sigma})) );
-);
---test which cones imageSourceCones land in; deleted cone if hit
-for rho in imageSourceCones do(
-    if (targetCones =={}) then return true;
-    for sigma in targetCones do(
-        if isInterior(target f, sigma, rho)
-	then (hitConeIndex := position(targetCones, i->i==sigma ); targetCones = drop(targetCones, hitConeIndex););
+    if not isDominant(f) then return false;
+    targetCones := reverse flatten drop(values orbits target f, -1);
+    sourceCones := flatten drop(values orbits source f, -1);
+    interiorSourceCones := {};
+    for sigma in sourceCones do(
+  	interiorSourceCones = append(interiorSourceCones, sum((rays source f)_sigma));
+    	);
+    imageSourceCones := {};
+    for sigma in interiorSourceCones do (
+   	imageSourceCones = append(imageSourceCones, ((matrix f) * (transpose matrix{sigma})) );
 	);
-    );
-false
-)
+--test which cones imageSourceCones land in; deleted cone if hit
+    for rho in imageSourceCones do(
+    	if (targetCones =={}) then return true;
+    	for sigma in targetCones do(
+            if isInterior(target f, sigma, rho)
+	    then (hitConeIndex := position(targetCones, i->i==sigma ); targetCones = drop(targetCones, hitConeIndex););
+	    );
+    	);
+    false
+   )
 
 
 
