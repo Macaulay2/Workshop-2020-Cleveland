@@ -14,12 +14,13 @@ integralClosure(Ideal, RingElement, ZZ) := opts -> (I,a,D) -> (
     gD := matrix inducedMap(RbarPlusD, zIdealD);
     mapback := map(S,Rbar, matrix{{numgens Rbar-numgens S:0_S}}|(vars S), DegreeMap => d -> drop(d, 1));
     M := coker mapback presentation RbarPlusD;
-    ID := I^D;
-    ID = (ideal mingens I)^D;
+--    ID := I^D;
+    ID = (trim I)^D;
     phi := map(M, module ID, mapback gD);
     assert(isHomogeneous phi);
 --    error "debug me";
-    extendIdeal(ID,a^D,phi)
+--    extendIdeal(ID,a^D,phi)
+    extendIdeal(ID,phi)    
     )
 
 findGrade2Ideal = method()
@@ -64,9 +65,9 @@ extendIdeal(Ideal, Matrix) := Ideal => (I, phi) -> (
           trim ideal psi)
 *-
 
-integralClosure(Ideal,ZZ) := (I,D) -> integralClosure(I, I_0, D)
-integralClosure(Ideal,RingElement) := (I,a) -> integralClosure(I, a, 1)
-integralClosure(Ideal) := I -> integralClosure(I, I_0, 1)
+integralClosure(Ideal,ZZ) := Ideal => o -> (I,D) -> integralClosure(I, I_0, D, o)
+integralClosure(Ideal,RingElement) := Ideal => o -> (I,a) -> integralClosure(I, a, 1, o)
+integralClosure(Ideal) := Ideal => o -> I -> integralClosure(I, I_0, 1, o)
 
     
 --basisOfDegreeD (List,Module)
@@ -81,7 +82,7 @@ basisOfDegreeD (List,Ring) := Matrix => (L,R) ->(
     PV := positions(degrees R, D->any(PL,i->D#i > 0));
     PVars := (gens R)_PV;
     PDegs := PVars/degree/(D->D_PL);
-    kk := ultimate(coefficientRing, R);
+      kk := ultimate(coefficientRing, R);
     R1 := kk(monoid[PVars,Degrees =>PDegs]);
     back := map(R,R1,PVars);
     g := back basis(L_PL, R1);
@@ -101,6 +102,35 @@ end--
 
 restart
 needs "bug-integralClosure.m2"
+TEST///
+    S = ZZ/101[a,b,c,d]
+    K =ideal(a,b)
+    I = c*d*K
+    M = module (c*K)
+    M' = module(d*K)
+    phi = map(M,module I,d*id_M)
+    phi' = map(M',module I,c*id_M')
+    assert(isWellDefined phi)
+    assert(extendIdeal(I,phi)== c*K)
+    assert(extendIdeal(I,phi')== d*K)    
+///
+TEST///
+    S = ZZ/101[a,b,c]/ideal(a^3-b*(b-c)*(b+c))
+    K =ideal(a,b)
+    I = c*(b+c)*K
+    M = module (c*K)
+    M' = module((b+c)*K)
+    phi = map(M,module I,(b+c)*id_M)
+    phi' = map(M',module I,c*id_M')
+    assert(isWellDefined phi)
+    assert(isWellDefined phi')    
+    assert(extendIdeal(I,phi)== c*K)
+    assert(extendIdeal(I,phi')== (b+c)*K)    
+    integralClosure I == I
+///
+
+
+
 
 S=ZZ/32003[a,b,c,d,e,f]
 I=ideal(a*b*d,a*c*e,b*c*f,d*e*f);
