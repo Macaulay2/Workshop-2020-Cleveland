@@ -1,23 +1,26 @@
 newPackage(
-  "Hierarchical Models",
+  "HierarchicalModels",
   Version => "0.1", 
   Date => "1",
-  Authors => {
-      {Name => "Ben Hollering",Email => "bkholler@ncsu.edu"},
-      {Name => "Aida Maraj",Email => "bkholler@ncsu.edu}
-      }
+  Authors => {{Name => "a", 
+  Email => "b", 
+  HomePage => "c"}},
   Headline => "a",
-  PackageImports => {
-      "FourTiTwo",
-      "SimplicialComplexes"
-      }
   DebuggingMode => true
-  
-  )
+)
 
 export {}
 
 -- Code here
+hierRing = method(Options => {});
+hierRing(List) :=  Ring => opts -> r -> (
+    
+    x := symbol x;
+    
+    QQ[x_(splice{#r:1})..x_r]
+    )
+
+
 
 
 
@@ -27,7 +30,7 @@ export {}
 beginDocumentation()
 
 -- template for package documentation
---  doc ///
+--  doc
 --  Key
 --    AlgebraicOptimization
 --  Headline
@@ -39,11 +42,11 @@ beginDocumentation()
 --      todo
 --  Caveat
 --  SeeAlso
---  ///
+--  
 
 
 -- template for function documentation
---  doc ///
+--  doc
 --  Key
 --    todo
 --  Headline
@@ -66,10 +69,10 @@ beginDocumentation()
 --    Pre
 --  Caveat
 --  SeeAlso
-  ///
+  
 
-  TEST ///
+ -- TEST 
   -- test code and assertions here
   -- may have as many TEST sections as needed
-  ///
+  
 
