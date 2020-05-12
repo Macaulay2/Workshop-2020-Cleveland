@@ -13,22 +13,46 @@ newPackage(
 
 -- Any symbols or functions that the user is to have access to
 -- must be placed in one of the following two lists
-export {"fieldExtension", "switchFieldMap", "MyOption"}
+export {"fieldExtension", "fieldBaseChange", "switchFieldMap", "MyOption"}
 exportMutable {}
 
-fieldExtension = method(TypicalValue => Sequence, Options => {})
-fieldExtension(Ring, GaloisField) := (Ring, RingMap) => opts -> (r1, k1) -> (
+fieldExtension = method(TypicalValue => RingMap, Options => {})
+fieldExtension(GaloisField, GaloisField) := RingMap => opts -> (l1, k1) -> (
+    if char l1 != char k1 
+    then error "fieldExtension: there is no field extension between fields of different positive characteristics";
+    
+    
+    p1 := char l1;
+    getDeg := k -> (degree (ideal ambient k)_0)#0;
+    degK := getDeg(k1);
+    degL := getDeg(l1);
+    if degL % degK != 0
+    then error "fieldExtension: there is no extension between these two fields";
+    
+    tempK := GF(p1, degK);
+    tempL := GF(p1, degL);
+    
+    tempG := map(tempK, k1, {tempK_0});
+    tempF := map(tempL, tempK);
+    tempH := map(l1, tempL, {l1_0});
+    
+    
+    return tempH * tempF * tempG
+)
+
+fieldBaseChange = method(TypicalValue => Sequence, Options => {})
+fieldBaseChange(Ring, GaloisField) := (Ring, RingMap) => opts -> (r1, k1) -> (
     if char r1 != char k1 
-    then error "There is no field extension between fields of different positive characteristics";
+    then error "fieldBaseChange: there is no field extension between fields of different positive characteristics";
     
     -- r1 = s1 / i1  = l1 [ s1.gens ] / i1
     s1 := ambient r1; 
     l1 := coefficientRing s1;
     i1 := ideal r1;
     
-    try map(k1, l1) 
-    then f1 := map(k1, l1)
-    else error "The base field of R is not a subfield of K";
+    try fieldExtension(k1, l1) 
+    then f1 := fieldExtension(k1, l1)
+    else error "fieldBaseChange: the base field of R is not a subfield of K";
     
     s2 := k1(monoid s1);
     f2 := map(s2, s1, append(s2.gens, f1(l1_0)));
@@ -42,7 +66,7 @@ fieldExtension(Ring, GaloisField) := (Ring, RingMap) => opts -> (r1, k1) -> (
 -- A function with an optional argument
 switchFieldMap = method(TypicalValue => RingMap, Options => {})
 switchFieldMap(Ring, Ring, List) := RingMap => opts -> (r1, r2, k1) ->(
-    (T1,f1) := fieldExtension(r2, coefficientRing r1);
+    (T1,f1) := fieldBaseChange(r2, coefficientRing r1);
          g1 := map(r1,T1,k1);
 	 g2 := g1*f1;
 	 return g2;
@@ -61,11 +85,45 @@ document {
 doc ///
     Key
         fieldExtension
-	(fieldExtension, Ring, GaloisField)
+	(fieldExtension, GaloisField, GaloisField)
     Headline
         prototype: This function is provided by the package  TO SwitchingFields.
     Usage
-        fieldExtension(R, K)
+        fieldBaseChange(L, K)
+    Inputs
+    	K:GaloisField
+	    a finite field
+	L:GaloisField
+	    a field extension of K
+    Outputs
+        :RingMap
+	    the natural ring map K -> L
+    Description
+        Text  
+       	    Some words to say things. You can even use LaTeX $R = k[x,y,z]$. 
+
+        Example
+            K = GF(8)
+     	    L = GF(64)
+	    fieldExtension(K,L)
+	   
+        Text
+       	    More words, but don't forget to indent. 
+	   
+    SeeAlso
+    
+    Caveat
+    
+///
+
+doc ///
+    Key
+        fieldBaseChange
+	(fieldBaseChange, Ring, GaloisField)
+    Headline
+        prototype: This function is provided by the package  TO SwitchingFields.
+    Usage
+        fieldBaseChange(R, K)
     Inputs
 	R:Ring
 	    a ring with a GaloisField L as its coefficientRing
@@ -81,7 +139,7 @@ doc ///
         Example
             R = GF(8)[x,y,z]/(x*y-z^2)
      	    K = GF(64)
-	    fieldExtension(R,K)
+	    fieldBaseChange(R,K)
 	   
         Text
        	    More words, but don't forget to indent. 
@@ -132,7 +190,7 @@ doc ///
 
 
 TEST ///
-(T,f) := fieldExtension(GF(8)[y], GF(64))
+(T,f) := fieldBaseChange(GF(8)[y], GF(64))
 g := switchFieldMap(GF(64)[x,y,z]/(x*y-z^2), GF(8)[a],{x})
 ///
   
