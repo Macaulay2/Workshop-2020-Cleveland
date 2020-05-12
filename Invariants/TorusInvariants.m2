@@ -40,5 +40,10 @@ W1 = matrix {{-3, -1, 1, 2}}
 invariants1 =  set {x_2*x_3, x_2^2*x_4, x_1*x_3*x_4, x_1*x_2*x_4^2, x_1^2*x_4^3, x_1*x_3^3}
 assert(set primaryInvariants(W1, R1) === invariants1)
 
+R2 = QQ[x_1..x_4]
+W2 = matrix{{0,1,-1,1},{1,0,-1,-1}}
+invariants2 = set {x_1*x_2*x_3,x_1^2*x_3*x_4}
+assert(set primaryInvariants(W2,R2) === invariants2)
+
 
 ///
