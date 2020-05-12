@@ -80,14 +80,19 @@ linearCode(Module,List) := LinearCode => opts -> (S,L) -> (
     
     if not isField(S.ring) then print "Warning: Codes over non-fields unstable.";
     
-    
-    -- note: need to add checks that the codewords live in the ambient module
+    -- note: check that codewords can be coerced into the ambient module and
+    -- have the correct dimensions:
+    try {
+	newL := apply(L, codeword -> apply(codeword, entry -> sub(entry,S.ring)));
+	    } else {
+	error "Elements in L do not live in base field of S.";
+	    };
      
     new LinearCode from {
 	symbol AmbientModule => S,
 	symbol BaseField => S.ring,
-	symbol Generators => L,
-	symbol Code => image matrix apply(L, v-> vector(v)),
+	symbol Generators => newL,
+	symbol Code => image matrix apply(newL, v-> vector(v)),
 	symbol cache => {}
 	}
     
@@ -100,7 +105,8 @@ linearCode(GaloisField,ZZ,List) := LinearCode => opts -> (F,n,L) -> (
     -- ambient module F^n:
     S := F^n;
     
-    -- note: need to add checks that the codewords live in the ambient module
+    --verify all tuples in generating set L have same length:
+    if not all(L, codeword -> #codeword == #L_0) then error "Codewords not of same length.";
      
     new LinearCode from {
 	symbol AmbientModule => S,
@@ -110,6 +116,17 @@ linearCode(GaloisField,ZZ,List) := LinearCode => opts -> (F,n,L) -> (
 	symbol Code => image matrix apply(L, v-> vector(v)),
 	symbol cache => {}
 	}
+    
+    )
+
+linearCode(GaloisField,List) := LinearCode => opts -> (F,L) -> (
+    -- input: field, list of generating codewords
+    -- outputs: code defined by module given by span of elements in L
+    
+    -- calculate length of code via elements of L:
+    n := # L_0;
+        
+    linearCode(F,n,L)
     
     )
 
@@ -197,11 +214,31 @@ beginDocumentation()
 document { 
 	Key => CodingTheory,
 	Headline => "a package for coding theory in M2",
-	EM "CodingTheory", " is a package to provide both
+	PARA {
+	    EM "CodingTheory", " is a package to provide both
 	basic coding theory objects and routines, and methods
 	for computing invariants of codes using commutative 
 	algebra techniques.."
+	},
+        
+	PARA { "This package currently provides constructors for
+	linear codes, evaluation codes, and a few methods for each."
 	}
+	}
+    
+document {
+    Key => {linearCode, (linearCode,Module), (linearCode,GaloisField,List), (linearCode,Module,List)},
+    Headline => "linear code constructors",
+    Usage => "linearCode(V)\nlinearCode(F,L)\nlinearCode(F,n,L)\nlinearCode(S,V)",
+    "These constructors are provided by the package ", TO CodingTheory, ".",
+    EXAMPLE {
+	"F = GF(2,4);codeLen = 7;codeDim = 3;",
+        "L = apply(toList(1..codeDim),j-> apply(toList(1..codeLen),i-> random(F))); VerticalList(L)",
+	"C = linearCode(F,L)"
+	}
+    }
+    
+
 document {
 	Key => {firstFunction, (firstFunction,ZZ)},
 	Headline => "a silly first function",
