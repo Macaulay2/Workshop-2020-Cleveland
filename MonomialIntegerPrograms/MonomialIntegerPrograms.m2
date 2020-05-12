@@ -27,7 +27,8 @@ export {
     "FirstBetti",
     "GradedBettis",
     "KnownDim",
-    "IgnorePrimes"
+    "IgnorePrimes",
+    "minimalPrimesIP"
     }
 exportMutable {
     "ScipPrintLevel"
@@ -148,7 +149,6 @@ topMinimalPrimesIP (MonomialIdeal) := o -> I -> (
       ));
     );
     ignorecontraints := ignorePrimesConstraints(ignorePrimes, squarefree);
-    print(ignorecontraints);
     
     k := if o.KnownDim >= 0 then o.KnownDim else dimensionIPWithConstraints(I, ignorecontraints);
     if k === null then return {};
@@ -170,6 +170,21 @@ topMinimalPrimesIP (MonomialIdeal) := o -> I -> (
     L := readAllPrimes(solFile, ring I);
     if squarefree then L else unPolarizeSome(L, R)
 )
+
+minimalPrimesIP = method();
+minimalPrimesIP (MonomialIdeal, ZZ) := (I, iterations) -> (
+  collectedPrimes := {};
+  i := 0;
+  while i < iterations or iterations < 0 do (
+    newPrimes := topMinimalPrimesIP(I, IgnorePrimes => collectedPrimes);
+    if #newPrimes === 0 then break;
+    collectedPrimes = collectedPrimes | newPrimes;
+    i = i + 1;
+  );
+  collectedPrimes
+)
+minimalPrimesIP (MonomialIdeal) := I -> minimalPrimesIP(I, -1);
+
 
 ----------------------
 -- internal methods --
