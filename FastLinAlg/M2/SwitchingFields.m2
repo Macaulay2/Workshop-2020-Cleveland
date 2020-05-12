@@ -4,16 +4,16 @@ newPackage(
     	Version => "0.1", 
     	Date => "May 11, 2020",
     	Authors => {
-	     {Name => "Zhan Jiang", Email => "zoeng@umich.edu"}
+	     {Name => "Zhan Jiang", Email => "zoeng@umich.edu", HomePage => "http://www-personal.umich.edu/~zoeng/"},
+	     {Name => "Sarasij Maitra", Email => "sm3vg@virginia.edu", HomePage => "https://people.virginia.edu/~sm3vg"}
 	     },
-    	HomePage => "http://www-personal.umich.edu/~zoeng/",
     	Headline => "an example Macaulay2 package",
 	AuxiliaryFiles => false -- set to true if package comes with auxiliary files
     	)
 
 -- Any symbols or functions that the user is to have access to
 -- must be placed in one of the following two lists
-export {"fieldExtension", "secondFunction", "MyOption"}
+export {"fieldExtension", "switchFieldMap", "MyOption"}
 exportMutable {}
 
 fieldExtension = method(TypicalValue => Sequence, Options => {})
@@ -40,20 +40,15 @@ fieldExtension(Ring, GaloisField) := (Ring, RingMap) => opts -> (r1, k1) -> (
 
    
 -- A function with an optional argument
-secondFunction = method(
-     TypicalValue => ZZ,
-     Options => {MyOption => 0}
-     )
-secondFunction(ZZ,ZZ) := o -> (m,n) -> (
-     if not instance(o.MyOption,ZZ)
-     then error "The optional MyOption argument must be an integer";
-     m + n + o.MyOption
-     )
-secondFunction(ZZ,List) := o -> (m,n) -> (
-     if not instance(o.MyOption,ZZ)
-     then error "The optional MyOption argument must be an integer";
-     m + #n + o.MyOption
-     )
+switchFieldMap = method(TypicalValue => RingMap, Options => {})
+switchFieldMap(Ring, Ring, List) := RingMap => opts -> (r1, r2, k1) ->(
+    (T1,f1) := fieldExtension(r2, coefficientRing r1);
+         g1 := map(r1,T1,k1);
+	 g2 := g1*f1;
+	 return g2;
+	 )
+    
+
 
 beginDocumentation()
 document { 
@@ -97,8 +92,48 @@ doc ///
     
 ///
 
+doc ///
+    Key
+        switchFieldMap
+	(switchFieldMap, Ring, Ring, List)
+    Headline
+        prototype: This function is provided by the package  TO SwitchingFields.
+    Usage
+        switchFieldMap(R, S, L)
+    Inputs
+	R:Ring
+	    a ring with a GaloisField X as its coefficientRing
+	S:Ring
+	    a ring with a GaloisField Y as its coefficientRing
+	L:List
+	    a list which is used to map from S to R
+    Outputs
+        :RingMap
+	    the natural ring map from S to R
+    Description
+        Text  
+       	    Some words to say things. You can even use LaTeX $R = k[x,y,z]$. 
+
+        Example
+            R = GF(64)[x,y,z]/(x*y-z^2)
+     	    S = GF(8)[a]
+	    L = {x}
+	    switchFieldMap(R,S,L)
+	   
+        Text
+       	    More words, but don't forget to indent. 
+	   
+    SeeAlso
+    
+    Caveat
+    
+///
+
+
+
 TEST ///
-f := fieldExtension(GF(64)[y], GF(8)[x], {y})
+(T,f) := fieldExtension(GF(8)[y], GF(64))
+g := switchFieldMap(GF(64)[x,y,z]/(x*y-z^2), GF(8)[a],{x})
 ///
   
        
