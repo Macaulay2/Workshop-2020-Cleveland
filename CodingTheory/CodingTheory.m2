@@ -85,7 +85,7 @@ linearCode(Module,List) := LinearCode => opts -> (S,L) -> (
 	symbol AmbientModule => S,
 	symbol BaseField => S.ring,
 	symbol Generators => L,
-	symbol Code => image transpose matrix apply(L, v-> vector(v)),
+	symbol Code => image matrix apply(L, v-> vector(v)),
 	symbol cache => {}
 	}
     
@@ -105,7 +105,7 @@ linearCode(GaloisField,ZZ,List) := LinearCode => opts -> (F,n,L) -> (
 	symbol BaseField => F,
 	 -- need to coerce generators into *this* GF(p,q):
 	symbol Generators => apply(L, codeword -> apply(codeword, entry -> sub(entry,F))),
-	symbol Code => image transpose matrix apply(L, v-> vector(v)),
+	symbol Code => image matrix apply(L, v-> vector(v)),
 	symbol cache => {}
 	}
     
