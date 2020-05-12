@@ -29,8 +29,14 @@ export {
     "linearCode",
     "AmbientModule",
     "Generators",
-    "Code"
+    "Code",
     -- Methods
+    "field",
+    "vectorSpace",
+    "codeDim",
+    "codeLength",
+    "ambientSpace",
+    "informationRate"
     }
 exportMutable {}
 
@@ -114,7 +120,49 @@ toString LinearCode := c -> toString c.Generators
 -- act on codes. Should use this section for
 -- writing methods to convert between 
 -- different Types of codes
- 
+
+--input: A linear code C
+--output: The field C is a code over
+--description: Given a linear code, the function returns the field C is a code over
+field = method(TypicalValue => Ring)
+field LinearCode := Ring => C -> (
+    return ring(C.AmbientModule);
+    )
+
+--input: A linear code C
+--output: The vector space spanned by the generators of C
+vectorSpace = method(TypicalValue => Module)
+vectorSpace LinearCode := Module => C -> (
+    return C.Code;
+    )
+
+--input: A linear code C
+--output: The ambient vector space the code is a subspace of
+ambientSpace = method(TypicalValue => Module)
+ambientSpace LinearCode := Module => C -> (
+    return C.AmbientModule
+    )
+
+--input: A linear code C
+--output: The vector space dimension of the ambient vector space 
+--C is a subspace of
+length LinearCode := Number => C -> (
+    return rank(C.AmbientModule);
+    )
+
+--input: A linear code C
+--output: The vector space dimension of the subspace given by the
+--span of the generators of C
+dim LinearCode := Number => C -> (
+    return length C.Generators;
+    )
+
+--input: A linear code C
+--output: The ratio (dim C)/(length C)
+informationRate = method(TypicalValue => Number)
+informationRate LinearCode := Number => C -> (
+    return (dim C)/(length C);
+    )
 
 beginDocumentation()
 document { 
