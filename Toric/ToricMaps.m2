@@ -229,8 +229,9 @@ isProper ToricMap := Boolean => f -> (
     rayMatrixX := transpose matrix rays X;
     rayMatrixY := transpose matrix rays Y;
     A := matrix f;
-    --based on the idea that the map should be proper if and only if all torus invariant curves in X are                              
-    --PP^1 or are contained in the torus invariant curves of Y.
+    --based on the idea that the map should be proper if and only if
+    --all torus invariant curves in X are PP^1 or are contained in the
+    --torus invariant curves of Y.
     for tau in max Y do (
 	--dimension of tau cap image A and computing potential cones over tau
 	d := dim Y - rank (gens ker transpose A | gens ker transpose rayMatrixY_tau);
@@ -774,6 +775,7 @@ doc ///
         (isComplete, NormalToricVariety)
 /// 
 
+undocumented {(isProper, ToricMap, ZZ)}
 
 doc ///
     Key
