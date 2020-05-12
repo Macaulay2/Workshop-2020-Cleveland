@@ -151,6 +151,7 @@ topMinimalPrimesIP (MonomialIdeal) := o -> I -> (
     print(ignorecontraints);
     
     k := if o.KnownDim >= 0 then o.KnownDim else dimensionIPWithConstraints(I, ignorecontraints);
+    if k === null then return {};
     (dir, zimplFile, solFile, errorFile, detailsFile) := tempDirectoryAndFiles("comps");
     zimplFile << degreeIPFormulation(I, k) << ignorecontraints << close;
     run(concatenate("(",ScipPath,
@@ -304,7 +305,8 @@ readAllPrimes (String, Ring) := (solFile, R) -> (
 readScipSolution = method();
 readScipSolution (String) := solFile -> (
     solContents := get solFile;
-    value first select(///objective value.[[:space:]]+([[:digit:]]+)///, ///\1///, solContents)
+    allSolutions := select(///objective value.[[:space:]]+([[:digit:]]+)///, ///\1///, solContents);
+    if #allSolutions == 0 then null else value first allSolutions
 )
 
 readScipCount = method();
@@ -371,13 +373,14 @@ codimensionIPWithConstraints (MonomialIdeal, String) := (I, constraints) -> (
 	    errorFile));
     printStatement({zimplFile, solFile, errorFile, "Codim", dir});
     readScipSolution(solFile)
-    )
+)
 
 dimensionIPWithConstraints = method();
 dimensionIPWithConstraints (MonomialIdeal, String) := (I, constraints) -> (
     n := numgens ring I;
-    n - codimensionIPWithConstraints(I, constraints)
-    )
+    cdim := codimensionIPWithConstraints(I, constraints);
+    if cdim === null then null else (n - cdim)
+)
 
 
 
