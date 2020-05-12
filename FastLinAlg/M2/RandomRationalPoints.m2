@@ -13,8 +13,63 @@ newPackage(
 
 -- Any symbols or functions that the user is to have access to
 -- must be placed in one of the following two lists
-export {"firstFunction", "secondFunction", "MyOption"}
+export {"randomPoint", "fieldElements", "firstFunction", "secondFunction", "MyOption", "GenericProjection", "NumPointsToCheck"}
 exportMutable {}
+
+randomPoint = method(Options => {NumPointsToCheck => 10, GenericProjection => false})
+
+randomPoint(Ideal) := opts -> (I1) -> (
+	gensList := first entries gens I1;
+	elementList := fieldElements(coefficientRing(ring I1));
+	i := 0;
+	flag := false; --this flag gets set if we found a point
+	local randomPt; --this is a list of values in our field
+	while (i < opts.NumPointsToCheck) do (
+		--do some checking to see if some random point is actually in the variety.
+		i = i+1;	
+	);
+	if (flag == true) then
+	(
+		return randomPoint;
+	)
+	else (
+		return null;
+	);
+);
+
+
+--this function was taken directly from an internal function in RationalPoints.m2 by Nathaniel Stapleton
+fieldElements = (k) -> (
+     J := ideal k;
+     p := char k;
+     els := {};
+     galoisfield := class k === GaloisField;     	       
+     if galoisfield then (
+	  x := k.PrimitiveElement; --sometimes k_0 is not the primitive element ie. GF 9
+	  e := 1;
+	  b := 0;
+	  els = els|{0};
+	  while b != 1 do (
+	       b = x^e;
+	       e = e+1;
+	       els = els | {b};
+	       );
+	  );
+     if not galoisfield and char ring J != 0 then ( 
+     	  d := (degree((flatten entries gens J)_0))_0;
+     	  a := (gens k)_0;
+          coeffs := toList ((set toList (0..p-1)) ^** (d));
+     	  for i to # coeffs - 1 do (
+	       x := 0;
+	       for j to d-1 do (
+	       	    x = x+coeffs_i_j*a^j;
+	       	    );
+	       els = els | {x};
+	       );
+	  );
+     if not galoisfield and char ring J == 0 then els = toList (0..p-1);     
+     return els;
+     );
 
 firstFunction = method(TypicalValue => String)
 firstFunction ZZ := String => n -> (
