@@ -1,0 +1,14 @@
+-- fn+f8 to start
+-- fn+f4 to run
+
+restart
+installedPackages()
+uninstallPackage("SubalgebraBases")
+installedPackages()
+path = prepend("/Users/burr2/Research/M2/khov-basis/Workshop-2020-Cleveland/Khov-basis/SubalgebraBases-Michael",path)
+installPackage("SubalgebraBases")
+installedPackages()
+
+S=QQ[x,y,MonomialOrder=>Lex]
+M=matrix{{x+y,x*y,x*y^2}}
+N=subalgebraBasis(M,Limit=>5,Strategy=>Engine,PrintLevel=>0)
