@@ -13,7 +13,7 @@ newPackage(
 
 -- Any symbols or functions that the user is to have access to
 -- must be placed in one of the following two lists
-export {"fieldExtension", "fieldBaseChange", "switchFieldMap", "MyOption"}
+export {"fieldExtension", "fieldBaseChange", "switchFieldMap"}
 exportMutable {}
 
 fieldExtension = method(TypicalValue => RingMap, Options => {})
@@ -103,11 +103,12 @@ doc ///
     Description
         --Text  
        	   -- Some words to say things. You can even use LaTeX $R = k[x,y,z]$. 
-
+--
         Example
             K = GF(8)
      	    L = GF(64)
-	    fieldExtension(K,L)
+	    fieldExtension(L,K)
+	    
 	   
         --Text
        	   -- More words, but don't forget to indent. 
@@ -137,7 +138,7 @@ doc ///
     Description
         --Text  
        	   -- Some words to say things. You can even use LaTeX $R = k[x,y,z]$. 
-
+--
         Example
             R = GF(8)[x,y,z]/(x*y-z^2)
      	    K = GF(64)
@@ -173,12 +174,13 @@ doc ///
     Description
      -- Text  
        --   Some words to say things. You can even use LaTeX $R = k[x,y,z]$. 
-
+--
         Example
             R = GF(64)[x,y,z]/(x*y-z^2)
      	    S = GF(8)[a]
 	    L = {x}
 	    switchFieldMap(R,S,L)
+	    
 	   
         --Text
        	   -- More words, but don't forget to indent. 
@@ -192,11 +194,14 @@ doc ///
 
 ----- TESTS -----
 TEST ///
-(T,f) := fieldBaseChange(GF(8)[y], GF(64))
+K=GF 64;
+(T,f) = fieldBaseChange(GF(8)[y], K);
+assert(coefficientRing T === K)
 ///
 
 TEST ///
 g := switchFieldMap(GF(64)[x,y,z]/(x*y-z^2), GF(8)[a],{x})
+assert(true)
 ///
   
        
