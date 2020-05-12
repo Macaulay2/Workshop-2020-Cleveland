@@ -522,18 +522,68 @@ doc ///
 	    T_Y$ such that $f$ is $T_X$-equivariant with respect to the
 	    $T_X$-action on $Y$ induced by $g$. This method returns $X$.	    
        	Text
-	    This example illustrates that the projection from the Hirzebruch
-	    surface H2 to the projective line PP1.	    
+	    We illustrate how to access this basic feature of a toric map with
+	    the projection from the Hirzebruch surface {\tt X} to the
+	    projective line {\tt Y}.
     	Example  
-	   H2 = hirzebruchSurface 2
-           PP1 = toricProjectiveSpace 1
-           f = map(PP1,H2,matrix{{1,0}})
+	   X = hirzebruchSurface 2;
+           Y = toricProjectiveSpace 1;
+           f = map(Y, X, matrix {{1, 0}})
      	   source f
-	   assert(source f === H2)       	   
+	   assert (source f === X)   
+	Text
+	    The number of columns in the underlying matrix must equal the
+	    dimension of the source.
+	Example
+	    assert (rank source matrix f == dim source f)
     SeeAlso
-        NormalToricVariety
+        (target, ToricMap)    
 	(isWellDefined, ToricMap)
+        (matrix, ToricMap)    	
+        (map, NormalToricVariety, NormalToricVariety, Matrix)    		
 ///
+
+doc ///
+    Key
+	(target, ToricMap)
+    Headline 
+    	gets the target of the map
+    Usage
+    	Y = target f
+    Inputs
+    	f : ToricMap
+    Outputs
+    	Y : NormalToricVariety
+    	    that is the target of the map f	
+    Description	    
+        Text
+            Let $X$ and $Y$ be normal toric varieties whose underlying tices
+	    are $N_X$ and $N_Y$ respectively.  A toric map is a morphism $f :
+	    X \to Y$ that induces a morphism of algebraic groups $g : T_X \to
+	    T_Y$ such that $f$ is $T_X$-equivariant with respect to the
+	    $T_X$-action on $Y$ induced by $g$. This method returns $X$.	    
+       	Text
+	    We illustrate how to access this basic feature of a toric map with
+	    the projection from the Hirzebruch surface {\tt X} to the
+	    projective line {\tt Y}.
+    	Example  
+	   X = hirzebruchSurface 2;
+           Y = toricProjectiveSpace 1;
+           f = map(Y, X, matrix {{1, 0}})
+     	   target f
+	   assert (target f === Y)   
+	Text
+	    The number of rows in the underlying matrix must equal the
+	    dimension of the target.
+	Example
+	    assert (rank source matrix f == dim source f)
+    SeeAlso
+        (source, ToricMap)    
+	(isWellDefined, ToricMap)
+        (matrix, ToricMap)    	
+        (map, NormalToricVariety, NormalToricVariety, Matrix)    		    
+///	         
+
 
 undocumented { (net,ToricMap) }
 
@@ -610,19 +660,6 @@ doc ///
         (weightedProjectiveSpace, List)
 ///
 
-doc ///
-    Key
-	(target, ToricMap)
-    Headline
-    	target -- target of a map of normal toric varieties
-    Usage
-    	target f
-    Description
-    	Text
-    	   Gives the target of a map of toric varieties.
-    SeeAlso
-    	(source, ToricMap)
-///	         
 
     
 doc ///
@@ -789,7 +826,8 @@ doc ///
 	    Given a toric map, there is an induced map between
 	    the homogeneous coordinate rings. This function returns
 	    that map.
-	Example PP1 = toricProjectiveSpace 1
+	Example 
+	    PP1 = toricProjectiveSpace 1
 	    f = map(PP1, PP1, 1)
 	    inducedMap f
 ///
