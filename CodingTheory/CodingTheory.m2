@@ -32,6 +32,8 @@ export {
     "BaseField",
     "Generators",
     "Code",
+    -- Families of Codes
+    "cyclicCode",
     -- Methods
     "field",
     "vectorSpace",
@@ -192,8 +194,9 @@ toString LinearCode := c -> toString c.Generators
 -- Use this section to add methods that 
 -- construct families of codes
 
-cyclicCode = method(TypicalValue => String)
-cyclicCode(List) := LinearCode -> v -> (
+cyclicCode = method(TypicalValue => LinearCode)
+
+cyclicCode(List) := LinearCode => v -> (
     -- constructs a cyclic code from a 
     -- vector of elements in some field F:
     
@@ -208,21 +211,30 @@ cyclicCode(List) := LinearCode -> v -> (
 	newV := apply(v, entry -> sub(entry,baseField));
 	} else {
 	-- otherwise, throw error:
-	error "Elements of input cannot be coerced into same field."
-	}
+	error "Elements of input cannot be coerced into same field.";
+	};
     
     -- produce cyclic matrix for code:
+    ndim := # newV;
     
-    "Code in progress"
+    cyclicMat := apply(toList(0..ndim-1), i -> apply(toList(0..ndim-1),j -> newV_((j-i)%ndim)));
+    
+    linearCode(baseField,cyclicMat)
     
     )
 
-cyclicCode(GaloisField,List) := LinearCode -> (F,v) -> (
+cyclicCode(GaloisField,List) := LinearCode => (F,v) -> (
     -- use this method to coerce all entries
     -- of v into the same base field before
     -- producing cyclic code
     
-    "Code in progress"
+    -- coerce all elements of v into the desired field:
+    -- (e.g. {0,1,1,0,1} by default is a list in ZZ,
+    -- but this would convert to GF(2))
+    
+    newV := apply(v, entry -> sub(entry,F));
+    
+    cyclicCode(newV)
     
     )
 
