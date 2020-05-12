@@ -40,6 +40,7 @@ projectiveDual Ideal := Ideal => opts -> I -> (
   sub(eliminate(xVars, J), dualR)
 )
 
+
 TEST ///
 S = QQ[x_0..x_2]
 I = ideal(x_2^2-x_0^2+x_1^2)
@@ -111,3 +112,4 @@ Description
   -- may have as many TEST sections as needed
   ///
 
+  
