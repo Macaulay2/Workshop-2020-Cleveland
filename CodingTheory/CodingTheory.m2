@@ -157,8 +157,6 @@ linearCode(Module,Module) := LinearCode => opts -> (S,V) -> (
     -- outputs: code defined by submodule V
     
     if not isField(S.ring) then print "Warning: Codes over non-fields unstable.";
-  
-    -- note: need to add checks that the codewords live in the ambient module
      
     new LinearCode from {
 	symbol AmbientModule => S,
@@ -183,6 +181,51 @@ net LinearCode := c -> (
      "Code: " | net c.Code
      )
 toString LinearCode := c -> toString c.Generators
+
+
+------------------------------------------
+------------------------------------------
+-- Families of Codes
+------------------------------------------
+------------------------------------------
+
+-- Use this section to add methods that 
+-- construct families of codes
+
+cyclicCode = method(TypicalValue => String)
+cyclicCode(List) := LinearCode -> v -> (
+    -- constructs a cyclic code from a 
+    -- vector of elements in some field F:
+    
+    -- check that type of entries in vector
+    -- all live in the same field (or can be
+    -- coerced to live in the same field)
+    baseField := class v_0;
+    
+    try {
+	-- attempt to coerce all entries into
+	-- same field, if necessary:
+	newV := apply(v, entry -> sub(entry,baseField));
+	} else {
+	-- otherwise, throw error:
+	error "Elements of input cannot be coerced into same field."
+	}
+    
+    -- produce cyclic matrix for code:
+    
+    "Code in progress"
+    
+    )
+
+cyclicCode(GaloisField,List) := LinearCode -> (F,v) -> (
+    -- use this method to coerce all entries
+    -- of v into the same base field before
+    -- producing cyclic code
+    
+    "Code in progress"
+    
+    )
+
  
 ------------------------------------------
 ------------------------------------------
@@ -203,6 +246,7 @@ field = method(TypicalValue => Ring)
 field LinearCode := Ring => C -> (
     return C.BaseField
     )
+ 
 
 --input: A linear code C
 --output: The vector space spanned by the generators of C
@@ -247,7 +291,7 @@ size LinearCode := ZZ => C -> (
     )
 
 
-dualCode = method()
+dualCode = method(TypicalValue => LinearCode)
 dualCode(LinearCode) := LinearCode => C -> (
     -- creates dual code to code C
     -- defn: the dual C^ is the code given by all c'
@@ -255,7 +299,7 @@ dualCode(LinearCode) := LinearCode => C -> (
     linearCode(dual cokernel gens C.Code)
     )
 
-alphabet = method()
+alphabet = method(TypicalValue => List)
 alphabet(LinearCode) := List => C -> (
     -- "a" is the multiplicative generator of the
     -- field that code C is over
@@ -269,7 +313,7 @@ alphabet(LinearCode) := List => C -> (
     
     )
 
-generic = method()
+generic = method(TypicalValue => LinearCode)
 generic(LinearCode) := LinearCode => C -> (
     linearCode(C.AmbientModule)
     )
