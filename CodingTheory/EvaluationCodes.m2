@@ -13,16 +13,19 @@ evaluationCode(Ring,List,List) := EvaluationCode => opts -> (F,P,S) -> (
     -- We should check if all the points lives in the same F-vector space.
     -- Should we check if all the monomials lives in the same ring?
     
-    R:= ring S#0;
-    I:=intersect apply(P,i->ideal apply(numgens R-1,j->R_j-i#j));
-    S=toList apply(apply(S,i->promote(i,R/I)),j->lift(j,R))-set{0*S#0};
-    G:=transpose matrix apply(P,i->flatten entries sub(matrix(R/I,{S}),matrix(F,{i})));
+    R := ring S#0;
+
+    I := intersect apply(P,i->ideal apply(numgens R-1,j->R_j-i#j)); -- Vanishing ideal of the set of points.
+
+    S = toList apply(apply(S,i->promote(i,R/I)),j->lift(j,R))-set{0*S#0}; -- Drop the elements in S that was already in I.
+
+    G := matrix apply(P,i->flatten entries sub(matrix(R,{S}),matrix(F,{i}))); -- Evaluate the elements in S over the elements on P.
     
     new EvaluationCode from{
 	symbol AmbientSpace => F^(#P),
 	symbol Points => P,
 	symbol VanishingIdeal => I,
-	symbol MonomialSet => S,
+	symbol PolynomialSet => S,
 	symbol Code => image G
 	}
     )
@@ -33,15 +36,16 @@ evaluationCode(Ring,List,Matrix) := EvaluationCode => opts -> (F,P,M) -> (
     -- outputs: a F-module.
     
     -- We should check if all the points of P are in the same F-vector space.
-    
-    m:=numgens image M;
-    R=F[t_1..t_m];
-    S:=apply(numgens source M-1,i->vectorToMonomial(vector transpose M^{i},R));
-    I:=intersect apply(P,i->ideal apply(m-1,j->R_j-i#(j)));
-    S=toList apply(apply(S,i->promote(i,R/I)),j->lift(j,R))-set{0*S#0};
-    M=matrix apply(S,i->first exponents i);
-    G:=transpose matrix apply(P,i->flatten entries sub(matrix(R/I,{S}),matrix(F,{i})));
-    
+
+    m := numgens image M; -- number of monomials.
+
+    R := F[t_1..t_m];
+
+    I := intersect apply(P,i->ideal apply(m-1,j->R_j-i#(j))); -- Vanishing ideal of P.
+
+    G := transpose matrix apply(entries M,i->toList apply(P,j->product apply(m,k->(j#k)^(i#k))));    
+
+
     new EvaluationCode from{
 	symbol AmbientSpace => F^(#P),
 	symbol Points => P,
@@ -50,6 +54,7 @@ evaluationCode(Ring,List,Matrix) := EvaluationCode => opts -> (F,P,M) -> (
 	symbol Code => image G
 	}
     )
+
    
 ToricCode = method(Options => {})
 
@@ -69,21 +74,14 @@ ToricCode(ZZ,Matrix) := EvaluationCode => opts -> (q,M) -> (
     P:=toList ss/splice;
     R:=F[t_1..t_m];
     Polytop:=convexHull M;
-    L:=latticePolints Polytop;
-    S:=apply(length(L),i->vectorToMonomial(vector L#i,R));
-    evaluationCode(F,P,S);
-)    
+    L:=latticePoints Polytop;
+    LL:=apply(L,l->entries l);
+    G:=matrix apply(LL,i->apply(P,j->product apply(m,k->(j#k)^(i#k#0))));
+)   
     
     
        
 ------------This an example of an evaluation code----------------------------------------
-loadPackage "NormalToricVarieties"
-loadPackage "NAGtypes"
-loadPackage "Polyhedra"
-loadPackage "SRdeformations"
-loadPackage "RationalPoints"
-
-
 
 d=2
 q=2
@@ -111,41 +109,81 @@ C_d=apply(Polynum,y->apply(0..length f -1,x->(flatten entries evaluate(y,XX#x))#
    
     
 ------------------------------------------------------------------------------------------------------------------------------
-d=2
-q=4
-m=2
 
-F_4=GF(4, Variable=>z)
 
-M=matrix{{1,2,5},{4,5,6}}
-P=convexHull M
-L=latticePoints P
-R=F_4[t_1..t_2]
-vector L#1
-f=vectorToMonomial(vector L#1,R)
-numgens target M
-I=ideal apply(m,j->R_j-1)
 
-s=set apply(q-1,i->z^i)
-ss=s
-for i from 1 to m-1 do (
-    ss=set toList ss/splice**s;
+cartesianCode = method(Options => {})
+
+cartesianCode(Ring,List,List) := EvaluationCode => opts -> (F,S,M) -> (
+    --constructor for a cartesian code
+    --input: a field, a list of subsets of F and a list of polynomials.
+    --outputs: The evaluation code using the cartesian product of the elements in S and the polynomials in M.
+    
+    m := #S;
+    R := ring M#0;
+    I := ideal apply(m,i->product apply(S#i,j->R_i-j));
+    P := set S#0;
+    for i from 1 to m-1 do P=P**set S#i;
+    P = apply(toList(P/deepSplice),i->toList i);
+    Mm := toList apply(apply(M,i->promote(i,R/I)),j->lift(j,R))-set{0*M#0};
+    G := matrix apply(P,i->flatten entries sub(matrix(R,{Mm}),matrix(F,{i})));
+    
+    new EvaluationCode from{
+	symbol AmbientSpace => F^(#P),
+	symbol Sets => S,
+	symbol VanshingIdeal => I,
+	symbol PolynomialSet => Mm,
+	symbol Code => image G
+	}
     )
-P=toList ss/splice
-length(P)
-P#1
-S=apply(length(L),i->vectorToMonomial(vector L#i,R))
 
-evaluationCode F_4,PP,S
-S
-R
+cartesianCode(Ring,List,ZZ) := EvaluationCode => opts -> (F,S,d) -> (
+    -- Constructor for cartesian codes.
+    -- inputs: A field F, a set of tuples representing the subsets of F and the degree d.
+    -- outputs: the cartesian code of degree d.
+    m:=#S;
+    R:=F[t_0..t_(m-1)];
+    M:=apply(flatten entries basis(R/monomialIdeal basis(d+1,R)),i->lift(i,R));
+    
+    cartesianCode(F,S,M)
+    )
+   
+cartesianCode(Ring,List,Matrix) := EvaluationCode => opts -> (F,S,M) -> (
+    -- constructor for a monomial cartesian code.
+    -- inputs: a field, a list of sets, a matrix representing as rows the exponents of the variables
+    -- outputs: a cartesian code evaluated with monomials
+    
+    -- Should we add a second version of this function with a third argument an ideal? For the case of decreasing monomial codes.
+    
+    m := #S;
+    R := F[t_0..t_(m-1)];
+    I := ideal apply(m,i->product apply(S#i,j->R_i-j));
+    P := set S#0;
+    for i from 1 to m-1 do P=P**set S#i;
+    P = apply(toList(P/deepSplice),i->toList i);
+    G := transpose matrix apply(entries M,i->toList apply(P,j->product apply(m,k->(j#k)^(i#k))));
+    
+    new EvaluationCode from{
+	symbol AmbientSpace => F^(#P),
+	symbol VanishingIdeal => I,
+	symbol ExponentsMatrix => M,
+	symbol Code => image G
+	}
+    )
 
 
-P#1
-ToricCode(2,matrix{{1,2,5},{4,5,6}})
-M
-P
-s
-P#1
-PP=apply(length(P),i->toList P#i)
-PP#1
+RMCode = method(TypicalValue => EvaluationCode)
+    
+RMCode(ZZ,ZZ,ZZ) := CartesianCode => (q,m,d) -> (
+    -- Contructor for a generalized Reed-Muller code.
+    -- Inputs: A prime power q (the order of the finite field), m the number of variables in the defining ring  and an integer d (the degree of the code).
+    -- outputs: The cartesian code of the GRM code.
+    
+    F := GF(q);
+    S := apply(q-1, i->F_0^i)|{0*F_0};
+    S = apply(m, i->S);
+    
+    cartesianCode(F,S,d)
+    )
+
+
