@@ -1605,6 +1605,33 @@ assert(ideal f == ideal(R_1-R_2))
 assert(ideal g == ideal(R_0*R_1-R_2^2))
 ///
 
+--Tests for induced maps on divisors
+TEST ///
+X = toricProjectiveSpace 1;
+Y = hirzebruchSurface 2;
+f = map(X,Y,matrix{{1,0}});
+fCD = cartierDivisorGroup f;
+fPic = picardGroup f;
+assert(source fPic == picardGroup target f);
+assert(target fPic == picardGroup source f);
+assert(source fCD == cartierDivisorGroup target f);
+assert(target fCD == cartierDivisorGroup source f);
+assert(fPic * fromCDivToPic(X) == fromCDivToPic(Y) * fCD)
+
+TEST ///
+
+TEST ///
+X = toricProjectiveSpace 2;
+Y = hirzebruchSurface (-1);
+-- Y is a blowup of X
+E = Y_3;
+f = map(X,Y,1);
+fCD = cartierDivisorGroup f;
+assert(fCD*(vector X_0) == vector (Y_2+E))
+assert(fCD*(vector X_1) == vector (Y_0+E))
+TEST ///
+
+
 
 end---------------------------------------------------------------------------     
 
