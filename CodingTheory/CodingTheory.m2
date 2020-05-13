@@ -58,7 +58,68 @@ exportMutable {}
 -- Use this section to add basic types and
 -- constructors for error correcting codes
  
-LinearCode = new Type of HashTable
+LinearCode = new Type of MutableHashTable
+
+-- internal function to validate inputs:
+rawLinearCode = method()
+rawLinearCode(List) := LinearCode => (inputVec) -> (
+    -- use externally facing functions to create list:	
+    -- { AmbientModule, BaseField, Generators, ParityCheckRows, Code}
+    
+    -- use this function to validate inputs and provide warnings:
+    
+    -- check if "baseField" is a field, throw warning otherwise:
+    if not isField(inputVec_1) then print "Warning: Working over non-field.";
+   
+    if inputVec_2 != {} then {
+	-- check that all generating codewords are of the same length:
+	if not all(inputVec_2, codeword -> length(codeword) == length(inputVec_2)_0) then error "Codewords not of same length.";
+	
+	-- coerce generators and generator matrix into base field, if possible:
+	try {
+	    newGens := apply(inputVec_2, codeword -> apply(codeword, entry -> sub(entry, inputVec_1)));
+	    newGenMat := matrix(newGens);
+	    } else {
+	    error "Elements do not live in base field/ring.";
+	    };
+	} else {
+	-- if generators and generator matrix were undefined:
+	newGens = {};
+	newGenMat = matrix({newGens});
+	};
+    
+    if inputVec_3 != {} then {
+	-- check that all parity check rows are of the same length:
+	if not all(inputVec_3, parityrow -> length(parityrow) == length(inputVec_3)_0) then error "Parity check row not of same length.";
+	
+	-- coerce parity check rows and parity check matrix into base field, if possible:
+	try {
+	    newParRow := apply(inputVec_3, codeword -> apply(codeword, entry -> sub(entry, inputVec_1)));
+	    newParMat := matrix(newParRow);
+	    } else {
+	    error "Elements do not live in base field/ring.";
+	    };
+	} else {
+	newParRow = {};
+	newParMat = matrix({newParRow});
+	};
+    
+    -- coerce code matrix into base field:
+    codeSpace := sub(inputVec_4,inputVec_1);
+    
+    
+    return new LinearCode from {
+        symbol AmbientModule => inputVec_0,
+	symbol BaseField => inputVec_1,
+        symbol Generators => newGens,
+	symbol GeneratorMatrix => newGenMat,
+	symbol ParityCheckRows  => newParRow,
+	symbol ParityCheckMatrix =>  newParMat,
+	symbol Code => codeSpace,
+	symbol cache => {}
+	}
+    
+    )
 
 -- by default, assume that inputs are generators or generating matrices
 -- set ParityCheck => true to have inputs be rows of parity check matrix:
@@ -68,42 +129,16 @@ linearCode(Module,List) := LinearCode => opts -> (S,L) -> (
     -- constructor for a linear code
     -- input: ambient vector space/module S, list of generating codewords
     -- outputs: code defined by submodule given by span of elements in L
+
+
+    -- { AmbientModule, BaseField, Generators, GeneratorMatrix, ParityCheckRows, ParityCheckMatrix, Code }
+    if opts.ParityCheck then {
+	outputVec := {S, S.ring, {}, L, kernel matrix L};
+	} else {
+	outputVec =  {S, S.ring, L , {}, image matrix L};
+	};
     
-    if not isField(S.ring) then print "Warning: Working over non-field.";
-    
-    -- note: check that codewords can be coerced into the ambient module and
-    -- have the correct dimensions:
-    try {
-	newL := apply(L, codeword -> apply(codeword, entry -> sub(entry,S.ring)));
-	    } else {
-	error "Elements in L do not live in base field of S.";
-	    };
-	
-    if opts.ParityCheck then print "this worked";
-    
-     
-    new LinearCode from {
-	symbol AmbientModule => S,
-	symbol BaseField => S.ring,
-	-- if defining via parity check matrix:
-	if opts.ParityCheck then {
-	    symbol Generators => null, -- don't set these until user adds
-	    symbol GeneratorMatrix => null, -- don't set this until user adds
-	    symbol ParityCheckRows  => newL,
-	    symbol ParityCheckMatrix =>  matrix newL,
-	    symbol Code => kernel matrix newL,
-	    symbol cache => {}
-	    }
-	-- if defining via generators:
-	else {
-	    symbol Generators  => newL,
-	    symbol GeneratorMatrix => matrix newL,
-	    symbol ParityCheckRows => null, -- don't set until user adds
-	    symbol ParityCheckMatrix => null, -- don't set until user adds
-	    symbol Code => image matrix newL,
-	    symbol cache => {}
-	    };
-	}
+    return rawLinearCode(outputVec)
     
     )
 
@@ -114,17 +149,13 @@ linearCode(GaloisField,ZZ,List) := LinearCode => opts -> (F,n,L) -> (
     -- ambient module F^n:
     S := F^n;
     
-    --verify all tuples in generating set L have same length:
-    if not all(L, codeword -> #codeword == #L_0) then error "Codewords not of same length.";
-     
-    new LinearCode from {
-	symbol AmbientModule => S,
-	symbol BaseField => F,
-	 -- need to coerce generators into *this* GF(p,q):
-	symbol Generators => apply(L, codeword -> apply(codeword, entry -> sub(entry,F))),
-	symbol Code => image matrix apply(L, v-> vector(v)),
-	symbol cache => {}
-	}
+    if opts.ParityCheck then {
+	outputVec := {S, F, {}, L, kernel matrix L};
+	} else {
+	outputVec =  {S, F, L , {}, image matrix L};
+	};    
+    
+    return rawLinearCode(outputVec)     
     
     )
 
