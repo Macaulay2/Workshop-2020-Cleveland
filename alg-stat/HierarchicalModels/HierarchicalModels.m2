@@ -1,78 +1,115 @@
 newPackage(
-     "HierarchicalModels",
-     Version => "1.0",
-     Date => "May 12, 2020",
-     Headline => "bla",
-     Authors => {
-	  {Name => "a"},
-	  {Name => "b"}
-	  },
-     PackageImports => {
-	  "FourTiTwo",
-	  "Polyhedra",
-	  "SimplicialComplexes"
-	  },
-     )
+    "HierarchicalModels",
+  Version => "0.1", 
+  Date => "May 12, 2020",
+  Authors => {
+    {Name => "Ben Hollering", 
+    Email => "bkholler@ncsu.edu", 
+    HomePage => "https://benhollering.wordpress.ncsu.edu/"},
+    {Name => "Aida Maraj",
+    Email => "ama363@g.uky.edu",
+    HomePage => "https://sites.google.com/view/aidamaraj"}
+  },
+  Headline => "A package for Hierarchical Models",
+  DebuggingMode => true,
+  PackageImports => {
+      "FourTiTwo", 
+      "Polyhedra"
+      }
+)
 
 export{}
 
-probRing = method(Options => {})
+--Creates the ring the toric ideal lives in
+probRing = method(Options => {});
 probRing(List) :=  Ring => opts -> r -> (
     
     p := symbol p;
     
-    QQ[x_(splice{#r:1})..p_r]
-    )
-
-hierMatrix = method(Options => {})
-hierMatrix(List, List) := Matrix => opts -> (r, Facets) -> (
+    R := QQ[p_(splice{#r:1})..p_r];
     
-    
-    
-    
-    )
-
-
---the method hmodel inputs a list of states of length n, and a list of maximal faces for a simplicial complex on a ground set [n]
---it produces the parameter ring R, target ring S, toric map A, ideal IModel,the exponent vectors of gens of the ideal M, and the marginal polytope for it.
-hmodel = method()
-hmodel(List,List) := (r,Facets) -> (
-R=QQ[p_(splice{#r:0})..p_r];  
-S=QQ; 
-for i from 0 to (#Facets-1) do (S= tensor (S, QQ[y_(splice{#Facets_i:0,i})..y_(append (r_(Facets_i),i))]));
-listOfImages={};
-apply(flatten entries vars R, j->(c=toString(j);  
-    c=substring(2,#c-2,c);
-        alpha = value c;  
-    accumulateMonomial = 1;
-    for i from 0 to (#Facets-1)do (accumulateMonomial= accumulateMonomial*y_(append(alpha_(Facets_i),i)));
-    listOfImages=append (listOfImages,accumulateMonomial);));
-PSI=map(S,R,listOfImages);
-B=mutableMatrix (ZZ, numgens S, numgens R);
-for j from 0 to ( #listOfImages-1) do(
-for i from  0  to (numgens S-1) do(if gcd(S_i,listOfImages_j)!=1  then B_(i,j)=1));
-A= matrix entries B;
-margP=convexHull(A);
-M=toricMarkov(A);
-IModel=toBinomial(M,R); 
+    R
     );
 
+-- Creates the ring of parameters of a hierarchhical model
+parameterRing = method(Options => {});
+parameterRing(List, List) := Ring => opts -> (r, Facets) -> (
+    
+    parameters := {};
+    
+    S := QQ;
+    
+    y := symbol y;
+    
+    for i from 0 to (#Facets-1) do (
+	
+	S = tensor(S, QQ[y_(splice{i, #Facets_i:1})..y_(prepend(i, r_(Facets_i)))] ));
+    
+    S
+    );
 
-TEST\\\
-r={1,1}
-Facets={{0},{1}}
-hmodel(r,Facets)
-R
-S
-A
-M
-IModel
-\\\
+-- Produces the matrix that encodes the monomial map defining the toric ideal
+hierMatrix = method(Options => {});
+hierMatrix(List, List) := Matrix => opts -> (r, Facets) -> (
+    
+    R := probRing(r);
+    S := parameterRing(r, Facets);
+    
+    B := mutableMatrix (ZZ, numgens S, numgens R);
+    
+    for j from 0 to (numgens R - 1) do(
+	
+	probIndex := last baseName (gens R)_j;
+	
+	for i from  0 to (numgens S - 1) do(
+	    
+	    paramIndex := last baseName (gens S)_i;	    
+	    
+	    if probIndex_(Facets_(paramIndex_(0))) == drop(paramIndex, 1) then B_(i,j) = 1;
+	    
+	    );
+	);
+    
+    A := matrix entries B;
+    
+    A
+    );
 
---creates the simplicial complex out of Facets where n=#r is the ground set.
-makeSim = (Facets, n) -> (
-    return unique flatten for f in Facets list delete(null, for a in subsets(n) list if isSubset(a,f) then a);
+-- Computes the toric ideal of the hierarchical model defined by r and Facets using FourTiTwo
+hierToric42 = method(Options => {});
+hierToric42(List, List) := Ideal => opts -> (r, Facets) -> (
+    
+    R := probRing(r);
+    
+    I := toricMarkov(hierMatrix(r, Facets), R);
+    
+    I
     )
 
+-- Computes the dimension of the hierarchical model
+hierDim = method();
+hierDim(List,List) := (r,Facets) ->(  
+    n := #r;
+    
+    Sim:=delete({},unique flatten for f in Facets list delete(null, for a in subsets(n) list if isSubset(a,f) then a));
+    
+    dimI:=0;
+    
+    for j from 0 to #Sim-1 do(
+	
+	for i from 0 to #Sim_j-1 do(
+	    
+    	    f := 1;
+	    
+    	    f = f*r_(Sim_j_i);
+	    
+    	    dimI = dimI+f 
+	    );
+    	);
+dimI
+)
+
+
+
+
 end
-------------------------------------------------------------
