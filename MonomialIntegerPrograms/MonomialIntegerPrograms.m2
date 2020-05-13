@@ -55,6 +55,7 @@ ScipPrintLevel = if userPrintLevel == "" then(
 ---------------------
 codimensionIP = method();
 codimensionIP (MonomialIdeal) := I -> (
+    if I.cache#?codim then return I.cache#codim;
     (dir, zimplFile, solFile, errorFile, detailsFile) := tempDirectoryAndFiles("codim");
     zimplFile << codimensionIPFormulation(I) << close;
     run(concatenate("(",ScipPath, 
@@ -79,6 +80,7 @@ degreeIP = method(
     Options => {KnownDim => -1}
     );
 degreeIP (MonomialIdeal) := o -> I -> (
+  if I.cache#?degree then return I.cache#degree;
     objValue := if o.KnownDim >= 0 then o.KnownDim else dimensionIP(I);
     (dir, zimplFile, solFile, errorFile, detailsFile) := tempDirectoryAndFiles("deg");        
     if not isSquareFree I then(

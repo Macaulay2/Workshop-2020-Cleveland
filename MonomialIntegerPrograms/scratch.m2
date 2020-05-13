@@ -2,6 +2,8 @@ restart
 needsPackage("MonomialIntegerPrograms")
 viewHelp("MonomialIntegerPrograms")
 
+loadBuiltinCodimAndDegree();
+
 -- quick function for generating a random monomial ideal
 rmi := (R, j, k, l) -> monomialIdeal(apply(j, i -> product apply(take(random gens R, 1 + random k), x -> x^(1 + random l))))
 
@@ -49,4 +51,3 @@ member(M_0, Mb)
 -- enumerating Betti tables of mon. ideals with a given Hilbert function
 B = bettiTablesWithHilbertFunction({1,3,4,2,1,0}, R)
 tB = bettiTablesWithHilbertFunction({1,3,4,2,1,0}, R, Count => true)
-
