@@ -20,7 +20,7 @@ examples'names = {
     "eco8",
     "geneig",
     "heart",
-    -- "ipp",
+    "ipp",
     "katsura",
     "ku10",
     -- "lumped",
