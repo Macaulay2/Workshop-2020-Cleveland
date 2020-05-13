@@ -45,15 +45,13 @@ conormalRing Ring := ConormalRing => opts -> R -> (
 
 
 conormalVariety = method(Options => options conormalRing);
--- Computes the conormal variety with respect to the (polynomial)
--- objective function p
-conormalVariety (Ideal, RingElement, ConormalRing) := Ideal => opts -> (I,p,C) -> (
+-- Computes the conormal variety
+conormalVariety (Ideal, ConormalRing) := Ideal => opts -> (I,C) -> (
   if not ring I === C.PrimalRing then error "expected ideal in primal ring";
-  if not ring p === C.CNRing then error "expected objective function in conormal ring";
   
   c := codim I;
   jacI := sub(diff(matrix{C.PrimalCoordinates}, transpose gens I), C.CNRing);
-  jacBar := diff(sub(matrix{C.PrimalCoordinates}, C.CNRing), p) || jacI;
+  jacBar := sub(matrix{C.DualCoordinates}, C.CNRing) || jacI;
   J' := sub(I,C.CNRing) + minors(c+1, jacBar);
   J := saturate(J', minors(c, jacI));
   J
@@ -71,8 +69,7 @@ projectiveDual Ideal := Ideal => opts -> I -> (
   primalCoordinates := S.PrimalCoordinates / (i->sub(i,S.CNRing));
   dualCoordinates := S.DualCoordinates / (i->sub(i,S.CNRing));
 
-  p := apply(primalCoordinates, dualCoordinates, (p,d) -> p*d) // sum;
-  J := conormalVariety(I, p, S);
+  J := conormalVariety(I, S);
 
   sub(eliminate(primalCoordinates, J), S.DualRing)
 )
@@ -183,16 +180,15 @@ SeeAlso
 doc ///
 Key
   conormalVariety
-Headline
-  todo
+  (conormalVariety, Ideal, ConormalRing)
+--Headline
+--  todo
 Inputs
   I:Ideal
     defined in the primal variables only
-  p:RingElement
-    objective function
   S:ConormalRing
 Usage
-  conormalVariety(I,p,S)
+  conormalVariety(I,S)
 
 Caveat
   The ring containing $I$ and $p$ must have primal variables in degree $\{1,0\}$ and dual variables in degree $\{0,1\}$.
