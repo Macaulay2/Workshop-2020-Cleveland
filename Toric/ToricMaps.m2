@@ -1192,6 +1192,51 @@ doc ///
         (ToricMap)
 /// 
    
+doc ///
+    Key
+        (classGroup, ToricMap)
+    Headline 
+        makes the induce map between the corresponding class groups
+    Usage 
+        classGroup f
+    Inputs 
+        f : ToricMap
+    Outputs 
+        : Matrix 
+	    representing the map of abelian groups between the corresponding
+	    class groups
+    Description
+        Text
+	    Given a toric map $f : X \to Y$, this method returns the induced
+	    map of abelian groups from the class group of $Y$ to the class
+	    group of $X$.  In other words, the {\tt classGroup} is a
+	    contravariant functor on the category of normal toric varieties.
+	Text
+	    The example produces the induced map from the class group of the
+	    projective line to the class group of the first Hirzebruch
+	    surface.
+	Example
+	    X = hirzebruchSurface 1;
+	    Y = toricProjectiveSpace 1;
+	    f = map(Y, X, matrix {{1, 0}})
+	    f' = classGroup f
+	    assert (source f' == classGroup Y)
+	    assert (target f' == classGroup X) 
+	Text
+	    The next example gives the induced map from the class group of the
+	    projective plane to the class group of the first Hirzebruch
+	    surface.
+	Example
+	    nefGenerators X
+	    Z = toricProjectiveSpace 2;
+	    g = map(Z, X, matrix {{1, 0}, {0,-1}})
+	    assert isWellDefined g
+	    g' = classGroup f
+	    assert (source g' == classGroup Y)
+	    assert (target g' == classGroup X) 	    
+    SeeAlso
+        (classGroup, NormalToricVariety)
+/// 
 
     	
 
