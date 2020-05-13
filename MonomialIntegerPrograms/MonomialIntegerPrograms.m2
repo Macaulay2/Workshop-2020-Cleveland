@@ -22,9 +22,9 @@ export {
     "codimensionIP",    
     "degreeIP",
     "dimensionIP",
-    "minimalPrimesIP"
     "monomialIdealsWithHilbertFunction",
     "topMinimalPrimesIP",
+    "minimalPrimesIP",
     "BoundGenerators",
     "Count",
     "FirstBetti",
@@ -101,16 +101,14 @@ degreeIP (MonomialIdeal) := o -> I -> (
     readScipCount(solFile)
     )
 
-=======
 --TODO: talk about this to decide if we want to alert/prompt users of this behavior.
 codim MonomialIdeal := {  } >> opts -> m -> codimensionIP m;
 degree MonomialIdeal := degreeIP;
 
 
----------------
--- betti tables
----------------
-
+-----------------------
+-- betti tables with HF
+-----------------------
 bettiTablesWithHilbertFunction = method(
     Options => {
 	Count => false,
@@ -119,7 +117,6 @@ bettiTablesWithHilbertFunction = method(
 	GradedBettis => ""
 	}
     );
-
 bettiTablesWithHilbertFunction (List, Ring) := o -> (D, R) -> (
     M := monomialIdealsWithHilbertFunction(D, R, 
 	BoundGenerators => o.BoundGenerators, 
@@ -132,8 +129,9 @@ bettiTablesWithHilbertFunction (List, Ring) := o -> (D, R) -> (
 	unique apply(M, m -> betti res m)
 	)
     )
-    
-
+-----------------------
+-- monideals with HF
+-----------------------
 monomialIdealsWithHilbertFunction = method(
     Options => {
 	BoundGenerators => -1,
@@ -141,7 +139,6 @@ monomialIdealsWithHilbertFunction = method(
 	GradedBettis => ""
 	}
     );
-
 monomialIdealsWithHilbertFunction (List, Ring) := o -> (D, R) -> (
     if not isHF D then error(
 	"impossible values for a Hilbert function! Make sure your Hilbert function corresponds to the QUOTIENT of a homogeneous ideal"
