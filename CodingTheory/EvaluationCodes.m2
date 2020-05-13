@@ -1,4 +1,5 @@
 needsPackage "SRdeformations"
+needsPackage "Polyhedra"
 
 EvaluationCode = new Type of HashTable
 
@@ -35,7 +36,7 @@ evaluationCode(Ring,List,Matrix) := EvaluationCode => opts -> (F,P,M) -> (
     -- outputs: a F-module.
     
     -- We should check if all the points of P are in the same F-vector space.
-    
+
     m := numgens image M; -- number of monomials.
 
     R := F[t_1..t_m];
@@ -55,9 +56,33 @@ evaluationCode(Ring,List,Matrix) := EvaluationCode => opts -> (F,P,M) -> (
     )
 
    
+ToricCode = method(Options => {})
+
+ToricCode(ZZ,Matrix) := EvaluationCode => opts -> (q,M) -> (
+    -- Constructor for a toric code.
+    -- inputs: size of a field, an integer matrix 
+    -- outputs: the evaluation code defined by evaluating all monomials corresponding to integer 
+    ---         points in the convex hull of the columns of M at the points of the algebraic torus (F*)^n
+    
+    F:=GF(q, Variable=>z);
+    s:=set apply(q-1,i->z^i);
+    m:=numgens target M;
+    ss:=s;
+    for i from 1 to m-1 do (
+    	ss=set toList ss/splice**s;
+    );
+    P:=toList ss/splice;
+    R:=F[t_1..t_m];
+    Polytop:=convexHull M;
+    L:=latticePoints Polytop;
+    LL:=apply(L,l->entries l);
+    G:=matrix apply(LL,i->apply(P,j->product apply(m,k->(j#k)^(i#k#0))));
+)   
+    
+    
+       
 ------------This an example of an evaluation code----------------------------------------
-needsPackage "NormalToricVarieties"
-needsPackage "NAGtypes"
+
 d=2
 q=2
 S=3
@@ -84,9 +109,6 @@ C_d=apply(Polynum,y->apply(0..length f -1,x->(flatten entries evaluate(y,XX#x))#
    
     
 ------------------------------------------------------------------------------------------------------------------------------
-
-
-
 
 
 
