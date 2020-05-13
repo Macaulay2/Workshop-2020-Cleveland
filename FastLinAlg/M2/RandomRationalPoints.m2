@@ -16,27 +16,6 @@ newPackage(
 export {"randomPoint", "fieldElements", "firstFunction", "secondFunction", "MyOption", "GenericProjection", "NumPointsToCheck"}
 exportMutable {}
 
-randomPoint = method(Options => {NumPointsToCheck => 10, GenericProjection => false})
-
-randomPoint(Ideal) := opts -> (I1) -> (
-	gensList := first entries gens I1;
-	elementList := fieldElements(coefficientRing(ring I1));
-	i := 0;
-	flag := false; --this flag gets set if we found a point
-	local randomPt; --this is a list of values in our field
-	while (i < opts.NumPointsToCheck) do (
-		--do some checking to see if some random point is actually in the variety.
-		i = i+1;	
-	);
-	if (flag == true) then
-	(
-		return randomPoint;
-	)
-	else (
-		return null;
-	);
-);
-
 
 --this function was taken directly from an internal function in RationalPoints.m2 by Nathaniel Stapleton
 fieldElements = (k) -> (
@@ -79,11 +58,11 @@ firstFunction ZZ := String => n -> (
 	)
     
   --Function to create a random point 
-   createRandomPoints=(I1)->(
+createRandomPoints=(I1)->(
     noVar := #generators ring I1;
     K:=coefficientRing ring (I1);
-   return toList apply(noVar, i ->random(K) )
-   ) 
+    return toList apply(noVar, i ->random(K) )
+) 
 
 randomRatPt = I -> (
 	R:=ring I;
@@ -120,9 +99,9 @@ randomRatPt = I -> (
 
 
 --Function to check if random point is in the variety
-evaluate= method( Options=>{});
+randomPoint = method( Options=>{});
 
-evaluate(Ideal) :=opts->(I1)->(
+randomPoint(Ideal) :=opts->(I1)->(
 	genList:= first entries gens I1;
 	K:=coefficientRing ring I1;point:=createRandomPoints(I1);
 	eval:= map(K,ring I1,point);
@@ -135,11 +114,11 @@ evaluate(Ideal) :=opts->(I1)->(
     if (tempEval ==0) then return point else return false;
 )
  
-evaluate(ZZ,Ideal):=opts->(n1,I1)->(
+randomPoint(ZZ,Ideal):=opts->(n1,I1)->(
     j:=0;
     local point;
     while( j<n1) do (
-		point=evaluate(I1);
+		point=randomPoint(I1);
 	    if not (point===false ) then return point; 
 	  	j=j+1;
 	);
