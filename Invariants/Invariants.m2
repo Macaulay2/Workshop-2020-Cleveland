@@ -95,10 +95,10 @@ abelianInvariants (Matrix, PolynomialRing, List) := List => (W, R, L) -> (
     scan(n,i->if m % R_i == 0 then (j = i+1;break));
     k := j;
     while k > 0 do(
-        u := m*R_(k-1);
+        u = m*R_(k-1);
         temp := flatten entries (v + W_(k-1));
 	temp = apply(#temp,i -> temp_i % L_i);
-	v' := matrix(vector temp);
+	v' = matrix(vector temp);
         if all(S#v', m' -> u%m' =!= 0_R) then (
 	    S#v' = S#v'|{u};
             if first degree u < t then(
