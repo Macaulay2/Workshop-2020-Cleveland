@@ -437,20 +437,41 @@ ideal ToricMap := Ideal => f -> (
     saturate (kernel inducedMap f, B)
     )
 
+weilDivisorGroup ToricMap := Matrix => f -> (
+    X := source f;
+    Y := target f;
+    map(weilDivisorGroup X, weilDivisorGroup Y,
+	transpose matrix apply(# rays Y, i -> entries pullback (f, Y_i)))
+    )
+
 -- Given ToricMap f: X -> Y, with smooth Y, returns a map Cl Y -> Cl X
 classGroup ToricMap := Matrix => f -> (
     X := source f;
     Y := target f;
-    divisorMap := map(weilDivisorGroup X, weilDivisorGroup Y,
-	transpose matrix apply(# rays Y, i -> entries pullback (f, Y_i))
-	);
+    divisorMap := weilDivisorGroup f;
     map(classGroup X, classGroup Y,
 	transpose ((transpose (fromWDivToCl(X) * divisorMap)) // transpose fromWDivToCl(Y))
 	)
     )
 
-
-
+cartierDivisorGroup ToricMap := Matrix => f -> (
+    X := source f;
+    Y := target f;
+    CDX := cartierDivisorGroup X;
+    CDY := cartierDivisorGroup Y;
+    map(CDX, CDY,
+        transpose matrix apply(numgens CDY, i ->
+            entries pullback (f, toricDivisor(flatten entries (fromCDivToWDiv(Y)*CDY_i),Y))))
+    )
+-- Given ToricMap f
+picardGroup ToricMap := Matrix => f -> (
+    X := source f;
+    Y := target f;
+    divisorMap := cartierDivisorGroup f;
+    map(classGroup X, classGroup Y,
+	transpose ((transpose (fromCDivToPic(X) * divisorMap)) // transpose fromCDivToPic(Y))
+	)
+     )
 
 ------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
