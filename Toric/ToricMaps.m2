@@ -1110,9 +1110,9 @@ doc ///
     Usage 
         isSurjective f
     Inputs 
-        f:ToricMap
+        f : ToricMap
     Outputs 
-        :Boolean 
+        : Boolean 
 	    that is true if the map is surjective
     Description
         Text
@@ -1381,6 +1381,9 @@ DY=toricDivisor({1,0,1},Y)
 pullback(f,DY)
 assert (pullback(f,DY)==toricDivisor({3,7},X))
 ///
+
+
+-- Tests for isSurjective
 
 
 
