@@ -25,6 +25,7 @@ export {
     "firstFunction",
     "secondFunction",
     "MyOption",
+    "MaxIterations",
     -- Types and Constructors
     "LinearCode",
     "linearCode",
@@ -44,7 +45,8 @@ export {
     "informationRate",
     "dualCode",
     "alphabet",
-    "generic"
+    "generic",
+    "bitflipDecode"
     }
 exportMutable {}
 
@@ -381,6 +383,53 @@ parityCheck(LinearCode) := Matrix => C -> (
     )
 
 
+-*
+
+Bitflip decode the codeword v relative to the parity check matrix H.
+
+Example:
+R=GF(2);
+H := matrix(R, {
+	{1,1,0,0,0,0,0},
+	{0,1,1,0,0,0,0},
+	{0,1,1,1,1,0,0},
+	{0,0,0,1,1,0,0},
+	{0,0,0,0,1,1,0},
+	{0,0,0,0,1,0,1}});
+v := vector transpose matrix(R, {{0,1,0,0,1,0,0}});
+print(bitflipDecode(H,v));
+
+*-
+bitflipDecode = method(TypicalValue => List, Options => {MaxIterations => 100})
+bitflipDecode(Matrix, Vector) := opts -> (H, v) -> (
+    w := v;
+    if(H*w == 0_(target H)) then(
+	return entries w;
+	);
+    
+    for iteration from 0 to (opts.MaxIterations)-1 do(
+    	n := rank target H;
+    	fails := positions(entries (H*w), i -> i==1);
+    	failsRows := select(pairs entries H, i -> member(first i, set(fails)));
+    	-- matrix representing only the homogenous eqns that fail
+    	failSubgraph := lift(matrix toList(apply(failsRows, i -> last i)),ZZ);
+    	oneVec := vector apply(entries (0_(target failSubgraph)), i -> 1);
+    	-- number of times each variable appears in a failing equation
+    	numFails := entries (transpose(failSubgraph)*oneVec);
+    	toFlip := positions(numFails, n -> n == (max numFails));
+    	flipVec := sum apply(toFlip, i -> vector ((entries basis source H)#i));
+    	w = flipVec+w;
+    
+	
+	if(H*w == 0_(target H)) then(
+	    return entries w;
+	    );
+    	);
+    
+    return {};
+    );
+    
+
 
 ------------------------------------------
 ------------------------------------------
@@ -400,7 +449,19 @@ D = linearCode(F,codeLen,L)
 assert( C == D)
 ///
 
-
+-- bitflipDecode
+TEST ///
+-- Make sure that it only outputs codewords.
+R := GF(2);
+H := random(R^10, R^15)
+for i from 1 to 50 do(
+    v := vector (for i from 1 to 15 list(random(R)));
+    w := bitflipDecode(H, v);
+    if(w != {}) then (
+    	assert(H*(vector w) == 0_(target H));
+    );
+);
+///
 
 ------------------------------------------
 ------------------------------------------
@@ -437,7 +498,34 @@ document {
 	}
     }
     
-
+document {
+	Key => {bitflipDecode, (bitflipDecode,Matrix, Vector)},
+	Headline => "Uses the Gallager bit flip algorithm to decode a codeword given a parity check matrix.",
+	Usage => "bitflipDecode(H,v)",
+	Inputs => {
+		"H" => Matrix => {"The parity check matrix."},
+		"v" => Vector => {"The codeword to decode."}
+		
+		},
+	Outputs => {
+		List => {}
+		},
+	"The matrix H and the vector v must have entries in GF(2). ",
+	"Returns the empty list if MaxIterations is exceeded.",
+	EXAMPLE {
+		"R=GF(2);",
+		"H := matrix(R, {{1,1,0,0,0,0,0},{0,1,1,0,0,0,0},{0,1,1,1,1,0,0},{0,0,0,1,1,0,0},{0,0,0,0,1,1,0},{0,0,0,0,1,0,1}});",
+		"v := vector transpose matrix(R, {{1,0,0,1,0,1,1}});",
+		"bitflipDecode(H,v)"
+		}
+	}
+document {
+    Key => MaxIterations,
+    Headline => "Specifies the maximum amount of iterations before giving up. Default is 100.",
+    TT "MaxIterations", " -- Specifies the max iterations.",
+    PARA{},
+    "This symbol is provided by the package ", TO CodingTheory, "."
+    }
 document {
 	Key => {firstFunction, (firstFunction,ZZ)},
 	Headline => "a silly first function",
