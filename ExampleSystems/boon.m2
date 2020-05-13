@@ -46,26 +46,3 @@ doc ///
 	    time sols = solveSystem F;
 	    #sols
     ///
-     
------------------------------------------------------------
------------------------------------------------------------ 
-end
------------------------------------------------------------
------------------------------------------------------------  
--- Here place M2 code that you find useful while developing this
--- package.  None of it will be executed when the file is loaded,
--- because loading stops when the symbol "end" is encountered.
------------------------------------------------------------
------------------------------------------------------------  
-
-restart
-path = {"~/Workshop-2020-Cleveland/ExampleSystems"}|path
-path = {"~/Workshop-2020-Cleveland/"}|path
-needsPackage"ExampleSystems"
-load "boon.m2"
-
-F = boon(QQ)
-time sols = solveSystem F;  -- used 10.7427 seconds
-#sols == 8
-product(F/degree/first) == 1024
-
