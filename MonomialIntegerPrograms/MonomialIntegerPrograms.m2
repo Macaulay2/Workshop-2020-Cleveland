@@ -22,14 +22,15 @@ export {
     "codimensionIP",    
     "degreeIP",
     "dimensionIP",
+    "minimalPrimesIP"
     "monomialIdealsWithHilbertFunction",
     "topMinimalPrimesIP",
     "BoundGenerators",
+    "Count",
     "FirstBetti",
     "GradedBettis",
     "KnownDim",
-    "IgnorePrimes",
-    "Count"
+    "IgnorePrimes"
     }
 exportMutable {
     "ScipPrintLevel"
@@ -99,6 +100,16 @@ degreeIP (MonomialIdeal) := o -> I -> (
     printStatement({zimplFile, solFile, errorFile, "Degree", dir});
     readScipCount(solFile)
     )
+
+=======
+--TODO: talk about this to decide if we want to alert/prompt users of this behavior.
+codim MonomialIdeal := {  } >> opts -> m -> codimensionIP m;
+degree MonomialIdeal := degreeIP;
+
+
+---------------
+-- betti tables
+---------------
 
 bettiTablesWithHilbertFunction = method(
     Options => {
@@ -176,7 +187,6 @@ topMinimalPrimesIP (MonomialIdeal) := o -> I -> (
       ));
     );
     ignorecontraints := ignorePrimesConstraints(ignorePrimes, squarefree);
-    print(ignorecontraints);
     
     k := if o.KnownDim >= 0 then o.KnownDim else dimensionIPWithConstraints(I, ignorecontraints);
     if k === null then return {};
@@ -198,6 +208,21 @@ topMinimalPrimesIP (MonomialIdeal) := o -> I -> (
     L := readAllPrimes(solFile, ring I);
     if squarefree then L else unPolarizeSome(L, R)
 )
+
+minimalPrimesIP = method();
+minimalPrimesIP (MonomialIdeal, ZZ) := (I, iterations) -> (
+  collectedPrimes := {};
+  i := 0;
+  while i < iterations or iterations < 0 do (
+    newPrimes := topMinimalPrimesIP(I, IgnorePrimes => collectedPrimes);
+    if #newPrimes === 0 then break;
+    collectedPrimes = collectedPrimes | newPrimes;
+    i = i + 1;
+  );
+  collectedPrimes
+)
+minimalPrimesIP (MonomialIdeal) := I -> minimalPrimesIP(I, -1);
+
 
 ----------------------
 -- internal methods --
@@ -317,18 +342,16 @@ readAllMonomialIdeals (String, Ring) := (solFile, R) -> (
 
 readAllPrimes = method()
 readAllPrimes (String, Ring) := (solFile, R) -> (
-    n := numgens R;
-    L := lines get solFile;
-    mons := apply(select("X#([[:digit:]]+)", L#0), a -> R_(value substring(a, 2)));
-    L = drop(L, 1);
-    allSolutions := apply(L, 
-	ln -> (
-	    l := drop(separate(",",ln), 1);
-	    l = drop(l, -1);
-	    monomialIdeal for i from 0 to #l-1 list if value(l#i)==1 then mons#i else continue
-	    )
-	)
-    )
+  n := numgens R;
+  L := lines get solFile;
+  mons := apply(select("X#([[:digit:]]+)", L#0), a -> R_(value substring(a, 2)));
+  L = drop(L, 1);
+  allSolutions := apply(L, ln -> (
+    l := value replace("\\(", "-(", ln);  --faster parse: offloads parsing to value
+                                          --replaces "24(24)" with "24-(24)" which allows value to parse the line as a sequence.
+    monomialIdeal for i from 1 to #l-1 list if l#i===1 then mons#(i-1) else continue
+  ))
+)
 
 readScipSolution = method();
 readScipSolution (String) := solFile -> (
