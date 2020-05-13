@@ -14,7 +14,7 @@ evaluationCode(Ring,List,List) := EvaluationCode => opts -> (F,P,S) -> (
     
     R := ring S#0;
 
-    I := intersect apply(P,i->ideal apply(numgens R-1,j->R_j-i#j)); -- Vanishing ideal of the set of points.
+    I := intersect apply(P,i->ideal apply(numgens R,j->R_j-i#j)); -- Vanishing ideal of the set of points.
 
     S = toList apply(apply(S,i->promote(i,R/I)),j->lift(j,R))-set{0*S#0}; -- Drop the elements in S that was already in I.
 
@@ -40,7 +40,7 @@ evaluationCode(Ring,List,Matrix) := EvaluationCode => opts -> (F,P,M) -> (
 
     R := F[t_1..t_m];
 
-    I := intersect apply(P,i->ideal apply(m-1,j->R_j-i#(j))); -- Vanishing ideal of P.
+    I := intersect apply(P,i->ideal apply(m,j->R_j-i#(j))); -- Vanishing ideal of P.
 
     G := transpose matrix apply(entries M,i->toList apply(P,j->product apply(m,k->(j#k)^(i#k))));    
 
