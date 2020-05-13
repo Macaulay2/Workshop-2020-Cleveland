@@ -77,6 +77,27 @@ firstFunction ZZ := String => n -> (
 	then "Hello, World!"
 	else "D'oh!"	
 	)
+    
+  --Function to create a random point 
+   createRandomPoints=(I1)->(
+    noVar := #generators ring I1;
+    K:=coefficientRing ring (I1);
+   return toList apply(noVar, i ->random(K) )
+   ) 
+
+--Function to check if random point is in the variety
+evaluate =(I1)->
+(genList:= first entries gens I1;
+K:=coefficientRing ring I1;point:=createRandomPoints(I);
+eval:= map(K,ring I1,point);
+  j:=0;while(j< #genList) do (
+          tempEval:=eval(genList_j);
+          if not (tempEval==0) then return false else 
+               j:=j+1);
+          if (tempEval ==0) then 
+   return point  else return false;
+   )
+       
    
 -- A function with an optional argument
 secondFunction = method(
@@ -95,6 +116,71 @@ secondFunction(ZZ,List) := o -> (m,n) -> (
      )
 
 beginDocumentation()
+
+doc ///
+    Key
+        createRandomPoints
+	(createRandomPoints, ideal)
+    Headline
+        prototype: This function is provided by the package  TO create a random point.
+    Usage
+        createRandomPoints(I)
+    Inputs
+    I: Ideal inside a polynomial ring 
+    Outputs
+        :A random List of elements which will provid a random point in the affine plane.
+	    
+    Description
+        --Text  
+       	   -- Some words to say things. You can even use LaTeX $R = k[x,y,z]$. 
+--
+        Example
+            R = QQ[x,y]
+     	    I= ideal(random(2,R),random(3,R))
+	    createRandomPoint I
+	    
+	   
+        --Text
+       	   -- More words, but don't forget to indent. 
+	   
+   -- SeeAlso
+    
+    Caveat
+    
+///
+
+doc ///
+    Key
+        evaluate
+	(evaluate, ideal)
+    Headline
+        prototype: This function in  the package will  will and tell if some random point is in the variety or not.
+    Usage
+        evaluate(I)
+    Inputs
+    I: Ideal inside a polynomial ring. 
+    Outputs
+        :A random point if it is in the variety otherwise False.
+	    
+    Description
+        --Text  
+       	   -- Some words to say things. You can even use LaTeX $R = k[x,y,z]$. 
+--
+        Example
+            R = QQ[x,y]
+     	    I= ideal(random(2,R),random(3,R))
+	    evaluate I
+	    
+	   
+        --Text
+       	   -- More words, but don't forget to indent. 
+	   
+   -- SeeAlso
+    
+    Caveat
+    
+///
+
 document { 
 	Key => RandomRationalPoints,
 	Headline => "an example Macaulay2 package",
@@ -170,6 +256,18 @@ TEST ///
   assert(secondFunction(1,3,MyOption=>5) === 9)
 ///
   
+ --Need help to write this part 
+  TEST///
+R=QQ[t_1..t_3];
+I = ideal(t_1,t_2+t_3);
+assert(createRandomPoints I==={2/7, 5/4,3/10} )
+   ///
+   
+ TEST///
+ R=QQ[t_1..t_3];
+I = ideal(t_1,t_2+t_3);
+assert(evaluate(I)===false); 
+ ///   
        
 end
 
