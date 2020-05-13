@@ -54,7 +54,14 @@ export {"pointNorm",
     "toACertifiedPoly",
     "pointBlock",
     "toACertifiedPoint",
-    "alphaCert"}
+    "alphaCert",
+    "Hessian",--                                                                                                                      
+    "computeOrthoBasis",--                                                                                                            
+    "Aoperator",--these are added                                                                                                     
+    "Hoperator",--these are added                                                                                                     
+    "gammaKBound",--these are added                                                                                                   
+    "certifyRootMultiplicityBound"--these are added  
+    }
 exportMutable {}
 
 ALPHACERTIFIEDexe=(options NumericalCertification).Configuration#"ALPHACERTIFIEDexec"
