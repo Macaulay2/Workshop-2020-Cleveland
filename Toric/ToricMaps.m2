@@ -38,6 +38,10 @@ newPackage(
       Email => "ranaj@lawrence.edu",
       HomePage => "https://sites.google.com/site/jranamath"},  
       {
+      Name => "Mahrud Sayrafi",
+      Email => "mahrud@umn.edu",
+      HomePage => "https://math.umn.edu/~mahrud/"}
+      {
       Name => "Gregory G. Smith", 
       Email => "ggsmith@mast.queensu.ca", 
       HomePage => "https://www.mast.queensu.ca/~ggsmith"},
