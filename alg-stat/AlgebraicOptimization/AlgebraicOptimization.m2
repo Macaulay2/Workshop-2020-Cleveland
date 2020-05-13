@@ -16,12 +16,15 @@ newPackage(
 )
 
 export {
-  "projectiveDual"
+  -- Methods
+  "projectiveDual",
+  -- Options
+  "DualVariable"
 }
 
 -- Code here
 
-projectiveDual = method(Options => {}); -- Maybe options are needed?
+projectiveDual = method(Options => {DualVariable => null}); -- Maybe options are needed?
 -- (Alg. 5.1 in SIAM book)
 -- Takes homogeneous ideal as input, returns ideal of dual of the projective variety
 projectiveDual Ideal := Ideal => opts -> I -> (
@@ -30,7 +33,7 @@ projectiveDual Ideal := Ideal => opts -> I -> (
   jacI := transpose jacobian I;
   R := ring I;
   numVars := #gens R;
-  u := symbol u;
+  u := if opts.DualVariable === null then symbol u else opts.DualVariable;
   dualR := (coefficientRing R)[u_0..u_(numVars-1)];
   S := R ** dualR;
   jacBar := sub(vars dualR, S) || sub(jacI, S);
@@ -76,6 +79,7 @@ doc ///
 Key
   projectiveDual
   (projectiveDual, Ideal)
+  [projectiveDual, DualVariable]
 Headline
   Compute projective dual
 Usage
@@ -97,6 +101,11 @@ Description
     S = QQ[x_0..x_2]
     I = ideal(x_2^2-x_0^2+x_1^2)
     projectiveDual(I)
+
+  Text
+    The option {\tt DualVariable} specifies the basename for the dual variables
+  Example
+    projectiveDual(I,DualVariable => y)
 --  Code
 --    todo
 --  Pre
