@@ -1,7 +1,7 @@
 -- -*- coding: utf-8 -*-
 newPackage(
 	"SwitchingFields",
-    	Version => "0.1", 
+    	Version => "1.0", 
     	Date => "May 12, 2020",
     	Authors => {
 	     {Name => "Zhan Jiang", Email => "zoeng@umich.edu", HomePage => "http://www-personal.umich.edu/~zoeng/"},
@@ -77,9 +77,9 @@ switchFieldMap(Ring, Ring, List) := RingMap => opts -> (r1, r2, k1) ->(
 beginDocumentation()
 document { 
     Key => SwitchingFields,
-    Headline => "Switch Base Fields and Obtain Natural Maps",
-    EM "SwitchingFields", " is a package that helps to switch the field of 
-    coefficients of a given ring, to another given field via 
+    Headline => "Switch base fields and obtain natural maps for rings over finite fields",
+    EM "SwitchingFields", " is a package that helps to switch the (finite) field of 
+    coefficients of a given ring, to another given (finite) field via 
     the ", EM "natural", " map between these fields.
 	"
 }
@@ -89,33 +89,42 @@ doc ///
         fieldExtension
 	(fieldExtension, GaloisField, GaloisField)
     Headline
-        prototype: This function is provided by the package  TO SwitchingFields.
+        a fix to the failure of map(GaloisField,GaloisField) function when Variable option is used
     Usage
         fieldExtension(L, K)
     Inputs
     	K:GaloisField
 	    a finite field
 	L:GaloisField
-	    a field extension of K
+	    a field extension of $K$
     Outputs
         :RingMap
-	    the natural ring map K -> L
+	    the natural ring map $K \to L$.
     Description
-        --Text  
-       	   -- Some words to say things. You can even use LaTeX $R = k[x,y,z]$. 
---
+        Text  
+       	    The usual map function is not working properly when the generators of a GaloisField are designated. For example,
+	    
+	Example
+	    K1 = GF(8); L1 = GF(64);
+	    K2 = GF(8, Variable=>b); L2 = GF(64, Variable=>c);
+	    map(L1, K1) --correct natural map
+	    try map(L2, K2) then << "correct map" else << "error: not implemented: maps between non-Conway Galois fields";
+	    
+	Text
+	    This function is a fix for that. See following example
+
         Example
-            K = GF(8)
-     	    L = GF(64)
-	    fieldExtension(L,K)
+            K2 = GF(8, Variable=>b); L2 = GF(64, Variable=>c);
+	    fieldExtension(L2, K2)
 	    
 	   
-        --Text
-       	   -- More words, but don't forget to indent. 
+        Text
+       	   The function is implemented by composing the isomorphism $K_2\cong K_1$, the natural embedding $K_1\to L_1$ and the isomorphism $L_1\cong L_2$.
 	   
    -- SeeAlso
     
     Caveat
+        The function depends on the implementation of map(GaloisField,GaloisField).
     
 ///
 
@@ -124,17 +133,17 @@ doc ///
         fieldBaseChange
 	(fieldBaseChange, Ring, GaloisField)
     Headline
-        prototype: This function is provided by the package  TO SwitchingFields.
+        a function to compute the base change between GaloisFields
     Usage
         fieldBaseChange(R, K)
     Inputs
 	R:Ring
-	    a ring with a GaloisField L as its coefficientRing
+	    with a GaloisField $L$ as its coefficient ring
 	K:GaloisField
-	    a field extension of L
+	    extension of $L$
     Outputs
         :Sequence
-	    a ring R  otimes L K and a ring map R -> R otimes L K
+	    ($T$ ,$f$) where $T = R  \otimes_L K$ is the base-changed ring, $f:R\to T$ is the ring map $R\otimes_L L\to R\otimes_L K$ induced from $L\to K$.
     Description
         --Text  
        	   -- Some words to say things. You can even use LaTeX $R = k[x,y,z]$. 
@@ -142,7 +151,9 @@ doc ///
         Example
             R = GF(8)[x,y,z]/(x*y-z^2)
      	    K = GF(64)
-	    fieldBaseChange(R,K)
+	    (T,f) = fieldBaseChange(R,K)
+	    describe T
+	    describe f
 	   
         --Text
        	   -- More words, but don't forget to indent. 
@@ -158,29 +169,35 @@ doc ///
         switchFieldMap
 	(switchFieldMap, Ring, Ring, List)
     Headline
-        prototype: This function is provided by the package  TO SwitchingFields.
+        a function to provide correct map between rings with different finite coefficient field
     Usage
-        switchFieldMap(R, S, L)
+        switchFieldMap(S, R, l)
     Inputs
-	R:Ring
-	    a ring with a GaloisField X as its coefficientRing
 	S:Ring
-	    a ring with a GaloisField Y as its coefficientRing
-	L:List
-	    a list defining the map  S -> R
+	    with a GaloisField as its coefficientRing
+	R:Ring
+	    with a GaloisField as its coefficientRing
+	l:List
+	    defining the map $R \to S$
     Outputs
         :RingMap
-	    the natural ring map  S -> R
+	    the natural ring map  $R \to S$
     Description
-     -- Text  
-       --   Some words to say things. You can even use LaTeX $R = k[x,y,z]$. 
---
+        Text  
+            The usual map function does not check whether the map for the ground field is a well-defined map.
         Example
-            R = GF(64)[x,y,z]/(x*y-z^2)
-     	    S = GF(8)[a]
-	    L = {x}
-	    switchFieldMap(R,S,L)
-	    
+            R = GF(8)[x,y,z]/(x*y-z^2); S = GF(64)[u,v]/(v^2);
+	    f = map(S, R, {u, 0, v})
+	    t = (coefficientRing R)_0;
+	    f(t^3+t+1)
+	    f(t)^3+f(t)+1
+	Text
+	    Our function provides a fix to this issue. See below
+        Example
+            R = GF(8)[x,y,z]/(x*y-z^2); S = GF(64)[u,v]/(v^2);
+	    f = switchFieldMap(S, R, {u, 0, v})
+	    t = (coefficientRing R)_0;
+	    f(t)^3+f(t)+1
 	   
         --Text
        	   -- More words, but don't forget to indent. 
