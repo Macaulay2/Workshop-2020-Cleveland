@@ -7,7 +7,8 @@ newPackage(
              {Name => "Luigi Ferraro", Email => "ferrarl@wfu.edu",
               HomePage => "http://users.wfu.edu/ferrarl/"},
              {Name => "Federico Galetto", Email => "f.galetto@csuohio.edu", HomePage => "https://math.galetto.org"},
-             {Name => "Xianglong Ni", Email => "xlni@berkeley.edu", HomePage => "https://math.berkeley.edu/~xlni/"}
+             {Name => "Xianglong Ni", Email => "xlni@berkeley.edu", HomePage => "https://math.berkeley.edu/~xlni/"},
+	     {Name => "Hang Huang", Email => "hhuang235@tamu.edu", HomePage => "https://math.tamu.edu/~hhuang"}
              },
         Headline => "Computing Invariants for Tori and Abelian Groups",
         DebuggingMode => true,
