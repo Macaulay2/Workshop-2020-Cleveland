@@ -32,6 +32,7 @@ export {
     "BaseField",
     "Generators",
     "Code",
+    "CodeRows",    
     -- Families of Codes
     "cyclicMatrix",
     "quasiCyclicCode",
@@ -104,6 +105,7 @@ linearCode(Module,List) := LinearCode => opts -> (S,L) -> (
 	symbol BaseField => S.ring,
 	symbol Generators => newL,
 	symbol Code => image matrix apply(newL, v-> vector(v)),
+	symbol CodeRows => image transpose matrix apply(newL, v-> vector(v)),
 	symbol cache => {}
 	}
     
@@ -125,6 +127,7 @@ linearCode(GaloisField,ZZ,List) := LinearCode => opts -> (F,n,L) -> (
 	 -- need to coerce generators into *this* GF(p,q):
 	symbol Generators => apply(L, codeword -> apply(codeword, entry -> sub(entry,F))),
 	symbol Code => image matrix apply(L, v-> vector(v)),
+	symbol CodeRows => image transpose matrix apply(L, v-> vector(v)),	
 	symbol cache => {}
 	}
     
