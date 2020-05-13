@@ -18,6 +18,8 @@ newPackage(
 export {
   -- Methods
   "projectiveDual",
+  "makePrimalDualRing",
+  "conormalVariety",
   -- Options
   "DualVariable"
 }
@@ -28,12 +30,21 @@ conormalVariety = method();
 -- Computes the conormal variety with respect to the (polynomial)
 -- objective function p
 conormalVariety (Ideal, RingElement) := Ideal => (I,p) -> (
-  if not ring I === ring p then error("Ideal and polynomial must be in same ring.")
+  if not ring I === ring p then error("Ideal and polynomial must be in same ring.");
+  R := ring p;
+  if not degreeLength R == 2 then error("ring doesn't have degree length 2") -- This could create the primal dual ring!
+)
+
+makePrimalDualRing = method(Options => {DualVariable => null});
+-- Creates a ring with the primal and dual variables
+makePrimalDualRing Ring := Ring => opts -> R -> (
+  u := if opts.DualVariable === null then symbol u else opts.DualVariable;
+  dualR := (coefficientRing R)[u_0..u_(#gens R - 1)];
+  R ** dualR
 )
 
 
-
-projectiveDual = method(Options => {DualVariable => null});
+projectiveDual = method(Options => options makePrimalDualRing);
 -- (Alg. 5.1 in SIAM book)
 -- Takes homogeneous ideal as input, returns ideal of dual of the projective variety
 projectiveDual Ideal := Ideal => opts -> I -> (
@@ -124,8 +135,45 @@ Description
 --  todo
 ///
 
-  TEST ///
+doc ///
+Key
+  makePrimalDualRing
+  [makePrimalDualRing, DualVariable]
+Headline
+  Creates a ring with primal and dual variables
+Usage
+  makePrimalDualRing(R)
+Inputs
+  R:Ring
+Outputs
+  :Ring
+Description
+  Text
+    Return a ring containing both primal and dual variables.
+    This is the ring where the conormal variety lives.
+    By default, the dual variables have the symbol u, but this can be changed using the
+    optional argument {\tt DualVariable}
+  Example
+    R = QQ[x_0..x_4]
+    S = makePrimalDualRing(R)
+    gens S
+    makePrimalDualRing(R, DualVariable => y)
+  Text
+    The primal variables have degree $\{1,0\}$ and the dual variables have degree $\{0,1\}$
+  Example
+    basis({1,0}, S)
+    basis({0,1}, S)
+SeeAlso
+  conormalVariety
+///
+
+doc ///
+Key
+  conormalVariety
+///
+
+TEST ///
   -- test code and assertions here
   -- may have as many TEST sections as needed
-  ///
+///
 
