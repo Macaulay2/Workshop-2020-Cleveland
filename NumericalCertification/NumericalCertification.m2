@@ -18,6 +18,7 @@ newPackage(
 -- must be placed in one of the following two lists
 
 export {"pointNorm", 
+    "ALPHACERTIFIEDexec",
     "polyNorm", 
     "polySysNorm", 
     "newtonOper",
@@ -54,6 +55,23 @@ export {"pointNorm",
     "toACertifiedPoly",
     "pointBlock",
     "toACertifiedPoint",
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+    "alphaCertified",
+    "ALGORITHM",
+    "ARITHMETICTYPE",
+    "PRECISION",
+    "REFINEDIGITS",
+    "NUMRANDOMSYSTEMS",
+    "RANDOMDIGITS",
+    "RANDOMSEED",
+    "NEWTONONLY",
+    "NUMITERATIONS",
+    "REALITYCHECK",
+    "REALITYTEST"}
+=======
+>>>>>>> kisun
     "alphaCert",
     "Hessian",--                                                                                                                      
     "computeOrthoBasis",--                                                                                                            
@@ -62,7 +80,13 @@ export {"pointNorm",
     "gammaKBound",--these are added                                                                                                   
     "certifyRootMultiplicityBound"--these are added  
     }
+<<<<<<< HEAD
+=======
+>>>>>>> 8b54303403dc23232b432bfb6cd5ae7ed150bef9
+>>>>>>> kisun
 exportMutable {}
+
+
 
 ALPHACERTIFIEDexe=(options NumericalCertification).Configuration#"ALPHACERTIFIEDexec"
 
@@ -916,6 +940,10 @@ krawczykMethod(PolySystem, IntervalOptionList) := o -> (polySys, option) -> (
 
 
 
+
+
+
+
 -- a function converting a polynomial into alphaCertified input format.
 -- input : polynomial
 -- output : the first line is the number of terms of an input.
@@ -926,21 +954,15 @@ degCoeff = method()
 degCoeff(RingElement) := f -> (
     variables := gens ring f;
     R := coefficientRing ring f;
-    if precision R =!= infinity then (
-	R = R;
-	)
-    else if R =!= QQ then (
-	R = coefficientRing R;
-	)
-    else (
- 	R = R;
-	); 
+    if precision R == infinity then (
+	print "error! Use a polynomial ring with coefficients CC or RR"; break
+	);
     (E, C) := coefficients f;
     E = flatten entries E;
     C = flatten entries C;
     strList := apply(length E, i -> 
         replace("[{,},,]", "", toString(apply(variables, j -> 
-	    degree(j, E#i)) | {realPart sub(C#i, QQ), imaginaryPart sub(C#i, QQ)}))
+	    degree(j, E#i)) | {lift(realPart sub(C#i,CC), QQ), lift(imaginaryPart sub(C#i,CC), QQ)}))
 	);
     prepend(length E, strList)
     )
@@ -960,16 +982,6 @@ toACertifiedPoly(PolySystem) := P -> (
     (numOfVars, numOfPolys) := (P.NumberOfVariables, P.NumberOfPolys);
     fn << toString numOfVars | " " | toString numOfPolys << endl;
     fn << "" << endl;
-    R := coefficientRing ring P;
-    if precision R =!= infinity then (
-	R = R;
-	)
-    else if R =!= QQ then (
-	R = coefficientRing R;
-	)
-    else (
- 	R = R;
-	); 
     polyList := flatten entries P.PolyMap;
     strList := apply(polyList, i -> 
 	degCoeff i);
@@ -988,18 +1000,8 @@ pointBlock(Point) := P -> (
     pointBlock matrix P
     )
 pointBlock(Matrix) := M -> (
-    R := ring first flatten entries M;
-    if precision R =!= infinity then (
-	R = R;
-	)
-    else if R =!= QQ then (
-	R = coefficientRing R;
-	)
-    else (
- 	R = R;
-	); 
     strList := apply(flatten entries M, i -> 
-        replace("[{,},,]", "", toString({realPart i, imaginaryPart i}))
+        replace("[{,},,]", "", toString({lift((realPart i)_QQ,QQ), lift((imaginaryPart i)_QQ,QQ)}))
 	);
     strList = append(strList, "")    
     )
@@ -1020,11 +1022,27 @@ toACertifiedPoint(List) := L -> (
     fn
     )
     
-alphaCert = method()
-alphaCert(PolySystem, List) := (P, L) -> (
+alphaCertified = method(Options => {
+	ALGORITHM => 2,
+	ARITHMETICTYPE => 0,
+	PRECISION => 96,
+	REFINEDIGITS => 0,
+	NUMRANDOMSYSTEMS => 2,
+	RANDOMDIGITS => 10,
+	RANDOMSEED => random 10000,
+	NEWTONONLY => 0,
+	NUMITERATIONS => 2,
+	REALITYCHECK => 1,
+	REALITYTEST => 0
+	}
+	)
+alphaCertified(PolySystem, List) := o -> (P, L) -> (
     fin1 := toACertifiedPoly P;
     fin2 := toACertifiedPoint L;
-    run("cd " | ALPHACERTIFIEDexe |"; ./alphaCertified " | fin1 |" "| fin2);
+    fin3 := temporaryFileName();
+    apply(# o, i -> fin3 << toString(keys o)#i | ": "|toString(values o)#i|";" << endl);
+    fin3 << close;
+    run("cd " | ALPHACERTIFIEDexe |"; ./alphaCertified " | fin1 |" "| fin2 |" " | fin3);
     )
     
     
