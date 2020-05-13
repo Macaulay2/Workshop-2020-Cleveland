@@ -19,19 +19,131 @@ newPackage(
 -- Any symbols or functions that the user is to have access to
 -- must be placed in one of the following two lists
 export {
-    "torusInvariants",
+    "action",
+    "finiteAction",
+    "groupGens",
+    "invariants",
+    "invariantRing",
+    "isAbelian",
+    "torusAction",
+    "weights",
     "abelianInvariants",
     "hilbertIdeal"
     }
-exportMutable {}
+--exportMutable {}
+
+--Protect Option/hashtable symbols
+protect Action
+protect AmbientRing
+protect basering
+protect Generators
+protect RepDimension
+protect TorusRank
+protect WeightMatrix
 
 needsPackage("Polyhedra", Reload => true)
 needsPackage("Elimination", Reload => true)
 
-torusInvariants = method()
-torusInvariants (Matrix, PolynomialRing) := List => (W, R) -> (
-    r := numRows W; --dimesion of torus
-    n := numColumns W; --dimension of ring. We could get rid of the R by using QQ[n gens]. Or use R for error message
+
+GroupAction = new Type of MutableHashTable
+FiniteGroupAction = new Type of GroupAction
+TorusAction = new Type of GroupAction
+RingOfInvariants = new Type of Ring    	       -- For some reason, InvariantRing already seems to be a protected symbol.
+
+
+-------------------------------------------
+--- FiniteGroupAction methods -------------
+-------------------------------------------
+
+net FiniteGroupAction := G -> net G.Generators
+
+finiteAction = method()
+
+finiteAction List := FiniteGroupAction => G -> (
+    new FiniteGroupAction from {basering => ring first G, Generators => G, RepDimension => numColumns first G}
+    )
+
+groupGens = method()
+
+groupGens FiniteGroupAction := List => G -> G.Generators 
+
+numgens FiniteGroupAction := ZZ => G -> #(groupGens G)
+
+dim FiniteGroupAction := ZZ => G -> G.RepDimension
+
+ring FiniteGroupAction := Ring => G -> G.basering
+
+isAbelian = method()
+
+isAbelian FiniteGroupAction := Boolean => G -> (
+    X := groupGens G;
+    n := #X;
+    if n == 1 then(
+	return true 
+	)
+    else(
+	all(n - 1, i -> all(n - 1 - i, j -> (X#j)*(X#(n - 1 - i)) == (X#(n - 1 - i))*(X#j) ) )
+	)
+    )
+
+
+-------------------------------------------
+--- TorusAction methods -------------------
+-------------------------------------------
+
+torusAction = method()
+
+torusAction Matrix := TorusAction => W -> (
+    new TorusAction from {WeightMatrix => W, TorusRank => numRows W, RepDimension => numColumns W}
+    )
+
+net TorusAction := T -> net (T.WeightMatrix)
+
+dim TorusAction := ZZ => T -> T.RepDimension
+
+rank TorusAction := ZZ => T -> T.TorusRank
+
+weights = method()
+
+weights TorusAction := Matrix => T -> T.WeightMatrix 
+
+
+
+-------------------------------------------
+--- RingOfInvariants methods --------------
+-------------------------------------------
+
+net RingOfInvariants := B -> (
+    R := ambient B;
+    G := action B;
+    if instance(G, TorusAction) then (net R)|" <-- "|(net action B)
+    else net R
+    )
+
+invariantRing = method()
+
+invariantRing (TorusAction, PolynomialRing) := RingOfInvariants => (T, R) -> (
+    new RingOfInvariants from {AmbientRing => R, Action => T }
+    )
+
+PolynomialRing^TorusAction := RingOfInvariants => (R, T) -> invariantRing(T, R)
+
+action = method()
+
+action RingOfInvariants := GroupAction => B -> B.Action
+
+ambient RingOfInvariants := PolynomialRing => B -> B.AmbientRing
+
+-------------------------------------------
+
+invariants = method()
+
+invariants RingOfInvariants := B -> invariants(action B, ambient B)
+
+invariants (TorusAction, PolynomialRing) := List => (T, R) -> (
+    r := rank T;
+    n := dim R;
+    W := weights T;
     local C;
     if r == 1 then C = convexHull W else C = convexHull( 2*r*W|(-2*r*W) );
     C = (latticePoints C)/vector;
@@ -44,6 +156,7 @@ torusInvariants (Matrix, PolynomialRing) := List => (W, R) -> (
     while  #nonemptyU > 0 do(
 	v = first nonemptyU;
 	m = first (U#v);
+	
 	-- Uncomment lines in step by step printing to see steps
 	-- Note: there is one such line before the while loop
 	--print("\n"|"Iteration "|toString(iteration)|".\n"); --step by step printing
@@ -53,10 +166,11 @@ torusInvariants (Matrix, PolynomialRing) := List => (W, R) -> (
 	--print("\n"|"    Set S of weights/monomials:\n"); --step by step printing
 	--print(net("    ")|net(pairs select(hashTable pairs S,l->l!= {}))); --step by step printing
 	--iteration = iteration + 1; --step by step printing
+	
 	scan(n, i -> (
         u := m*R_i;
         v' := v + W_i;
-        if ((U#?v') and all(S#v', m' -> u%m' =!= 0_R)) then( --% command may by slower than lin alg computation
+        if ((U#?v') and all(S#v', m' -> u%m' =!= 0_R)) then( 
                 S#v' = S#v'|{u};
                 U#v' = U#v'|{u};
 		)
@@ -67,6 +181,9 @@ torusInvariants (Matrix, PolynomialRing) := List => (W, R) -> (
 	);
     return S#(0_(ZZ^r))
     )
+
+-------------------------------------------
+-- No FiniteAbelianAction type exists yet
 
 abelianInvariants = method()
 abelianInvariants (Matrix, PolynomialRing, List) := List => (W, R, L) -> (
@@ -138,6 +255,7 @@ hilbertIdeal (Ideal, Matrix, PolynomialRing) := Ideal => (A, M, R) -> (
     return trim(sub(II, join(apply(n, i -> x_(i+1) => R_i),apply(n, i -> y_(i+1) => 0), apply(l, i -> z_(i+1) => 0))))
 )
 
+
 beginDocumentation()
 document { 
 	Key => Invariants,
@@ -160,6 +278,7 @@ document {
 		}
         }
 	}
+ -*
 document {
 	Key => {torusInvariants, (torusInvariants,Matrix,PolynomialRing)},
 	Headline => "Computes the primary invariants for a diagonal torus action given by column weight vectors",
@@ -198,6 +317,7 @@ document {
 	   ". Heidelberg: Springer. pp 174-177"}
         }	
 }
+*-
 document {
 	Key => {abelianInvariants, (abelianInvariants,Matrix,PolynomialRing,List)},
 	Headline => "Computes the primary invariants for an abelian group action given by column weight vectors",
@@ -210,9 +330,9 @@ document {
 	Outputs => {
 		List => {"A minimal set of generating invariants for the abelian group action"}
 		},
-	SeeAlso => {torusInvariants},
+	SeeAlso => {invariants},
 	PARA {
-	    "This function is provided by the package ", TO Invariants, ". It is based on the same algorithm as ", TO torusInvariants,
+	    "This function is provided by the package ", TO Invariants, ". It is based on the same algorithm as ", TO invariants,
 	    " with some adjustments and optimizations for the finite group case; see the reference below for details. Writing the finite abelian group as",
 	    TEX /// $\mathbb{Z}/d_1 \oplus \cdots \oplus \mathbb{Z}/d_r$, ///,
 	    "the input ", TT "L", " is the list ", TT "{d_1,d_2,...,d_r}", ". We assume that the group acts diagonally on the input polynomial ring",
@@ -271,16 +391,16 @@ document {
 
 TEST ///
 R1 = QQ[x_1..x_4]
-W1 = matrix {{-3, -1, 1, 2}}
+T1 = torusAction matrix {{-3, -1, 1, 2}}
 invariants1 =  set {x_2*x_3, x_2^2*x_4, x_1*x_3*x_4, x_1*x_2*x_4^2, x_1^2*x_4^3, x_1*x_3^3}
-assert(set torusInvariants(W1, R1) === invariants1)
+assert(set invariants(T1, R1) === invariants1)
 ///
 
 TEST ///
 R2 = QQ[x_1..x_4]
-W2 = matrix{{0,1,-1,1},{1,0,-1,-1}}
+T2 = torusAction matrix{{0,1,-1,1},{1,0,-1,-1}}
 invariants2 = set {x_1*x_2*x_3,x_1^2*x_3*x_4}
-assert(set torusInvariants(W2,R2) === invariants2)
+assert(set invariants(T2,R2) === invariants2)
 ///
        
 end
