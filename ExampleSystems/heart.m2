@@ -12,7 +12,6 @@ heart (Ring) := kk -> (
        c*t**2 - c*v**2 + 2*a*t*v + d*u**2 - d*w**2 + 2*b*u*w + 0.843453,
        a*t**3 - 3*a*t*v**2 + c*v**3 - 3*c*v*t**2 + b*u**3 - 3*b*u*w**2 + d*w**3 - 3*d*w*u**2 + 0.9563453,
        c*t**3 - 3*c*t*v**2 - a*v**3 + 3*a*v*t**2 + d*u**3 - 3*d*u*w**2 - b*w**3 + 3*b*w*u**2 - 1.2342523 }
-						
  )
 
     beginDocumentation()
@@ -27,11 +26,13 @@ doc ///
     	heart(kk)
     Inputs
     	kk:Ring
+            the coefficient ring
     Outputs
-    	:List	  of solutions
+    	:List
+            of solutions
     Description
     	Text
-	    The Bezout bound is 1458 and the actual root count is 64.
+	    The Bezout bound is 1458.
 	    
 	    Reference: "Determination of magnitudes, directions, and locations of two independent dipoles in a circular conducting region from boundary potential measurements" by C.V. Nelson and B.C. Hodgkin (pages 817-823),
 	    "Coefficient-Parameter Polynomial Continuation" by A.P. Morgan and A.J. Sommese (pages 123-160), 

@@ -15,7 +15,6 @@ ku10 (Ring) := kk -> (
        8*x_9*x_10 + 4*x_9 + 3*x_10 - 51,
        3*x_1*x_10 - 6*x_1 + x_10 + 5
      }
-						
  )
 
 beginDocumentation()
@@ -30,11 +29,13 @@ doc ///
     	ku10(kk)
     Inputs
     	kk:Ring
+            the coefficient ring
     Outputs
-    	:List	  of solutions
+    	:List
+            of solutions
     Description
     	Text
-	    The Bezout bound is 1024 and the actual root count is 2.
+	    The Bezout bound is 1024.
 	    
 	    We point out that this system is difficult for homotopy continuation (without 
 		multi-homogenization), yet an easy system for elimination. 

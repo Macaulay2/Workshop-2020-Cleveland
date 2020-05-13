@@ -23,7 +23,6 @@ lumped (Ring) := kk -> (
        +( 3.30100210000000E-01 + 8.90584170000000E-01*i)*x_2
        +(-1.11290920000000E-01 - 6.71774920000000E-01*i)*x_4
         }
-						
  )
 
    beginDocumentation()
@@ -38,11 +37,13 @@ doc ///
     	lumped(kk)
     Inputs
     	kk:Ring
+            the coefficient ring
     Outputs
-    	:List 	  of solutions
+    	:List
+            of solutions
     Description
     	Text
-	    The Bezout bound is 16 and the actual root count is 4. 
+	    The Bezout bound is 16.
 	    
 	    Reference: "Solving deficient polynomial systems with homotopies which keep 
 	    the subschemes at infinity invariant" by T.Y. Li and X. Wang (pages 693-710).

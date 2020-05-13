@@ -14,12 +14,26 @@ newPackage(
     	)
 
 examples'names = {
+    "boon",
+    "butcher",
     "cyclic",
+    "eco8",
+    "geneig",
+    "heart",
+    -- "ipp",
     "katsura",
+    "ku10",
+    -- "lumped",
+    "puma",
+    "quadgrid",
+    "rabmo",
     "randomGeneralizedEigenvalueProblem",
-    "randomSystem"
+    "randomSystem",
+    "rbpl24s",
+    "reimer5",
+    "sendra"
     }
-
+    
 for e in examples'names do 
 needs("./ExampleSystems/"|e|".m2")
 

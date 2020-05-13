@@ -22,12 +22,13 @@ doc ///
 	reimer5(kk)
     Inputs
 	kk:Ring
+		the coefficient ring
     Outputs
 	:List
-		of solutions
+		of polynomials in the system
     Description
     	Text
-	    The Bezout bound is 720 and the actual root count is 146. 
+	    The Bezout bound is 720 and the actual root count is 145. 
 	    
 	    Reference: PoSSo test suite.
 	    

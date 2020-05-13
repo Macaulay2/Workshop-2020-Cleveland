@@ -50,27 +50,3 @@ doc ///
 	Example
 	    F = butcher(QQ)
     ///
-    
-    
------------------------------------------------------------
------------------------------------------------------------
-end
------------------------------------------------------------
------------------------------------------------------------  
--- Here place M2 code that you find useful while developing this
--- package.  None of it will be executed when the file is loaded,
--- because loading stops when the symbol "end" is encountered.
------------------------------------------------------------
------------------------------------------------------------  
-
-restart
-path = {"~/Workshop-2020-Cleveland/ExampleSystems"}|path
-path = {"~/Workshop-2020-Cleveland/"}|path
-needsPackage"ExampleSystems"
-load "butcher.m2"
-
-F = butcher(QQ)
-time sols = solveSystem F;  -- used 88.8358 seconds 
---  took more than 15 sec so don't put this calculation in doc
-#sols == 7 -- doesn't match
-product(F/degree/first) == 4608

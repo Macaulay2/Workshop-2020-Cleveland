@@ -15,7 +15,6 @@ geneig(Ring) := kk -> (
        3*x_1*x_6^2+x_2*x_6^2+x_3*x_6^2+ 2*x_4*x_6^2-11*x_5*x_6^2+x_1*x_6+ 3*x_2*x_6-2*x_3*x_6+ 3*x_4*
        x_6+ 3*x_5*x_6-2*x_1-2*x_2-x_3+x_4+ 10*x_5,
        x_1+x_2+x_3+x_4+x_5-1 }
-						
  )
 
   
@@ -31,11 +30,13 @@ doc ///
     	geneig(kk)
     Inputs
     	kk:Ring
+            the coefficient ring
     Outputs
-    	:List 	  of solutions
+    	:List
+            of solutions
     Description
     	Text
-	    The Bezout bound is 243 and the actual root count is 10. 
+	    The Bezout bound is 243. 
 	    
 	    Reference: "Homotopy method for general lambda-matrix problems" by M. Chu, T.Y. Li and
 	     T. Sauer (pages 528-536).

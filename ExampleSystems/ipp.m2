@@ -27,7 +27,6 @@ ipp (Ring) := kk -> (
        x_3+ 3.57444130000000E-01*x_4+ 1.24991170000000E+00*x_5+ 1.46773600000000E+00*x_6
        + 1.16517200000000E+00*x_7+ 1.10763397000000E+00*x_8-6.96868090000000E-01
         }
-						
  )
 
     beginDocumentation()
@@ -42,11 +41,13 @@ doc ///
     	ipp(kk)
     Inputs
     	kk:Ring
+            the coefficient ring
     Outputs
-    	:List 	  of solutions 
+    	:List
+            of solutions 
     Description
     	Text
-	    The Bezout bound is 256 and the actual root count is 48.
+	    The Bezout bound is 256.
 	     
 	    Reference: "Computing all solutions to polynomial systems using
 	     homotopy continuation" by A. Morgan and A. Sommese (pages 115-138).
