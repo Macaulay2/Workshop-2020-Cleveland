@@ -75,7 +75,8 @@ export {
     "isFibration",
     "isProper",
     "pullback",
-    "isSurjective"
+    "isSurjective",
+    "isDominant"
 }
 
 
@@ -143,7 +144,7 @@ ToricMap * ToricMap := ToricMap => (g, f) -> (
     )
 
 -- local method; produces the outer normal vectors for each max cone
--- at the moment exported for dubugging purposes
+-- at the moment exported for debugging purposes
 outerNormals = method()
 outerNormals (NormalToricVariety,List) := Matrix => (X, sigma) -> (
     if not X.cache.?outerNormals then (
@@ -1497,6 +1498,18 @@ pullback(f,DY)
 assert (pullback(f,DY)==toricDivisor({3,7},X))
 ///
 
+
+TEST ///
+--Test for isDominant
+Y = toricProjectiveSpace 2
+X = hirzebruchSurface 1
+f = map(Y, X, matrix{{1,0},{0,-1}})
+assert isDominant (f)
+assert isSurjective f
+isDominant f
+isSurjective f
+assert isWellDefined f
+///
 
 -- Tests for isSurjective
 
