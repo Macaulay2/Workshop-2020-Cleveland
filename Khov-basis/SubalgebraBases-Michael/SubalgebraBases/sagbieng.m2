@@ -8,7 +8,7 @@ sagbiEngine = (Gens, maxnloops, printlevel) -> (
      (d, maxdeg, nloops, Pending) := 4:null;
      numnewsagbi := null;
 
-<< "***************" << endl;
+<< "=================" << endl;
 << "Initializiation Data" << endl;
 << "Gens = " << Gens << endl;
 << "Class of Gens = " << class(Gens) << endl;
@@ -27,7 +27,7 @@ sagbiEngine = (Gens, maxnloops, printlevel) -> (
 << "nloops = " << nloops << endl;
 << "Pending = " << Pending << endl;
 << "numnewsagbi = " << numnewsagbi << endl;
-<< "***************" << endl;
+<< "=================" << endl;
 
      R = ring Gens;
      maxdeg = maxnloops;
@@ -35,7 +35,7 @@ sagbiEngine = (Gens, maxnloops, printlevel) -> (
      RtoRS := null;
      RStoR := null;
 
-<< "***************" << endl;
+<< "=================" << endl;
 << "Second Initialization" << endl;
 << "R = " << R << endl;
 << "maxdeg = " << maxdeg << endl;
@@ -43,7 +43,7 @@ sagbiEngine = (Gens, maxnloops, printlevel) -> (
 << "Elements of Pending = " << peek(Pending) << endl;
 << "RtoRS = " << RtoRS << endl;
 << "RStoR = " << RStoR << endl;
-<< "***************" << endl;
+<< "=================" << endl;
 
      insertPending := (m) -> (
 	  -- append the entries of the one row matrix 'm' to Pending.
@@ -184,13 +184,15 @@ sagbiEngine = (Gens, maxnloops, printlevel) -> (
 << "Gens = " << Gens << endl;
 << "Pending = " << Pending << endl;
 << "Elements of Pending = " << peek(Pending) << endl;
+<< "=================" << endl;
 
      Pending#0 = {};
      d = grabLowestDegree();  -- initializes G
 
+<< "=================" << endl;
 << "d = " << d << endl;
 << "G = " << G << endl;
-
+<< "=================" << endl;
 
      d = d+1;
      nloops = d;
@@ -202,9 +204,11 @@ sagbiEngine = (Gens, maxnloops, printlevel) -> (
 	    << "--- degree " << d << " ----" << endl;
      	  tgbJ := timing gb(J, DegreeLimit=>d);
 
+<< "=================" << endl;
 << "J = " << J << endl;
 << "tgbJ = " << peek(tgbJ#1) << endl;
 << "tgbJ Generators = " << gens(tgbJ#1) << endl;
+<< "=================" << endl;
 
 	  gbJ := tgbJ#1;
 	  if printlevel > 0 then 
