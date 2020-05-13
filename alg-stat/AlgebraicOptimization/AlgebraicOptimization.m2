@@ -20,6 +20,7 @@ export {
   "projectiveDual",
   "conormalRing",
   "conormalVariety",
+  "multiDegreeEDDegree",
   -- Options
   "DualVariable",
   --Types and keys
@@ -56,6 +57,9 @@ conormalVariety (Ideal, ConormalRing) := Ideal => opts -> (I,C) -> (
   J := saturate(J', minors(c, jacI));
   J
 )
+TEST ///
+
+///
 
 
 projectiveDual = method(Options => options conormalRing);
@@ -74,7 +78,6 @@ projectiveDual Ideal := Ideal => opts -> I -> (
   sub(eliminate(primalCoordinates, J), S.DualRing)
 )
 
-
 TEST ///
 S = QQ[x_0..x_2]
 I = ideal(x_2^2-x_0^2+x_1^2)
@@ -82,6 +85,25 @@ dualI = projectiveDual(I)
 S = ring dualI
 assert( dualI == ideal(S_0^2 - S_1^2 - S_2^2)) 
 ///
+
+
+multiDegreeEDDegree = method();
+multiDegreeEDDegree Ideal := ZZ => I -> (
+  S := conormalRing ring I;
+  N := conormalVariety(I,S);
+  (mon,coef) := coefficients multidegree N;
+  sub(sum flatten entries coef, ZZ)
+)
+
+TEST ///
+R = QQ[x_0..x_3]
+J = ideal det(matrix{{x_0, x_1, x_2}, {x_1, x_0, x_3}, {x_2, x_3, x_0}})
+assert(multiDegreeEDDegree(J) == 13)
+///
+
+
+
+
 
 
 
@@ -193,6 +215,33 @@ Usage
 Caveat
   The ring containing $I$ and $p$ must have primal variables in degree $\{1,0\}$ and dual variables in degree $\{0,1\}$.
   Such a ring can be obtained using @TO{conormalRing}@.
+///
+
+doc ///
+Key
+  multiDegreeEDDegree
+  (multiDegreeEDDegree, Ideal)
+Inputs
+  I:Ideal
+Outputs
+  :ZZ
+    the ED-degree of $I$
+Usage
+  multiDegreeEDDegree(I)
+Description
+  Text
+    Computes the ED degree symbolically by taking the sum of multidegrees of the conormal ideal. 
+    See theorem 5.4 in Draisma et. al. The Euclidean Distance Degree of an Algebraic Variety https://arxiv.org/abs/1309.0049 
+
+    As an example, we see that the ED-degree of Caylay's cubic surface is 13
+  Example
+    R = QQ[x_0..x_3]
+    J = ideal det(matrix{{x_0, x_1, x_2}, {x_1, x_0, x_3}, {x_2, x_3, x_0}})
+    multiDegreeEDDegree(J)
+
+Caveat
+  The conormal variety cannot intersect the diagonal $\Delta(\mathbb{P}^{n-1}) \subset \mathbb{P}^{n-1} \times \mathbb{P}^{n-1}$.
+  At the moment this is not checked.
 ///
 
 TEST ///
