@@ -1063,7 +1063,7 @@ doc ///
 	    pullback(f, M)
     SeeAlso
         "Total coordinate rings and coherent sheaves"
-	(isSmooth, NormalToricVariety)
+	(isSimplicial, NormalToricVariety)
 	(symbol SPACE, OO, ToricDivisor)
         (pullback, ToricMap, ToricDivisor)
 ///
