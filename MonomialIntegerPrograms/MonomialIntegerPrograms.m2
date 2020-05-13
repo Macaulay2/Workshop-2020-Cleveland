@@ -22,6 +22,8 @@ export {
     "codimensionIP",    
     "degreeIP",
     "dimensionIP",
+    "loadSCIPCodimAndDegree",
+    "loadBuiltinCodimAndDegree",
     "monomialIdealsWithHilbertFunction",
     "topMinimalPrimesIP",
     "minimalPrimesIP",
@@ -100,10 +102,22 @@ degreeIP (MonomialIdeal) := o -> I -> (
     printStatement({zimplFile, solFile, errorFile, "Degree", dir});
     readScipCount(solFile)
     )
+    
 
---TODO: talk about this to decide if we want to alert/prompt users of this behavior.
-codim MonomialIdeal := {  } >> opts -> m -> ((cacheValue codim) codimensionIP) m;
-degree MonomialIdeal := m -> ((cacheValue degree) degreeIP) m;
+
+oldCodim = lookup(codim, MonomialIdeal);
+oldDegree = lookup(degree, MonomialIdeal);
+loadSCIPCodimAndDegree = method();
+installMethod(loadSCIPCodimAndDegree,() -> (
+  codim MonomialIdeal := {  } >> opts -> m -> ((cacheValue codim) codimensionIP) m;
+  degree MonomialIdeal := m -> ((cacheValue degree) degreeIP) m;
+))
+loadBuiltinCodimAndDegree = method();
+installMethod(loadBuiltinCodimAndDegree, () -> (
+  codim MonomialIdeal := oldCodim;
+  degree MonomialIdeal := oldDegree;
+))
+loadSCIPCodimAndDegree();
 
 
 -----------------------
