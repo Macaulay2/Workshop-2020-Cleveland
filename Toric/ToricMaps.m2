@@ -71,8 +71,7 @@ export {
     "isFibration",
     "isProper",
     "pullback",
-    "isSurjective",
-    "isDominant"
+    "isSurjective"
 }
 
 
