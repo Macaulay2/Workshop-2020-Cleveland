@@ -69,10 +69,8 @@ export {"pointNorm",
     "NEWTONONLY",
     "NUMITERATIONS",
     "REALITYCHECK",
-    "REALITYTEST"}
-=======
->>>>>>> kisun
-    "alphaCert",
+    "REALITYTEST",
+    "alphaCertified",
     "Hessian",--                                                                                                                      
     "computeOrthoBasis",--                                                                                                            
     "Aoperator",--these are added                                                                                                     
@@ -80,10 +78,6 @@ export {"pointNorm",
     "gammaKBound",--these are added                                                                                                   
     "certifyRootMultiplicityBound"--these are added  
     }
-<<<<<<< HEAD
-=======
->>>>>>> 8b54303403dc23232b432bfb6cd5ae7ed150bef9
->>>>>>> kisun
 exportMutable {}
 
 
