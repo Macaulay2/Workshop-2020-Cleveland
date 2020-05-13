@@ -113,3 +113,15 @@ Description
   ///
 
   
+end
+
+
+--Example
+path={"/Users/jo/Documents/GoodGit/M2020/Workshop-2020-Cleveland/alg-stat/AlgebraicOptimization"}|path  
+restart
+loadPackage "AlgebraicOptimization"
+M= QQ[x_1..x_2]
+I = ideal(4*(x_1^4+x_2^4),4*x_1^3,4*x_2^3)
+dualI = projectiveDual(I)
+radical I==I
+S = ring dualI
