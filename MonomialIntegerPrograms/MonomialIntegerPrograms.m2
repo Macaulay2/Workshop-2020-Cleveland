@@ -97,6 +97,12 @@ degreeIP (MonomialIdeal) := o -> I -> (
     readScipCount(solFile)
     )
 
+--TODO: talk about this to decide if we want to alert/prompt users of this behavior.
+codim MonomialIdeal := {  } >> opts -> m -> codimensionIP m;
+degree MonomialIdeal := degreeIP;
+
+
+
 monomialIdealsWithHilbertFunction = method(
     Options => {
 	BoundGenerators => -1,
