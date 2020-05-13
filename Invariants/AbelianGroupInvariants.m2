@@ -50,9 +50,17 @@ primaryInvariantsAbelian (Matrix, PolynomialRing, List) := Thing => (W, R, L) ->
 end
 
 
------test-----
+-----example using Amy's code-----
+needsPackage "Invariants"
 R = QQ[a_1..a_3]
 W = matrix{{1,0,1},{0,1,1}}
-primaryInvariantsAbelian(W,R,{3,3})
+elapsedTime abelianInvariants(W,R,{3,3})
 
-
+----same example using InvariantRing package----
+needsPackage "InvariantRing"
+-- adjoin primitive cubic root of unity to QQ
+kk = toField(QQ[z]/ideal(z^2+z+1))
+G = generateGroup({matrix{{z,0,0},{0,1,0},{0,0,z}},
+    matrix{{1,0,0},{0,z,0},{0,0,z}}},kk)
+S = kk[b_1..b_3]
+elapsedTime invariantRing(S,G)
