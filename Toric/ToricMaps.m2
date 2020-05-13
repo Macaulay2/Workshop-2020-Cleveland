@@ -38,6 +38,10 @@ newPackage(
       Email => "ranaj@lawrence.edu",
       HomePage => "https://sites.google.com/site/jranamath"},  
       {
+      Name => "Mahrud Sayrafi",
+      Email => "mahrud@umn.edu",
+      HomePage => "https://math.umn.edu/~mahrud/"},
+      {
       Name => "Gregory G. Smith", 
       Email => "ggsmith@mast.queensu.ca", 
       HomePage => "https://www.mast.queensu.ca/~ggsmith"},
@@ -1019,7 +1023,6 @@ doc ///
         (isProper, ToricMap)
 /// 
 
--- TODO: add (isSmooth, ToricDivisor) under SeeAlso
 doc ///
     Key
         (pullback, ToricMap, Module)
@@ -1060,6 +1063,7 @@ doc ///
 	    pullback(f, M)
     SeeAlso
         "Total coordinate rings and coherent sheaves"
+	(isSmooth, NormalToricVariety)
 	(symbol SPACE, OO, ToricDivisor)
         (pullback, ToricMap, ToricDivisor)
 ///
@@ -1106,6 +1110,9 @@ doc ///
 	   rays AA2
 	   DAA2=toricDivisor({1,0},AA2)
            pullback(f, DAA2)
+	Text
+	    See Theorem 4.2.12.b and Proposition 6.2.7 in Cox-Little-Schenck for
+	    more information.
     SeeAlso
         (isCartier, ToricDivisor)
         (pullback, ToricMap, Module)
