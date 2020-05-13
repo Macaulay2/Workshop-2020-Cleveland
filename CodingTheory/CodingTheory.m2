@@ -36,7 +36,6 @@ export {
     "ParityCheckRows",
     "ParityCheckMatrix",
     "Code",
-    "CodeRows",    
     -- Families of Codes
     "cyclicMatrix",
     "quasiCyclicCode",
@@ -51,7 +50,8 @@ export {
     "alphabet",
     "generic",
     "bitflipDecode",
-    "MaxIterations"
+    "MaxIterations",
+    "shorten"
     }
 exportMutable {}
 
@@ -259,6 +259,33 @@ net LinearCode := c -> (
 toString LinearCode := c -> toString c.Generators
 
 
+-- input: An [n,k] linear code C and an iteger i such that 1 <= i <= n.
+-- output: A new code from C by selecting only those codewords of C having a zero as their 
+--     i-th component and deleting the i-th component from these codewords. Thus, the resulting 
+--     code will have length n - 1. 
+
+shorten = method(TypicalValue => LinearCode)
+shorten ( LinearCode, ZZ ) := LinearCode => ( C, i ) -> (
+    local newL;
+        
+    newL = delete(0,apply(C.Generators, c -> if c#i == 0 then c else 0 ));
+    newL = entries submatrix' ( matrix newL, {i} );
+            
+    return linearCode ( C.BaseField , newL )    
+    )
+
+
+-- Given an [n, k] code C and a set S of distinct integers { i1, ..., ir}, each of which lies in 
+-- the range [1, n], construct a new code from C by selecting only those codewords of C having 
+-- zeros in each of the coordinate positions i1, ..., ir, and deleting these components. Thus, 
+-- the resulting code will have length n - r. 
+shorten ( LinearCode, List ) := LinearCode => ( C, i ) -> (
+
+    -- Branden will write this tomorrow. 
+            
+    )
+
+
 ------------------------------------------
 ------------------------------------------
 -- Binary Operations
@@ -266,7 +293,11 @@ toString LinearCode := c -> toString c.Generators
 ------------------------------------------
 
 -- equality of linear codes
-LinearCode == LinearCode := (C,D) -> ( C.Code == D.Code ) 
+LinearCode == LinearCode := (C,D) -> ( 
+    MC := matrix apply(C.Generators, a -> vector a );
+    MD := matrix apply(D.Generators, a -> vector a );
+    image MC == image MD
+    )
 
 
 
@@ -496,8 +527,9 @@ bitflipDecode(Matrix, Vector) := opts -> (H, v) -> (
 ------------------------------------------
 ------------------------------------------
 
--- Equality Test
+
 TEST ///
+-- Equality Test
 F = GF(2)
 codeLen = 10
 codeDim = 4
@@ -508,8 +540,9 @@ D = linearCode(F,codeLen,L)
 assert( C == D)
 ///
 
--- bitflipDecode
+
 TEST ///
+-- bitflipDecode
 -- Make sure that it only outputs codewords.
 R := GF(2);
 H := random(R^10, R^15)
@@ -521,6 +554,26 @@ for i from 1 to 50 do(
     );
 );
 ///
+
+TEST///
+-- shorten test
+F = GF(2)
+codeLen = 10
+codeDim = 4
+L = {{0, 1, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 1, 0, 1, 1, 0, 1, 0, 0}, {1, 1, 0, 0, 0, 1, 0, 0, 1, 0}, {1, 0, 0, 1, 0, 0, 0, 1, 1, 1}}
+H = L|L
+
+C2 = linearCode(F,codeLen,H)
+C3 = linearCode(F,codeLen,L)
+
+shortL = {{0, 1, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 1, 1, 1, 0, 1, 0, 0}, {1, 1, 0, 0, 1, 0, 0, 1, 0}}
+
+assert( numColumns ( C2.GeneratorMatrix ) == numColumns (shorten( C2, 3)).GeneratorMatrix + 1 )
+assert( numColumns ( C3.GeneratorMatrix ) == numColumns (shorten( C3, 3)).GeneratorMatrix + 1 )
+assert( shorten( C2, 3 ) == linearCode(F, shortL) )
+assert( shorten( C3, 3 ) == linearCode(F, shortL) )
+///
+
 
 ------------------------------------------
 ------------------------------------------
@@ -652,7 +705,7 @@ TEST ///
   assert(secondFunction(1,3,MyOption=>5) === 9)
 ///
   
->>>>>>> NateN-bitflip
+
        
 end
 
