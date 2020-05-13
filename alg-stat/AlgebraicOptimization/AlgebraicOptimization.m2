@@ -24,23 +24,25 @@ export {
   "DualVariable"
 }
 
--- Code here
-
-conormalVariety = method();
--- Computes the conormal variety with respect to the (polynomial)
--- objective function p
-conormalVariety (Ideal, RingElement) := Ideal => (I,p) -> (
-  if not ring I === ring p then error("Ideal and polynomial must be in same ring.");
-  R := ring p;
-  if not degreeLength R == 2 then error("ring doesn't have degree length 2") -- This could create the primal dual ring!
-)
 
 makePrimalDualRing = method(Options => {DualVariable => null});
 -- Creates a ring with the primal and dual variables
 makePrimalDualRing Ring := Ring => opts -> R -> (
+  if not degreeLength R == 1 then error "expected degree length 1";
   u := if opts.DualVariable === null then symbol u else opts.DualVariable;
   dualR := (coefficientRing R)[u_0..u_(#gens R - 1)];
   R ** dualR
+)
+
+
+conormalVariety = method(Options => options makePrimalDualRing);
+-- Computes the conormal variety with respect to the (polynomial)
+-- objective function p
+conormalVariety (Ideal, RingElement) := Ideal => opts -> (I,p) -> (
+  if not ring I === ring p then error("ideal and polynomial must be in same ring.");
+  R := ring p;
+  if not degreeLength R == 2 then error "degreeLength must be 2";
+  p
 )
 
 
@@ -163,6 +165,8 @@ Description
   Example
     basis({1,0}, S)
     basis({0,1}, S)
+Caveat
+  The ring $R$ must have degree length 1
 SeeAlso
   conormalVariety
 ///
