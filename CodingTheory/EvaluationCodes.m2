@@ -1,4 +1,5 @@
 needsPackage "SRdeformations"
+needsPackage "Polyhedra"
 
 EvaluationCode = new Type of HashTable
 
@@ -33,7 +34,7 @@ evaluationCode(Ring,List,Matrix) := EvaluationCode => opts -> (F,P,M) -> (
     
     -- We should check if all the points of P are in the same F-vector space.
     
-    m=numgens image M;
+    m:=numgens image M;
     R=F[t_1..t_m];
     S:=apply(numgens source M-1,i->vectorToMonomial(vector transpose M^{i},R));
     I:=intersect apply(P,i->ideal apply(m-1,j->R_j-i#(j)));
@@ -50,9 +51,40 @@ evaluationCode(Ring,List,Matrix) := EvaluationCode => opts -> (F,P,M) -> (
 	}
     )
    
+ToricCode = method(Options => {})
+
+ToricCode(ZZ,Matrix) := EvaluationCode => opts -> (q,M) -> (
+    -- Constructor for a toric code.
+    -- inputs: size of a field, an integer matrix 
+    -- outputs: the evaluation code defined by evaluating all monomials corresponding to integer 
+    ---         points in the convex hull of the columns of M at the points of the algebraic torus (F*)^n
+    
+    F:=GF(q, Variable=>z);
+    s:=set apply(q-1,i->z^i);
+    m:=numgens target M;
+    ss:=s;
+    for i from 1 to m-1 do (
+    	ss=set toList ss/splice**s;
+    );
+    P:=toList ss/splice;
+    R:=F[t_1..t_m];
+    Polytop:=convexHull M;
+    L:=latticePolints Polytop;
+    S:=apply(length(L),i->vectorToMonomial(vector L#i,R));
+    evaluationCode(F,P,S);
+)    
+    
+    
+       
 ------------This an example of an evaluation code----------------------------------------
 loadPackage "NormalToricVarieties"
 loadPackage "NAGtypes"
+loadPackage "Polyhedra"
+loadPackage "SRdeformations"
+loadPackage "RationalPoints"
+
+
+
 d=2
 q=2
 S=3
@@ -79,3 +111,41 @@ C_d=apply(Polynum,y->apply(0..length f -1,x->(flatten entries evaluate(y,XX#x))#
    
     
 ------------------------------------------------------------------------------------------------------------------------------
+d=2
+q=4
+m=2
+
+F_4=GF(4, Variable=>z)
+
+M=matrix{{1,2,5},{4,5,6}}
+P=convexHull M
+L=latticePoints P
+R=F_4[t_1..t_2]
+vector L#1
+f=vectorToMonomial(vector L#1,R)
+numgens target M
+I=ideal apply(m,j->R_j-1)
+
+s=set apply(q-1,i->z^i)
+ss=s
+for i from 1 to m-1 do (
+    ss=set toList ss/splice**s;
+    )
+P=toList ss/splice
+length(P)
+P#1
+S=apply(length(L),i->vectorToMonomial(vector L#i,R))
+
+evaluationCode F_4,PP,S
+S
+R
+
+
+P#1
+ToricCode(2,matrix{{1,2,5},{4,5,6}})
+M
+P
+s
+P#1
+PP=apply(length(P),i->toList P#i)
+PP#1
