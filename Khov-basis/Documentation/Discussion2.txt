@@ -1,0 +1,21 @@
+Questions:
+    What structure should we have?  
+    How should valuations be represented?
+    Where are we going?
+
+Information:
+     The MO flags appear to do nothing.
+      
+Project:
+     Combine the two SAGBI approaches into a single algorithm.
+     Design a new structure for the package
+     Prepare to split out subroutines from the SAGBI approaches.
+
+Homework:
+     1. Create a (start to a) package for subAlgebra
+     2. Clean up existing code and move functions to be defined independently.
+     3. Look at both sagbiengine and sagbitop try to move towards combining.
+
+     Michael: 3.
+     Tim:     1.
+     Elise:   2.
