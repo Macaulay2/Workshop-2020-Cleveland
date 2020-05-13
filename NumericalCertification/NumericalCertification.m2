@@ -332,6 +332,115 @@ certifyCount(PolySystem, List) := (f, X) -> (
 
 
 
+
+--------------------------------
+--Start Multiple Roots Section--
+--------------------------------
+--make everything work with exact arithmetic.
+
+
+Hessian = method(TypicalValue => Matrix)
+Hessian(PolySystem) := f->(
+    return(jacobian jacobian f)
+    )
+
+Hessian(PolySystem,Point) := (f,x0)->(
+    return(evaluate(Hessian(f),x0))
+    )
+
+rationalUnitaryMatrix = method(TypicalValue => Matrix)
+rationalUnitaryMatrix(ZZ) := n->(
+    M := random(QQ^n,QQ^n,UpperTriangular=>true);
+    S := M-transpose(M);
+    I := id_(QQ^n);
+    A := inverse(S-I)*(S+I);
+    return(A)
+    )
+
+--this probably needs a better name
+--this is currently non-deterministic. 
+computeOrthoBasis = method(TypicalValue => Matrix)
+computeOrthoBasis(PolySystem,Point) := (F,x0)->(
+    n := F#NumberOfPolys;
+    J := evaluate(jacobian F,x0);
+    (singularValues,P,Q) := SVD sub(J,CC);
+    kappa := number(singularValues,sigma->abs sigma < 1e-8);
+    --V := submatrix(inverse(Q),n-kappa..n-1);
+    V := submatrix(rationalUnitaryMatrix(n),0..kappa-1);
+    return(V)
+    )
+
+Aoperator = method(TypicalValue => Matrix)
+Aoperator(PolySystem,Point,Matrix) := (F,x0,V)->(
+    n := F#NumberOfPolys;
+    eqs := equations F;
+    J := evaluate(jacobian F,x0);
+    --is there a way to get individual equations as polySystems?
+    HessianList := apply(eqs,f->Hessian(polySystem matrix{{f}},x0));
+    kappa := numcols V;
+    --this is bad, find a better way of writing this.
+    A := J + 1/2*sum(kappa,i->fold(apply(n,j->transpose(V_{i})*HessianList#j*V_{i}*transpose(V_{i})),(A,B)->A||B));
+    return(A)
+    )
+
+Hoperator = method(TypicalValue => Matrix)
+Hoperator(PolySystem,Point,Matrix) := (F,x0,V)->(
+    J := evaluate(jacobian F,x0);
+    H := J*V*(transpose V);
+    return(H)
+    )
+
+gammaKBound = method(TypicalValue => Number)
+gammaKBound(PolySystem,Point) := (F,x0)->(
+    eqs := equations F;
+    pointNormx := pointNorm x0;
+    --this seems like it can be simplified.
+    degs := select(flatten apply(eqs, i -> degree i), i -> i =!= 0);
+    deltaF := diagonalMatrix flatten apply(degs, i -> sqrt(i * (pointNormx)^(i-1))); 
+    V := computeOrthoBasis(F,x0);
+    A := Aoperator(F,x0,V);
+    H := Hoperator(F,x0,V);
+    --where does the square come from?
+    mu := max {1, polySysNorm(F) * (norm(2,inverse(A-H) * deltaF))^2};
+    gammaK := mu*(max degs)^(3/2)/(2*pointNormx);
+    return(gammaK)
+    )
+
+--needs better name and output
+--needs to be checked a bit
+certifyRootMultiplicityBound = method(TypicalValue => ZZ)
+certifyRootMultiplicityBound(PolySystem,Point) := (F,x0)->(
+    eqs := equations F;
+    pointNormx := pointNorm x0;
+    V := computeOrthoBasis(F,x0);
+    A := Aoperator(F,x0,V);
+    H := Hoperator(F,x0,V);
+    kappa := numcols computeOrthoBasis(F,x0);
+    --this seems like it can be simplified. (repeat from gammaKBound)
+    degs := select(flatten apply(eqs, i -> degree i), i -> i =!= 0);
+    deltaF := diagonalMatrix flatten apply(degs, i -> sqrt(i * (pointNormx)^(i-1))); 
+    mu := max {1, polySysNorm(F) * (norm(2,inverse(A-H) * deltaF))^2};
+    
+    lhs := norm(2,evaluate(F,x0)) + norm(2,H)*(max degs)/4;
+    rhs := pointNormx^4/(2*mu^4*(max degs)^5*norm(2,inverse(A-H)));
+    return(lhs < rhs,2^kappa)
+    )
+
+
+------------------------------
+--End Multiple Roots Section--
+------------------------------
+
+
+
+
+
+
+
+
+
+
+
 intervalOption = method(TypicalValue => IntervalOption)
 intervalOption(Option) := o -> new IntervalOption from (
     (a,b) := toSequence o;
