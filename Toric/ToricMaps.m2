@@ -38,10 +38,6 @@ newPackage(
       Email => "ranaj@lawrence.edu",
       HomePage => "https://sites.google.com/site/jranamath"},  
       {
-      Name => "Mahrud Sayrafi",
-      Email => "mahrud@umn.edu",
-      HomePage => "https://math.umn.edu/~mahrud/"},
-      {
       Name => "Gregory G. Smith", 
       Email => "ggsmith@mast.queensu.ca", 
       HomePage => "https://www.mast.queensu.ca/~ggsmith"},
@@ -334,7 +330,7 @@ isFibration ToricMap := Boolean => f -> (
     isProper f and gens gb matrix f == id_(ZZ^(dim target f)))
 
 isDominant = method()
-isDominant ToricMap := Boolean => f -> (rank matrix f == dim target f)
+isDominant ToricMap := Boolean => f -> (rank matrix f == rank matrix rays target f)
 
 outerNorm = method()
 outerNorm (NormalToricVariety,List) := Sequence => (X,sigma) -> (
@@ -431,7 +427,6 @@ pullback (ToricMap, CoherentSheaf) := CoherentSheaf => (f, F) -> sheaf(source f,
 -- Given ToricMap f: X -> Y, with simplicial X and Y, returns the RingMap Cox Y -> Cox X
 inducedMap ToricMap := RingMap => opts -> (cacheValue inducedMap) (f -> (
     Y := target f;
---    if not isSmooth Y then error "-- expected the target variety to be smooth";
     S := ring Y;
     R := ring source f;
     map(R, S, apply(numgens S, i -> (
@@ -440,9 +435,6 @@ inducedMap ToricMap := RingMap => opts -> (cacheValue inducedMap) (f -> (
 	    )))
     ))
 
---As Greg points out, this is wrong.  To see this, consider the inclusion of A^2 into
---P^2 - the induced map code would define the homomorphism C[x_0,x_1,x_2]->C[x_1,x_2] that
---sends x_0 to zero, so the kernel is <x_0>, which is not the zero ideal.
 ideal ToricMap := Ideal => f -> (
     --First find the ideal in K[T_Y] of image of the map from T_X to T_Y
     --The map K[T_Y] -> K[T_X] is given by t_i mapsto prod_j t_j^{a_ij}, where A = matrix(f),
@@ -1053,6 +1045,7 @@ doc ///
         (isProper, ToricMap)
 /// 
 
+-- TODO: add (isSmooth, ToricDivisor) under SeeAlso
 doc ///
     Key
         (pullback, ToricMap, Module)
@@ -1140,9 +1133,6 @@ doc ///
 	   rays AA2
 	   DAA2=toricDivisor({1,0},AA2)
            pullback(f, DAA2)
-	Text
-	    See Theorem 4.2.12.b and Proposition 6.2.7 in Cox-Little-Schenck for
-	    more information.
     SeeAlso
         (isCartier, ToricDivisor)
         (pullback, ToricMap, Module)
@@ -1565,7 +1555,7 @@ Y = normalToricVariety({{1,0,0},{0,1,0}},{{0,1}})
 f1 = map(X,Y,matrix{{1,0,0},{0,1,0}})
 f2 = map(Y,X,matrix{{1,0},{0,1},{0,0}})
 assert isSurjective f1
---assert isSurjective f2
+assert isSurjective f2
 ///
 
 -- Test 3: Embedding open subsets I
@@ -1573,7 +1563,7 @@ TEST ///
 X = affineSpace 2
 Y = toricProjectiveSpace 2 
 f = map(Y,X,matrix{{1,0},{0,1}})
-assert (not isSurjective f1)
+assert (not isSurjective f)
 ///
 
 -- Test 4: Embedding open subsets II
@@ -1584,12 +1574,12 @@ f = map(Y,X,matrix{{1,0},{1,1}})
 assert (not isSurjective f)
 ///
 
--- Test 5: Blowdon
+-- Test 5: Blowdown
 TEST ///
 X = affineSpace 2
 Y = toricBlowup({0,1},X) 
-f1 = map(X,Y,matrix{{1,0},{0,1}})
-assert isSurjective f1
+f = map(X,Y,matrix{{1,0},{0,1}})
+assert isSurjective f
 ///
 
 
