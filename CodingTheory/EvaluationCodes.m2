@@ -75,12 +75,12 @@ ToricCode(ZZ,Matrix) := EvaluationCode => opts -> (q,M) -> (
     R:=F[t_1..t_m];
     Polytop:=convexHull M;
     L:=latticePoints Polytop;
-    LL:=apply(L,l->entries l);
-    G:=matrix apply(LL,i->apply(P,j->product apply(m,k->(j#k)^(i#k#0))));
+    LL:=transpose matrix apply(L, i-> first entries transpose i);
+    G:=matrix apply(entries LL,i->apply(P,j->product apply(m,k->(j#k)^(i#k))));
     
     new EvaluationCode from{
 	symbol AmbientSpace => F^(#P),
-	symbol ExponentsMatrix => L,
+	symbol ExponentsMatrix => LL,
 	symbol Code => image G
 	}
 )   
