@@ -18,6 +18,7 @@ integralClosure(Ideal, RingElement, ZZ) := opts -> (I,a,D) -> (
     ID = (trim I)^D;
     phi := map(M, module ID, mapback gD);
     assert(isHomogeneous phi);
+    assert(isWellDefined phi);
 --    error "debug me";
 --    extendIdeal(ID,a^D,phi)
     extendIdeal phi
@@ -130,6 +131,7 @@ TEST///
     assert(extendIdeal phi == c*K)
     assert(extendIdeal phi'== d*K)    
 ///
+
 TEST///
     S = ZZ/101[a,b,c]/ideal(a^3-b*(b-c)*(b+c))
     K =ideal(a,b)
@@ -143,6 +145,31 @@ TEST///
     assert(extendIdeal phi == c*K)
     assert(extendIdeal phi'== (b+c)*K)    
     integralClosure I == I
+///
+
+TEST///
+-*
+  restart
+  needs "bug-integralClosure.m2"
+*-
+    S = ZZ/101[a,b,c]/ideal(a^3-b^2*c)
+    K =ideal(a,b)
+    I = c*(b+c)*K
+    M = module (c*K)
+    M' = module((b+c)*K)
+    phi = map(M,module I,(b+c)*id_M)
+    phi' = map(M',module I,c*id_M')
+    assert(isWellDefined phi)
+    assert(isWellDefined phi')    
+    assert(extendIdeal(I,phi)== c*K)
+    assert(extendIdeal(I,phi')== (b+c)*K)    
+    integralClosure I -- wrong!!
+    
+    S = ZZ/101[a,b,c]/ideal(a^3-b^2*c)
+    ID = ideal(b^2*c+b*c^2,a*b*c+a*c^2)
+    M = (cokernel matrix {{-a, 0, 0, -c}, {b, -a, 0, 0}}) ** S^{-3}
+    phi = map(module ID, M, matrix {{1_S, 0}, {0, 1}})  -- not well defined?
+    isWellDefined phi
 ///
 
 
