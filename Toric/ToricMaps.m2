@@ -69,9 +69,9 @@ newPackage(
 export {
     "ToricMap",
     "isFibration",
-    "outerNormals",
     "isProper",
-    "pullback"
+    "pullback",
+    "isSurjective"
 }
 
 
@@ -337,6 +337,8 @@ outerNorm (NormalToricVariety,List) := Sequence => (X,sigma) -> (
     X.cache.outerNorm#sigma = {transpose D#0, transpose D#1});
     return X.cache.outerNorm#sigma)
 
+
+
 isInterior = method()
 isInterior (NormalToricVariety,List,Matrix) := Boolean => (X,sigma,rho) -> (
    if dim X =!= rank target rho then error "the dimension of the ray is not correct";
@@ -349,8 +351,9 @@ isInterior (NormalToricVariety,List,Matrix) := Boolean => (X,sigma,rho) -> (
 
 
 
---isSurjective is running, needs tested
+isSurjective = method()
 isSurjective ToricMap := Boolean => (f) -> (
+    if not isWellDefined(f) then return "the map is not well defined";
     if not isDominant(f) then return false;
     targetCones := reverse flatten drop(values orbits target f, -1);
     sourceCones := flatten drop(values orbits source f, -1);
@@ -362,16 +365,14 @@ isSurjective ToricMap := Boolean => (f) -> (
     for sigma in interiorSourceCones do (
    	imageSourceCones = append(imageSourceCones, ((matrix f) * (transpose matrix{sigma})) );
 	);
---test which cones imageSourceCones land in; deleted cone if hit
+    if targetCones == {} then return true;
     for rho in imageSourceCones do(
-    	if (targetCones =={}) then return true;
     	for sigma in targetCones do(
-            if isInterior(target f, sigma, rho)
-	    then (hitConeIndex := position(targetCones, i->i==sigma ); targetCones = drop(targetCones, hitConeIndex););
-	    );
+            if isInterior(target f, sigma, rho) then targetCones = delete(sigma,targetCones));
     	);
-    false
+    return targetCones == {}
    )
+
 
 
 
@@ -974,6 +975,58 @@ doc ///
 	    source h
 	    target h
 ///	
+
+doc ///
+    Key
+    	isSurjective
+        (isSurjective, ToricMap)
+    Headline 
+        whether a toric map is surjective (currently broken)
+    Usage 
+        isSurjective f
+    Inputs 
+        f:ToricMap
+    Outputs 
+        :Boolean 
+	    that is true if the map is surjective
+    Description
+        Text
+	    A morphism $f : X\to Y$ is surjective if $f(X) = Y$ as sets. 
+	    A toric morphism is injecive, if the induced map of fans is 
+	    surjective.
+	Text
+	    Projections are surjective
+	Example
+	    X = toricProjectiveSpace 2
+	    isSurjective map(X,X,1)
+
+	    Y = hirzebruchSurface 2
+	    XY = X ** Y
+	    p1 = map(X,XY, matrix{{1,0,0,0},{0,1,0,0}})
+	    p2 = map(Y,XY, matrix{{0,0,1,0},{0,0,0,1}})
+	    isSurjective p1
+	    isDominant
+	    isSurjective p2
+	Text
+	    Blowdowns are surjective
+	Example	
+    	    X = affineSpace 2
+	    Y = toricBlowup({0,1},X)
+	    f = map(X,Y,matrix{{1,0},{0,1}})
+	    isSurjective f
+	Text
+	    The inclusion of the A^2 in P^2 is not surjective
+	Example
+	    X = affineSpace 2
+	    Y = toricProjectiveSpace 2
+	    f = map(Y,X,matrix{{1,0},{0,1}})
+	    isSurjective f
+ 
+    SeeAlso
+        (ToricMap)
+/// 
+   
+
     	
 
 ------------------------------------------------------------------------------
