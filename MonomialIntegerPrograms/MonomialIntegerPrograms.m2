@@ -304,18 +304,16 @@ readAllMonomialIdeals (String, Ring) := (solFile, R) -> (
 
 readAllPrimes = method()
 readAllPrimes (String, Ring) := (solFile, R) -> (
-    n := numgens R;
-    L := lines get solFile;
-    mons := apply(select("X#([[:digit:]]+)", L#0), a -> R_(value substring(a, 2)));
-    L = drop(L, 1);
-    allSolutions := apply(L, 
-	ln -> (
-	    l := drop(separate(",",ln), 1);
-	    l = drop(l, -1);
-	    monomialIdeal for i from 0 to #l-1 list if value(l#i)==1 then mons#i else continue
-	    )
-	)
-    )
+  n := numgens R;
+  L := lines get solFile;
+  mons := apply(select("X#([[:digit:]]+)", L#0), a -> R_(value substring(a, 2)));
+  L = drop(L, 1);
+  allSolutions := apply(L, ln -> (
+    l := value replace("\\(", "-(", ln);  --faster parse: offloads parsing to value
+                                          --replaces "24(24)" with "24-(24)" which allows value to parse the line as a sequence.
+    monomialIdeal for i from 1 to #l-1 list if l#i===1 then mons#(i-1) else continue
+  ))
+)
 
 readScipSolution = method();
 readScipSolution (String) := solFile -> (
