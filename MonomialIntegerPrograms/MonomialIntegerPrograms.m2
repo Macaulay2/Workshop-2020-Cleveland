@@ -29,7 +29,7 @@ export {
     "GradedBettis",
     "KnownDim",
     "IgnorePrimes",
-    "TallyTables"
+    "Count"
     }
 exportMutable {
     "ScipPrintLevel"
@@ -102,7 +102,7 @@ degreeIP (MonomialIdeal) := o -> I -> (
 
 bettiTablesWithHilbertFunction = method(
     Options => {
-	TallyTables => false,
+	Count => false,
 	BoundGenerators => -1,
 	FirstBetti => "",
 	GradedBettis => ""
@@ -114,7 +114,7 @@ bettiTablesWithHilbertFunction (List, Ring) := o -> (D, R) -> (
 	BoundGenerators => o.BoundGenerators, 
 	FirstBetti => o.FirstBetti, 
 	GradedBettis => o.GradedBettis);
-    if o.TallyTables then(
+    if o.Count then(
 	tally apply(M, m -> betti res m)
 	)
     else(
@@ -948,9 +948,9 @@ assert(all(monomialIdealsWithHilbertFunction({1,4,10,19,31}, R), I -> numgens I 
 TEST /// --bettis
 R = QQ[x,y,z];
 assert(#bettiTablesWithHilbertFunction({1,2,1,0}, R) == 2)
-assert(values bettiTablesWithHilbertFunction({1,2,1,0}, R, TallyTables => true) == {3, 6})
+assert(values bettiTablesWithHilbertFunction({1,2,1,0}, R, Count => true) == {3, 6})
 assert(#bettiTablesWithHilbertFunction({1,3,4,2,1,0}, R) == 8)
-assert(values bettiTablesWithHilbertFunction({1,3,4,2,1,0}, R, TallyTables => true) == {54, 30, 24, 18, 9, 6, 12, 3})
+assert(values bettiTablesWithHilbertFunction({1,3,4,2,1,0}, R, Count => true) == {54, 30, 24, 18, 9, 6, 12, 3})
 R = QQ[x,y,z,w];
 assert(#bettiTablesWithHilbertFunction({1,4,3,1,0}, R) == 10)
 b = new BettiTally from {(0,{0},0) => 1, (1,{2},2) => 7, (1,{3},3) => 1, (2,{3},3) => 10, (2,{4},4) => 4, (2,{5},5) => 1, (3,{4},4) => 5, (3,{5},5) => 4, (3,{6},6) => 2, (4,{5},5) => 1, (4,{6},6) => 1, (4,{7},7) => 1} 
