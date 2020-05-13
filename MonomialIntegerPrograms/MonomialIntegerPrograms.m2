@@ -961,6 +961,8 @@ TEST /// --hilbert
 R = QQ[x,y,z];
 assert(#monomialIdealsWithHilbertFunction({1,2,1,0}, R) == 9)
 assert(#monomialIdealsWithHilbertFunction({1,3,4,2,1,0}, R) == 156)
+assert(#monomialIdealsWithHilbertFunction({1,3,4,2,1,0}, R, FirstBetti => 6) == 72)
+assert(b = {0,0,2,3,0,1}; Mb = monomialIdealsWithHilbertFunction({1,3,4,2,1,0}, R, GradedBettis => b); #Mb == 30)
 R = QQ[x,y,z,w];
 assert(#monomialIdealsWithHilbertFunction({1,4,3,1,0}, R) == 244)
 assert(all(monomialIdealsWithHilbertFunction({1,4,10,19,31}, R), I -> numgens I == 1))
