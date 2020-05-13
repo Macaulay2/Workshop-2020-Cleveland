@@ -85,7 +85,7 @@ firstFunction ZZ := String => n -> (
    return toList apply(noVar, i ->random(K) )
    ) 
 
-randomRatPt Ideal = I -> (
+randomRatPt = I -> (
 	R:=ring I;
 	if char R == 0 then error "expected a finite ground field";
 	if not class R === PolynomialRing then error "expected an ideal in a polynomial ring";
@@ -122,34 +122,29 @@ randomRatPt Ideal = I -> (
 --Function to check if random point is in the variety
 evaluate= method( Options=>{});
 
-
-
-
-
-
-evaluate(Ideal) :=opts->(I1)->
-(genList:= first entries gens I1;
-K:=coefficientRing ring I1;point:=createRandomPoints(I);
-eval:= map(K,ring I1,point);
-  j:=0;while(j< #genList) do (
-          tempEval:=eval(genList_j);
-          if not (tempEval==0) then return false else 
-               j=j+1);
-          if (tempEval ==0) then 
-   return point  else return false;
-   )
+evaluate(Ideal) :=opts->(I1)->(
+	genList:= first entries gens I1;
+	K:=coefficientRing ring I1;point:=createRandomPoints(I1);
+	eval:= map(K,ring I1,point);
+	j:=0;
+	while(j< #genList) do (
+        tempEval:=eval(genList_j);
+        if not (tempEval==0) then return false;
+		j=j+1
+	);
+    if (tempEval ==0) then return point else return false;
+)
  
- evaluate(ZZ,Ideal):=opts->(n1,I1)->(
-     j:=0;
-     local point;
-      while( j<n1) do (
-	    point=evaluate(I1);
-	    if not (point===false ) then return point 
-	  else    j=j+1;
-	   );
-       return false;)
-	      
- )
+evaluate(ZZ,Ideal):=opts->(n1,I1)->(
+    j:=0;
+    local point;
+    while( j<n1) do (
+		point=evaluate(I1);
+	    if not (point===false ) then return point; 
+	  	j=j+1;
+	);
+    return false;
+);
   
    
 -- A function with an optional argument
@@ -170,76 +165,10 @@ secondFunction(ZZ,List) := o -> (m,n) -> (
 
 beginDocumentation()
 
-doc ///
-    Key
-        createRandomPoints
-	(createRandomPoints, Ideal)
-    Headline
-        prototype: This function is provided by the package  TO create a random point.
-    Usage
-        createRandomPoints(I)
-    Inputs
-    I: Ideal inside a polynomial ring 
-    Outputs
-        :A random List of elements which will provid a random point in the affine plane.
-	    
-    Description
-        --Text  
-       	   -- Some words to say things. You can even use LaTeX $R = k[x,y,z]$. 
---
-        Example
-            R = QQ[x,y]
-     	    I= ideal(random(2,R),random(3,R))
-	    createRandomPoint I
-	    
-	   
-        --Text
-       	   -- More words, but don't forget to indent. 
-	   
-   -- SeeAlso
-    
-    Caveat
-    
-///
-
-doc ///
-    Key
-        evaluate
-	(evaluate, Ideal)
-	(evaluate,ZZ,Ideal)
-    Headline
-        prototype: This function in  the package will  will and tell if some random point is in the variety or not.
-    Usage
-        evaluate(I)
-    Inputs
-    I: Ideal inside a polynomial ring. 
-    Outputs
-        :A random point if it is in the variety otherwise False.
-	    
-    Description
-        --Text  
-       	   -- Some words to say things. You can even use LaTeX $R = k[x,y,z]$. 
---
-        Example
-            R = QQ[x,y]
-     	    I= ideal(random(2,R),random(3,R))
-	    evaluate I
-	    
-	   
-        --Text
-       	   -- More words, but don't forget to indent. 
-	   
-   -- SeeAlso
-    
-    Caveat
-    
-///
-
 document { 
 	Key => RandomRationalPoints,
 	Headline => "an example Macaulay2 package",
-	EM "RandomRationalPoints", " is an example package which can
-	be used as a template for user packages."
+	EM "RandomRationalPoints", " is an example package which can be used as a template for user packages."
 	}
 document {
 	Key => {firstFunction, (firstFunction,ZZ)},
@@ -311,17 +240,17 @@ TEST ///
 ///
   
  --Need help to write this part 
-  TEST///
-R=QQ[t_1..t_3];
-I = ideal(t_1,t_2+t_3);
-assert(#(createRandomPoints(I))==3)
-   ///
-   
- TEST///
+TEST///
  R=QQ[t_1..t_3];
-I = ideal(t_1,t_2+t_3, t_1-1);
-assert(evaluate(I)===false); 
- ///   
+ I = ideal(t_1,t_2+t_3);
+ assert(#(createRandomPoints(I))==3)
+///
+   
+TEST///
+ R=QQ[t_1..t_3];
+ I = ideal(t_1,t_2+t_3, t_1-1);
+ assert(evaluate(I)===false); 
+///   
        
 end
 
