@@ -69,9 +69,9 @@ newPackage(
 export {
     "ToricMap",
     "isFibration",
-    "outerNormals",
     "isProper",
-    "pullback"
+    "pullback",
+    "isSurjective"
 }
 
 
@@ -113,6 +113,7 @@ map(NormalToricVariety, NormalToricVariety, ZZ) := ToricMap => opts -> (Y, X, i)
     )
 NormalToricVariety#id = X -> map(X,X,1)
 
+-*
 - ToricMap := ToricMap => f -> new ToricMap from {
     symbol source => source f,
     symbol target => target f,
@@ -125,6 +126,7 @@ ZZ * ToricMap := ToricMap => (r, f) -> new ToricMap from {
     symbol matrix => r * matrix f,
     symbol cache => new CacheTable
     }
+*-
 
 ToricMap * ToricMap := ToricMap => (g, f) -> (
     if target f =!= source g then error "-- expected composable maps";
@@ -339,6 +341,8 @@ outerNorm (NormalToricVariety,List) := Sequence => (X,sigma) -> (
     X.cache.outerNorm#sigma = {transpose D#0, transpose D#1});
     return X.cache.outerNorm#sigma)
 
+
+
 isInterior = method()
 isInterior (NormalToricVariety,List,Matrix) := Boolean => (X,sigma,rho) -> (
    if dim X =!= rank target rho then error "the dimension of the ray is not correct";
@@ -350,9 +354,9 @@ isInterior (NormalToricVariety,List,Matrix) := Boolean => (X,sigma,rho) -> (
    false)
 
 
-
---isSurjective is running, needs tested
+isSurjective = method()
 isSurjective ToricMap := Boolean => (f) -> (
+    if not isWellDefined(f) then return "the map is not well defined";
     if not isDominant(f) then return false;
     targetCones := reverse flatten drop(values orbits target f, -1);
     sourceCones := flatten drop(values orbits source f, -1);
@@ -364,18 +368,13 @@ isSurjective ToricMap := Boolean => (f) -> (
     for sigma in interiorSourceCones do (
    	imageSourceCones = append(imageSourceCones, ((matrix f) * (transpose matrix{sigma})) );
 	);
---test which cones imageSourceCones land in; deleted cone if hit
+    if targetCones == {} then return true;
     for rho in imageSourceCones do(
-    	if (targetCones =={}) then return true;
     	for sigma in targetCones do(
-            if isInterior(target f, sigma, rho)
-	    then (hitConeIndex := position(targetCones, i->i==sigma ); targetCones = drop(targetCones, hitConeIndex););
-	    );
+            if isInterior(target f, sigma, rho) then targetCones = delete(sigma,targetCones));
     	);
-    false
+    return targetCones == {}
    )
-
-
 
 
 -- THIS IS AN UNEXPORTED METHOD FROM "NormalToricVarieties"
@@ -384,8 +383,8 @@ isSurjective ToricMap := Boolean => (f) -> (
 -- Cartier divisor, which in M2 are ordered as in `max X`.
 cartierCoefficients = value NormalToricVarieties#"private dictionary"#"cartierCoefficients";
 
--- Helper function for pullback that caches the index of the maximal cone
--- in the target which contains the image of each ray of the source.
+-- Unexported helper function for pullback that caches the index of the maximal
+-- cone in the target which contains the image of each ray of the source.
 rayTargets = (cacheValue rayTargets) (f -> (
     m := matrix f;
     X := source f;
@@ -399,8 +398,7 @@ rayTargets = (cacheValue rayTargets) (f -> (
 		b -> b <= 0)))
     ))
 
--- TODO: if target f is smooth, we can cache the pullback of exceptional divisors
--- and use linearity of the pullback
+-- Given ToricMap f: X -> Y and a Cartier ToricDivisor D on Y, returns a ToricDivisor on X
 pullback = method()
 pullback (ToricMap, ToricDivisor) := ToricDivisor => (f, D) -> (
     if not isCartier D then error "-- expected a Cartier divisor";
@@ -409,15 +407,14 @@ pullback (ToricMap, ToricDivisor) := ToricDivisor => (f, D) -> (
     X := source f;
     rayList := rays X;
     maxConeIndices := rayTargets f;
-    sum for i to # rayList - 1 list (
+    sum for i to #rayList - 1 list (
 	imageRho := m * transpose matrix {rayList_i};
 	-- see Thm 4.2.12.b and Prop 6.2.7 in Cox-Little-Schenck (Prop 6.1.20 in the preprint)
 	-- note: in CLS they use inner normals, whereas we use outer normals, hence the different sign
 	(transpose cartierData_(maxConeIndices_i) * imageRho)_(0,0) * X_i)
     )
 
--- Given ToricMap f: X -> Y and a Module on smooth Y, returns a Module on X
--- TODO: use OO on Divisor to test this and below
+-- Given ToricMap f: X -> Y and a Module on Cox Y, returns a Module on Cox X
 pullback (ToricMap, Module) := Module => (f, M) -> (
     if ring target f =!= ring M then error "-- expected module over the Cox ring of the target";
     (inducedMap f) ** M)
@@ -425,17 +422,17 @@ pullback (ToricMap, Module) := Module => (f, M) -> (
 -- Given ToricMap f: X -> Y and a CoherentSheaf on smooth Y, returns the CoherentSheaf on X
 pullback (ToricMap, CoherentSheaf) := CoherentSheaf => (f, F) -> sheaf(source f, pullback(f, module F))
 
--- Given ToricMap f: X -> Y, with smooth Y, returns the RingMap Cox Y -> Cox X
-inducedMap ToricMap := RingMap => opts -> f -> (
-    R := ring source f;
+-- Given ToricMap f: X -> Y, with simplicial X and Y, returns the RingMap Cox Y -> Cox X
+inducedMap ToricMap := RingMap => opts -> (cacheValue inducedMap) (f -> (
     Y := target f;
 --    if not isSmooth Y then error "-- expected the target variety to be smooth";
     S := ring Y;
+    R := ring source f;
     map(R, S, apply(numgens S, i -> (
 		exps := entries pullback(f, Y_i);
 		product(numgens R, j -> R_j^(exps#j))
 	    )))
-    )
+    ))
 
 --As Greg points out, this is wrong.  To see this, consider the inclusion of A^2 into
 --P^2 - the induced map code would define the homomorphism C[x_0,x_1,x_2]->C[x_1,x_2] that
@@ -445,10 +442,10 @@ ideal ToricMap := Ideal => f -> (
     saturate (kernel inducedMap f, B)
     )
 
+-- Given ToricMap f: X -> Y, with smooth Y, returns a map Cl Y -> Cl X
 classGroup ToricMap := Matrix => f -> (
     X := source f;
     Y := target f;
-    if not isSmooth Y then error "-- expected the target variety to be smooth";
     divisorMap := map(weilDivisorGroup X, weilDivisorGroup Y,
 	transpose matrix apply(# rays Y, i -> entries pullback (f, Y_i))
 	);
@@ -1000,41 +997,85 @@ doc ///
         (isProper, ToricMap)
 /// 
 
+-- TODO: add (isSmooth, ToricDivisor) under SeeAlso
 doc ///
     Key
-        (pullback, ToricMap, ToricDivisor)
         (pullback, ToricMap, Module)
         (pullback, ToricMap, CoherentSheaf)
-    Headline 
+    Headline
+        compute the pullback of a module or coherent sheaf under a toric map
+    Usage
+        M' = pullback(f, M)
+        F' = pullback(f, F)
+    Inputs
+        f : ToricMap
+	    a map between toric varieties
+	M : Module
+	    a module, or coherent sheaf, on the target of f
+    Outputs
+        M' : Module
+	    the pullback of M under f
+    Description
+        Text
+            Given a toric map $f: X \to Y$ with simplicial $X$ and $Y$, modules
+	    and coherent sheaves on the Cox ring of $Y$ can be pulled back to
+	    a module or coherent sheaf on the Cox ring of $X$ via $f$.
+	Text
+	    In this example, we compute the pullback of the structure sheaf of
+	    a divisor.
+	Example
+            PP1 = toricProjectiveSpace 1;
+            X = PP1 ** PP1
+            f = map(PP1, X, matrix{{1,0}})
+	    F = OO toricDivisor({1,1}, PP1)
+	    pullback(f, F)
+	Text
+	    We can also pull back modules on the Cox ring.
+	Example
+	    S = ring PP1
+	    R = ring X
+	    M = module F
+	    pullback(f, M)
+    SeeAlso
+        "Total coordinate rings and coherent sheaves"
+	(symbol SPACE, OO, ToricDivisor)
+        (pullback, ToricMap, ToricDivisor)
+///
+
+doc ///
+    Key
+         pullback
+        (pullback, ToricMap, ToricDivisor)
+    Headline
         compute the pullback of a Cartier divisor under a toric map
-    Usage 
+    Usage
         pullback(f, D)
-    Inputs 
+    Inputs
         f : ToricMap
 	    a map between toric varieties
 	D : ToricDivisor
 	    a toric divisor on the target of f
-    Outputs 
-        : ToricDivisor 
+    Outputs
+        : ToricDivisor
 	    the pullback of D under f
     Description
         Text
             Torus-invariant Cartier divisors pull back under a toric map by
-	    composing the toric map with the support function of the divisor.	    
+	    composing the toric map with the support function of the divisor.
     	Text
 	    In the first example, we consider the projection from a product of
-	    two projective lines onto the first factor.  The pullback of a
-	    point is just a fibre in the product.
-    	Example  
+	    two projective lines onto the first factor. The pullback of a point
+	    is just a fibre in the product.
+	Example
             PP1 = toricProjectiveSpace 1;
-	    X = PP1 ** PP1;
+            X = PP1 ** PP1
             f = map(PP1, X, matrix{{1,0}})
-      	    assert isWellDefined f
-    	    D = toricDivisor({1,1}, PP1)
+	    D = toricDivisor({1,1}, PP1)
 	    pullback(f, D)
 	Text
-	    This example illustrates that the pullback of a line through the origin in 
-	    affine 2-space under the blowup map is a line together with the exceptional divisor.
+	    This example illustrates that the pullback of a line through the
+	    origin in affine 2-space under the blowup map is a line together
+	    with the exceptional divisor.
 	Example
 	   AA2 = affineSpace 2;
 	   max AA2
@@ -1044,9 +1085,10 @@ doc ///
 	   DAA2=toricDivisor({1,0},AA2)
            pullback(f, DAA2)
     SeeAlso
-        (entries, ToricDivisor)
+        (isCartier, ToricDivisor)
+        (pullback, ToricMap, Module)
+        (pullback, ToricMap, CoherentSheaf)
 ///
-
 
 doc ///
     Key
@@ -1102,6 +1144,100 @@ doc ///
 	    source h
 	    target h
 ///	
+
+doc ///
+    Key
+    	isSurjective
+        (isSurjective, ToricMap)
+    Headline 
+        whether a toric map is surjective
+    Usage 
+        isSurjective f
+    Inputs 
+        f : ToricMap
+    Outputs 
+        : Boolean 
+	    that is true if the map is surjective
+    Description
+        Text
+	    A morphism $f : X\to Y$ is surjective if $f(X) = Y$ as sets. 
+	    A toric morphism is surjective, if the induced map of fans is 
+	    surjective.
+	Text
+	    Projections are surjective
+	Example
+	    X = toricProjectiveSpace 2
+	    Y = hirzebruchSurface 2
+	    XY = X ** Y
+	    p1 = map(X,XY, matrix{{1,0,0,0},{0,1,0,0}})
+	    p2 = map(Y,XY, matrix{{0,0,1,0},{0,0,0,1}})
+	    isSurjective p1
+	    isSurjective p2
+	Text
+	    Blowdowns are surjective
+	Example	
+    	    X = affineSpace 2
+	    Y = toricBlowup({0,1},X)
+	    f = map(X,Y,matrix{{1,0},{0,1}})
+	    isSurjective f
+	Text
+	    The inclusion of the A^2 in P^2 is not surjective
+	Example
+	    X = affineSpace 2
+	    Y = toricProjectiveSpace 2
+	    f = map(Y,X,matrix{{1,0},{0,1}})
+	    isSurjective f
+ 
+    SeeAlso
+        (ToricMap)
+/// 
+   
+doc ///
+    Key
+        (classGroup, ToricMap)
+    Headline 
+        make the induce map between the corresponding class groups
+    Usage 
+        classGroup f
+    Inputs 
+        f : ToricMap
+    Outputs 
+        : Matrix 
+	    representing the map of abelian groups between the corresponding
+	    class groups
+    Description
+        Text
+	    Given a toric map $f : X \to Y$, this method returns the induced
+	    map of abelian groups from the class group of $Y$ to the class
+	    group of $X$.  In other words, {\tt classGroup} is a contravariant
+	    functor on the category of normal toric varieties.	    
+	Text
+	    Our first example produces the induced map from the class group of
+	    the projective line to the class group of the first Hirzebruch
+	    surface.
+	Example
+	    X = hirzebruchSurface 1;
+	    Y = toricProjectiveSpace 1;
+	    f = map(Y, X, matrix {{1, 0}})
+	    f' = classGroup f
+	    assert (source f' == classGroup Y)
+	    assert (target f' == classGroup X) 
+	Text
+	    The next example gives the induced map from the class group of the
+	    projective plane to the class group of the first Hirzebruch
+	    surface.
+	Example
+	    nefGenerators X
+	    Z = toricProjectiveSpace 2;
+	    g = map(Z, X, matrix {{1, 0}, {0,-1}})
+	    assert isWellDefined g
+	    g' = classGroup f
+	    assert (source g' == classGroup Y)
+	    assert (target g' == classGroup X) 	    
+    SeeAlso
+        (classGroup, NormalToricVariety)
+/// 
+
     	
 
 ------------------------------------------------------------------------------
@@ -1331,6 +1467,9 @@ DY=toricDivisor({1,0,1},Y)
 pullback(f,DY)
 assert (pullback(f,DY)==toricDivisor({3,7},X))
 ///
+
+
+-- Tests for isSurjective
 
 
 
