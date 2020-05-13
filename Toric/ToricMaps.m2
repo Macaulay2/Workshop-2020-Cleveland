@@ -376,46 +376,54 @@ isSurjective ToricMap := Boolean => (f) -> (
 
 
 
--- THIS LOCAL METHOD ALREADY APPEARS IN "NormalToricVarieties"
-cartierCoefficients = method ()
-cartierCoefficients ToricDivisor := List => D -> (
-    X := variety D;
-    rayMatrix := matrix rays X;
-    coeffs := transpose (matrix {entries D});
-    apply (max X, sigma -> coeffs^sigma // rayMatrix^sigma)
-    )
+-- THIS IS AN UNEXPORTED METHOD FROM "NormalToricVarieties"
+-- In the notation of Theorem 4.2.8 in Cox-Little-Schenck, this function returns
+-- the characters $m_\sigma$ for each maximal cone $\sigma$ in the fan of a
+-- Cartier divisor, which in M2 are ordered as in `max X`.
+cartierCoefficients = value NormalToricVarieties#"private dictionary"#"cartierCoefficients";
 
+-- Helper function for pullback that caches the index of the maximal cone
+-- in the target which contains the image of each ray of the source.
+rayTargets = (cacheValue rayTargets) (f -> (
+    m := matrix f;
+    X := source f;
+    Y := target f;
+    maxCones := max Y;
+    -- find a maximal cone containing the image of each ray
+    for ray in rays X list (
+	imageRho := m * transpose matrix {ray};
+	position(maxCones,
+	    sigma -> all(flatten entries(outerNormals(Y, sigma) * imageRho),
+		b -> b <= 0)))
+    ))
 
+-- TODO: if target f is smooth, we can cache the pullback of exceptional divisors
+-- and use linearity of the pullback
 pullback = method()
 pullback (ToricMap, ToricDivisor) := ToricDivisor => (f, D) -> (
     if not isCartier D then error "-- expected a Cartier divisor";
     cartierData := cartierCoefficients D;
+    m := matrix f;
     X := source f;
     rayList := rays X;
-    n := # rayList;
-    Y := target f;
-    maxCones := max Y;
-    sum for i to n-1 list (
-	imageRho := (matrix f) * (transpose matrix {rayList_i});
-	-- find a maximal cone containing the image of each ray
-	maxConeIndex := position(maxCones, 
-	    sigma -> all(flatten entries(outerNormals(Y, sigma) * imageRho), b -> b <= 0));
-	-- see Thm 4.2.12.b and Prop 6.2.7 in Cox-Little-Schenck (6.1.20 in the preprint)
-	((transpose imageRho * cartierData_(maxConeIndex))_(0,0)) * X_i
-	)
+    maxConeIndices := rayTargets f;
+    sum for i to # rayList - 1 list (
+	imageRho := m * transpose matrix {rayList_i};
+	-- see Thm 4.2.12.b and Prop 6.2.7 in Cox-Little-Schenck (Prop 6.1.20 in the preprint)
+	-- note: in CLS they use inner normals, whereas we use outer normals, hence the different sign
+	(transpose cartierData_(maxConeIndices_i) * imageRho)_(0,0) * X_i)
     )
 
-
+-- Given ToricMap f: X -> Y and a Module on smooth Y, returns a Module on X
+-- TODO: use OO on Divisor to test this and below
 pullback (ToricMap, Module) := Module => (f, M) -> (
-    R := ring source f;
-    S := ring target f;
-    if R =!= ring M then error "-- expected module over the Cox ring of the source";
-    f ** M    
-    )
+    if ring target f =!= ring M then error "-- expected module over the Cox ring of the target";
+    (inducedMap f) ** M)
 
-pullback (ToricMap, CoherentSheaf) := CoherentSheaf => (f, F) -> sheaf pullback(f, module F)
+-- Given ToricMap f: X -> Y and a CoherentSheaf on smooth Y, returns the CoherentSheaf on X
+pullback (ToricMap, CoherentSheaf) := CoherentSheaf => (f, F) -> sheaf(source f, pullback(f, module F))
 
-
+-- Given ToricMap f: X -> Y, with smooth Y, returns the RingMap Cox Y -> Cox X
 inducedMap ToricMap := RingMap => opts -> f -> (
     R := ring source f;
     Y := target f;
@@ -426,6 +434,7 @@ inducedMap ToricMap := RingMap => opts -> f -> (
 		product(numgens R, j -> R_j^(exps#j))
 	    )))
     )
+
 ideal ToricMap := Ideal => f -> (
     B := ideal ring target f;
     saturate (kernel inducedMap f, B)
@@ -866,6 +875,8 @@ doc ///
 doc ///
     Key
         (pullback, ToricMap, ToricDivisor)
+        (pullback, ToricMap, Module)
+        (pullback, ToricMap, CoherentSheaf)
     Headline 
         compute the pullback of a Cartier divisor under a toric map
     Usage 
@@ -1134,6 +1145,8 @@ Y = toricProjectiveSpace 1
 f = map(Y,X, matrix{{1,0}})
 D = toricDivisor({-2,3}, Y)
 assert (pullback(f,D) == toricDivisor({3,0,-2},X))
+assert (pairs pullback(f,OO D) === pairs OO toricDivisor({3,0,-2},X))
+assert (module pullback(f,OO D) === module OO toricDivisor({3,0,-2},X))
 ///
 
 TEST ///
