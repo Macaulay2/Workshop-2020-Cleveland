@@ -42,7 +42,12 @@ conormalVariety (Ideal, RingElement) := Ideal => opts -> (I,p) -> (
   if not ring I === ring p then error("ideal and polynomial must be in same ring.");
   R := ring p;
   if not degreeLength R == 2 then error "degreeLength must be 2";
-  p
+  c := codim I;
+  jacI := diff(basis({1,0}, R), transpose gens I);
+  jacBar := diff(basis({1,0}, R), p) || jacI;
+  J' := I + minors(c+1, jacBar);
+  J := saturate(J', minors(c, jacI));
+  J
 )
 
 
@@ -63,6 +68,24 @@ projectiveDual Ideal := Ideal => opts -> I -> (
   J := saturate(J', minors(c, sub(jacI,S)));
   xVars := (gens R) / (i -> sub(i,S));
   sub(eliminate(xVars, J), dualR)
+)
+
+-- TODO This should either replace projectiveDual or be deleted!
+projectiveDual2 = method(Options => options makePrimalDualRing);
+projectiveDual2 Ideal := Ideal => opts -> I -> (
+  if not isHomogeneous I then error("Ideal has to be homogeneous");
+  R := ring I;
+  S := makePrimalDualRing(R, opts);
+  primalVars := basis({1,0},S);
+  dualVars := basis({0,1},S);
+  numVars := numgens R;
+  
+  I = sub(I,S);
+  p := (primalVars * transpose dualVars)_(0,0);
+  J := conormalVariety(I, p);
+  dualIndices := flatten entries dualVars / index // sort;
+  (dualR, i) := selectVariables(dualIndices, S);
+  sub(eliminate(flatten entries primalVars, J), dualR)
 )
 
 TEST ///
@@ -174,6 +197,19 @@ SeeAlso
 doc ///
 Key
   conormalVariety
+Headline
+  todo
+Inputs
+  I:Ideal
+    defined in the primal variables only
+  p:RingElement
+    objective function
+Usage
+  conormalVariety(I,p)
+
+Caveat
+  The ring containing $I$ and $p$ must have primal variables in degree $\{1,0\}$ and dual variables in degree $\{0,1\}$.
+  Such a ring can be obtained using @TO{makePrimalDualRing}@.
 ///
 
 TEST ///
