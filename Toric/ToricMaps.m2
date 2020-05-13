@@ -113,6 +113,7 @@ map(NormalToricVariety, NormalToricVariety, ZZ) := ToricMap => opts -> (Y, X, i)
     )
 NormalToricVariety#id = X -> map(X,X,1)
 
+-*
 - ToricMap := ToricMap => f -> new ToricMap from {
     symbol source => source f,
     symbol target => target f,
@@ -125,6 +126,7 @@ ZZ * ToricMap := ToricMap => (r, f) -> new ToricMap from {
     symbol matrix => r * matrix f,
     symbol cache => new CacheTable
     }
+*-
 
 ToricMap * ToricMap := ToricMap => (g, f) -> (
     if target f =!= source g then error "-- expected composable maps";
