@@ -318,8 +318,11 @@ isFibration = method()
 -- https://math.stackexchange.com/questions/132689/elementary-proof-that-if-a-is-a-matrix-map-from-mathbbzm-to-mathbb-zn
 -- There may be a way to fix this, based on Cox, Little, Schenck
 -- chapter 7, but it needs work.
+-- 
+-- We follow proposition 2.1 in DMM 
 
-isFibration ToricMap := Boolean => f -> 1 == minors(dim target f, matrix f)
+isFibration ToricMap := Boolean => f -> (
+    isProper f and  1 == minors(dim target f, matrix f))
 
 isDominant = method()
 isDominant ToricMap := Boolean => f -> (rank matrix f == dim target f)
@@ -348,70 +351,79 @@ isInterior (NormalToricVariety,List,Matrix) := Boolean => (X,sigma,rho) -> (
 
 --isSurjective is running, needs tested
 isSurjective ToricMap := Boolean => (f) -> (
-targetCones := reverse flatten drop(values orbits target f, -1);
-sourceCones := flatten drop(values orbits source f, -1);
-interiorSourceCones := {};
-for sigma in sourceCones do(
-  interiorSourceCones = append(interiorSourceCones, sum( (rays source f)_sigma));
-);
-imageSourceCones := {};
-for sigma in interiorSourceCones do (
-   imageSourceCones = append(imageSourceCones, ((matrix f) * (transpose matrix{sigma})) );
-);
---test which cones imageSourceCones land in; deleted cone if hit
-for rho in imageSourceCones do(
-    if (targetCones =={}) then return true;
-    for sigma in targetCones do(
-        if isInterior(target f, sigma, rho)
-	then (hitConeIndex := position(targetCones, i->i==sigma ); targetCones = drop(targetCones, hitConeIndex););
+    if not isDominant(f) then return false;
+    targetCones := reverse flatten drop(values orbits target f, -1);
+    sourceCones := flatten drop(values orbits source f, -1);
+    interiorSourceCones := {};
+    for sigma in sourceCones do(
+  	interiorSourceCones = append(interiorSourceCones, sum((rays source f)_sigma));
+    	);
+    imageSourceCones := {};
+    for sigma in interiorSourceCones do (
+   	imageSourceCones = append(imageSourceCones, ((matrix f) * (transpose matrix{sigma})) );
 	);
-    );
-false
-)
+--test which cones imageSourceCones land in; deleted cone if hit
+    for rho in imageSourceCones do(
+    	if (targetCones =={}) then return true;
+    	for sigma in targetCones do(
+            if isInterior(target f, sigma, rho)
+	    then (hitConeIndex := position(targetCones, i->i==sigma ); targetCones = drop(targetCones, hitConeIndex););
+	    );
+    	);
+    false
+   )
 
 
 
 
--- THIS LOCAL METHOD ALREADY APPEARS IN "NormalToricVarieties"
-cartierCoefficients = method ()
-cartierCoefficients ToricDivisor := List => D -> (
-    X := variety D;
-    rayMatrix := matrix rays X;
-    coeffs := transpose (matrix {entries D});
-    apply (max X, sigma -> coeffs^sigma // rayMatrix^sigma)
-    )
+-- THIS IS AN UNEXPORTED METHOD FROM "NormalToricVarieties"
+-- In the notation of Theorem 4.2.8 in Cox-Little-Schenck, this function returns
+-- the characters $m_\sigma$ for each maximal cone $\sigma$ in the fan of a
+-- Cartier divisor, which in M2 are ordered as in `max X`.
+cartierCoefficients = value NormalToricVarieties#"private dictionary"#"cartierCoefficients";
 
+-- Helper function for pullback that caches the index of the maximal cone
+-- in the target which contains the image of each ray of the source.
+rayTargets = (cacheValue rayTargets) (f -> (
+    m := matrix f;
+    X := source f;
+    Y := target f;
+    maxCones := max Y;
+    -- find a maximal cone containing the image of each ray
+    for ray in rays X list (
+	imageRho := m * transpose matrix {ray};
+	position(maxCones,
+	    sigma -> all(flatten entries(outerNormals(Y, sigma) * imageRho),
+		b -> b <= 0)))
+    ))
 
+-- TODO: if target f is smooth, we can cache the pullback of exceptional divisors
+-- and use linearity of the pullback
 pullback = method()
 pullback (ToricMap, ToricDivisor) := ToricDivisor => (f, D) -> (
     if not isCartier D then error "-- expected a Cartier divisor";
     cartierData := cartierCoefficients D;
+    m := matrix f;
     X := source f;
     rayList := rays X;
-    n := # rayList;
-    Y := target f;
-    maxCones := max Y;
-    sum for i to n-1 list (
-	imageRho := (matrix f) * (transpose matrix {rayList_i});
-	-- find a maximal cone containing the image of each ray
-	maxConeIndex := position(maxCones, 
-	    sigma -> all(flatten entries(outerNormals(Y, sigma) * imageRho), b -> b <= 0));
-	-- see Proposition 6.1.20 in Cox-Little-Schenck
-	((transpose imageRho * cartierData_(maxConeIndex))_(0,0)) * X_i
-	)
+    maxConeIndices := rayTargets f;
+    sum for i to # rayList - 1 list (
+	imageRho := m * transpose matrix {rayList_i};
+	-- see Thm 4.2.12.b and Prop 6.2.7 in Cox-Little-Schenck (Prop 6.1.20 in the preprint)
+	-- note: in CLS they use inner normals, whereas we use outer normals, hence the different sign
+	(transpose cartierData_(maxConeIndices_i) * imageRho)_(0,0) * X_i)
     )
 
-
+-- Given ToricMap f: X -> Y and a Module on smooth Y, returns a Module on X
+-- TODO: use OO on Divisor to test this and below
 pullback (ToricMap, Module) := Module => (f, M) -> (
-    R := ring source f;
-    S := ring target f;
-    if R =!= ring M then error "-- expected module over the Cox ring of the source";
-    f ** M    
-    )
+    if ring target f =!= ring M then error "-- expected module over the Cox ring of the target";
+    (inducedMap f) ** M)
 
-pullback (ToricMap, CoherentSheaf) := CoherentSheaf => (f, F) -> sheaf pullback(f, module F)
+-- Given ToricMap f: X -> Y and a CoherentSheaf on smooth Y, returns the CoherentSheaf on X
+pullback (ToricMap, CoherentSheaf) := CoherentSheaf => (f, F) -> sheaf(source f, pullback(f, module F))
 
-
+-- Given ToricMap f: X -> Y, with smooth Y, returns the RingMap Cox Y -> Cox X
 inducedMap ToricMap := RingMap => opts -> f -> (
     R := ring source f;
     Y := target f;
@@ -422,6 +434,7 @@ inducedMap ToricMap := RingMap => opts -> f -> (
 		product(numgens R, j -> R_j^(exps#j))
 	    )))
     )
+
 ideal ToricMap := Ideal => f -> (
     B := ideal ring target f;
     saturate (kernel inducedMap f, B)
@@ -819,9 +832,51 @@ doc ///
         (isComplete, NormalToricVariety)
 /// 
 
+
+--Finding the right spot
+doc ///
+    Key
+    	isFibration
+        (isFibration, ToricMap)
+    Headline 
+        whether a toric map is a fibration
+    Usage 
+        isFibration f
+    Inputs 
+        f:ToricMap
+    Outputs 
+        :Boolean 
+	    that is true if the map is a fibration
+    Description
+        Text
+	    A proper morphism $f : X\to Y$ is a fibration if $f_*(OO_X) = OO_Y$.
+	    A proper toric map is a fibration if and only if the underlying map
+	    of lattices is a surjection.
+	Text
+	    The first example shows that the projection from the first
+	    Hirzebruch surface to the projective line is a fibration.
+	Example
+	    X = hirzebruchSurface 1;
+	    Y = toricProjectiveSpace 1;
+	    f = map(Y,X,matrix{{1,0}})
+	    isFibration f
+	Text
+	    Here is an example of a proper map which is not a fibration.
+	Example
+	    Z = weightedProjectiveSpace {1,1,2};
+	    g = map(Z,X,matrix{{1,0},{0,-2}})
+	    isWellDefined g
+	    isFibration g
+	    isProper g
+    SeeAlso
+        (isProper, ToricMap)
+/// 
+
 doc ///
     Key
         (pullback, ToricMap, ToricDivisor)
+        (pullback, ToricMap, Module)
+        (pullback, ToricMap, CoherentSheaf)
     Headline 
         compute the pullback of a Cartier divisor under a toric map
     Usage 
@@ -846,7 +901,7 @@ doc ///
             PP1 = toricProjectiveSpace 1;
 	    X = PP1 ** PP1;
             f = map(PP1, X, matrix{{1,0}})
-	    assert isWellDefined f
+      	    assert isWellDefined f
     	    D = toricDivisor({1,1}, PP1)
 	    pullback(f, D)
 	Text
@@ -889,6 +944,37 @@ doc ///
 	    inducedMap f
 ///
 
+doc ///
+    Key
+    	(symbol *, ToricMap, ToricMap)
+    Headline
+    	compute the composition of two toric maps
+    Usage
+    	g * f
+    Inputs
+    	f : ToricMap
+	    a map between toric varieties
+	g : ToricMap
+	    a map between toric varieties
+    Outputs
+    	: ToricMap
+	    the composition g*f from source f to target g
+    Description
+    	Text
+	    Given two maps with the target of f equal to the source of
+	    g, this function returns the toric map from source f to
+	    target g that is the composition of g and f.
+	Example
+	    PP1 = toricProjectiveSpace 1
+	    X = PP1**PP1
+	    Y = toricBlowup({0,2}, X)
+	    f= map(X,Y,1)
+	    g = map(PP1,X,matrix{{1,0}})
+    	    h=g*f
+	    source h
+	    target h
+///	
+    	
 
 ------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
@@ -1059,6 +1145,8 @@ Y = toricProjectiveSpace 1
 f = map(Y,X, matrix{{1,0}})
 D = toricDivisor({-2,3}, Y)
 assert (pullback(f,D) == toricDivisor({3,0,-2},X))
+assert (pairs pullback(f,OO D) === pairs OO toricDivisor({3,0,-2},X))
+assert (module pullback(f,OO D) === module OO toricDivisor({3,0,-2},X))
 ///
 
 TEST ///
