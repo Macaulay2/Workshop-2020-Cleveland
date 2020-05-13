@@ -6,7 +6,7 @@ newPackage(
         Authors => {
              {Name => "Luigi Ferraro", Email => "ferrarl@wfu.edu", HomePage => "http://users.wfu.edu/ferrarl/"},
              {Name => "Federico Galetto", Email => "f.galetto@csuohio.edu", HomePage => "https://math.galetto.org"},
-             {Name => "Francesca Gandini", Email => "", HomePage => ""},
+             {Name => "Francesca Gandini", Email => "fra.gandi.phd@gmail.com", HomePage => "https://sites.google.com/a/umich.edu/gandini/home"},
 	     {Name => "Hang Huang", Email => "hhuang235@tamu.edu", HomePage => "https://math.tamu.edu/~hhuang"},
 	     {Name => "Matthew Mastroeni", Email => "mmastro@okstate.edu", HomePage => "https://mnmastro.github.io/"},
              {Name => "Xianglong Ni", Email => "xlni@berkeley.edu", HomePage => "https://math.berkeley.edu/~xlni/"}
@@ -30,8 +30,8 @@ needsPackage("Elimination", Reload => true)
 
 torusInvariants = method()
 torusInvariants (Matrix, PolynomialRing) := List => (W, R) -> (
-    r := numRows W;
-    n := numColumns W;
+    r := numRows W; --dimesion of torus
+    n := numColumns W; --dimension of ring. We could get rid of the R by using QQ[n gens]. Or use R for error message
     local C;
     if r == 1 then C = convexHull W else C = convexHull( 2*r*W|(-2*r*W) );
     C = (latticePoints C)/vector;
@@ -56,7 +56,7 @@ torusInvariants (Matrix, PolynomialRing) := List => (W, R) -> (
 	scan(n, i -> (
         u := m*R_i;
         v' := v + W_i;
-        if ((U#?v') and all(S#v', m' -> u%m' =!= 0_R)) then(
+        if ((U#?v') and all(S#v', m' -> u%m' =!= 0_R)) then( --% command may by slower than lin alg computation
                 S#v' = S#v'|{u};
                 U#v' = U#v'|{u};
 		)
