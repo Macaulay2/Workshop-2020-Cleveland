@@ -40,7 +40,7 @@ doc ///
 	    
 	    See also: post to sci.math.num-analysis by Sjirk Boon
 	    
-	    See also: http://homepages.math.uic.edu/~jan/Demo/reimer5.html.	    
+	    See also: http://homepages.math.uic.edu/~jan/Demo/boon.html	    
 	Example
 	    F = boon(QQ)
 	    time sols = solveSystem F;
