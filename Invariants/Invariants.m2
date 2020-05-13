@@ -4,9 +4,9 @@ newPackage(
         Version => "1.0", 
         Date => "May 12, 2020",
         Authors => {
-             {Name => "Luigi Ferraro", Email => "ferrarl@wfu.edu",
-              HomePage => "http://users.wfu.edu/ferrarl/"},
+             {Name => "Luigi Ferraro", Email => "ferrarl@wfu.edu", HomePage => "http://users.wfu.edu/ferrarl/"},
              {Name => "Federico Galetto", Email => "f.galetto@csuohio.edu", HomePage => "https://math.galetto.org"},
+	     {Name => "Matthew Mastroeni", Email => "mmastro@okstate.edu", HomePage => "https://mnmastro.github.io"},
              {Name => "Xianglong Ni", Email => "xlni@berkeley.edu", HomePage => "https://math.berkeley.edu/~xlni/"}
              },
         Headline => "Computing Invariants for Tori and Abelian Groups",
