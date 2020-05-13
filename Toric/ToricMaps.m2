@@ -324,7 +324,7 @@ isFibration = method()
 -- We follow proposition 2.1 in DMM 
 
 isFibration ToricMap := Boolean => f -> (
-    isProper f and  1 == minors(dim target f, matrix f))
+    isProper f and gens gb matrix f == id_(ZZ^(dim target f)))
 
 isDominant = method()
 isDominant ToricMap := Boolean => f -> (rank matrix f == dim target f)
