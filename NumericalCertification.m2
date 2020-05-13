@@ -8,6 +8,7 @@ newPackage(
     	HomePage => "http://people.math.gatech.edu/~klee669",
     	Headline => "numerical certification",
 	PackageExports => {"NumericalAlgebraicGeometry"},
+	Configuration => {"ALPHACERTIFIEDexec" => "alphaCertified"},
     	--DebuggingMode => true		 -- set to true only during development
     	DebuggingMode => false,
 	AuxiliaryFiles => true
@@ -48,8 +49,15 @@ export {"pointNorm",
     "intervalJacMat",
     "sqabsForGaussianRational",
     "conjugateGaussian",
-    "conjugateGaussianRationalMatrix"}
+    "conjugateGaussianRationalMatrix",
+    "degCoeff",
+    "toACertifiedPoly",
+    "pointBlock",
+    "toACertifiedPoint",
+    "alphaCert"}
 exportMutable {}
+
+ALPHACERTIFIEDexe=(options NumericalCertification).Configuration#"ALPHACERTIFIEDexec"
 
 
 Interval = new Type of List
@@ -791,6 +799,121 @@ krawczykMethod(PolySystem, IntervalOptionList) := o -> (polySys, option) -> (
 
 
 
+-- a function converting a polynomial into alphaCertified input format.
+-- input : polynomial
+-- output : the first line is the number of terms of an input.
+--    	    the second to last lines represent terms of an input polynomial in a way that
+--    	    the first (variable-many) numbers are  degrees of each variable in the monomial and 
+--          the last two numbers are real and imaginary parts of its coefficient
+degCoeff = method()
+degCoeff(RingElement) := f -> (
+    variables := gens ring f;
+    R := coefficientRing ring f;
+    if precision R =!= infinity then (
+	R = R;
+	)
+    else if R =!= QQ then (
+	R = coefficientRing R;
+	)
+    else (
+ 	R = R;
+	); 
+    (E, C) := coefficients f;
+    E = flatten entries E;
+    C = flatten entries C;
+    strList := apply(length E, i -> 
+        replace("[{,},,]", "", toString(apply(variables, j -> 
+	    degree(j, E#i)) | {realPart sub(C#i, QQ), imaginaryPart sub(C#i, QQ)}))
+	);
+    prepend(length E, strList)
+    )
+    
+    
+    
+
+
+-- a function converting a polynomial system into alphaCertified input format.
+-- input : polynomial system
+-- output : a directory to a temporary file which can be used as an input for alphaCertified.
+--          the first line consists of the number of variables and the number of polynomials.
+--    	    each block represents information about each polynomial in the system.
+toACertifiedPoly = method()
+toACertifiedPoly(PolySystem) := P -> (
+    fn := temporaryFileName();
+    (numOfVars, numOfPolys) := (P.NumberOfVariables, P.NumberOfPolys);
+    fn << toString numOfVars | " " | toString numOfPolys << endl;
+    fn << "" << endl;
+    R := coefficientRing ring P;
+    if precision R =!= infinity then (
+	R = R;
+	)
+    else if R =!= QQ then (
+	R = coefficientRing R;
+	)
+    else (
+ 	R = R;
+	); 
+    polyList := flatten entries P.PolyMap;
+    strList := apply(polyList, i -> 
+	degCoeff i);
+    apply(flatten strList, i -> fn << i << endl);
+    fn << close;
+    fn
+    )
+
+
+
+-- a function converting a point into a block of digits for alphaCertified input.
+-- input : Matrix representing a coordinate of a point or Point
+-- output : a list of coordinates of a given point.
+pointBlock = method()
+pointBlock(Point) := P -> (
+    pointBlock matrix P
+    )
+pointBlock(Matrix) := M -> (
+    R := ring first flatten entries M;
+    if precision R =!= infinity then (
+	R = R;
+	)
+    else if R =!= QQ then (
+	R = coefficientRing R;
+	)
+    else (
+ 	R = R;
+	); 
+    strList := apply(flatten entries M, i -> 
+        replace("[{,},,]", "", toString({realPart i, imaginaryPart i}))
+	);
+    strList = append(strList, "")    
+    )
+    
+    
+
+toACertifiedPoint = method()
+toACertifiedPoint(List) := L -> (
+    fn := temporaryFileName();
+    n := length L;
+    fn << toString n << endl;
+    fn << "" << endl;
+    apply(L, i -> 
+	apply(pointBlock i, j -> 
+	    fn << j << endl)
+	);
+    fn << close;
+    fn
+    )
+    
+alphaCert = method()
+alphaCert(PolySystem, List) := (P, L) -> (
+    fin1 := toACertifiedPoly P;
+    fin2 := toACertifiedPoint L;
+    run("cd " | ALPHACERTIFIEDexe |"; ./alphaCertified " | fin1 |" "| fin2);
+    )
+    
+    
+    
+
+
 
 
 TEST ///
@@ -819,6 +942,8 @@ restart
 check "NumericalCertification"
 uninstallAllPackages()
 installPackage "NumericalCertification"
+debug needsPackage("NumericalCertification", Configuration => {"ALPHACERTIFIEDexec" => "~/alphaCertifiedLinux64/"})
+needsPackage("NumericalCertification", Configuration => {"ALPHACERTIFIEDexec" => "~/alphaCertifiedLinux64/"})
 viewHelp NumericalCertification
 
 
