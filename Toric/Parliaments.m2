@@ -698,6 +698,47 @@ kernel ToricReflexiveSheafMap := ToricReflexiveSheaf => opts -> (
       basisSet);
     toricReflexiveSheaf(W,X)))
 
+image(ToricReflexiveSheafMap) := f -> (
+    X := variety f;
+    mat := matrix f;
+    sourceVB := source f;
+    targetVB := target f;
+    sourceVS := ambient sourceVB;
+    targetVS := ambient targetVB;
+    K := coefficientRing (sourceVS#0)
+    vsImageFunc := f -> ((flatten entries ((basis reverse targetVS)*mat*sub(polynomialToVect(f,sourceVS),K)))#0);
+    -- a list of lists representing the image
+    filteredVSImages := apply(#(rays X),i ->filteredVSImage(sourceVB#i,vsImageFunc));
+    toricReflexiveSheaf(filteredVSImages/pairs,X)
+    )
+
+cokernel(ToricReflexiveSheafMap) := f -> (
+    X := variety f;
+    targetVB := target f;
+    (R,d) := ambient targetVB;
+    I := ideal( basis(d,R) * gens coker matrix f );
+    C := cokernel matrix f;
+    r := rank C;
+    K := coefficientRing R;
+    e := symbol e;
+    R' := K(monoid[e_1..e_r]);
+    d' := {1};
+    --zero sheaf I think?
+    if r==0 then return toricReflexiveSheaf(R',d',X);
+    mg := mingens C;
+    mat := map(target mg,target mg,1)//mg;
+    --mat := map(C,target matrix f,1)//(mingens C);
+    print mat;
+    print C;
+    print R';
+    print d';
+    vsImageFunc := f -> ((flatten entries ((basis(d',R'))*mat*sub(polynomialToVect(f,(R,d)),K)))#0);
+    filteredCokernels := apply(#(rays X),i ->filteredVSImage(targetVB#i,vsImageFunc));
+    print filteredCokernels;
+    toricReflexiveSheaf(filteredCokernels/pairs,X)
+    )
+
+
 mukaiLazarsfeldBundle = method();
 mukaiLazarsfeldBundle ToricDivisor := ToricReflexiveSheaf => D -> (
   coeffs := entries vector D;
