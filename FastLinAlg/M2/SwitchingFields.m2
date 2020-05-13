@@ -199,8 +199,8 @@ doc ///
 	    t = (coefficientRing R)_0;
 	    f(t)^3+f(t)+1
 	   
-        --Text
-       	   -- More words, but don't forget to indent. 
+        Text
+       	    The switchFieldMap makes the user defined map compatible with the natural map between the coeffiecient fields.
 	   
     --SeeAlso
     
@@ -210,6 +210,7 @@ doc ///
 
 
 ----- TESTS -----
+
 TEST ///
 K=GF 64;
 (T,f) = fieldBaseChange(GF(8)[y], K);
@@ -217,13 +218,13 @@ assert(coefficientRing T === K)
 ///
 
 TEST ///
-g = switchFieldMap(GF(64)[x,y,z]/(x*y-z^2), GF(8)[a],{x})
-assert(true)
+R = GF(8)[x,y,z]/(x*y-z^2); 
+S = GF(64)[u,v]/(v^2);
+f = switchFieldMap(S, R, {u, 0, v})
+t = (coefficientRing R)_0;
+assert(f(t)^3+f(t)+1 === 0)
 ///
-  
-TEST///
-
-///    
+   
 end
 
 -- Here place M2 code that you find useful while developing this
