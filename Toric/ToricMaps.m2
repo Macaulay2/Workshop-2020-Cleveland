@@ -352,7 +352,7 @@ isInterior (NormalToricVariety,List,Matrix) := Boolean => (X,sigma,rho) -> (
    false)
 
 
-
+--isSurjective is running, needs tested
 isSurjective = method()
 isSurjective ToricMap := Boolean => (f) -> (
     if not isWellDefined(f) then return "the map is not well defined";
@@ -376,17 +376,14 @@ isSurjective ToricMap := Boolean => (f) -> (
    )
 
 
-
-
-
 -- THIS IS AN UNEXPORTED METHOD FROM "NormalToricVarieties"
 -- In the notation of Theorem 4.2.8 in Cox-Little-Schenck, this function returns
 -- the characters $m_\sigma$ for each maximal cone $\sigma$ in the fan of a
 -- Cartier divisor, which in M2 are ordered as in `max X`.
 cartierCoefficients = value NormalToricVarieties#"private dictionary"#"cartierCoefficients";
 
--- Helper function for pullback that caches the index of the maximal cone
--- in the target which contains the image of each ray of the source.
+-- Unexported helper function for pullback that caches the index of the maximal
+-- cone in the target which contains the image of each ray of the source.
 rayTargets = (cacheValue rayTargets) (f -> (
     m := matrix f;
     X := source f;
@@ -400,8 +397,7 @@ rayTargets = (cacheValue rayTargets) (f -> (
 		b -> b <= 0)))
     ))
 
--- TODO: if target f is smooth, we can cache the pullback of exceptional divisors
--- and use linearity of the pullback
+-- Given ToricMap f: X -> Y and a Cartier ToricDivisor D on Y, returns a ToricDivisor on X
 pullback = method()
 pullback (ToricMap, ToricDivisor) := ToricDivisor => (f, D) -> (
     if not isCartier D then error "-- expected a Cartier divisor";
@@ -410,15 +406,14 @@ pullback (ToricMap, ToricDivisor) := ToricDivisor => (f, D) -> (
     X := source f;
     rayList := rays X;
     maxConeIndices := rayTargets f;
-    sum for i to # rayList - 1 list (
+    sum for i to #rayList - 1 list (
 	imageRho := m * transpose matrix {rayList_i};
 	-- see Thm 4.2.12.b and Prop 6.2.7 in Cox-Little-Schenck (Prop 6.1.20 in the preprint)
 	-- note: in CLS they use inner normals, whereas we use outer normals, hence the different sign
 	(transpose cartierData_(maxConeIndices_i) * imageRho)_(0,0) * X_i)
     )
 
--- Given ToricMap f: X -> Y and a Module on smooth Y, returns a Module on X
--- TODO: use OO on Divisor to test this and below
+-- Given ToricMap f: X -> Y and a Module on Cox Y, returns a Module on Cox X
 pullback (ToricMap, Module) := Module => (f, M) -> (
     if ring target f =!= ring M then error "-- expected module over the Cox ring of the target";
     (inducedMap f) ** M)
@@ -426,27 +421,26 @@ pullback (ToricMap, Module) := Module => (f, M) -> (
 -- Given ToricMap f: X -> Y and a CoherentSheaf on smooth Y, returns the CoherentSheaf on X
 pullback (ToricMap, CoherentSheaf) := CoherentSheaf => (f, F) -> sheaf(source f, pullback(f, module F))
 
--- Given ToricMap f: X -> Y, with smooth Y, returns the RingMap Cox Y -> Cox X
-inducedMap ToricMap := RingMap => opts -> f -> (
-    R := ring source f;
+-- Given ToricMap f: X -> Y, with simplicial X and Y, returns the RingMap Cox Y -> Cox X
+inducedMap ToricMap := RingMap => opts -> (cacheValue inducedMap) (f -> (
     Y := target f;
-    if not isSmooth Y then error "-- expected the target variety to be smooth";
     S := ring Y;
+    R := ring source f;
     map(R, S, apply(numgens S, i -> (
 		exps := entries pullback(f, Y_i);
 		product(numgens R, j -> R_j^(exps#j))
 	    )))
-    )
+    ))
 
 ideal ToricMap := Ideal => f -> (
     B := ideal ring target f;
     saturate (kernel inducedMap f, B)
     )
 
+-- Given ToricMap f: X -> Y, with smooth Y, returns a map Cl Y -> Cl X
 classGroup ToricMap := Matrix => f -> (
     X := source f;
     Y := target f;
-    if not isSmooth Y then error "-- expected the target variety to be smooth";
     divisorMap := map(weilDivisorGroup X, weilDivisorGroup Y,
 	transpose matrix apply(# rays Y, i -> entries pullback (f, Y_i))
 	);
@@ -998,41 +992,85 @@ doc ///
         (isProper, ToricMap)
 /// 
 
+-- TODO: add (isSmooth, ToricDivisor) under SeeAlso
 doc ///
     Key
-        (pullback, ToricMap, ToricDivisor)
         (pullback, ToricMap, Module)
         (pullback, ToricMap, CoherentSheaf)
-    Headline 
+    Headline
+        compute the pullback of a module or coherent sheaf under a toric map
+    Usage
+        M' = pullback(f, M)
+        F' = pullback(f, F)
+    Inputs
+        f : ToricMap
+	    a map between toric varieties
+	M : Module
+	    a module, or coherent sheaf, on the target of f
+    Outputs
+        M' : Module
+	    the pullback of M under f
+    Description
+        Text
+            Given a toric map $f: X \to Y$ with simplicial $X$ and $Y$, modules
+	    and coherent sheaves on the Cox ring of $Y$ can be pulled back to
+	    a module or coherent sheaf on the Cox ring of $X$ via $f$.
+	Text
+	    In this example, we compute the pullback of the structure sheaf of
+	    a divisor.
+	Example
+            PP1 = toricProjectiveSpace 1;
+            X = PP1 ** PP1
+            f = map(PP1, X, matrix{{1,0}})
+	    F = OO toricDivisor({1,1}, PP1)
+	    pullback(f, F)
+	Text
+	    We can also pull back modules on the Cox ring.
+	Example
+	    S = ring PP1
+	    R = ring X
+	    M = module F
+	    pullback(f, M)
+    SeeAlso
+        "Total coordinate rings and coherent sheaves"
+	(symbol SPACE, OO, ToricDivisor)
+        (pullback, ToricMap, ToricDivisor)
+///
+
+doc ///
+    Key
+         pullback
+        (pullback, ToricMap, ToricDivisor)
+    Headline
         compute the pullback of a Cartier divisor under a toric map
-    Usage 
+    Usage
         pullback(f, D)
-    Inputs 
+    Inputs
         f : ToricMap
 	    a map between toric varieties
 	D : ToricDivisor
 	    a toric divisor on the target of f
-    Outputs 
-        : ToricDivisor 
+    Outputs
+        : ToricDivisor
 	    the pullback of D under f
     Description
         Text
             Torus-invariant Cartier divisors pull back under a toric map by
-	    composing the toric map with the support function of the divisor.	    
+	    composing the toric map with the support function of the divisor.
     	Text
 	    In the first example, we consider the projection from a product of
-	    two projective lines onto the first factor.  The pullback of a
-	    point is just a fibre in the product.
-    	Example  
+	    two projective lines onto the first factor. The pullback of a point
+	    is just a fibre in the product.
+	Example
             PP1 = toricProjectiveSpace 1;
-	    X = PP1 ** PP1;
+            X = PP1 ** PP1
             f = map(PP1, X, matrix{{1,0}})
-      	    assert isWellDefined f
-    	    D = toricDivisor({1,1}, PP1)
+	    D = toricDivisor({1,1}, PP1)
 	    pullback(f, D)
 	Text
-	    This example illustrates that the pullback of a line through the origin in 
-	    affine 2-space under the blowup map is a line together with the exceptional divisor.
+	    This example illustrates that the pullback of a line through the
+	    origin in affine 2-space under the blowup map is a line together
+	    with the exceptional divisor.
 	Example
 	   AA2 = affineSpace 2;
 	   max AA2
@@ -1042,9 +1080,10 @@ doc ///
 	   DAA2=toricDivisor({1,0},AA2)
            pullback(f, DAA2)
     SeeAlso
-        (entries, ToricDivisor)
+        (isCartier, ToricDivisor)
+        (pullback, ToricMap, Module)
+        (pullback, ToricMap, CoherentSheaf)
 ///
-
 
 doc ///
     Key
