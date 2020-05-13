@@ -427,9 +427,10 @@ certifyRootMultiplicityBound(PolySystem,Point) := (F,x0)->(
     degs := select(flatten apply(eqs, i -> degree i), i -> i =!= 0);
     deltaF := diagonalMatrix flatten apply(degs, i -> sqrt(i * (pointNormx)^(i-1))); 
     mu := max {1, polySysNorm(F) * (norm(2,inverse(A-H) * deltaF))^2};
-    
-    lhs := norm(2,evaluate(F,x0)) + norm(2,H)*(max degs)/4;
-    rhs := pointNormx^4/(2*mu^4*(max degs)^5*norm(2,inverse(A-H)));
+    --I think d is the min real sol of #### not max degs?
+    --used d<.3
+    lhs := norm(2,evaluate(F,x0)) + (.3)/4*norm(2,H);
+    rhs := pointNormx^4/(2*mu^4*(.3)^5*norm(2,inverse(A-H)));
     return(lhs < rhs,2^kappa)
     )
 
