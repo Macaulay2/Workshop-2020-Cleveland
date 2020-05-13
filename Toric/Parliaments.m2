@@ -698,6 +698,33 @@ kernel ToricReflexiveSheafMap := ToricReflexiveSheaf => opts -> (
       basisSet);
     toricReflexiveSheaf(W,X)))
 
+--Image and cokernel helper functions
+
+--Given a filtered vector space represented by hash table mapping vectors to weights
+--compute the image, also represented as a hash table mapping vectors to weights
+--f should be a function that takesa a single vector (polynomial) and outputs an image vector (polynomial)
+filteredVSImage := (filt,f) -> (
+    if #filt==0 then return filt;
+    weightedImages := rsort apply(pairs filt, (v,w) -> (w,f(v)));
+    R := ring ((weightedImages)#0#1);
+    accum := ideal(0_R);
+    --get rid of redundent vectors by progressively building the vectorspace (represented here as an ideal)
+    --as well as reverse the roles of the two elements of the pair
+    reducedWeightedImages := for w in weightedImages list(
+        newAccum := accum + w#1;
+        if newAccum==accum then continue;
+        accum = newAccum;
+        (w#1,w#0)
+        );
+    hashTable reducedWeightedImages
+    )
+
+
+polynomialToVect := (f,VS) -> (
+    (coefficients(f,Monomials => basis reverse VS))#1
+    )
+
+
 image(ToricReflexiveSheafMap) := f -> (
     X := variety f;
     mat := matrix f;
@@ -705,7 +732,7 @@ image(ToricReflexiveSheafMap) := f -> (
     targetVB := target f;
     sourceVS := ambient sourceVB;
     targetVS := ambient targetVB;
-    K := coefficientRing (sourceVS#0)
+    K := coefficientRing (sourceVS#0);
     vsImageFunc := f -> ((flatten entries ((basis reverse targetVS)*mat*sub(polynomialToVect(f,sourceVS),K)))#0);
     -- a list of lists representing the image
     filteredVSImages := apply(#(rays X),i ->filteredVSImage(sourceVB#i,vsImageFunc));
@@ -728,13 +755,8 @@ cokernel(ToricReflexiveSheafMap) := f -> (
     mg := mingens C;
     mat := map(target mg,target mg,1)//mg;
     --mat := map(C,target matrix f,1)//(mingens C);
-    print mat;
-    print C;
-    print R';
-    print d';
     vsImageFunc := f -> ((flatten entries ((basis(d',R'))*mat*sub(polynomialToVect(f,(R,d)),K)))#0);
     filteredCokernels := apply(#(rays X),i ->filteredVSImage(targetVB#i,vsImageFunc));
-    print filteredCokernels;
     toricReflexiveSheaf(filteredCokernels/pairs,X)
     )
 
