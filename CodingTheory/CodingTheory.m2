@@ -21,16 +21,16 @@ newPackage(
 -- must be placed in one of the following two lists
 
 export {
-    -- toy functions as examples
-    "firstFunction",
-    "secondFunction",
-    "MyOption",
     -- Types and Constructors
     "LinearCode",
     "linearCode",
     "AmbientModule",
     "BaseField",
     "Generators",
+    "GeneratorMatrix",
+    "ParityCheck",
+    "ParityCheckRows",
+    "ParityCheckMatrix",
     "Code",
     "CodeRows",    
     -- Families of Codes
@@ -49,28 +49,6 @@ export {
     }
 exportMutable {}
 
-firstFunction = method(TypicalValue => String)
-firstFunction ZZ := String => n -> (
-	if n == 1
-	then "Hello, World!"
-	else "D'oh!"	
-	)
-   
--- A function with an optional argument
-secondFunction = method(
-     TypicalValue => ZZ,
-     Options => {MyOption => 0}
-     )
-secondFunction(ZZ,ZZ) := o -> (m,n) -> (
-     if not instance(o.MyOption,ZZ)
-     then error "The optional MyOption argument must be an integer";
-     m + n + o.MyOption
-     )
-secondFunction(ZZ,List) := o -> (m,n) -> (
-     if not instance(o.MyOption,ZZ)
-     then error "The optional MyOption argument must be an integer";
-     m + #n + o.MyOption
-     )
 
 ------------------------------------------
 ------------------------------------------
@@ -81,33 +59,87 @@ secondFunction(ZZ,List) := o -> (m,n) -> (
 -- Use this section to add basic types and
 -- constructors for error correcting codes
  
-LinearCode = new Type of HashTable
+LinearCode = new Type of MutableHashTable
 
-linearCode = method(Options => {})
+-- internal function to validate inputs:
+rawLinearCode = method()
+rawLinearCode(List) := LinearCode => (inputVec) -> (
+    -- use externally facing functions to create list:	
+    -- { AmbientModule, BaseField, Generators, ParityCheckRows, Code}
+    
+    -- use this function to validate inputs and provide warnings:
+    
+    -- check if "baseField" is a field, throw warning otherwise:
+    if not isField(inputVec_1) then print "Warning: Working over non-field.";
+   
+    if inputVec_2 != {} then {
+	-- check that all generating codewords are of the same length:
+	if not all(inputVec_2, codeword -> length(codeword) == length(inputVec_2)_0) then error "Codewords not of same length.";
+	
+	-- coerce generators and generator matrix into base field, if possible:
+	try {
+	    newGens := apply(inputVec_2, codeword -> apply(codeword, entry -> sub(entry, inputVec_1)));
+	    newGenMat := matrix(newGens);
+	    } else {
+	    error "Elements do not live in base field/ring.";
+	    };
+    } else {
+	-- if generators and generator matrix were undefined:
+	newGens = {};
+	newGenMat = matrix({newGens});
+    };
+    
+    if inputVec_3 != {} then {
+	-- check that all parity check rows are of the same length:
+	if not all(inputVec_3, parityrow -> length(parityrow) == length(inputVec_3)_0) then error "Parity check row not of same length.";
+	
+	-- coerce parity check rows and parity check matrix into base field, if possible:
+	try {
+	    newParRow := apply(inputVec_3, codeword -> apply(codeword, entry -> sub(entry, inputVec_1)));
+	    newParMat := matrix(newParRow);
+	    } else {
+	    error "Elements do not live in base field/ring.";
+	    };
+    } else {
+	newParRow = {};
+	newParMat = matrix({newParRow});
+    };
+    
+    -- coerce code matrix into base field:
+    codeSpace := sub(inputVec_4,inputVec_1);
+    
+    
+    return new LinearCode from {
+        symbol AmbientModule => inputVec_0,
+	symbol BaseField => inputVec_1,
+        symbol Generators => newGens,
+	symbol GeneratorMatrix => newGenMat,
+	symbol ParityCheckRows  => newParRow,
+	symbol ParityCheckMatrix =>  newParMat,
+	symbol Code => codeSpace,
+	symbol cache => {}
+	}
+    
+    )
+
+-- by default, assume that inputs are generators or generating matrices
+-- set ParityCheck => true to have inputs be rows of parity check matrix:
+linearCode = method(Options => {symbol ParityCheck => false})
 
 linearCode(Module,List) := LinearCode => opts -> (S,L) -> (
     -- constructor for a linear code
     -- input: ambient vector space/module S, list of generating codewords
     -- outputs: code defined by submodule given by span of elements in L
+
+
+    -- { AmbientModule, BaseField, Generators, GeneratorMatrix, ParityCheckRows, ParityCheckMatrix, Code }
+    if opts.ParityCheck then {
+	outputVec := {S, S.ring, {}, L, kernel matrix L};
+	} else {
+	outputVec =  {S, S.ring, L , {}, image matrix L};
+	};
     
-    if not isField(S.ring) then print "Warning: Codes over non-fields unstable.";
-    
-    -- note: check that codewords can be coerced into the ambient module and
-    -- have the correct dimensions:
-    try {
-	newL := apply(L, codeword -> apply(codeword, entry -> sub(entry,S.ring)));
-	    } else {
-	error "Elements in L do not live in base field of S.";
-	    };
-     
-    new LinearCode from {
-	symbol AmbientModule => S,
-	symbol BaseField => S.ring,
-	symbol Generators => newL,
-	symbol Code => image matrix apply(newL, v-> vector(v)),
-	symbol CodeRows => image transpose matrix apply(newL, v-> vector(v)),
-	symbol cache => {}
-	}
+    return rawLinearCode(outputVec)
     
     )
 
@@ -117,19 +149,14 @@ linearCode(GaloisField,ZZ,List) := LinearCode => opts -> (F,n,L) -> (
     
     -- ambient module F^n:
     S := F^n;
+
+    if opts.ParityCheck then {
+	outputVec := {S, F, {}, L, kernel matrix L};
+	} else {
+	outputVec =  {S, F, L , {}, image matrix L};
+	};    
     
-    --verify all tuples in generating set L have same length:
-    if not all(L, codeword -> #codeword == #L_0) then error "Codewords not of same length.";
-     
-    new LinearCode from {
-	symbol AmbientModule => S,
-	symbol BaseField => F,
-	 -- need to coerce generators into *this* GF(p,q):
-	symbol Generators => apply(L, codeword -> apply(codeword, entry -> sub(entry,F))),
-	symbol Code => image matrix apply(L, v-> vector(v)),
-	symbol CodeRows => image transpose matrix apply(L, v-> vector(v)),	
-	symbol cache => {}
-	}
+    return rawLinearCode(outputVec)
     
     )
 
@@ -380,6 +407,9 @@ generic(LinearCode) := LinearCode => C -> (
 parityCheck = method(TypicalValue => Matrix)
 
 parityCheck(LinearCode) := Matrix => C -> (
+    -- produce canonical form of the generating matrix:
+    G := transpose groebnerBasis generators C.Code;
+    G
     
     )
 
@@ -440,76 +470,6 @@ document {
 	}
     }
     
-
-document {
-	Key => {firstFunction, (firstFunction,ZZ)},
-	Headline => "a silly first function",
-	Usage => "firstFunction n",
-	Inputs => {
-		"n" => ZZ => {}
-		},
-	Outputs => {
-		String => {}
-		},
-	"This function is provided by the package ", TO CodingTheory, ".",
-	EXAMPLE {
-		"firstFunction 1",
-		"firstFunction 0"
-		}
-	}
-document {
-	Key => secondFunction,
-	Headline => "a silly second function",
-	"This function is provided by the package ", TO CodingTheory, "."
-	}
-document {
-	Key => (secondFunction,ZZ,ZZ),
-	Headline => "a silly second function",
-	Usage => "secondFunction(m,n)",
-	Inputs => {
-	     "m" => {},
-	     "n" => {}
-	     },
-	Outputs => {
-	     {"The sum of ", TT "m", ", and ", TT "n", 
-	     ", and "}
-	},
-	EXAMPLE {
-		"secondFunction(1,3)",
-		"secondFunction(23213123,445326264, MyOption=>213)"
-		}
-	}
-document {
-     Key => MyOption,
-     Headline => "optional argument specifying a level",
-     TT "MyOption", " -- an optional argument used to specify a level",
-     PARA{},
-     "This symbol is provided by the package ", TO CodingTheory, "."
-     }
-document {
-     Key => [secondFunction,MyOption],
-     Headline => "add level to result",
-     Usage => "secondFunction(...,MyOption=>n)",
-     Inputs => {
-	  "n" => ZZ => "the level to use"
-	  },
-     Consequences => {
-	  {"The value ", TT "n", " is added to the result"}
-	  },
-     "Any more description can go ", BOLD "here", ".",
-     EXAMPLE {
-	  "secondFunction(4,6,MyOption=>3)"
-	  },
-     SeeAlso => {
-	  "firstFunction"
-	  }
-     }
-TEST ///
-  assert(firstFunction 1 === "Hello, World!")
-  assert(secondFunction(1,3) === 4)
-  assert(secondFunction(1,3,MyOption=>5) === 9)
-///
-  
        
 end
 
