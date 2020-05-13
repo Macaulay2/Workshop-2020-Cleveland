@@ -1,20 +1,55 @@
 -- -*- coding: utf-8 -*-
 newPackage(
-	"PackageTemplate",
-    	Version => "1.0", 
-    	Date => "April 28, 2005",
-    	Authors => {
-	     {Name => "Jane Doe", Email => "doe@math.uiuc.edu"}
-	     },
-    	HomePage => "http://www.math.uiuc.edu/~doe/",
-    	Headline => "an example Macaulay2 package",
-	AuxiliaryFiles => false -- set to true if package comes with auxiliary files
-    	)
+        "Invariants",
+        Version => "1.0", 
+        Date => "May 12, 2020",
+        Authors => {
+             {Name => "Luigi Ferraro", Email => "ferrarl@wfu.edu",
+              HomePage => "http://users.wfu.edu/ferrarl/"},
+             {Name => "Federico Galetto", Email => "f.galetto@csuohio.edu", HomePage => "https://math.galetto.org"},
+             {Name => "Xianglong Ni", Email => "xlni@berkeley.edu", HomePage => "https://math.berkeley.edu/~xlni/"}
+             },
+        Headline => "Computing Invariants for Tori and Abelian Groups",
+        DebuggingMode => true,
+        AuxiliaryFiles => false
+        )
 
 -- Any symbols or functions that the user is to have access to
 -- must be placed in one of the following two lists
-export {"firstFunction", "secondFunction", "MyOption"}
+export {"primaryInvariants", "firstFunction", "secondFunction", "MyOption"}
 exportMutable {}
+
+needsPackage("Polyhedra", Reload => true)
+
+primaryInvariants = method()
+primaryInvariants (Matrix, PolynomialRing) := List => (W, R) -> (
+    r := numRows W;
+    n := numColumns W;
+    local C;
+    if r == 1 then C = convexHull W else C = convexHull( 2*r*W|(-2*r*W) );
+    C = (latticePoints C)/vector;
+    S := new MutableHashTable from apply(C, w -> w => {});
+    scan(n, i -> S#(W_i) = {R_i});
+    U := new MutableHashTable from S;
+    local v, local m, local v', local u;
+    nonemptyU := select(keys U, w -> #(U#w) > 0);
+    while  #nonemptyU > 0 do(
+	v = first nonemptyU;
+	m = first (U#v);
+	scan(n, i -> (
+        u := m*R_i;
+        v' := v + W_i;
+        if ((U#?v') and all(S#v', m' -> u%m' =!= 0_R)) then(
+                S#v' = S#v'|{u};
+                U#v' = U#v'|{u};
+		)
+	    )
+	);
+	U#v = delete(m, U#v);
+	nonemptyU = select(keys U, w -> #(U#w) > 0)
+	);
+    return S#(0_(ZZ^r))
+    )
 
 firstFunction = method(TypicalValue => String)
 firstFunction ZZ := String => n -> (
@@ -41,10 +76,26 @@ secondFunction(ZZ,List) := o -> (m,n) -> (
 
 beginDocumentation()
 document { 
-	Key => PackageTemplate,
-	Headline => "an example Macaulay2 package",
-	EM "PackageTemplate", " is an example package which can
+	Key => Invariants,
+	Headline => "Computing Invariants for Tori and Abelian Groups",
+	EM "Invariants", " is an example package which can
 	be used as a template for user packages."
+	}
+document {
+	Key => {primaryInvariants, (primaryInvariants,Matrix,PolynomialRing)},
+	Headline => "Computes the primary invariants for a diagonal torus action given by column weight vectors",
+	Usage => "primaryInvariants(W,R)",
+	Inputs => {
+	    	"R" => PolynomialRing => {"on which a torus acts"},
+		"W" => Matrix => {"whose ith column is the weight vector of ", TT "R_i"}
+		},
+	Outputs => {
+		List => {"A minimal set of generating invariants for the torus action"}
+		},
+	"This function is provided by the package ", TO Invariants, ".",
+	EXAMPLE {
+		"primaryInvariants(matrix{{1,-1}}, QQ[x_1,x_2])"
+		}
 	}
 document {
 	Key => {firstFunction, (firstFunction,ZZ)},
@@ -56,7 +107,7 @@ document {
 	Outputs => {
 		String => {}
 		},
-	"This function is provided by the package ", TO PackageTemplate, ".",
+	"This function is provided by the package ", TO Invariants, ".",
 	EXAMPLE {
 		"firstFunction 1",
 		"firstFunction 0"
@@ -65,7 +116,7 @@ document {
 document {
 	Key => secondFunction,
 	Headline => "a silly second function",
-	"This function is provided by the package ", TO PackageTemplate, "."
+	"This function is provided by the package ", TO Invariants, "."
 	}
 document {
 	Key => (secondFunction,ZZ,ZZ),
@@ -89,7 +140,7 @@ document {
      Headline => "optional argument specifying a level",
      TT "MyOption", " -- an optional argument used to specify a level",
      PARA{},
-     "This symbol is provided by the package ", TO PackageTemplate, "."
+     "This symbol is provided by the package ", TO Invariants, "."
      }
 document {
      Key => [secondFunction,MyOption],
@@ -114,7 +165,20 @@ TEST ///
   assert(secondFunction(1,3) === 4)
   assert(secondFunction(1,3,MyOption=>5) === 9)
 ///
-  
+
+TEST ///
+
+R1 = QQ[x_1..x_4]
+W1 = matrix {{-3, -1, 1, 2}}
+invariants1 =  set {x_2*x_3, x_2^2*x_4, x_1*x_3*x_4, x_1*x_2*x_4^2, x_1^2*x_4^3, x_1*x_3^3}
+assert(set primaryInvariants(W1, R1) === invariants1)
+
+R2 = QQ[x_1..x_4]
+W2 = matrix{{0,1,-1,1},{1,0,-1,-1}}
+invariants2 = set {x_1*x_2*x_3,x_1^2*x_3*x_4}
+assert(set primaryInvariants(W2,R2) === invariants2)
+
+///
        
 end
 
@@ -122,10 +186,13 @@ end
 -- package.  None of it will be executed when the file is loaded,
 -- because loading stops when the symbol "end" is encountered.
 
-installPackage "PackageTemplate"
-installPackage("PackageTemplate", RemakeAllDocumentation=>true)
-check PackageTemplate
+restart
+uninstallPackage "Invariants"
+installPackage "Invariants"
+--installPackage("Invariants", RemakeAllDocumentation=>true)
+check Invariants
 
 -- Local Variables:
--- compile-command: "make -C $M2BUILDDIR/Macaulay2/packages PACKAGES=PackageTemplate pre-install"
+-- compile-command: "make -C $M2BUILDDIR/Macaulay2/packages PACKAGES=Invariants pre-install"
 -- End:
+

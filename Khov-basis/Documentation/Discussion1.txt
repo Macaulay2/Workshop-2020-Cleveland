@@ -1,0 +1,20 @@
+Questions:
+    What does the keyword Limit actually do?
+        Is it the number of times that subduction is called?
+    Document what the different print levels do.
+
+Information:
+     Strategy=>Engine means that the C/C++ engine is used instead of interpreted M2 code 
+     PrintLevel=># (produces various output)
+      
+Project:
+     Understand SAGBIEngine
+     Take the functions inside SAGBIEngine outside of the engine.
+
+Homework:
+     1. Read main loop in sagbieng.m2 and try to explain it (perhaps in terms of an example)
+     2. Documented example of screws
+
+     Michael: 1.
+     Tim:     2.
+     Elise:   1.
