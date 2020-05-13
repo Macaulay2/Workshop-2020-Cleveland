@@ -21,16 +21,16 @@ newPackage(
 -- must be placed in one of the following two lists
 
 export {
-    -- toy functions as examples
-    "firstFunction",
-    "secondFunction",
-    "MyOption",
     -- Types and Constructors
     "LinearCode",
     "linearCode",
     "AmbientModule",
     "BaseField",
     "Generators",
+    "GeneratorMatrix",
+    "ParityCheck",
+    "ParityCheckRows",
+    "ParityCheckMatrix",
     "Code",
     -- Families of Codes
     "cyclicMatrix",
@@ -48,28 +48,6 @@ export {
     }
 exportMutable {}
 
-firstFunction = method(TypicalValue => String)
-firstFunction ZZ := String => n -> (
-	if n == 1
-	then "Hello, World!"
-	else "D'oh!"	
-	)
-   
--- A function with an optional argument
-secondFunction = method(
-     TypicalValue => ZZ,
-     Options => {MyOption => 0}
-     )
-secondFunction(ZZ,ZZ) := o -> (m,n) -> (
-     if not instance(o.MyOption,ZZ)
-     then error "The optional MyOption argument must be an integer";
-     m + n + o.MyOption
-     )
-secondFunction(ZZ,List) := o -> (m,n) -> (
-     if not instance(o.MyOption,ZZ)
-     then error "The optional MyOption argument must be an integer";
-     m + #n + o.MyOption
-     )
 
 ------------------------------------------
 ------------------------------------------
@@ -82,14 +60,16 @@ secondFunction(ZZ,List) := o -> (m,n) -> (
  
 LinearCode = new Type of HashTable
 
-linearCode = method(Options => {})
+-- by default, assume that inputs are generators or generating matrices
+-- set ParityCheck => true to have inputs be rows of parity check matrix:
+linearCode = method(Options => {symbol ParityCheck => false})
 
 linearCode(Module,List) := LinearCode => opts -> (S,L) -> (
     -- constructor for a linear code
     -- input: ambient vector space/module S, list of generating codewords
     -- outputs: code defined by submodule given by span of elements in L
     
-    if not isField(S.ring) then print "Warning: Codes over non-fields unstable.";
+    if not isField(S.ring) then print "Warning: Working over non-field.";
     
     -- note: check that codewords can be coerced into the ambient module and
     -- have the correct dimensions:
@@ -98,13 +78,31 @@ linearCode(Module,List) := LinearCode => opts -> (S,L) -> (
 	    } else {
 	error "Elements in L do not live in base field of S.";
 	    };
+	
+    if opts.ParityCheck then print "this worked";
+    
      
     new LinearCode from {
 	symbol AmbientModule => S,
 	symbol BaseField => S.ring,
-	symbol Generators => newL,
-	symbol Code => image matrix apply(newL, v-> vector(v)),
-	symbol cache => {}
+	-- if defining via parity check matrix:
+	if opts.ParityCheck then {
+	    symbol Generators => null, -- don't set these until user adds
+	    symbol GeneratorMatrix => null, -- don't set this until user adds
+	    symbol ParityCheckRows  => newL,
+	    symbol ParityCheckMatrix =>  matrix newL,
+	    symbol Code => kernel matrix newL,
+	    symbol cache => {}
+	    }
+	-- if defining via generators:
+	else {
+	    symbol Generators  => newL,
+	    symbol GeneratorMatrix => matrix newL,
+	    symbol ParityCheckRows => null, -- don't set until user adds
+	    symbol ParityCheckMatrix => null, -- don't set until user adds
+	    symbol Code => image matrix newL,
+	    symbol cache => {}
+	    };
 	}
     
     )
@@ -377,6 +375,9 @@ generic(LinearCode) := LinearCode => C -> (
 parityCheck = method(TypicalValue => Matrix)
 
 parityCheck(LinearCode) := Matrix => C -> (
+    -- produce canonical form of the generating matrix:
+    G := transpose groebnerBasis generators C.Code;
+    G
     
     )
 
@@ -437,76 +438,6 @@ document {
 	}
     }
     
-
-document {
-	Key => {firstFunction, (firstFunction,ZZ)},
-	Headline => "a silly first function",
-	Usage => "firstFunction n",
-	Inputs => {
-		"n" => ZZ => {}
-		},
-	Outputs => {
-		String => {}
-		},
-	"This function is provided by the package ", TO CodingTheory, ".",
-	EXAMPLE {
-		"firstFunction 1",
-		"firstFunction 0"
-		}
-	}
-document {
-	Key => secondFunction,
-	Headline => "a silly second function",
-	"This function is provided by the package ", TO CodingTheory, "."
-	}
-document {
-	Key => (secondFunction,ZZ,ZZ),
-	Headline => "a silly second function",
-	Usage => "secondFunction(m,n)",
-	Inputs => {
-	     "m" => {},
-	     "n" => {}
-	     },
-	Outputs => {
-	     {"The sum of ", TT "m", ", and ", TT "n", 
-	     ", and "}
-	},
-	EXAMPLE {
-		"secondFunction(1,3)",
-		"secondFunction(23213123,445326264, MyOption=>213)"
-		}
-	}
-document {
-     Key => MyOption,
-     Headline => "optional argument specifying a level",
-     TT "MyOption", " -- an optional argument used to specify a level",
-     PARA{},
-     "This symbol is provided by the package ", TO CodingTheory, "."
-     }
-document {
-     Key => [secondFunction,MyOption],
-     Headline => "add level to result",
-     Usage => "secondFunction(...,MyOption=>n)",
-     Inputs => {
-	  "n" => ZZ => "the level to use"
-	  },
-     Consequences => {
-	  {"The value ", TT "n", " is added to the result"}
-	  },
-     "Any more description can go ", BOLD "here", ".",
-     EXAMPLE {
-	  "secondFunction(4,6,MyOption=>3)"
-	  },
-     SeeAlso => {
-	  "firstFunction"
-	  }
-     }
-TEST ///
-  assert(firstFunction 1 === "Hello, World!")
-  assert(secondFunction(1,3) === 4)
-  assert(secondFunction(1,3,MyOption=>5) === 9)
-///
-  
        
 end
 
