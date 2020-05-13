@@ -7,13 +7,16 @@ integralClosure(Ideal, RingElement, ZZ) := opts -> (I,a,D) -> (
     w := local w;
     Reesi := (flattenRing reesAlgebra(I,a,Variable => z))_0;
     Rbar := integralClosure(Reesi, opts, Variable => w);
+    psi := map(Rbar,S,DegreeMap =>d->prepend(0,d));
     zIdeal := ideal(map(Rbar,Reesi))((vars Reesi)_{0..numgens I -1});
     zIdealD := module zIdeal^D;
+    zwIdeal := ideal((vars Rbar)_{0..numgens Rbar - numgens S-1});
     L := prepend(D,toList(degreeLength S:null));
     RbarPlusD := image basisOfDegreeD(L,Rbar); --all gens of first-degree D.
+    M := pushForward(psi,zwIdeal^D/zwIdeal^(D+1));
     gD := matrix inducedMap(RbarPlusD, zIdealD);
     mapback := map(S,Rbar, matrix{{numgens Rbar-numgens S:0_S}}|(vars S), DegreeMap => d -> drop(d, 1));
-    M := coker mapback presentation RbarPlusD;
+--    M := coker mapback presentation RbarPlusD;
 --    ID := I^D;
     ID = (trim I)^D;
     phi := map(M, module ID, mapback gD);
@@ -21,7 +24,8 @@ integralClosure(Ideal, RingElement, ZZ) := opts -> (I,a,D) -> (
     assert(isWellDefined phi);
 --    error "debug me";
 --    extendIdeal(ID,a^D,phi)
-    extendIdeal phi
+error();
+    extendIdeal(ID, phi)
     )
 
 findGrade2Ideal = method()
@@ -163,8 +167,9 @@ TEST///
     assert(isWellDefined phi')    
     assert(extendIdeal(I,phi)== c*K)
     assert(extendIdeal(I,phi')== (b+c)*K)    
-    integralClosure I -- wrong!!
-    
+    assert(I ==integralClosure I) -- right!
+    integralClosure I
+  
     S = ZZ/101[a,b,c]/ideal(a^3-b^2*c)
     ID = ideal(b^2*c+b*c^2,a*b*c+a*c^2)
     M = (cokernel matrix {{-a, 0, 0, -c}, {b, -a, 0, 0}}) ** S^{-3}
