@@ -19,7 +19,7 @@ newPackage(
   "ToricMaps",
   AuxiliaryFiles => false,
   Version => "0.3",
-  Date => "9 May 2020",
+  Date => "13 May 2020",
   Authors => {
       {
       Name => "Chris Eur", 
@@ -220,48 +220,50 @@ isWellDefined ToricMap := Boolean => f -> (
 )
 
 isProper = method()
-isProper ToricMap := Boolean => f -> (
-    if not isWellDefined f then << "The map is not well defined!" << return false;
-    X := source f;
-    Y := target f;
-    if isComplete X then return true;
-    if (isComplete Y and not isComplete X) then return false;
-    rayMatrixX := transpose matrix rays X;
-    rayMatrixY := transpose matrix rays Y;
-    A := matrix f;
-    --based on the idea that the map should be proper if and only if
-    --all torus invariant curves in X are PP^1 or are contained in the
-    --torus invariant curves of Y.
-    for tau in max Y do (
-	--dimension of tau cap image A and computing potential cones over tau
-	d := dim Y - rank (gens ker transpose A | gens ker transpose rayMatrixY_tau);
-	maxConesWithRightDimension := select(max X, 
-	    sigma -> member(sigma, orbits(X, rank A - d))
+isProper ToricMap := Boolean => (cacheValue symbol isProper) (
+    f -> (
+    	if not isWellDefined f then error "-- The map is not well defined!";
+    	X := source f;
+    	Y := target f;
+    	if isComplete X then return true;
+    	if (isComplete Y and not isComplete X) then return false;
+    	rayMatrixX := transpose matrix rays X;
+    	rayMatrixY := transpose matrix rays Y;
+    	A := matrix f;
+    	-- based on the idea that the map should be proper if and only if all
+    	-- torus invariant curves in X are PP^1 or are contained in the torus
+    	-- invariant curves of Y.	    
+    	for tau in max Y do (
+	    -- dimension of tau cap image A and computing potential cones over tau
+	    d := dim Y - rank (gens ker transpose A | gens ker transpose rayMatrixY_tau);
+	    maxConesWithRightDimension := select(max X, 
+	    	sigma -> member(sigma, orbits(X, rank A - d))
+	    	);
+	    -- compute the cones over tau
+	    conesOverTau := select(maxConesWithRightDimension, 
+	    	sigma -> all(flatten entries (outerNormals(Y,tau)*A*rayMatrixX_sigma),
+		    i -> i <= 0)
+	    	);
+    	    -- if no cones over tau, not proper
+	    if (#conesOverTau === 0) then return false;
+    	    -- compute facets of the cones over tau
+            facesOverTau := select(orbits(X, rank A - d + 1), 
+	    	alpha-> any(conesOverTau, sigma -> isSubset(alpha, sigma))
+	    	);
+    	    -- pick which faces appear only once
+	    facesCount := hashTable apply(facesOverTau,
+	    	alpha -> {alpha, #select(conesOverTau, sigma -> isSubset(alpha, sigma))}
+	    	);
+	    uniqueFaces := select(facesOverTau, i -> facesCount#i < 2);
+    	    -- faces of tau
+    	    facesOfTau := select(orbits(Y, dim Y - d + 1), beta -> isSubset(beta,tau));
+	    -- check if the faces appearing only once are contained in faces of tau
+	    if not all(uniqueFaces, alpha -> any(facesOfTau,
+		    beta -> coker (A*rayMatrixX_alpha) == coker rayMatrixY_beta)
+	    	) then return false;
 	    );
-	--compute the cones over tau
-	conesOverTau := select(maxConesWithRightDimension, 
-	    sigma -> all(flatten entries (outerNormals(Y,tau)*A*rayMatrixX_sigma),
-		i -> i <= 0)
-	    );
-    	--if no cones over tau, not proper
-	if (#conesOverTau === 0) then return false;
-    	--compute facets of the cones over tau
-        facesOverTau := select(orbits(X, rank A - d + 1), 
-	    alpha-> any(conesOverTau, sigma -> isSubset(alpha, sigma))
-	    );
-    	--pick which faces appear only once
-	facesCount := hashTable apply(facesOverTau,
-	    alpha -> {alpha, #select(conesOverTau, sigma -> isSubset(alpha, sigma))}
-	    );
-	uniqueFaces := select(facesOverTau, i -> facesCount#i < 2);
-    	--faces of tau
-    	facesOfTau := select(orbits(Y, dim Y - d + 1), beta -> isSubset(beta,tau));
-	--check if the faces appearing only once are contained in faces of tau
-	if not all(uniqueFaces, alpha -> any(facesOfTau,
-		beta -> coker (A*rayMatrixX_alpha) == coker rayMatrixY_beta)
-	    ) then return false;
-	);
-    true
+    	true
+    	)
     )
 
 
@@ -322,7 +324,7 @@ isFibration = method()
 -- We follow proposition 2.1 in DMM 
 
 isFibration ToricMap := Boolean => f -> (
-    isProper f and  1 == minors(dim target f, matrix f))
+    isProper f and gens gb matrix f == id_(ZZ^(dim target f)))
 
 isDominant = method()
 isDominant ToricMap := Boolean => f -> (rank matrix f == dim target f)
@@ -531,15 +533,13 @@ doc ///
     	    that is the source of the map f
     Description
         Text
-            Let $X$ and $Y$ be normal toric varieties whose underlying lattices
-	    are $N_X$ and $N_Y$ respectively.  A toric map is a morphism $f :
-	    X \to Y$ that induces a morphism of algebraic groups $g : T_X \to
-	    T_Y$ such that $f$ is $T_X$-equivariant with respect to the
-	    $T_X$-action on $Y$ induced by $g$. This method returns $X$.	    
+	    Given a toric map $f : X \to Y$, this method returns $X$.  Since
+	    this is a defining attribute of a toric map, no computation is
+	    required.
        	Text
 	    We illustrate how to access this basic feature of a toric map with
-	    the projection from the Hirzebruch surface {\tt X} to the
-	    projective line {\tt Y}.
+	    the projection from the second Hirzebruch surface to the
+	    projective line.
     	Example  
 	    X = hirzebruchSurface 2;
             Y = toricProjectiveSpace 1;
@@ -547,8 +547,8 @@ doc ///
      	    source f
 	    assert (source f === X)   
 	Text
-	    The number of columns in the underlying matrix must equal the
-	    dimension of the source.
+	    In a well-defined toric map, the number of columns in the
+	    underlying matrix equals the dimension of the source.	    
 	Example
 	    assert (numColumns matrix f == dim X)
     SeeAlso
@@ -572,15 +572,13 @@ doc ///
     	    that is the target of the map f	
     Description	    
         Text
-            Let $X$ and $Y$ be normal toric varieties whose underlying lattices
-	    are $N_X$ and $N_Y$ respectively.  A toric map is a morphism $f :
-	    X \to Y$ that induces a morphism of algebraic groups $g : T_X \to
-	    T_Y$ such that $f$ is $T_X$-equivariant with respect to the
-	    $T_X$-action on $Y$ induced by $g$. This method returns $Y$.	    
+	    Given a toric map $f : X \to Y$, this method returns $Y$.  Since
+	    this is a defining attribute of a toric map, no computation is
+	    required.    
        	Text
 	    We illustrate how to access this basic feature of a toric map with
-	    the projection from the Hirzebruch surface {\tt X} to the
-	    projective line {\tt Y}.
+	    the projection from the second Hirzebruch surface to the
+	    projective line.
     	Example  
 	    X = hirzebruchSurface 2;
             Y = toricProjectiveSpace 1;
@@ -588,8 +586,8 @@ doc ///
      	    target f
 	    assert (target f === Y)   
 	Text
-	    The number of rows in the underlying matrix must equal the
-	    dimension of the target.
+	    In a well-defined toric map, the number of rows in the
+	    underlying matrix equals the dimension of the target.	    
 	Example
 	    assert (numRows matrix f == dim Y)
     SeeAlso
@@ -615,30 +613,25 @@ doc ///
     	    over the @TO2 (ZZ, "integers")@
     Description	    
         Text
-            Let $X$ and $Y$ be normal toric varieties whose underlying lattices
-	    are $N_X$ and $N_Y$ respectively.  A toric map is a morphism $f :
-	    X \to Y$ that induces a morphism of algebraic groups $g : T_X \to
-	    T_Y$ such that $f$ is $T_X$-equivariant with respect to the
-	    $T_X$-action on $Y$ induced by $g$.  Every toric map $f : X \to Y$
-	    corresponds to a unique linear map from the rational vector space
-	    containing the fan of $X$ to the rational vector space containing
-	    the fan of $Y$.  Moreover, this linear map induces a map $g :
-	    N_X \to N_Y$ between the underlying lattices such that, for every
-	    cone $\sigma$ in the fan of $X$, there is a cone in the fan of $Y$
-	    that contains the image $g(\sigma)$.  This method returns $g$.
+	    Every toric map $f : X \to Y$ corresponds to a unique map of
+	    lattice $g : N_X \to N_Y$ such that, for every cone $\sigma$ in
+	    the fan of $X$, there is a cone in the fan of $Y$ that contains
+	    the image $g(\sigma)$.  This method returns an integer matrix
+	    representing $g$.	    
        	Text
 	    We illustrate how to access this basic feature of a toric map with
-	    the projection from the Hirzebruch surface {\tt X} to the
-	    projective line {\tt Y}.
+	    the projection from the second Hirzebruch surface to the
+	    projective line.
     	Example  
 	    X = hirzebruchSurface 2;
             Y = toricProjectiveSpace 1;
             f = map(Y, X, matrix {{1, 0}})
      	    g = matrix f
+	    assert (ring g === ZZ)
 	Text
-	    The number of rows in the underlying matrix must equal the
-	    dimension of the target and the number of columns must equal the
-	    dimension of the source.	    
+	    In a well-defined toric map, the number of rows in the underlying
+	    matrix must equal the dimension of the target and the number of
+	    columns must equal the dimension of the source.	    
 	Example
 	    assert (numColumns g == dim X)
 	    assert (numRows g == dim Y)	    
@@ -684,23 +677,32 @@ doc ///
             The first example illustrates the projection from the Hirzebruch
             surface to the projective line is well defined.
     	Example  
-	    FF2 = hirzebruchSurface 2;
-            PP1 = toricProjectiveSpace 1;
-            f = map(PP1, FF2, matrix{{1,0}})
+	    X = hirzebruchSurface 2;
+            Y = toricProjectiveSpace 1;
+            f = map (Y, X, matrix {{1, 0}})
+	    source f
+	    target f
+	    matrix f
     	    assert isWellDefined f 
+	    assert (source f === X)
+	    assert (target f === Y)
+	    assert (matrix f === matrix {{1, 0}})
 	Text
 	    The second example illustrates two attempts to define a toric map
 	    from the projective plane to a weighted projective space. The
 	    first, corresponding to the identity on the lattices, is not
 	    well-defined.  The second, corresponding to a stretch in the
-	    lattices, is well-defined.
+	    lattices, is well-defined.  By making the current debugging level
+	    greater than one, one gets some addition information about the
+	    nature of the failure.
 	Example
-	    PP2 = toricProjectiveSpace 2
-	    WP112 = weightedProjectiveSpace {1,1,2}
-	    g = map(WP112, PP2, 1)
+	    debugLevel = 1;	
+	    Z = toricProjectiveSpace 2;
+	    W = weightedProjectiveSpace {1, 1, 2};
+	    g = map (W, Z, 1)
 	    assert not isWellDefined g 
-	    f = map(WP112, PP2, matrix{{1,0},{0,2}})
-            assert isWellDefined f	   
+	    h = map (W, Z, matrix {{1, 0}, {0, 2}})
+            assert isWellDefined h
     	Text
             This method also checks that the following aspects of the data
             structure:	    
@@ -725,18 +727,17 @@ doc ///
 		    TO CacheTable, "."}
 	    }@	    
     SeeAlso
+    	(map, NormalToricVariety, NormalToricVariety, Matrix)
     	(hirzebruchSurface, ZZ)
         (toricProjectiveSpace, ZZ)
         (weightedProjectiveSpace, List)
 ///
-
-
     
 doc ///
     Key
         (map, NormalToricVariety, NormalToricVariety, Matrix)
     Headline 
-    	make torus-equivariant map between normal toric varieties
+    	make a torus-equivariant map between normal toric varieties
     Usage 
         f = map(Y, X, g)
     Inputs 
@@ -762,39 +763,156 @@ doc ///
 	    lattices such that, for any cone $\sigma$ in the fan of $X$, there
 	    is a cone in the fan of $Y$ that contains the image $g(\sigma)$.	
     	    Given the target, the source, and the matrix representing lattice
-    	    map, this method creates the corresponding toric map.
+    	    map, this basic constructor creates the corresponding toric map.
     	Text
-	    This first example constructs the projection from the Hirzebruch
-	    surface {\tt H2} to the projective line {\tt PP1}.
+	    This first example constructs the projection from the second
+	    Hirzebruch surface to the projective line.
     	Example  
-	   H2 = hirzebruchSurface 2
-           PP1 = toricProjectiveSpace 1
-           f = map(PP1,H2,matrix{{1,0}})
+	   X = hirzebruchSurface 2
+           Y = toricProjectiveSpace 1
+           f = map (Y, X, matrix {{1, 0}})
 	   assert isWellDefined f
-    	   assert isProper f
+    	   assert (source f === X)
+	   assert (target f === Y)
+	   assert (matrix f === matrix {{1, 0}})
 	Text
-	    This example illustrates that the map from the blow-up of the origin of 
-	    affine 2-space to affine 2-space is proper.
+	    The second example illustrates that the map from the blow-up of
+	    the origin of affine 2-space to affine 2-space is proper.
 	Example
-	   AA2 = affineSpace 2;
-	   max AA2
-	   BlO = toricBlowup({0,1}, AA2)
-	   f  = map(AA2, BlO, 1)
-           isProper(f)
+	   A = affineSpace 2;
+	   max A
+	   B = toricBlowup ({0, 1}, A);
+	   g = map(A, B, matrix {{1, 0}, {0, 1}})
+	   assert isWellDefined g
+    	   assert (source g === B)
+	   assert (target g === A)
+	   assert (matrix g === id_(ZZ^2))	   
     Caveat
-        This method assumes that given matrix does determine a map between the
-        toric varieties.  One can verify this by using 
+        This method implicitly assumes that given matrix does determine a map
+        between the toric varieties.  One can verify this by using 
 	@TO (isWellDefined, ToricMap)@.
     SeeAlso
-        (isComplete, NormalToricVariety)
+    	(source, ToricMap)
+	(target, ToricMap)
+	(matrix, ToricMap)
+        (map, NormalToricVariety, NormalToricVariety, ZZ)
 /// 
+
+doc ///
+    Key
+        (map, NormalToricVariety, NormalToricVariety, ZZ)
+    Headline 
+    	make a torus-equivariant map between normal toric varieties
+    Usage 
+        f = map(Y, X, m)
+    Inputs 
+        Y : NormalToricVariety
+	    the target of the map
+	X : NormalToricVariety
+	    the source of the map
+	m : ZZ
+	Degree => 
+	    used
+	DegreeLift =>   
+	    used
+	DegreeMap =>
+	    used
+    Outputs 
+        f : ToricMap
+    Description
+        Text
+	    Every toric map $f : X \to Y$ corresponds to a unique map 
+	    $g : N_X \to N_Y$ of lattices such that, for any cone $\sigma$ in
+	    the fan of $X$, there is a cone in the fan of $Y$ that contains
+	    the image $g(\sigma)$.  Given the target, the source, and an
+	    integer, this basic constructor creates the corresponding toric
+	    map.  The given integer determines the lattice map in two distinct
+	    ways.	    
+	Text	    
+	    When the integer equals zero, the underlying map of lattices is
+	    represented by the zero matrix.
+	Example
+	    X = hirzebruchSurface 2;
+	    Y = toricProjectiveSpace 1;
+	    f = map(Y, X, 0)
+	    assert isWellDefined f
+	    assert (source f === X)
+	    assert (target f === Y)
+	    assert (matrix f === map(ZZ^(dim Y), ZZ^(dim X), 0))
+    	Text	    	
+	    If the integer $m$ is nonzero, then the underlying map of lattices
+	    is represented by multiplying the identity matrix by the given
+	    integer $m$.  Hence, this second case requires that the dimension
+	    of the source and target be equal.
+	Example
+	    Z = normalToricVariety ({{1,0},{-1,2},{0,-1}}, {{0,1},{0,2},{1,2}});
+	    assert isWellDefined Z
+	    g = map(Z, X, 2)
+	    assert isWellDefined g
+	    assert (source g === X)
+	    assert (target g === Z)
+	    assert (matrix g === 2*id_(ZZ^(dim X)))	    
+    	Text
+	    Setting the integer equal to $1$ yields a easy way to construct
+	    the canoncal toric map associated to a blowup or the identity map.
+	Example
+	    A = affineSpace 2;
+	    B = toricBlowup ({0, 1}, A);
+	    h = map(A, B, 1)
+	    assert isWellDefined h
+    	    assert (source h === B)
+	    assert (target h === A)
+	    assert (matrix h === id_(ZZ^2))	 	    
+	    id_A
+	    assert isWellDefined id_A
+	    assert (source id_A === A)
+	    assert (target id_A === A)	    
+	    assert (matrix id_A === id_(ZZ^(dim A)))	    	    
+	    assert (id_A === map(A,A,1))
+    Caveat
+        This method implicitly assumes that given matrix does determine a map
+        between the toric varieties.  One can verify this by using 
+	@TO (isWellDefined, ToricMap)@.
+    SeeAlso
+    	(source, ToricMap)
+	(target, ToricMap)
+	(matrix, ToricMap)
+        (map, NormalToricVariety, NormalToricVariety, ZZ)
+/// 
+
+doc ///
+    Key
+        (id, NormalToricVariety)
+    Headline
+    	makes the identity map from a NormalToricVariety to itself
+    Usage 
+        id_X
+    Inputs 
+        X : NormalToricVariety
+    Outputs 
+        : ToricMap
+    Description
+        Text	    
+	    For the identity map on a normal toric variety, the underlying map
+	    of lattices given by the identity matrix.
+	Example
+	    X = hirzebruchSurface 2;
+	    f = id_X
+	    assert isWellDefined f
+	    assert (source f === X)
+	    assert (target f === X)
+	    assert (matrix f === id_(ZZ^(dim X)))	    
+    SeeAlso
+        (map, NormalToricVariety, NormalToricVariety, ZZ)
+        (map, NormalToricVariety, NormalToricVariety, Matrix)	 
+///    
 
 undocumented {(isProper, ToricMap, ZZ)}
 
 doc ///
     Key
-    	isProper
         (isProper, ToricMap)
+    	isProper	
     Headline 
         whether a toric map is proper
     Usage 
@@ -811,25 +929,32 @@ doc ///
 	    $f_N : N_X \to N_Y$ of lattices, this is equivalent to the
 	    preimage of the support of the target fan under $f_N$ being equal
 	    to the support of the source fan.
-
     	Text
-	    This example illustrates that the projection from the Hirzebruch
-	    surface H2 to P^1 is proper.	    
+	    The first example illustrates that the projection from the second
+	    Hirzebruch surface to the projective line is proper.
     	Example  
-	   H2 = hirzebruchSurface 2
-           PP1 = toricProjectiveSpace 1
-           f = map(PP1,H2,matrix{{1,0}})
-    	   assert isProper(f)
+	    X = hirzebruchSurface 2;
+            Y = toricProjectiveSpace 1
+            f = map (Y, X, matrix {{1,0}})
+    	    assert isProper f 
 	Text
 	    This example illustrates that the map from the blow-up of the origin of 
 	    affine 2-space to affine 2-space is proper.
 	Example
-	   AA2 = affineSpace 2;
-	   max AA2
-	   BlO = toricBlowup({0,1}, AA2)
-	   f  = map(AA2, BlO, 1)
-           isProper(f)
+	    A = affineSpace 2;
+	    B = toricBlowup({0,1}, A);
+	    g = map(A, B, 1)
+            assert isProper g
+	Text
+	    To improve computation speed, the package caches this test in the
+	    @TO CacheTable@ of the toric map.
+	Example
+	    keys g.cache
+	    g.cache.isProper
+	    assert (g.cache.isProper === true)
     SeeAlso
+    	(map, NormalToricVariety, NormalToricVariety, Matrix)
+    	(map, NormalToricVariety, NormalToricVariety, ZZ)	
         (isComplete, NormalToricVariety)
 /// 
 
