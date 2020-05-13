@@ -153,21 +153,6 @@ sagbiquo(Matrix,Ideal,ZZ,ZZ) := (Gens, I, maxnloops, printlevel) -> (
      	  reduced = matrix entries reduced; -- fix degrees
      	  reduced
      	  );
-     insertPending := (m) -> (
-	  -- append the entries of the one row matrix 'm' to Pending.
-	  i := 0;
-	  while i < numgens source m do (
-	      f := m_(0,i);
-	      e := (degree f)_0;
-	      Pending#e = append(Pending#e, f);
-	      i = i+1;
-	      ));
-     lowestDegree := () -> (
-	  -- returns maxdeg+1 if Pending list is empty, otherwise
-	  -- returns the smallest non-empty strictly positive degree.
-	  i := 0;
-	  while i <= maxdeg and Pending#i === {} do i=i+1;
-	  i);
      appendToBasis := (m) -> (
 	  R := ring m;
 	  M := monoid R;
@@ -206,36 +191,35 @@ sagbiquo(Matrix,Ideal,ZZ,ZZ) := (Gens, I, maxnloops, printlevel) -> (
      	       	    RStoR = map(R,RS,(vars R) | matrix {toList(nG:0_R)}););
 	       );
 	  );
-     grabLowestDegree := () -> (
-	  -- assumes: lowest degree pending list is already autosubducted.
-	  -- this row reduces this list, placing all of the
-	  -- entries back into Pending, but then appends the lowest
-	  -- degree part into the basis.
-	  e := lowestDegree();
-	  if e <= maxdeg then (
-	       if MOflag == 2 then (
-		    numnewsagbi = #Pending#e;
-		    appendToBasis matrix{Pending#e};
-		    Pending#e = {};)
-	       else (
-	       	    m := rowReduce(matrix{Pending#e}, e);
-	       	    Pending#e = {};
-	       	    insertPending m;
-	       	    e = lowestDegree();
-	       	    appendToBasis matrix{Pending#e};
-		    numnewsagbi = #Pending#e;
-	       	    Pending#e = {};);
+     grabLowestDegreeTop := (maxdeg, MOflag, Pending) -> (
+	-- assumes: lowest degree pending list is already autosubducted.
+	-- this row reduces this list, placing all of the
+	-- entries back into Pending, but then appends the lowest
+	-- degree part into the basis.
+	e := lowestDegree(maxdeg, Pending);
+	if e <= maxdeg then (
+	     if MOflag == 2 then (
+		  numnewsagbi = #Pending#e;
+		  appendToBasis matrix{Pending#e};
+		  Pending#e = {};)
+	     else (
+	          m := rowReduce(matrix{Pending#e}, e);
+	       	  Pending#e = {};
+	       	  insertPending(m, Pending);
+	       	  e = lowestDegree(maxdeg, Pending);
+	       	  appendToBasis matrix{Pending#e}; --call will need updating
+		  numnewsagbi = #Pending#e;
+	       	  Pending#e = {};);
 	       );
 	  e);
-
      gbI = gens gb I;
      Gens = compress (Gens % I);
      G = matrix(R, {{}});
      Gensmaxdeg := (max degrees source Gens)_0;
      Gens = compress submatrixBelowDegree(Gens, maxdeg+1);
-     insertPending Gens;
+     insertPending (Gens, Pending);
      Pending#0 = {};
-     d = grabLowestDegree();  -- initializes G 
+     d = grabLowestDegreeTop(maxdeg, MOflag, Pending);  -- initializes G 
      if printlevel > 0 then (
        << "--- degree " << d << " ----" << endl;
        << numnewsagbi << " new generators" << endl;
@@ -264,9 +248,9 @@ sagbiquo(Matrix,Ideal,ZZ,ZZ) := (Gens, I, maxnloops, printlevel) -> (
 	       stopcriteria := numgens source newguys)
 	  else stopcriteria = 0;
           if stopcriteria > 0 then (
-	       if MOflag == 3 then (insertPending newguys)
-	       else (insertPending RStoR newguys);
-	       d = grabLowestDegree();
+	       if MOflag == 3 then (insertPending (newguys, Pending))
+	       else (insertPending (RStoR newguys, Pending));
+	       d = grabLowestDegreeTop(maxdeg, MOflag, Pending);
 	       if printlevel > 0 then 
 	         << numnewsagbi << " new generators" << endl;
 	       )
