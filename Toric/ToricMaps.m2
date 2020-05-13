@@ -418,12 +418,13 @@ pullback (ToricMap, ToricDivisor) := ToricDivisor => (f, D) -> (
 	(transpose cartierData_(maxConeIndices_i) * imageRho)_(0,0) * X_i)
     )
 
--- Given ToricMap f: X -> Y and a Module on Cox Y, returns a Module on Cox X
+-- Given ToricMap f: X -> Y and a Module on Cox Y, with simplicial Y, returns a Module on Cox X
+-- TODO: something is wrong here, a test fails
 pullback (ToricMap, Module) := Module => (f, M) -> (
     if ring target f =!= ring M then error "-- expected module over the Cox ring of the target";
     (inducedMap f) ** M)
 
--- Given ToricMap f: X -> Y and a CoherentSheaf on smooth Y, returns the CoherentSheaf on X
+-- Given ToricMap f: X -> Y and a CoherentSheaf on Y, with simplicial Y, returns the CoherentSheaf on X
 pullback (ToricMap, CoherentSheaf) := CoherentSheaf => (f, F) -> sheaf(source f, pullback(f, module F))
 
 -- Given ToricMap f: X -> Y, with simplicial X and Y, returns the RingMap Cox Y -> Cox X
@@ -1465,6 +1466,8 @@ BlO = toricBlowup({0,1}, AA2)
 f  = map(AA2, BlO, 1)
 DAA2=toricDivisor({1,0},AA2)
 assert (pullback(f, DAA2)==toricDivisor({1,0,1},BlO))
+assert (pairs pullback(f,OO DAA2) === pairs OO toricDivisor({1,0,1},BlO))
+assert (module pullback(f,OO DAA2) === module OO toricDivisor({1,0,1},BlO))
 ///
 
 TEST ///
@@ -1502,6 +1505,8 @@ f = map(Y, X, matrix{{-2},{3}})
 DY=toricDivisor({1,0,1},Y)
 pullback(f,DY)
 assert (pullback(f,DY)==toricDivisor({3,7},X))
+assert (pairs pullback(f,OO DY) === pairs OO toricDivisor({3,7},X))
+assert (module pullback(f,OO DY) === module OO toricDivisor({3,7},X))
 ///
 
 
