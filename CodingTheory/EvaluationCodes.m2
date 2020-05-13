@@ -1,4 +1,5 @@
 needsPackage "SRdeformations"
+needsPackage "Polyhedra"
 
 EvaluationCode = new Type of HashTable
 
@@ -35,7 +36,7 @@ evaluationCode(Ring,List,Matrix) := EvaluationCode => opts -> (F,P,M) -> (
     -- outputs: a F-module.
     
     -- We should check if all the points of P are in the same F-vector space.
-    
+
     m := numgens image M; -- number of monomials.
 
     R := F[t_1..t_m];
@@ -54,7 +55,73 @@ evaluationCode(Ring,List,Matrix) := EvaluationCode => opts -> (F,P,M) -> (
 	}
     )
 
+   
+ToricCode = method(Options => {})
 
+ToricCode(ZZ,Matrix) := EvaluationCode => opts -> (q,M) -> (
+    -- Constructor for a toric code.
+    -- inputs: size of a field, an integer matrix 
+    -- outputs: the evaluation code defined by evaluating all monomials corresponding to integer 
+    ---         points in the convex hull of the columns of M at the points of the algebraic torus (F*)^n
+    
+    F:=GF(q, Variable=>z);
+    s:=set apply(q-1,i->z^i);
+    m:=numgens target M;
+    ss:=s;
+    for i from 1 to m-1 do (
+    	ss=set toList ss/splice**s;
+    );
+    P:=toList ss/splice;
+    R:=F[t_1..t_m];
+    Polytop:=convexHull M;
+    L:=latticePoints Polytop;
+    LL:=transpose matrix apply(L, i-> first entries transpose i);
+    G:=matrix apply(entries LL,i->apply(P,j->product apply(m,k->(j#k)^(i#k))));
+    
+    new EvaluationCode from{
+	symbol AmbientSpace => F^(#P),
+	symbol ExponentsMatrix => LL,
+	symbol Code => image G
+	}
+)   
+    
+----------------- Example of ToricCode method ----
+
+M=matrix{{1,2,8},{4,5,6}}
+T=ToricCode(4,M)
+
+------------------    
+    
+    
+       
+------------This an example of an evaluation code----------------------------------------
+
+d=2
+q=2
+S=3
+F_2=GF 2-- Galois fiel
+---------------------Defining  points in the Fano plane-----
+A=affineSpace(S, CoefficientRing => F_2, Variable => y)
+aff=rays A
+matrix aff
+--------------Points in Fano plane------------------
+LL=apply(apply(toList (set(0..q-1))^**(S)-(set{0})^**(3),toList),x -> (matrix aff)*vector deepSplice x)
+X=apply(LL,x->flatten entries x)
+------------------Defining the ring and the vector space of  homogeneous polynomials with degree 2----------------------------------
+R=F_2[vars(0..2)]
+LE=apply(apply(toList (set(0..q-1))^**(hilbertFunction(2,R))-(set{0})^**(hilbertFunction(2,R)),toList),x -> basis(2,R)*vector deepSplice x)
+Poly=apply(LE,x-> entries x)
+-----------------------for each point p_k in Fano plane exists a polynomial f_i s.t f_i(p_k)not=0 ---------------------------------------
+f={b^2,c^2,a^2,a^2,b^2,a^2,a^2}
+----------------------------Using the package  numerial algebraic geometry----------------------------------
+Polynum=apply(0..length LE-1, x->polySystem{LE#x#0})
+PolyDem=apply(f,x->polySystem{x})
+XX=apply(X,x->point{x})
+---------------------Reed-Muller-type code of order 2------------------------------------------
+C_d=apply(Polynum,y->apply(0..length f -1,x->(flatten entries evaluate(y,XX#x))#0/(flatten entries evaluate(PolyDem#x,XX#x))#0))
+   
+    
+------------------------------------------------------------------------------------------------------------------------------
 
 
 
