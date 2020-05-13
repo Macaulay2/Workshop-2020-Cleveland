@@ -1505,8 +1505,52 @@ assert (pullback(f,DY)==toricDivisor({3,7},X))
 ///
 
 
+-------------------------------------------------------
 -- Tests for isSurjective
+-------------------------------------------------------
+TEST ///
+-- Test 1: Projection from a Hizerbruch surface to P^1
+X = hirzebruchSurface 4
+Y = toricProjectiveSpace 1
+f = map(Y,X,matrix{{1,0}})
+assert isSurjective f
+///
 
+-- Test 2: When a fan lies in a hyerplane 
+TEST ///
+X = affineSpace 2
+-- A^2 for which the fan lies in the hypereplane
+Y = normalToricVariety({{1,0,0},{0,1,0}},{{0,1}})
+-- Isomorphisms between X, Y
+f1 = map(X,Y,matrix{{1,0,0},{0,1,0}})
+f2 = map(Y,X,matrix{{1,0},{0,1},{0,0}})
+assert isSurjective f1
+--assert isSurjective f2
+///
+
+-- Test 3: Embedding open subsets I
+TEST ///
+X = affineSpace 2
+Y = toricProjectiveSpace 2 
+f = map(Y,X,matrix{{1,0},{0,1}})
+assert (not isSurjective f1)
+///
+
+-- Test 4: Embedding open subsets II
+TEST ///
+X = affineSpace 2
+Y = toricBlowup({0,1},X) 
+f = map(Y,X,matrix{{1,0},{1,1}})
+assert (not isSurjective f)
+///
+
+-- Test 5: Blowdon
+TEST ///
+X = affineSpace 2
+Y = toricBlowup({0,1},X) 
+f1 = map(X,Y,matrix{{1,0},{0,1}})
+assert isSurjective f1
+///
 
 
 --Tests for ideal
