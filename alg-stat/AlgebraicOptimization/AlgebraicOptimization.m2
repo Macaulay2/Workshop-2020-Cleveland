@@ -24,7 +24,16 @@ export {
 
 -- Code here
 
-projectiveDual = method(Options => {DualVariable => null}); -- Maybe options are needed?
+conormalVariety = method();
+-- Computes the conormal variety with respect to the (polynomial)
+-- objective function p
+conormalVariety (Ideal, RingElement) := Ideal => (I,p) -> (
+  if not ring I === ring p then error("Ideal and polynomial must be in same ring.")
+)
+
+
+
+projectiveDual = method(Options => {DualVariable => null});
 -- (Alg. 5.1 in SIAM book)
 -- Takes homogeneous ideal as input, returns ideal of dual of the projective variety
 projectiveDual Ideal := Ideal => opts -> I -> (
