@@ -102,7 +102,7 @@ doc ///
 	    the natural ring map $K \to L$.
     Description
         Text  
-       	    The usual map function is not working properly when the generators of a GaloisField are designated. For example,
+       	    The usual @TO map@ function is not working properly when the generators of a @TO GaloisField@ are designated. For example,
 	    
 	Example
 	    K1 = GF(8); L1 = GF(64);
@@ -184,7 +184,7 @@ doc ///
 	    the natural ring map  $R \to S$
     Description
         Text  
-            The usual map function does not check whether the map for the ground field is a well-defined map.
+            The usual @TO map@ function does not check whether the map for the ground field is a well-defined map.
         Example
             R = GF(8)[x,y,z]/(x*y-z^2); S = GF(64)[u,v]/(v^2);
 	    f = map(S, R, {u, 0, v})
@@ -217,11 +217,13 @@ assert(coefficientRing T === K)
 ///
 
 TEST ///
-g := switchFieldMap(GF(64)[x,y,z]/(x*y-z^2), GF(8)[a],{x})
+g = switchFieldMap(GF(64)[x,y,z]/(x*y-z^2), GF(8)[a],{x})
 assert(true)
 ///
   
-       
+TEST///
+
+///    
 end
 
 -- Here place M2 code that you find useful while developing this
