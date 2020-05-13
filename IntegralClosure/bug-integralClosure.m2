@@ -22,7 +22,7 @@ integralClosure(Ideal, RingElement, ZZ) := opts -> (I,a,D) -> (
     phi := map(M, module ID, mapback gD);
     assert(isHomogeneous phi);
     assert(isWellDefined phi);
---    error "debug me";
+    error "debug me";
 --    extendIdeal(ID,a^D,phi)
 error();
     extendIdeal(ID, phi)
@@ -167,14 +167,18 @@ TEST///
     assert(isWellDefined phi')    
     assert(extendIdeal(I,phi)== c*K)
     assert(extendIdeal(I,phi')== (b+c)*K)    
-    assert(I ==integralClosure I) -- right!
-    integralClosure I
-  
+    integralClosure I -- wrong!!
+    -- inside the debugger, during `integralClosure I`
+    isWellDefined phi -- true.
+    
     S = ZZ/101[a,b,c]/ideal(a^3-b^2*c)
     ID = ideal(b^2*c+b*c^2,a*b*c+a*c^2)
-    M = (cokernel matrix {{-a, 0, 0, -c}, {b, -a, 0, 0}}) ** S^{-3}
-    phi = map(module ID, M, matrix {{1_S, 0}, {0, 1}})  -- not well defined?
+    M = (cokernel matrix {{-a, 0, 0, -c}, {b, -a, 0, 0}})
+    phi = map(M, module ID, matrix {{1_S, 0}, {0, 1}})
     isWellDefined phi
+    extendIdeal(ID, phi) -- should not be 0, must contain I?
+      -- unless the hypothesis that M is isomorphic to an ideal
+      -- containing ID is incorrect...?
 ///
 
 
