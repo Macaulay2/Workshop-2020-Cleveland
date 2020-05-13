@@ -86,18 +86,37 @@ firstFunction ZZ := String => n -> (
    ) 
 
 --Function to check if random point is in the variety
-evaluate =(I1)->
+evaluate= method( Options=>{});
+
+
+
+
+
+
+evaluate(Ideal) :=opts->(I1)->
 (genList:= first entries gens I1;
 K:=coefficientRing ring I1;point:=createRandomPoints(I);
 eval:= map(K,ring I1,point);
   j:=0;while(j< #genList) do (
           tempEval:=eval(genList_j);
           if not (tempEval==0) then return false else 
-               j:=j+1);
+               j=j+1);
           if (tempEval ==0) then 
    return point  else return false;
    )
-       
+ 
+ evaluate(ZZ,Ideal):=opts->(n1,I1)->(
+     j:=0;
+     local point;
+      while( j<n1) do (
+	    point=evaluate(I1);
+	    if not (point===false ) then return point 
+	  else    j=j+1;
+	   );
+       return false;)
+	      
+ )
+  
    
 -- A function with an optional argument
 secondFunction = method(
@@ -120,7 +139,7 @@ beginDocumentation()
 doc ///
     Key
         createRandomPoints
-	(createRandomPoints, ideal)
+	(createRandomPoints, Ideal)
     Headline
         prototype: This function is provided by the package  TO create a random point.
     Usage
@@ -152,7 +171,8 @@ doc ///
 doc ///
     Key
         evaluate
-	(evaluate, ideal)
+	(evaluate, Ideal)
+	(evaluate,ZZ,Ideal)
     Headline
         prototype: This function in  the package will  will and tell if some random point is in the variety or not.
     Usage
@@ -260,12 +280,12 @@ TEST ///
   TEST///
 R=QQ[t_1..t_3];
 I = ideal(t_1,t_2+t_3);
-assert(createRandomPoints I==={2/7, 5/4,3/10} )
+assert(#(createRandomPoints(I))==3)
    ///
    
  TEST///
  R=QQ[t_1..t_3];
-I = ideal(t_1,t_2+t_3);
+I = ideal(t_1,t_2+t_3, t_1-1);
 assert(evaluate(I)===false); 
  ///   
        
