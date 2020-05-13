@@ -46,7 +46,7 @@ doc ///
 	    
 	    This example is from the POSSO test suite available by anonymous ftp from the site gauss.dm.unipi.it, from the directory pub/posso.
 	    
-	    See also: http://homepages.math.uic.edu/~jan/Demo/reimer5.html.
+	    See also: http://homepages.math.uic.edu/~jan/Demo/butcher.html
 	Example
 	    F = butcher(QQ)
     ///
