@@ -354,7 +354,6 @@ isInterior (NormalToricVariety,List,Matrix) := Boolean => (X,sigma,rho) -> (
    false)
 
 
---isSurjective is running, needs tested
 isSurjective = method()
 isSurjective ToricMap := Boolean => (f) -> (
     if not isWellDefined(f) then return "the map is not well defined";
@@ -374,7 +373,7 @@ isSurjective ToricMap := Boolean => (f) -> (
     	for sigma in targetCones do(
             if isInterior(target f, sigma, rho) then targetCones = delete(sigma,targetCones));
     	);
-    return not targetCones == {}
+    return targetCones == {}
    )
 
 
@@ -1147,7 +1146,7 @@ doc ///
     	isSurjective
         (isSurjective, ToricMap)
     Headline 
-        whether a toric map is surjective (currently broken)
+        whether a toric map is surjective
     Usage 
         isSurjective f
     Inputs 
@@ -1158,20 +1157,17 @@ doc ///
     Description
         Text
 	    A morphism $f : X\to Y$ is surjective if $f(X) = Y$ as sets. 
-	    A toric morphism is injecive, if the induced map of fans is 
+	    A toric morphism is surjective, if the induced map of fans is 
 	    surjective.
 	Text
 	    Projections are surjective
 	Example
 	    X = toricProjectiveSpace 2
-	    isSurjective map(X,X,1)
-
 	    Y = hirzebruchSurface 2
 	    XY = X ** Y
 	    p1 = map(X,XY, matrix{{1,0,0,0},{0,1,0,0}})
 	    p2 = map(Y,XY, matrix{{0,0,1,0},{0,0,0,1}})
 	    isSurjective p1
-	    isDominant
 	    isSurjective p2
 	Text
 	    Blowdowns are surjective
