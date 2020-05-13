@@ -374,7 +374,7 @@ isSurjective ToricMap := Boolean => (f) -> (
     	for sigma in targetCones do(
             if isInterior(target f, sigma, rho) then targetCones = delete(sigma,targetCones));
     	);
-    return targetCones == {}
+    return not targetCones == {}
    )
 
 
