@@ -71,7 +71,8 @@ export {
     "isFibration",
     "isProper",
     "pullback",
-    "isSurjective"
+    "isSurjective",
+    "isDominant"
 }
 
 
@@ -1554,7 +1555,7 @@ Y = normalToricVariety({{1,0,0},{0,1,0}},{{0,1}})
 f1 = map(X,Y,matrix{{1,0,0},{0,1,0}})
 f2 = map(Y,X,matrix{{1,0},{0,1},{0,0}})
 assert isSurjective f1
---assert isSurjective f2
+assert isSurjective f2
 ///
 
 -- Test 3: Embedding open subsets I
@@ -1562,7 +1563,7 @@ TEST ///
 X = affineSpace 2
 Y = toricProjectiveSpace 2 
 f = map(Y,X,matrix{{1,0},{0,1}})
-assert (not isSurjective f1)
+assert (not isSurjective f)
 ///
 
 -- Test 4: Embedding open subsets II
@@ -1573,12 +1574,12 @@ f = map(Y,X,matrix{{1,0},{1,1}})
 assert (not isSurjective f)
 ///
 
--- Test 5: Blowdon
+-- Test 5: Blowdown
 TEST ///
 X = affineSpace 2
 Y = toricBlowup({0,1},X) 
-f1 = map(X,Y,matrix{{1,0},{0,1}})
-assert isSurjective f1
+f = map(X,Y,matrix{{1,0},{0,1}})
+assert isSurjective f
 ///
 
 
