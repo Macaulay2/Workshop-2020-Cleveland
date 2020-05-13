@@ -77,7 +77,20 @@ ToricCode(ZZ,Matrix) := EvaluationCode => opts -> (q,M) -> (
     L:=latticePoints Polytop;
     LL:=apply(L,l->entries l);
     G:=matrix apply(LL,i->apply(P,j->product apply(m,k->(j#k)^(i#k#0))));
+    
+    new EvaluationCode from{
+	symbol AmbientSpace => F^(#P),
+	symbol ExponentsMatrix => L,
+	symbol Code => image G
+	}
 )   
+    
+----------------- Example of ToricCode method ----
+
+M=matrix{{1,2,8},{4,5,6}}
+T=ToricCode(4,M)
+
+------------------    
     
     
        
