@@ -164,7 +164,7 @@ linearCode(Module,List) := LinearCode => opts -> (S,L) -> (
     if opts.ParityCheck then {
 	outputVec := {S, S.ring, {}, L, kernel matrix L};
 	} else {
-	outputVec =  {S, S.ring, L , {}, image matrix L};
+	outputVec =  {S, S.ring, L , {}, image transpose matrix L};
 	};
     
     return rawLinearCode(outputVec)
@@ -181,7 +181,7 @@ linearCode(GaloisField,ZZ,List) := LinearCode => opts -> (F,n,L) -> (
     if opts.ParityCheck then {
 	outputVec := {S, F, {}, L, kernel matrix L};
 	} else {
-	outputVec =  {S, F, L , {}, image matrix L};
+	outputVec =  {S, F, L , {}, image transpose matrix L};
 	};
     
     return rawLinearCode(outputVec)
@@ -244,7 +244,7 @@ linearCode(Matrix) := LinearCode => opts -> M -> (
     )
 
 net LinearCode := c -> (
-     "Code: " | net c.Code
+     "Code with Generator Matrix: " | net transpose generators c.Code
      )
 toString LinearCode := c -> toString c.Generators
 
