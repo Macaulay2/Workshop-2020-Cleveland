@@ -64,7 +64,7 @@ export{
   "StrategyRandom",
   "StrategyCurrent",
   "MaxSteps",
-  "DegreeFunction",
+  "SPairsFunction",
   "UseOnlyFastCodim"
 }
 
@@ -118,7 +118,8 @@ optRn := {
     CodimCheckFunction => ((k) -> 1.3^k),
     MaxSteps => 4,
     UseOnlyFastCodim => false, 
-    DegreeFunction => ( (t,i) -> ceiling((i+1)*t))
+--    DegreeFunction => ( (t,i) -> ceiling((i+1)*t))
+    SPairsFunction => (i -> ceiling(i^1.5))
 };
 
 optInternalChooseMinor := {
@@ -154,7 +155,8 @@ optChooseGoodMinors := {
 optIsCodimAtLeast := {
     Verbose => false,
     MaxSteps => 10,
-    DegreeFunction => ( (t,i) -> ceiling((i+1)*t))
+    --DegreeFunction => ( (t,i) -> ceiling((i+1)*t))
+    SPairsFunction => (i -> ceiling(i^1.5))
 };
 
 
@@ -805,7 +807,7 @@ Rn(ZZ, Ring) := opts -> (n1, R1) -> (
         if (opts.Verbose or debugLevel > 0) then print concatenate("Rn:  Loop step, about to compute dimension.  Submatrices considered: ", toString(i), ", and computed = ", toString(# keys searchedSet) );
         mutM2 = mutableMatrix(nonzeroM); --reset this matrix periodically
         mutM1 = mutableMatrix(M1);
-        if (true === isCodimAtLeast((D - r) + n1 + 1, Id + sumMinors, MaxSteps=>opts.MaxSteps, DegreeFunction => opts.DegreeFunction)) then (
+        if (true === isCodimAtLeast((D - r) + n1 + 1, Id + sumMinors, MaxSteps=>opts.MaxSteps, SPairsFunction => opts.SPairsFunction)) then (
             d = r-n1 - 1;
             if (opts.Verbose or debugLevel > 0) then print concatenate("Rn:  singularLocus dimension verified by isCodimAtLeast");            
         );
@@ -966,17 +968,21 @@ isCodimAtLeast(ZZ, Ideal) := opts -> (n1, I1) -> (
     );
     --now we set stuff up for the loop if that doesn't work.  
     vCount := # first entries vars S1;
-    baseDeg := apply(sum(apply(first entries vars S1, t1 -> degree t1)), v -> ceiling(v/vCount)); --use this as the base degree to step by (probably we should use a different value)
-    i := 0;
-    curLimit := baseDeg;
+ --   baseDeg := apply(sum(apply(first entries vars S1, t1 -> degree t1)), v -> ceiling(v/vCount)); --use this as the base degree to step by (probably we should use a different value)
+    i := 1;
+    --curLimit := baseDeg;
+    local curLimit;
+    local myGB;
     
     gensList := null;
     while (i < opts.MaxSteps) do(
-        curLimit = apply(baseDeg, tt -> (opts.DegreeFunction)(tt,i));
+        curLimit = opts.SPairsFunction(i);
+--        curLimit = apply(baseDeg, tt -> (opts.SPairsFunction)(tt,i));
         if (opts.Verbose or debugLevel > 0) then print concatenate("isCodimAtLeast: about to compute gb DegreeLimit => ", toString curLimit);
-        gensList = first entries leadTerm gb(I2, DegreeLimit=>curLimit);    
+        myGB = gb(I2, PairLimit=>curLimit);
+        gensList = first entries leadTerm gb(I2, PairLimit=>curLimit);    
         if (#gensList > 0) then (
-            monIdeal = monomialIdeal(first entries leadTerm gb(I2, DegreeLimit=>curLimit));
+            monIdeal = monomialIdeal(first entries leadTerm myGB);
             if (opts.Verbose or debugLevel > 0) then print concatenate("isCodimAtLeast: computed gb, now computing codim ");
             if (codim monIdeal - dAmb >= n1) then return true;
         );
@@ -1446,7 +1452,7 @@ doc ///
         [Rn, CodimCheckFunction]
         [Rn, MaxSteps]
         [Rn, UseOnlyFastCodim]
-        [Rn, DegreeFunction]
+        [Rn, SPairsFunction]
         MinMinorsFunction
         CodimCheckFunction
         UseOnlyFastCodim
@@ -1530,7 +1536,7 @@ doc ///
             The minimum number of minors computed before checking the codimension, can also be controlled by an option {\tt MinMinorsFunction}.  This is should be a function of a single variable, the number of minors computed.  Finally, via the option {\tt CodimCheckFunction}, you can pass the {\tt Rn} a function which controls how frequently the codimension of the partial Jacobian ideal is computed.  By default this is the floor of {\tt 1.3^k}.  
             Finally, passing the option {\tt ModP => p} will do the computation after changing the coefficient ring to {\tt ZZ/p}.
         Text
-            The options {\tt MaxSteps} and {\tt DegreeFunction} are passed directly to {\tt isCodimAtLeast}.  You can turn off internal calls to {\tt codim/dim}, and only use {\tt isCodimAtLeast} by setting {\tt UseOnlyFastCodim => true}.
+            The options {\tt MaxSteps} and {\tt SPairsFunction} are passed directly to {\tt isCodimAtLeast}.  You can turn off internal calls to {\tt codim/dim}, and only use {\tt isCodimAtLeast} by setting {\tt UseOnlyFastCodim => true}.
     SeeAlso
         isCodimAtLeast
 ///
@@ -1779,9 +1785,9 @@ doc ///
         isCodimAtLeast
         (isCodimAtLeast, ZZ, Ideal)
         [isCodimAtLeast, Verbose]
-        [isCodimAtLeast, DegreeFunction]
+        [isCodimAtLeast, SPairsFunction]
         [isCodimAtLeast, MaxSteps]
-        DegreeFunction
+        SPairsFunction
         MaxSteps
     Headline
         returns true if we can quickly see if the codim is at least a given number
@@ -1812,7 +1818,7 @@ doc ///
         Text
             The function works by computing {\tt gb(I, DegreeLimit=>f(t,i))} for successive values of {\tt i}.  Here {tt f(t,i)} is a function that takes {\tt t}, some approximation of the base degree value
             of the polynomial ring (for example, in a standard graded polynomial ring, this is probably expected to be {\tt \{1\}}).  And {\tt i} is a counting variable.  
-            You can provide your own function by calling {\tt isCodimAtLeast(n, I, DegreeFunction=>( (t,i) -> f(t,i) )}.   Perhaps more commonly however, the user may want to 
+            You can provide your own function by calling {\tt isCodimAtLeast(n, I, SPairsFunction=>( (t,i) -> f(t,i) )}.   Perhaps more commonly however, the user may want to 
             instead tell the function to compute for larger values of {\tt i}.  This is done via the option {\tt MaxSteps}.  This is the max value of {\tt i} to consider before the function gives up.
         Example
             time isCodimAtLeast(3, chooseGoodMinors(15, r, myDiff, Strategy=>StrategyDefaultNonRandom), MaxSteps => 3, Verbose=>true)
@@ -1827,7 +1833,7 @@ doc ///
         isDimAtMost
         (isDimAtMost, ZZ, Ideal)
         [isDimAtMost, Verbose]
-        [isDimAtMost, DegreeFunction]
+        [isDimAtMost, SPairsFunction]
         [isDimAtMost, MaxSteps]
     Headline
         returns true if we can quickly see if the dim is at most a given number
