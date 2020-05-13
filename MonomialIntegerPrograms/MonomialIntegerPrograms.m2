@@ -8,7 +8,8 @@ newPackage (
       }},
   Headline => "using integer programming for fast computations with monomial ideals",
   Configuration => {
-      "CustomPath" => ""
+      "CustomPath" => "",
+      "CustomScipPrintLevel" => ""
       },
   PackageImports => {"LexIdeals"},
   DebuggingMode => true
@@ -44,14 +45,14 @@ ScipPath = if userPath == "" then(
     print("Using default executable name \"scip\".\nTo change this, load package using CustomPath option.");
     "scip") else userPath;
 
-ScipPrintLevel = 1;
-print("Current value of ScipPrintLevel is 1.")
--------------
--- methods --
--------------
+userPrintLevel = MonomialIntegerPrograms#Options#Configuration#"CustomScipPrintLevel";
 
-
-
+ScipPrintLevel = if userPrintLevel == "" then(
+    print("Current value of ScipPrintLevel is 1.\nTo set a custom default value, load package using CustomScipPrintLevel option.");
+    1) else userPrintLevel;
+---------------------
+-- codim, dim, degree
+---------------------
 codimensionIP = method();
 codimensionIP (MonomialIdeal) := I -> (
     (dir, zimplFile, solFile, errorFile, detailsFile) := tempDirectoryAndFiles("codim");
@@ -1020,7 +1021,8 @@ end--
 
 restart
 uninstallPackage("MonomialIntegerPrograms")
-installPackage("MonomialIntegerPrograms")--, MakeDocumentation => true)
+installPackage("MonomialIntegerPrograms")
+loadPackage("MonomialIntegerPrograms", Configuration => {"CustomScipPrintLevel" => "0"})
 viewHelp("sample session in Monomial Integer Programs")
 needsPackage("MonomialIntegerPrograms")
 check("MonomialIntegerPrograms")
