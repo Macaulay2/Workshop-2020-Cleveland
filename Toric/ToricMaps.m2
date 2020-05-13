@@ -429,7 +429,7 @@ pullback (ToricMap, CoherentSheaf) := CoherentSheaf => (f, F) -> sheaf(source f,
 inducedMap ToricMap := RingMap => opts -> f -> (
     R := ring source f;
     Y := target f;
-    if not isSmooth Y then error "-- expected the target variety to be smooth";
+--    if not isSmooth Y then error "-- expected the target variety to be smooth";
     S := ring Y;
     map(R, S, apply(numgens S, i -> (
 		exps := entries pullback(f, Y_i);
@@ -437,6 +437,9 @@ inducedMap ToricMap := RingMap => opts -> f -> (
 	    )))
     )
 
+--As Greg points out, this is wrong.  To see this, consider the inclusion of A^2 into
+--P^2 - the induced map code would define the homomorphism C[x_0,x_1,x_2]->C[x_1,x_2] that
+--sends x_0 to zero, so the kernel is <x_0>, which is not the zero ideal.
 ideal ToricMap := Ideal => f -> (
     B := ideal ring target f;
     saturate (kernel inducedMap f, B)
