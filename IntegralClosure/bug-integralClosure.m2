@@ -20,7 +20,7 @@ integralClosure(Ideal, RingElement, ZZ) := opts -> (I,a,D) -> (
     assert(isHomogeneous phi);
 --    error "debug me";
 --    extendIdeal(ID,a^D,phi)
-    extendIdeal(ID,phi)    
+    extendIdeal phi
     )
 
 findGrade2Ideal = method()
@@ -56,6 +56,22 @@ extendIdeal(Ideal, Matrix) := Ideal => (I, phi) -> (
     preimageInc := inc // (phi0 * sz);
     ideal (sz * preimageInc)
     )
+
+extendIdeal(Matrix) := Ideal => phi -> (
+    --input: f: (module I) --> M, an inclusion from an ideal 
+    --to a module that is isomorphic to the inclusion of I into an ideal J containing I.
+    --output: the ideal J, so that f becomes the inclusion I subset J.
+    inc := transpose gens source phi;
+    phi0 := transpose matrix phi;
+    (q,r) = quotientRemainder(inc,phi0);
+    if r !=0 then error "phi is not isomorphic to an inclusion of ideals";
+    trim ideal q -- is the "trim" doing anything?
+    )
+--    sz := syz transpose presentation target phi;
+--    assert(source phi0 == target sz);
+--    preimageInc := inc // (phi0 * sz);
+--    ideal (sz * preimageInc)
+--  )
 -*
 --bits of old code:      
 	  return J;
@@ -111,8 +127,8 @@ TEST///
     phi = map(M,module I,d*id_M)
     phi' = map(M',module I,c*id_M')
     assert(isWellDefined phi)
-    assert(extendIdeal(I,phi)== c*K)
-    assert(extendIdeal(I,phi')== d*K)    
+    assert(extendIdeal phi == c*K)
+    assert(extendIdeal phi'== d*K)    
 ///
 TEST///
     S = ZZ/101[a,b,c]/ideal(a^3-b*(b-c)*(b+c))
@@ -124,8 +140,8 @@ TEST///
     phi' = map(M',module I,c*id_M')
     assert(isWellDefined phi)
     assert(isWellDefined phi')    
-    assert(extendIdeal(I,phi)== c*K)
-    assert(extendIdeal(I,phi')== (b+c)*K)    
+    assert(extendIdeal phi == c*K)
+    assert(extendIdeal phi'== (b+c)*K)    
     integralClosure I == I
 ///
 
@@ -139,7 +155,6 @@ K=integralClosure(I,I_0,2) -- integral closure of J = I^2
 assert(K == J+ideal"abcdef") --doesn't work yet on this example!
 
 Ibar = extendIdeal(ID,I_0^2,phi)
---time K' = integralClosure(I^2)  -- how long does this take?
 F=ideal(a*b*c*d*e*f);
 gens(F^2)%J^2 -- so F satisfies X^2-m, with m\in J^2.
 assert(isSubset(F, K)) -- F should be contained in the integral closure.
