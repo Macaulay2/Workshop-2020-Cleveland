@@ -18,74 +18,63 @@ newPackage(
 export {
   -- Methods
   "projectiveDual",
-  "makePrimalDualRing",
+  "conormalRing",
   "conormalVariety",
   -- Options
-  "DualVariable"
+  "DualVariable",
+  --Types and keys
+  "ConormalRing","CNRing","PrimalRing","DualRing","PrimalCoordinates","DualCoordinates"
 }
 
+ConormalRing = new Type of HashTable;
 
-makePrimalDualRing = method(Options => {DualVariable => null});
--- Creates a ring with the primal and dual variables
-makePrimalDualRing Ring := Ring => opts -> R -> (
+conormalRing = method(Options => {DualVariable => null});
+-- Creates a ConormalRing from a primal ring R
+conormalRing Ring := ConormalRing => opts -> R -> (
   if not degreeLength R == 1 then error "expected degree length 1";
   u := if opts.DualVariable === null then symbol u else opts.DualVariable;
   dualR := (coefficientRing R)[u_0..u_(#gens R - 1)];
-  R ** dualR
+  new ConormalRing from {
+    CNRing => R ** dualR,
+    PrimalRing => R,
+    DualRing => dualR,
+    PrimalCoordinates => gens R,
+    DualCoordinates => gens dualR
+  }
 )
 
 
-conormalVariety = method(Options => options makePrimalDualRing);
+conormalVariety = method(Options => options conormalRing);
 -- Computes the conormal variety with respect to the (polynomial)
 -- objective function p
-conormalVariety (Ideal, RingElement) := Ideal => opts -> (I,p) -> (
-  if not ring I === ring p then error("ideal and polynomial must be in same ring.");
-  R := ring p;
-  if not degreeLength R == 2 then error "degreeLength must be 2";
+conormalVariety (Ideal, RingElement, ConormalRing) := Ideal => opts -> (I,p,C) -> (
+  if not ring I === C.PrimalRing then error "expected ideal in primal ring";
+  if not ring p === C.CNRing then error "expected objective function in conormal ring";
+  
   c := codim I;
-  jacI := diff(basis({1,0}, R), transpose gens I);
-  jacBar := diff(basis({1,0}, R), p) || jacI;
-  J' := I + minors(c+1, jacBar);
+  jacI := sub(diff(matrix{C.PrimalCoordinates}, transpose gens I), C.CNRing);
+  jacBar := diff(sub(matrix{C.PrimalCoordinates}, C.CNRing), p) || jacI;
+  J' := sub(I,C.CNRing) + minors(c+1, jacBar);
   J := saturate(J', minors(c, jacI));
   J
 )
 
 
-projectiveDual = method(Options => options makePrimalDualRing);
+projectiveDual = method(Options => options conormalRing);
 -- (Alg. 5.1 in SIAM book)
 -- Takes homogeneous ideal as input, returns ideal of dual of the projective variety
 projectiveDual Ideal := Ideal => opts -> I -> (
   if not isHomogeneous I then error("Ideal has to be homogeneous");
-  c := codim I;
-  jacI := transpose jacobian I;
   R := ring I;
-  numVars := #gens R;
-  u := if opts.DualVariable === null then symbol u else opts.DualVariable;
-  dualR := (coefficientRing R)[u_0..u_(numVars-1)];
-  S := R ** dualR;
-  jacBar := sub(vars dualR, S) || sub(jacI, S);
-  J' := sub(I, S) + minors(c+1, jacBar);
-  J := saturate(J', minors(c, sub(jacI,S)));
-  xVars := (gens R) / (i -> sub(i,S));
-  sub(eliminate(xVars, J), dualR)
-)
+  S := conormalRing(R, opts);
 
--- TODO This should either replace projectiveDual or be deleted!
-projectiveDual2 = method(Options => options makePrimalDualRing);
-projectiveDual2 Ideal := Ideal => opts -> I -> (
-  if not isHomogeneous I then error("Ideal has to be homogeneous");
-  R := ring I;
-  S := makePrimalDualRing(R, opts);
-  primalVars := basis({1,0},S);
-  dualVars := basis({0,1},S);
-  numVars := numgens R;
-  
-  I = sub(I,S);
-  p := (primalVars * transpose dualVars)_(0,0);
-  J := conormalVariety(I, p);
-  dualIndices := flatten entries dualVars / index // sort;
-  (dualR, i) := selectVariables(dualIndices, S);
-  sub(eliminate(flatten entries primalVars, J), dualR)
+  primalCoordinates := S.PrimalCoordinates / (i->sub(i,S.CNRing));
+  dualCoordinates := S.DualCoordinates / (i->sub(i,S.CNRing));
+
+  p := apply(primalCoordinates, dualCoordinates, (p,d) -> p*d) // sum;
+  J := conormalVariety(I, p, S);
+
+  sub(eliminate(primalCoordinates, J), S.DualRing)
 )
 
 TEST ///
@@ -115,6 +104,11 @@ Description
     todo
 Caveat
 SeeAlso
+///
+
+doc ///
+Key
+  ConormalRing
 ///
 
 
@@ -162,32 +156,23 @@ Description
 
 doc ///
 Key
-  makePrimalDualRing
-  [makePrimalDualRing, DualVariable]
+  conormalRing
+  [conormalRing, DualVariable]
 Headline
   Creates a ring with primal and dual variables
 Usage
-  makePrimalDualRing(R)
+  conormalRing(R)
 Inputs
   R:Ring
 Outputs
-  :Ring
+  :ConormalRing
 Description
   Text
-    Return a ring containing both primal and dual variables.
-    This is the ring where the conormal variety lives.
-    By default, the dual variables have the symbol u, but this can be changed using the
-    optional argument {\tt DualVariable}
+    Creates an element of type ConormalRing
   Example
-    R = QQ[x_0..x_4]
-    S = makePrimalDualRing(R)
-    gens S
-    makePrimalDualRing(R, DualVariable => y)
-  Text
-    The primal variables have degree $\{1,0\}$ and the dual variables have degree $\{0,1\}$
-  Example
-    basis({1,0}, S)
-    basis({0,1}, S)
+    R = QQ[x_0..x_2]
+    conormalRing(R)
+    conormalRing(R, DualVariable => l)
 Caveat
   The ring $R$ must have degree length 1
 SeeAlso
@@ -204,12 +189,13 @@ Inputs
     defined in the primal variables only
   p:RingElement
     objective function
+  S:ConormalRing
 Usage
-  conormalVariety(I,p)
+  conormalVariety(I,p,S)
 
 Caveat
   The ring containing $I$ and $p$ must have primal variables in degree $\{1,0\}$ and dual variables in degree $\{0,1\}$.
-  Such a ring can be obtained using @TO{makePrimalDualRing}@.
+  Such a ring can be obtained using @TO{conormalRing}@.
 ///
 
 TEST ///
