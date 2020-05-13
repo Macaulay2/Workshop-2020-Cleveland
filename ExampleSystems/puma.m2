@@ -32,13 +32,14 @@ doc ///
 		of polynomials in the system
     Description
     	Text
-	    The Bezout bound is 128. 
+	    This system was solved in May 2020, using @TO solveSystem@ in Macaulay2 v1.15
+	     with an Intel(R) Core(TM) i5-5250U CPU @ 1.60GHz.
+	   
+	    There were 16 solutions found in 0.531 seconds (with a Bezout bound of 128). 
 	    
 	    Reference: "Box-Bisection for solving second-degree systems and the problem of clustering', ACM Transactions on Mathematical Software" by A. Morgan and V. Shapiro. (p. 152-167).
 	    
 	    See also: http://homepages.math.uic.edu/~jan/Demo/puma.html.
 	Example
 	    F = puma(RR_53)
-	    time sols = solveSystem F;
-	    #sols
     ///

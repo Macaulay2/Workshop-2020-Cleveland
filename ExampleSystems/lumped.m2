@@ -23,10 +23,10 @@ doc ///
     	lumped(kk)
     Inputs
     	kk:Ring
-            the coefficient ring
+	    	the coefficient ring
     Outputs
     	:List
-            of solutions
+            of the polynomials in the system
     Description
     	Text
 	    This system was solved in May 2020, using @TO solveSystem@ in Macaulay2 v1.15

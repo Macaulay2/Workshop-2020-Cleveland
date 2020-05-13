@@ -32,10 +32,13 @@ doc ///
             the coefficient ring
     Outputs
     	:List
-            of solutions
+            of the polynomials in the system
     Description
     	Text
-	    The Bezout bound is 1024.
+	    This system was solved in May 2020, using @TO solveSystem@ in Macaulay2 v1.15
+	     with an Intel(R) Core(TM) i5-5250U CPU @ 1.60GHz.
+	   
+	    There were 4 solutions found in 2.266 seconds (with a Bezout bound of 1024).
 	    
 	    We point out that this system is difficult for homotopy continuation (without 
 		multi-homogenization), yet an easy system for elimination. 
@@ -45,7 +48,5 @@ doc ///
 	    See also: http://homepages.math.uic.edu/~jan/Demo/ku10.html.
 	Example
 	    F = ku10(QQ)
-    	    time sols = solveSystem F;
-    	    #sols
     ///
     

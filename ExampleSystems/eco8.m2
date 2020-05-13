@@ -32,7 +32,10 @@ doc ///
 		of polynomials in the system
     Description
     	Text
-	    The Bezout bound is 1458. 
+	    This system was solved in May 2020, using @TO solveSystem@ in Macaulay2 v1.15
+	     with an Intel(R) Core(TM) i5-5250U CPU @ 1.60GHz.
+	   
+	    There were 64 solutions found in 9.197 seconds (with a Bezout bound of 1458).
 	    
 	    Reference: "Solving polynomial systems using continuation for engineering
  	    and scientific problems" by Alexander Morgan (p 148).
@@ -40,6 +43,4 @@ doc ///
 	    See also: http://homepages.math.uic.edu/~jan/Demo/eco8.html.
 	Example
 	    F = eco8(QQ)
-	    time sols = solveSystem F;
-	    #sols
     ///

@@ -34,7 +34,10 @@ doc ///
 	    of the polynomials in the system 
     Description
     	Text
-	    The Bezout bound is 256.
+	    This system was solved in May 2020, using @TO solveSystem@ in Macaulay2 v1.15
+	     with an Intel(R) Core(TM) i5-5250U CPU @ 1.60GHz.
+	   
+	    There were 48 solutions found in 1.708 seconds (with a Bezout bound of 256).
 	     
 	    Reference: "Computing all solutions to polynomial systems using
 	     homotopy continuation" by A. Morgan and A. Sommese (pages 115-138).
@@ -42,6 +45,4 @@ doc ///
 	    See also: http://homepages.math.uic.edu/~jan/Demo/ipp.html.
 	Example
 	    F = ipp(RR_53)
-    	    time sols = solveSystem F;
-    	    #sols
     ///

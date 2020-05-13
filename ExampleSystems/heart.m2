@@ -29,10 +29,13 @@ doc ///
             the coefficient ring
     Outputs
     	:List
-            of solutions
+            of the polynomials in the system
     Description
     	Text
-	    The Bezout bound is 1458.
+	    This system was solved in May 2020, using @TO solveSystem@ in Macaulay2 v1.15
+	     with an Intel(R) Core(TM) i5-5250U CPU @ 1.60GHz.
+	   
+	    There were 2 solutions found in 3.356 seconds (with a Bezout bound of 1458).
 	    
 	    Reference: "Determination of magnitudes, directions, and locations of two independent dipoles in a circular conducting region from boundary potential measurements" by C.V. Nelson and B.C. Hodgkin (pages 817-823),
 	    "Coefficient-Parameter Polynomial Continuation" by A.P. Morgan and A.J. Sommese (pages 123-160), 
@@ -41,7 +44,5 @@ doc ///
 	    See also: http://homepages.math.uic.edu/~jan/Demo/heart.html.
 	Example
 	    F = heart(RR_53)
-    	    time sols = solveSystem F;
-    	    #sols
     ///
     

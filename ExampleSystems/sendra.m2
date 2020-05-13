@@ -25,13 +25,14 @@ doc ///
 		of polynomials in the system
     Description
     	Text
-	    The Bezout bound is 49. 
+	    This system was solved in May 2020, using @TO solveSystem@ in Macaulay2 v1.15
+	     with an Intel(R) Core(TM) i5-5250U CPU @ 1.60GHz.
+	   
+	    There were 46 solutions found in 0.111 seconds (with a Bezout bound of 49). 
 	    
 	    Reference: PoSSo test suite.
 	    
 	    See also: http://homepages.math.uic.edu/~jan/Demo/sendra.html.
 	Example
 	    F = sendra(QQ)
-	    time sols = solveSystem F;
-	    #sols
     ///

@@ -23,7 +23,7 @@ examples'names = {
     "ipp",
     "katsura",
     "ku10",
-    -- "lumped",
+    "lumped",
     "puma",
     "quadgrid",
     "rabmo",

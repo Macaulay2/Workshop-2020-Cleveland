@@ -33,7 +33,10 @@ doc ///
 		of polynomials in the system
     Description
     	Text
-	    The Bezout bound is 36000. 
+	    This system could not be solved in May 2020, using @TO solveSystem@ in Macaulay2 v1.15
+	     with an Intel(R) Core(TM) i5-5250U CPU @ 1.60GHz after waiting 12 hours.
+	   
+	    There should be 16 solutions (with a Bezout bound of 36000). 
 	    
 	    Reference: "Methods and applications of interval analysis" by Ramon E. Moore (p. 64).
 	    
