@@ -18,7 +18,7 @@ newPackage (
 -- exports --
 -------------
 export {
-    "allBettiTablesWithHilbertFunction",
+    "bettiTablesWithHilbertFunction",
     "codimensionIP",    
     "degreeIP",
     "dimensionIP",
@@ -100,7 +100,7 @@ degreeIP (MonomialIdeal) := o -> I -> (
     readScipCount(solFile)
     )
 
-allBettiTablesWithHilbertFunction = method(
+bettiTablesWithHilbertFunction = method(
     Options => {
 	TallyTables => false,
 	BoundGenerators => -1,
@@ -109,7 +109,7 @@ allBettiTablesWithHilbertFunction = method(
 	}
     );
 
-allBettiTablesWithHilbertFunction (List, Ring) := o -> (D, R) -> (
+bettiTablesWithHilbertFunction (List, Ring) := o -> (D, R) -> (
     M := monomialIdealsWithHilbertFunction(D, R, 
 	BoundGenerators => o.BoundGenerators, 
 	FirstBetti => o.FirstBetti, 
@@ -937,26 +937,25 @@ assert(degreeIP K == degree K)
 ///
 
 TEST /// --hilbert
-R=QQ[x,y,z];
-assert(#monomialIdealsWithHilbertFunction({1,2,1,0},R)==9)
-assert(#monomialIdealsWithHilbertFunction({1,3,4,2,1,0},R)==156)
-R=QQ[x,y,z,w];
-assert(#monomialIdealsWithHilbertFunction({1,4,3,1,0},R)==244)
-assert(all(monomialIdealsWithHilbertFunction({1,4,10,19,31},R), I -> numgens I == 1))
+R = QQ[x,y,z];
+assert(#monomialIdealsWithHilbertFunction({1,2,1,0}, R) == 9)
+assert(#monomialIdealsWithHilbertFunction({1,3,4,2,1,0}, R) == 156)
+R = QQ[x,y,z,w];
+assert(#monomialIdealsWithHilbertFunction({1,4,3,1,0}, R) == 244)
+assert(all(monomialIdealsWithHilbertFunction({1,4,10,19,31}, R), I -> numgens I == 1))
 ///
 
 TEST /// --bettis
-R=QQ[x,y,z];
-allBettiTablesWithHilbertFunction({1,2,1,0}, R)
-allBettiTablesWithHilbertFunction({1,2,1,0}, R, TallyTables => true)
-
-allBettiTablesWithHilbertFunction({1,2,1,0}, R)
-allBettiTablesWithHilbertFunction({1,2,1,0}, R, TallyTables => true)
-
-assert(#monomialIdealsWithHilbertFunction({1,3,4,2,1,0},R)==156)
-R=QQ[x,y,z,w];
-assert(#monomialIdealsWithHilbertFunction({1,4,3,1,0},R)==244)
-assert(all(monomialIdealsWithHilbertFunction({1,4,10,19,31},R), I -> numgens I == 1))
+R = QQ[x,y,z];
+assert(#bettiTablesWithHilbertFunction({1,2,1,0}, R) == 2)
+assert(values bettiTablesWithHilbertFunction({1,2,1,0}, R, TallyTables => true) == {3, 6})
+assert(#bettiTablesWithHilbertFunction({1,3,4,2,1,0}, R) == 8)
+assert(values bettiTablesWithHilbertFunction({1,3,4,2,1,0}, R, TallyTables => true) == {54, 30, 24, 18, 9, 6, 12, 3})
+R = QQ[x,y,z,w];
+assert(#bettiTablesWithHilbertFunction({1,4,3,1,0}, R) == 10)
+b = new BettiTally from {(0,{0},0) => 1, (1,{2},2) => 7, (1,{3},3) => 1, (2,{3},3) => 10, (2,{4},4) => 4, (2,{5},5) => 1, (3,{4},4) => 5, (3,{5},5) => 4, (3,{6},6) => 2, (4,{5},5) => 1, (4,{6},6) => 1, (4,{7},7) => 1} 
+assert(member(b, bettiTablesWithHilbertFunction({1,4,3,1,0}, R)))
+assert(bettiTablesWithHilbertFunction({1,4,10,19,31}, R) == {new BettiTally from {(0,{0},0) => 1, (1,{3},3) => 1}})
 ///
 
 TEST /// --top min primes
@@ -971,23 +970,23 @@ L = monomialIdeal(y^12, x*y^3, z*w^3, z*v*y^10, z*x^10, v*z^10, w*v^10, y*v*x*z*
 assert(set(topMinimalPrimesIP(L))===set(select(minimalPrimes(L), p -> 2 == dim p)))
 ///
 
-TEST /// --min primes
-R = QQ[x,y,z,w,v];
-I = monomialIdeal(x*y*w, x*z*v, y*x, y*z*v);
-assert(set(minimalPrimesIP I) === set(minimalPrimes I))
-J = monomialIdeal(x^2*y*w^3*z, x*y*z*w*v, y*x^8*v, y^5*z*v, x^10, z^10, v^10);
-assert(set(minimalPrimesIP J) === set(minimalPrimes J) )
-K = monomialIdeal(x^2*y*w^3*z, x*y*z*w*v, y*x^8*v, y^5*z*v, y*x^10, v*z^10, w*v^10);
-assert(set(minimalPrimesIP K) === set(minimalPrimes K) )
-L = monomialIdeal(y^12, x*y^3, z*w^3, z*v*y^10, z*x^10, v*z^10, w*v^10, y*v*x*z*w);
-assert(set(minimalPrimesIP L) === set(minimalPrimes L) )
-///
+--TEST /// --min primes
+--R = QQ[x,y,z,w,v];
+--I = monomialIdeal(x*y*w, x*z*v, y*x, y*z*v);
+--assert(set(minimalPrimesIP I) === set(minimalPrimes I))
+--J = monomialIdeal(x^2*y*w^3*z, x*y*z*w*v, y*x^8*v, y^5*z*v, x^10, z^10, v^10);
+--assert(set(minimalPrimesIP J) === set(minimalPrimes J) )
+--K = monomialIdeal(x^2*y*w^3*z, x*y*z*w*v, y*x^8*v, y^5*z*v, y*x^10, v*z^10, w*v^10);
+--assert(set(minimalPrimesIP K) === set(minimalPrimes K) )
+--L = monomialIdeal(y^12, x*y^3, z*w^3, z*v*y^10, z*x^10, v*z^10, w*v^10, y*v*x*z*w);
+--assert(set(minimalPrimesIP L) === set(minimalPrimes L) )
+--///
 
 end--
 
 restart
 uninstallPackage("MonomialIntegerPrograms")
-installPackage("MonomialIntegerPrograms", MakeDocumentation => true)
+installPackage("MonomialIntegerPrograms")--, MakeDocumentation => true)
 viewHelp("sample session in Monomial Integer Programs")
 needsPackage("MonomialIntegerPrograms")
 check("MonomialIntegerPrograms")
