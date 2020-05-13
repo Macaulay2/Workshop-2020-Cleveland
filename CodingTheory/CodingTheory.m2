@@ -182,7 +182,7 @@ linearCode(GaloisField,ZZ,List) := LinearCode => opts -> (F,n,L) -> (
 	outputVec := {S, F, {}, L, kernel matrix L};
 	} else {
 	outputVec =  {S, F, L , {}, image matrix L};
-	};    
+	};
     
     return rawLinearCode(outputVec)
     
@@ -212,45 +212,35 @@ linearCode(ZZ,ZZ,ZZ,List) := LinearCode => opts -> (p,q,n,L) -> (
     )
 
 
-linearCode(Module,Module) := LinearCode => opts -> (S,V) -> (
-    -- constructor for a linear code
-    -- input: ambient vector space/module S, submodule V of S
-    -- outputs: code defined by submodule V
-    
-    if not isField(S.ring) then print "Warning: Codes over non-fields unstable.";
-     
-    new LinearCode from {
-	symbol AmbientModule => S,
-	symbol BaseField => S.ring,
-	symbol Generators => try V.gens then V.gens else gens V,
-	symbol Code => V,
-	symbol cache => {}
-	}
-    
-    )
-
 linearCode(Module) := LinearCode => opts -> V -> (
     -- constructor for a linear code
     -- input: some submodule V of S
     -- outputs: code defined by submodule V
     
-    linearCode(ambient V, V)
+    -- produce a set of generators for the specified submodule V:
+    generatorMatrix := transpose generators V;
+    
+    outputVec := {generatorMatrix.source, generatorMatrix.ring, entries generatorMatrix, {}, V};
+    
+    rawLinearCode(outputVec)
     
     )
 
 linearCode(Matrix) := LinearCode => opts -> M -> (
     -- constructor for a linear code
     -- input: a generating matrix for a code
-    -- output: code defined by the columns of M
+    -- output: if ParityCheck => true then code defined by kernel of M
+    --         if ParityCheck => false then code defined by rows of M
     
-    new LinearCode from {
-	symbol AmbientModule => M.target,
-	symbol BaseField => M.ring,
-	symbol Generators => entries transpose M,
-	symbol Code => image M,
-	symbol cache => {}
-	}
+
+    if opts.ParityCheck then {
+	outputVec := {M.source, M.ring, {}, entries M, kernel M};
+	} else {
+	outputVec =  {M.target, M.ring, entries M, {}, image transpose M};
+	};
     
+    rawLinearCode(outputVec)
+      
     )
 
 net LinearCode := c -> (
