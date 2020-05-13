@@ -102,8 +102,8 @@ degreeIP (MonomialIdeal) := o -> I -> (
     )
 
 --TODO: talk about this to decide if we want to alert/prompt users of this behavior.
-codim MonomialIdeal := {  } >> opts -> m -> codimensionIP m;
-degree MonomialIdeal := degreeIP;
+codim MonomialIdeal := {  } >> opts -> m -> ((cacheValue codim) codimensionIP) m;
+degree MonomialIdeal := m -> ((cacheValue degree) degreeIP) m;
 
 
 -----------------------
