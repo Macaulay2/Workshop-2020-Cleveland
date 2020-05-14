@@ -21,12 +21,14 @@ evaluationCode(Ring,List,List) := EvaluationCode => opts -> (F,P,S) -> (
 
     G := matrix apply(P,i->flatten entries sub(matrix(R,{S}),matrix(F,{i}))); -- Evaluate the elements in S over the elements on P.
     
+    G = (transpose G)//(groebnerBasis transpose G);
+    
     new EvaluationCode from{
-	symbol AmbientSpace => F^(#P),
 	symbol Points => P,
 	symbol VanishingIdeal => I,
 	symbol PolynomialSet => S,
-	symbol Code => image G
+	symbol GeneratingMatrix => G,
+	symbol LinearCode => linearCode(G)
 	}
     )
 
@@ -45,13 +47,14 @@ evaluationCode(Ring,List,Matrix) := EvaluationCode => opts -> (F,P,M) -> (
 
     G := transpose matrix apply(entries M,i->toList apply(P,j->product apply(m,k->(j#k)^(i#k))));    
 
-
-    new EvaluationCode from{
-	symbol AmbientSpace => F^(#P),
+    G := transpose((transpose G)//(groebnerBasis transpose G));
+    
+    new EvaluationCode from{,
 	symbol Points => P,
 	symbol VanishingIdeal => I,
 	symbol ExponentsMatrix => M,
-	symbol Code => image G
+	symbol GeneratingMatrix => G,
+	symbol LinearCode => linearCode(G)
 	}
     )
 
@@ -81,7 +84,7 @@ ToricCode(ZZ,Matrix) := EvaluationCode => opts -> (q,M) -> (
     new EvaluationCode from{
 	symbol AmbientSpace => F^(#P),
 	symbol ExponentsMatrix => LL,
-	symbol Code => image G
+	symbol LinearCode => linearCode(G)
 	}
 )   
     
@@ -140,13 +143,14 @@ cartesianCode(Ring,List,List) := EvaluationCode => opts -> (F,S,M) -> (
     P = apply(toList(P/deepSplice),i->toList i);
     Mm := toList apply(apply(M,i->promote(i,R/I)),j->lift(j,R))-set{0*M#0};
     G := matrix apply(P,i->flatten entries sub(matrix(R,{Mm}),matrix(F,{i})));
+    G = (transpose G)//(groebnerBasis transpose G);
     
     new EvaluationCode from{
-	symbol AmbientSpace => F^(#P),
 	symbol Sets => S,
 	symbol VanshingIdeal => I,
 	symbol PolynomialSet => Mm,
-	symbol Code => image G
+	symbol GeneratingMatrix => G,
+	symbol LinearCode => linearCode(G)
 	}
     )
 
@@ -175,12 +179,13 @@ cartesianCode(Ring,List,Matrix) := EvaluationCode => opts -> (F,S,M) -> (
     for i from 1 to m-1 do P=P**set S#i;
     P = apply(toList(P/deepSplice),i->toList i);
     G := transpose matrix apply(entries M,i->toList apply(P,j->product apply(m,k->(j#k)^(i#k))));
+    G := ((transpose G)//(groebnerBasis transpose G));
     
     new EvaluationCode from{
-	symbol AmbientSpace => F^(#P),
 	symbol VanishingIdeal => I,
 	symbol ExponentsMatrix => M,
-	symbol Code => image G
+	symbol GeneratingMatrix => G,
+	symbol LinearCode => linearCode(G)
 	}
     )
 
