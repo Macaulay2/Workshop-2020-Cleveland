@@ -28,7 +28,8 @@ export {
     "torusAction",
     "weights",
     "abelianInvariants",
-    "hilbertIdeal"
+    "hilbertIdeal",
+    "isInvariant"
     }
 --exportMutable {}
 
@@ -255,6 +256,30 @@ hilbertIdeal (Ideal, Matrix, PolynomialRing) := Ideal => (A, M, R) -> (
     return trim(sub(II, join(apply(n, i -> x_(i+1) => R_i),apply(n, i -> y_(i+1) => 0), apply(l, i -> z_(i+1) => 0))))
 )
 
+isInvariant = method(TypicalValue => Boolean)
+isInvariant (Ideal, Matrix, Thing) := Boolean => (A, M, f) -> (
+    R := ring(f);
+    if (numColumns M =!= numRows M) or (numRows M =!= #(gens R)) then print "Matrix size does not match polynomial ring";
+    x := local x, z := local z;
+    n := numColumns M;
+    K := coefficientRing(ring(f));
+    l := #(gens ring M);
+    
+    S := K[x_1..x_n, z_1..z_l];
+    M' := sub(M, apply(l, i -> (ring M)_i => z_(i+1)));
+    A' := sub(A, apply(l, i -> (ring M)_i => z_(i+1)));
+    f' := sub(f, apply(n, i -> (ring(f))_i => x_(i+1)));
+    Gf' := sub(f, apply(n, i -> (ring(f))_i => sum(n, j -> M'_(j,i) * x_(j+1))));
+    return ( (Gf' - f') % A' == 0 )
+)
+isInvariant (Matrix, Thing) := Boolean => (W,f) -> (
+    return W * transpose(matrix(exponents(f))) == 0
+)
+isInvariant (Matrix, List, Thing) := Boolean => (W,L,f) -> (
+    V := W * transpose(matrix(exponents(f)));
+    n := numColumns W;
+    return apply(n, i -> (V#i)%(L#i)) == 0
+)
 
 beginDocumentation()
 document { 
