@@ -268,29 +268,58 @@ generatorsFromHilbertIdeal (Ideal, Matrix, Ideal) := List => (A, M, I) -> (
     l := #(gens ring M);
     X := K[x_1..x_n];
     
+    I' := flatten entries gens sub(I, apply(n, i -> (ring I)_i => x_(i+1)));
+    
     S := K[x_1..x_n, z_1..z_l];
     M' := sub(M, apply(l, i -> (ring M)_i => z_(i+1)));
     A' := sub(A, apply(l, i -> (ring M)_i => z_(i+1)));
     
-    degreeList := sort toList set apply(flatten entries gens I, i -> first degree i);
-    
+    degreeList := sort toList set apply(I', i -> first degree i);
     generatorList := {};
-    scan (degreeList, d -> (
-	L := sub(basis(d,X), S);
-    	r := numColumns L;
-    	NFDL := apply(r, i -> (sub(L_(0,i), apply(n, j -> x_(j+1) => sum(n, k -> M'_(k,j) * x_(k+1)))) - L_(0,i)) % A');
-    	monomialsNFDL := flatten entries monomials(matrix{NFDL});
-    	m := #monomialsNFDL;
-    	B := matrix(apply(m, i -> apply(r, j -> coefficient(monomialsNFDL#i, NFDL#j))));
-    	KB := gens kernel B;
-	generatorList = join(generatorList, flatten entries (L * KB));
+    
+    local d;
+    while (#degreeList > 0) do(
+	d = degreeList#0;
+    	Id := select(I', i -> first degree i == d);
+	
+	alreadyInv := true;
+	j := 0;
+	while alreadyInv and Id#?j do(
+	    if not isInvariant(A,M,Id#j) then alreadyInv = false;
+	    j = j+1
+	);
+    	if not alreadyInv then (
+	    L := sub(basis(d,X), S);
+    	    r := numColumns L;
+    	    NFDL := apply(r, i -> (sub(L_(0,i), apply(n, j -> x_(j+1) => sum(n, k -> M'_(k,j) * x_(k+1)))) - L_(0,i)) % A');
+    	    monomialsNFDL := flatten entries monomials(matrix{NFDL});
+    	    m := #monomialsNFDL;
+    	    B := matrix(apply(m, i -> apply(r, j -> coefficient(monomialsNFDL#i, NFDL#j))));
+    	    KB := gens kernel B;
+	    generatorList = join(generatorList, flatten entries sub(L * KB, join(apply(n, i -> x_(i+1) => R_i), apply(l, i -> z_(i+1) => 0))))
+	) else (
+	    use X;
+	    generatorList = join(generatorList, apply(Id, f -> sub(f, apply(n, i -> x_(i+1) => R_i))));
+	    use S
+	);
+    	degreeList = drop(degreeList,1)
+    );
+    return generatorList
+)
+
+manualTrim = method(TypicalValue => List)
+manualTrim (List) := List => L -> (
+    L' := {0_(ring L#0)};
+    
+    scan(#L, i -> (
+	if not (L#i % ideal(L') == 0) then L' = append(L', L#i)
     ));
-    return apply(generatorList, q -> sub(q, join(apply(n, i -> x_(i+1) => R_i), apply(l, i -> z_(i+1) => 0))))
+    return drop(L',1)
 )
 
 linearInvariants = method(TypicalValue => List)
 linearInvariants (Ideal, Matrix, PolynomialRing) := List => (A,M,R) -> (
-    return generatorsFromHilbertIdeal(A,M,hilbertIdeal(A,M,R))
+    return manualTrim generatorsFromHilbertIdeal(A,M,hilbertIdeal(A,M,R))
 )
 
 isInvariant = method(TypicalValue => Boolean)
@@ -480,3 +509,12 @@ check Invariants
 -- Local Variables:
 -- compile-command: "make -C $M2BUILDDIR/Macaulay2/packages PACKAGES=Invariants pre-install"
 -- End:
+
+needsPackage "Invariants"
+S = QQ[z]
+A = ideal(z^2 - 1)
+M = matrix{{(1+z)/2, (1-z)/2},{(1-z)/2, (1+z)/2}}
+R = QQ[a,b]
+I = hilbertIdeal(A,M,R)
+generatorsFromHilbertIdeal(A,M,I)
+linearInvariants(A,M,R)
