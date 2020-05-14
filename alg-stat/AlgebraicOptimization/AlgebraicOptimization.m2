@@ -287,7 +287,8 @@ TEST///
 
 --witnessCriticalVariety and Optimization degree
 witnessCriticalIdeal = method(Options => options makeLagrangeRing);
-witnessCriticalIdeal (List,List,LagrangeVarietyWitness) := (Ideal,Ideal) => opts  -> (v,g,LVW) ->(
+witnessCriticalIdeal (List,List,LagrangeVarietyWitness) := (Ideal,Ideal,Ideal) => opts  -> (v,g,LVW) ->(
+--Output: substitution of (WI,I,LVW) 
     if degreeLength  LVW#LagrangeRing#PrimalRing==2 then(
 	u:=gens coefficientRing (LVW);
 	if #v=!=#u then error "data does not agree with number of parameters. ";
@@ -299,17 +300,38 @@ witnessCriticalIdeal (List,List,LagrangeVarietyWitness) := (Ideal,Ideal) => opts
 	gradSub := map(ring LVW,ring LVW,subVars);	
 	subData :=apply(u,v,(i,j)->i=>j);
 	--TODO: Issue with denominators.
-	return (sub(gradSub(LVW#PrimalIdeal),subData),sub(gradSub(LVW#JacobianConstraint),subData))
+	return (sub(gradSub(LVW#PrimalWitnessSystem),subData),sub(gradSub(LVW#PrimalIdeal),subData),sub(gradSub(LVW#JacobianConstraint),subData))
 	)
     else error"degreeLength is not 2."
     )
 
 
-witnessCriticalIdeal (List,RingElement,LagrangeVarietyWitness) := Ideal =>opts -> (v,psi,LVW) -> (
+witnessCriticalIdeal (List,RingElement,LagrangeVarietyWitness) := (Ideal,Ideal,Ideal) =>opts -> (v,psi,LVW) -> (
     g := apply(gens ring psi,x->diff(x,psi));
     witnessCriticalIdeal(v,g,LVW);
     )
 --TODO : Establish naming conventions.
+TEST///
+R=QQ[a,b][x,y]
+I=ideal(x^2+y^2-1)
+WI=I
+LVW = witnessLagrangeVariety(WI,I)
+ring LVW
+WCI = witnessCriticalIdeal({7,99},{x-a,y-b},LVW)
+assert (2 ==degree (WCI_1+WCI_2))--ED degree of circle
+
+R=QQ[a,b][x,y]
+I=ideal(x^2+3*y^2-1)
+WI=I
+LVW = witnessLagrangeVariety(WI,I)
+ring LVW
+WCI = witnessCriticalIdeal({7,99},{x-a,y-b},LVW)
+assert (4 ==degree (WCI_1+WCI_2))--ED degree of ellipse
+///
+
+
+
+
 TEST///
 R=QQ[a,b][x,y]
 I=ideal(x^2+y^2-1)
@@ -324,8 +346,11 @@ WI=I
 LVW = witnessLagrangeVariety(WI,I)
 ring LVW
 assert (4 ==degree witnessCriticalIdeal({7,99},{x-a,y-b},LVW))--ED degree of ellipse
-
 ///
+
+--TODO : bertiniSolve
+--TODO : monodromySolve
+
 
 
 -*
