@@ -25,11 +25,13 @@ export {
   "conormalVariety",
   "multiDegreeEDDegree",
   --More Methods
-  "makeLagrangeRing","witnessLagrangeVariety",
+  "makeLagrangeRing","witnessLagrangeVariety","witnessCriticalIdeal",
   -- Options
   "DualVariable",
   --Types and keys
   "ConormalRing","CNRing","PrimalRing","DualRing","PrimalCoordinates","DualCoordinates",
+  --More Types
+  "LagrangeVarietyWitness","LagrangeRing",
   --More Keys
   "LagrangeVariable","PrimalIdeal","JacobianConstraint","AmbientRing","LagrangeCoordinates","PrimalWitnessSystem"
 }
@@ -229,11 +231,12 @@ assert(4 == degree (LVW))
 ///
 
 coefficientRing(LagrangeVarietyWitness) := LVW ->coefficientRing LVW#LagrangeRing#AmbientRing
-
+ring (LagrangeVarietyWitness) := LVW -> ring LVW#JacobianConstraint 
 
 -- Degree of LagrangeVarietyWitness
+--TODO: How to document this?
 degree (List,LagrangeVarietyWitness) := (v,LVW) -> (    
-    if degreeLength  LVW#LagrangeRing#PrimalRing==2 then(
+    if degreeLength  LVW.LagrangeRing#PrimalRing==2 then(
 	u:=gens coefficientRing LVW;
 	if #v=!=#u then error "data does not agree with number of parameters. ";
     	subData :=apply(u,v,(i,j)->i=>j);
@@ -242,7 +245,7 @@ degree (List,LagrangeVarietyWitness) := (v,LVW) -> (
     else error"degreeLength is not 2."
     )
 degree (Nothing,LagrangeVarietyWitness) := (a,LVW) -> (
-	u:=gens coefficientRing ring (LVW1#PrimalIdeal);
+	u:=gens coefficientRing ring (LVW#PrimalIdeal);
 	kk:=ultimate(coefficientRing,LVW);
     	v :=apply(u,i->random kk);
 	degree(v,LVW)
@@ -281,28 +284,50 @@ TEST///
 
 ///
 
--*
+
 --witnessCriticalVariety and Optimization degree
-witnessCriticalIdeal := (List,List,LagrangeVarietyWitness) := (v,g,LVW) -> (
-    if degreeLength LVW#PrimalRing==2 then(
-	u:=gens coefficientRing (LVW#PrimalRing);
+witnessCriticalIdeal = method(Options => options makeLagrangeRing);
+witnessCriticalIdeal (List,List,LagrangeVarietyWitness) := Ideal => opts  -> (v,g,LVW) ->(
+    if degreeLength  LVW#LagrangeRing#PrimalRing==2 then(
+	u:=gens coefficientRing (LVW);
 	if #v=!=#u then error "data does not agree with number of parameters. ";
-    	AR:=LVW.LagrangeRing;
-	y := drop(drop(gens AR,#gens AR.PrimalRing),# gens AR.LagrangeRing);
-	subDualVars := apply(y,g,(i,j)->i=>j);
-	gradSub := map(AR,ring LVW#PrimalRing,subDualVars);--back in primalRing.	
+    	LR:=LVW#LagrangeRing;
+	y := drop(drop(gens ring LVW,#gens LR#PrimalRing),-# gens LR#LagrangeRing);
+	subDualVars := apply(y,g,(i,j)->i=>sub(j,ring LVW));
+	subVars:=subDualVars;
+	scan(gens ring LVW,X->if not member(X,y) then subVars=append(subVars,X=>X) );
+	gradSub := map(ring LVW,ring LVW,subVars);	
 	subData :=apply(u,v,(i,j)->i=>j);
-	--Issue with denominators.
+	--TODO: Issue with denominators.
 	return sub(gradSub(LVW#PrimalIdeal+LVW#JacobianConstraint),subData)
 	)
     else error"degreeLength is not 2."
     )
 
-witnessCriticalIdeal := (List,RingElement,LagrangeVarietyWitness) := (v,psi,LVW) -> (
+witnessCriticalIdeal (List,RingElement,LagrangeVarietyWitness) := Ideal =>opts -> (v,psi,LVW) -> (
     g := apply(gens ring psi,x->diff(x,psi));
     witnessCriticalIdeal(v,g,LVW);
     )
+--TODO : Establish naming conventions.
+TEST///
+R=QQ[a,b][x,y]
+I=ideal(x^2+y^2-1)
+WI=I
+LVW = witnessLagrangeVariety(WI,I)
+ring LVW
+assert (2 ==degree witnessCriticalIdeal({7,99},{x-a,y-b},LVW))--ED degree of circle
 
+R=QQ[a,b][x,y]
+I=ideal(x^2+3*y^2-1)
+WI=I
+LVW = witnessLagrangeVariety(WI,I)
+ring LVW
+assert (4 ==degree witnessCriticalIdeal({7,99},{x-a,y-b},LVW))--ED degree of ellipse
+
+///
+
+
+-*
 optimizationDegree(v,g,LVW)-> (
     CI:=witnessCriticalIdeal(v,g,LVW);
     CI = CI+LVW#PrimalIdeal;
@@ -551,7 +576,7 @@ restart
 path={"/Users/jo/Documents/GoodGit/M2020/Workshop-2020-Cleveland/alg-stat/AlgebraicOptimization"}|path  
 loadPackage("AlgebraicOptimization",Reload=>true)
 check"AlgebraicOptimization"
-
+installPackage"AlgebraicOptimization"
 
 M= QQ[x_1..x_2]
 I = ideal(4*(x_1^4+x_2^4),4*x_1^3,4*x_2^3)
