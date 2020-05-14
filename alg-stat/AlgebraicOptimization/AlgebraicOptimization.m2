@@ -6,6 +6,9 @@ newPackage(
     {Name => "Marc Harkonen", 
     Email => "harkonen@gatech.edu", 
     HomePage => "https://people.math.gatech.edu/~mharkonen3/"},
+    {Name => "Jose Israel Rodriguez", 
+    Email => "jose@math.wisc.edu", 
+    HomePage => "https://www.math.wisc.edu/~jose/"},
     {Name => "Your name here",
     Email => "Your email here",
     HomePage => "Your page here"}
@@ -22,7 +25,7 @@ export {
   "conormalVariety",
   "multiDegreeEDDegree",
   --More Methods
-  "makeLagrangeRing",
+  "makeLagrangeRing","witnessLagrangeVariety",
   -- Options
   "DualVariable",
   --Types and keys
@@ -163,7 +166,7 @@ findRegularSequence = I -> (
     WI := sub(ideal(),ring I);
     b:=0;
     scan(numgens I, i -> (
-	J := ideal  WI + ideal I_i;
+	J :=  WI + ideal I_i;
 	if codim J == b + 1 then (WI=J; b=b+1)
 	)
     );
@@ -174,7 +177,7 @@ witnessLagrangeVariety = method(Options => options makeLagrangeRing);
 witnessLagrangeVariety (Ideal,Ideal, LagrangeRing) := LagrangeVarietyWitness => opts -> (WI,I,AR) -> (
   if not ring I === AR.PrimalRing then error "expected ideal in primal ring";  
   c := #AR.LagrangeCoordinates;
-  if numgens I =!= c then error "expected numgens WI to equal the number of lagrange coordinates";  
+  if numgens WI =!= c then error "expected numgens WI to equal the number of lagrange coordinates";  
   jacWI := sub(diff(matrix{AR.PrimalCoordinates}, transpose gens WI), AR.AmbientRing);
   jacBar := sub(matrix{AR.DualCoordinates}, AR.AmbientRing) || sub(jacWI,AR.AmbientRing);
   J0 := sub(WI,AR.AmbientRing);
@@ -194,31 +197,91 @@ witnessLagrangeVariety (Ideal) := LagrangeVarietyWitness => opts -> I -> (
   R:= ring I; 
   if isCofficientRingInexact(R) then error"Not implemented for RR or CC coefficient ring. Try makeLagrangeRing(ZZ,Ring).";
   WI := findRegularSequence I;--This may not be generically reduced.
-  makeLagrangeRing(numgens WI,R,opts)
+  AR:=makeLagrangeRing(numgens WI,R,opts);
+  witnessLagrangeVariety(WI,I,AR,opts)
   )
--*
+
+TEST ///
+R=QQ[x,y]
+I=ideal(x^2+y^2-1)
+LVW = witnessLagrangeVariety(I,I)
+--TODO better test
+--Check keys 
+assert( sort\\toString\keys LVW == sort\\toString\{JacobianConstraint, LagrangeRing, PrimalIdeal, PrimalWitnessSystem})
+--Check values TODO
+--Check degree
+assert(4 == degree (LVW))
+
+LVW =witnessLagrangeVariety (I,I, makeLagrangeRing I)
+--Check keys 
+assert( sort\\toString\keys LVW == sort\\toString\{JacobianConstraint, LagrangeRing, PrimalIdeal, PrimalWitnessSystem})
+--Check values TODO
+--Check degree
+assert(4 == degree (LVW))
+
+LVW =witnessLagrangeVariety I
+--Check keys 
+assert( sort\\toString\keys LVW == sort\\toString\{JacobianConstraint, LagrangeRing, PrimalIdeal, PrimalWitnessSystem})
+--Check values TODO
+--Check degree
+assert(4 == degree (LVW))
+
+///
+
+coefficientRing(LagrangeVarietyWitness) := LVW ->coefficientRing LVW#LagrangeRing#AmbientRing
+
+
 -- Degree of LagrangeVarietyWitness
-degree (List,LagrangeVarietyWitness) := (v,LVW) -> (
-    if degreeLength LVW#PrimalRing==2 then(
-	u:=gens coefficientRing (LVW#PrimalRing);
+degree (List,LagrangeVarietyWitness) := (v,LVW) -> (    
+    if degreeLength  LVW#LagrangeRing#PrimalRing==2 then(
+	u:=gens coefficientRing LVW;
 	if #v=!=#u then error "data does not agree with number of parameters. ";
     	subData :=apply(u,v,(i,j)->i=>j);
 	return degree sub(LVW#PrimalIdeal+LVW#JacobianConstraint,subData)
 	)
     else error"degreeLength is not 2."
     )
-degree (Nothing,LagrangeVarietyWitness) := LVW -> (
-    if degreeLength LVW#PrimalRing==2 then(
-	u:=gens coefficientRing (LVW#PrimalRing);
-	kk:=coefficientRing first u;
-    	v :=apply(u,i->i=>random kk);
-	return degree(v,LVW)
+degree (Nothing,LagrangeVarietyWitness) := (a,LVW) -> (
+	u:=gens coefficientRing ring (LVW1#PrimalIdeal);
+	kk:=ultimate(coefficientRing,LVW);
+    	v :=apply(u,i->random kk);
+	degree(v,LVW)
 	)
-    else error"degreeLength is not 2."
-    )
 degree (LagrangeVarietyWitness) := LVW -> degree(LVW#PrimalIdeal+LVW#JacobianConstraint)
 
 
+
+
+TEST///
+    R=QQ[x,y,z,w]
+    WI = ideal(x*z-y^2,y*w-z^2)
+    I = ideal(x*w-z*y)+WI 
+    codim I
+    LVW1 = witnessLagrangeVariety(WI,I)
+    LVW2 = witnessLagrangeVariety I
+    assert(LVW1#PrimalWitnessSystem =!=    LVW2#PrimalWitnessSystem )
+    assert(16 == degree LVW1)
+    assert(16 == degree LVW2)
+    
+    R=QQ[u][x,y,z,w]
+
+    WI = ideal(u*x*z-y^2,y*w-z^2)
+    I = ideal(u*x*w-z*y)+WI 
+    LVW1 = witnessLagrangeVariety(WI,I)
+    assert(16 == degree({1},LVW1)	)
+    assert(16 == degree(,LVW1)	)
+    assert(6 == degree({0},LVW1)	)
+    assert(33==degree LVW1)
+
+    LVW2 = witnessLagrangeVariety I
+    assert(16 == degree({1},LVW2)	)
+    assert(16 == degree(,LVW2)	)
+    assert(3 == degree({0},LVW2)	)
+    assert(36==degree LVW2)
+
+///
+
+-*
 --witnessCriticalVariety and Optimization degree
 witnessCriticalIdeal := (List,List,LagrangeVarietyWitness) := (v,g,LVW) -> (
     if degreeLength LVW#PrimalRing==2 then(
@@ -246,16 +309,6 @@ optimizationDegree(v,g,LVW)-> (
     scan(g,i->if ring g ==frac ring CI then CI:=saturate(CI,denominator g))
     )
 
-
-TEST ///
-
-R=QQ[x,y]
-I=ideal(x^2+y^2-1)
---LVW = witnessLagrangeVariety(I,I)
---peek LVW
---degree (LVW)
-
-///
 *-
 
 -- Documentation below
@@ -441,6 +494,55 @@ Description
 --  todo
 ///
   
+doc ///
+Key
+  witnessLagrangeVariety
+  (witnessLagrangeVariety, Ideal,Ideal, LagrangeRing)
+  (witnessLagrangeVariety, Ideal, Ideal)
+  (witnessLagrangeVariety, Ideal)
+Headline
+  witness a Lagrange variety
+Usage
+  witnessLagrangeVariety(WI,I,LR)  
+  witnessLagrangeVariety(WI,I)  
+  witnessLagrangeVariety(I)
+Inputs
+  I:
+    an  @TO2{Ideal, "ideal"}@    
+  WI:
+    a complete intersection with I as an irreducible component
+  LR:
+    a LagrangeRing    
+Outputs
+  :LagrangeVarietyWitness
+    a desciption of the output is needed TODO
+--Consequences
+--  asd
+Description
+  Text
+    TODO.
+
+  Example
+    R=QQ[x,y,z,w]
+    WI = ideal(x*z-y^2,y*w-z^2)
+    I = ideal(x*w-z*y)+WI 
+    codim I
+    LVW1 = witnessLagrangeVariety(WI,I)
+    LVW2 = witnessLagrangeVariety I
+    LVW1#PrimalWitnessSystem =!=    LVW2#PrimalWitnessSystem 
+
+--  Code
+--    todo
+--  Pre
+--    todo
+--Caveat
+--  todo
+--SeeAlso
+--  todo
+///
+
+  
+  
 end
 
 
@@ -448,6 +550,9 @@ end
 restart
 path={"/Users/jo/Documents/GoodGit/M2020/Workshop-2020-Cleveland/alg-stat/AlgebraicOptimization"}|path  
 loadPackage("AlgebraicOptimization",Reload=>true)
+check"AlgebraicOptimization"
+
+
 M= QQ[x_1..x_2]
 I = ideal(4*(x_1^4+x_2^4),4*x_1^3,4*x_2^3)
 dualI = projectiveDual(I)
