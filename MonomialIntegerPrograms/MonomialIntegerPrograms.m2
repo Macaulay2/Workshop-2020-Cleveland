@@ -1033,6 +1033,45 @@ doc ///
   degreeIP
 ///
 
+doc ///
+    Key
+        minimalPrimesIP
+        (minimalPrimesIP, MonomialIdeal)
+        (minimalPrimesIP, MonomialIdeal, ZZ)
+    Headline
+        one line description if different from minimalPrimesIP
+    Usage
+        minimalPrimesIP I
+        minimalPrimesIP (I, iterations)
+    Inputs
+        I:MonomialIdeal
+        iterations:ZZ
+            how many iterations of topMinimalPrimesIP should be called
+    Outputs
+        :List
+            the minimal primes of I
+    Description
+        Text
+            This is basically an alternative version of @TO minimalPrimes@.            
+            
+            This function calls @TO topMinimalPrimesIP@ repeatedly, collecting the primes
+            and passing them in with @TO IgnorePrimes@. This is repeated @TT"iterations"@ many times
+            or until there are no primes remaining. If @TT"iterations"@ is excluded, all minimal primes are returned.
+        Example
+            R = QQ[x,y,z,w,v];
+            I = monomialIdeal(y^12, x*y^3, z*w^3, z*v*y^10, z*x^10, v*z^10, w*v^10, y*v*x*z*w);
+            ScipPrintLevel = 0;
+            minimalPrimesIP(I, 1)
+            minimalPrimesIP I
+            minimalPrimes I
+    Caveat
+        Warning: more than likely, this with take longer than @TO minimalPrimes@ to return the same output.
+        It some situations @TO topMinimalPrimesIP@ is much faster than @TO minimalPrimes@, but not all.
+    SeeAlso
+        minimalPrimes
+        topMinimalPrimesIP
+        IgnorePrimes
+///
 
 
 
