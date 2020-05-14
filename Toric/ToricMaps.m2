@@ -167,7 +167,7 @@ outerNormals (NormalToricVariety,List) := Matrix => (X, sigma) -> (
 
 
 
-isWellDefined ToricMap := Boolean => f -> (
+isWellDefined ToricMap := Boolean => (cacheValue isWellDefined) (f -> (
     -- CHECK DATA STRUCTURE
     -- check keys
     K := keys f;
@@ -232,7 +232,7 @@ isWellDefined ToricMap := Boolean => f -> (
 	return false
 	);
     true
-)
+    ))
 
 isProper = method()
 isProper ToricMap := Boolean => (cacheValue symbol isProper) (
@@ -337,13 +337,14 @@ isFibration = method()
 -- chapter 7, but it needs work.
 -- 
 -- We follow proposition 2.1 in DMM 
-isFibration ToricMap := Boolean => f -> (
-    isProper f and gens gb matrix f == id_(ZZ^(dim target f)))
+isFibration ToricMap := Boolean => (cacheValue isFibration) (f -> (
+    isProper f and gens gb matrix f == id_(ZZ^(dim target f))))
 
 
 
 isDominant = method()
-isDominant ToricMap := Boolean => f -> (rank matrix f == rank matrix rays target f)
+isDominant ToricMap := Boolean => (cacheValue isDominant) (f -> (
+    rank matrix f == rank matrix rays target f))
 
 outerNorm = method()
 outerNorm (NormalToricVariety,List) := Sequence => (X,sigma) -> (
