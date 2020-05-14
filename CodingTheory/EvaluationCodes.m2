@@ -147,7 +147,7 @@ cartesianCode(Ring,List,List) := EvaluationCode => opts -> (F,S,M) -> (
     
     new EvaluationCode from{
 	symbol Sets => S,
-	symbol VanshingIdeal => I,
+	symbol VanishingIdeal => I,
 	symbol PolynomialSet => Mm,
 	symbol GeneratingMatrix => G,
 	symbol LinearCode => linearCode(G)
