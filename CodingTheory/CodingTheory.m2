@@ -21,10 +21,6 @@ newPackage(
 -- must be placed in one of the following two lists
 
 export {
-    -- toy functions as examples
-    "firstFunction",
-    "secondFunction",
-    "MyOption",
     -- Types and Constructors
     "generatorToParityCheck",
     "parityCheckToGenerator",
@@ -41,6 +37,7 @@ export {
     -- Families of Codes
     "cyclicMatrix",
     "quasiCyclicCode",
+    "HammingCode",
     -- Methods
     "field",
     "vectorSpace",
@@ -268,37 +265,6 @@ net LinearCode := c -> (
 toString LinearCode := c -> toString c.Generators
 
 
-shorten = method(TypicalValue => LinearCode)
--- input: An [n,k] linear code C and a set S of distinct integers { i1, ..., ir} such that 1 <= ik <= n.
--- output: A new code from C by selecting only those codewords of C having a zeros in each of the coordinate 
---     positions i1, ..., ir, and deleting these components. Thus, the resulting 
---     code will have length n - r. 
-shorten ( LinearCode, List ) := LinearCode => ( C, L ) -> (
-    local newL; local codeGens;
-    
-    codeGens = C.Generators;
-    newL = delete(0, apply( codeGens, c -> (
-	if sum apply( L, l -> c#l ) == 0
-	then c
-	else 0
-	)));
-    
-    if newL == {} then return C else (
-	newL = entries submatrix' ( matrix newL, L );
-	return linearCode ( C.BaseField , newL );
-	)
-    )
-
-
--- input: An [n,k] linear code C and an iteger i such that 1 <= i <= n.
--- output: A new code from C by selecting only those codewords of C having a zero as their 
---     i-th component and deleting the i-th component from these codewords. Thus, the resulting 
---     code will have length n - 1. 
-shorten ( LinearCode, ZZ ) := LinearCode => ( C, i ) -> (
-    
-    return shorten(C, {i})
-    
-    )
 
 ------------------------------------------
 ------------------------------------------
@@ -382,7 +348,35 @@ quasiCyclicCode(List) := LinearCode => V -> (
     try quasiCyclicCode(baseField,V) else error "Entries not over a field."
     
     )
- 
+
+HammingCode = method(TypicalValue => LinearCode)
+
+HammingCode(ZZ,ZZ) := LinearCode => (q,r) -> (
+        
+    -- produce Hamming code
+    -- q is the size of the field
+    -- r is the dimension of the dual
+    K:=GF(q);
+    -- setK is the set that contains all the elements of the field
+    setK:=set(  {0}| apply(toList(1..q-1),i -> K_1^i));
+    -- C is the transpose of the parity check matrix of the code. Its rows are the the points of the
+    -- projective space P(r-1,q)
+    j:=1;
+    C:= matrix(apply(toList(1..q^(r-j)), i -> apply(toList(1..1),j -> 1))) | matrix apply(toList(toList setK^**(r-j)/deepSplice),i->toList i);
+    for j from 2 to r do C=C|| matrix(apply(toList(1..q^(r-j)), i -> apply(toList(1..(j-1)),j -> 0))) | matrix(apply(toList(1..q^(r-j)), i -> apply(toList(1..1),j -> 1))) | matrix apply(toList(toList setK^**(r-j)/deepSplice),i->toList i);
+	
+    -- The Hamming code is defined by its parity check matrix
+    linearCode(transpose C, ParityCheck => true)
+    )
+
+-*
+Example:
+HammingCode(2,3)
+ParityCheckMatrix => | 1 1 1 1 0 0 0 |
+                     | 0 1 0 1 1 1 0 |
+                     | 0 1 1 0 0 1 1 |
+*-
+
 
 ------------------------------------------
 ------------------------------------------
@@ -394,6 +388,7 @@ quasiCyclicCode(List) := LinearCode => V -> (
 -- act on codes. Should use this section for
 -- writing methods to convert between 
 -- different Types of codes
+
 
  
 --input: A linear code C
@@ -473,6 +468,54 @@ alphabet(LinearCode) := List => C -> (
 generic = method(TypicalValue => LinearCode)
 generic(LinearCode) := LinearCode => C -> (
     linearCode(C.AmbientModule)
+    )
+
+
+
+shorten = method(TypicalValue => LinearCode)
+-- input: An [n,k] linear code C and a set S of distinct integers { i1, ..., ir} such that 1 <= ik <= n.
+-- output: A new code from C by selecting only those codewords of C having a zeros in each of the coordinate 
+--     positions i1, ..., ir, and deleting these components. Thus, the resulting 
+--     code will have length n - r. 
+shorten ( LinearCode, List ) := LinearCode => ( C, L ) -> (
+    local newL; local codeGens;
+    
+    codeGens = C.Generators;
+    newL = delete(0, apply( codeGens, c -> (
+	if sum apply( L, l -> c#l ) == 0
+	then c
+	else 0
+	)));
+    
+    if newL == {} then return C else (
+	newL = entries submatrix' ( matrix newL, L );
+	return linearCode ( C.BaseField , newL );
+	)
+    )
+
+
+-- input: An [n,k] linear code C and an iteger i such that 1 <= i <= n.
+-- output: A new code from C by selecting only those codewords of C having a zero as their 
+--     i-th component and deleting the i-th component from these codewords. Thus, the resulting 
+--     code will have length n - 1. 
+shorten ( LinearCode, ZZ ) := LinearCode => ( C, i ) -> (
+    
+    return shorten(C, {i})
+    
+    )
+
+
+
+-- input: A module as the base field/ring, an integer n as the code length, and an integer
+--    k as the code dimension.
+-- output: a random codeword with AmbientModule M^n of dimension k
+
+--random (Module, ZZ, ZZ) := LinearCode => (M, n, k) -> (
+--    linearCode( M, apply(toList(1..n),j-> apply(toList(1..k),i-> random(M))) )
+--    )
+
+random (GaloisField, ZZ, ZZ) := LinearCode => opts -> (F, n, k) -> (
+    linearCode( F, apply(toList(1..n),j-> apply(toList(1..k),i-> random(F, opts)) ) )
     )
     
     
@@ -714,6 +757,38 @@ assert( shorten( C3, K ) == linearCode(F, shortL) )
 ///
 
 
+TEST ///
+-- random test
+F = GF(2, 4)
+n = 3
+k = 5
+C = random ( F , n, k )
+
+assert( length C == k )
+assert( dim C == 3 )
+
+F = GF 2
+n = 3
+k = 5
+C = random ( F , n, k )
+
+assert( length C == k )
+assert( dim C == 3 )
+///
+
+TEST ///
+-- Hamming code over GF(2) and dimension of the dual 3
+C1= HammingCode(2,3)
+C1.ParityCheckMatrix
+///
+
+TEST ///
+-- Hamming code over GF(2) and dimension of the dual 4
+C2= HammingCode(2,4)
+C2.ParityCheckMatrix
+///
+
+
 ------------------------------------------
 ------------------------------------------
 -- Documentation
@@ -768,6 +843,28 @@ document {
 	"bitflipDecode(H,v)"
 	}
     }
+
+document {
+    Key => {HammingCode, (HammingCode,ZZ,ZZ)},
+    Headline => "Generates the Hamming code over GF(q) and dimension of the dual r.",
+    Usage => "HammingCode(q,r)",
+    Inputs => {
+	"q" => ZZ => {"Size of the field."},
+	"r" => Vector => {"Dimension of the dual of the Hamming code."}	
+	},
+    Outputs => {
+	:LinearCode
+	},
+    "q and r and integers",
+    "Returns the Hamming code over GF(q) and dimensino of the dual r.",
+    EXAMPLE {
+	"C1= HammingCode(2,3);",
+	"C1.ParityCheckMatrix",
+	"C2= HammingCode(2,3);",
+	"C2.ParityCheckMatrix"
+	}
+    }
+
 document {
     Key => MaxIterations,
     Headline => "Specifies the maximum amount of iterations before giving up. Default is 100.",
@@ -819,6 +916,28 @@ doc ///
 --   Caveat
 --       myDegree is was Problem 2 in the tutorial yesterday.
 
+doc ///
+   Key
+       (random, GaloisField, ZZ, ZZ)
+   Headline
+       a random linear code 
+   Usage
+       shorten(GaloisField, ZZ, ZZ)
+   Inputs
+        F:GaloisField
+	n:ZZ
+	    an integer $n$ as the code length. 
+	k:ZZ
+	    an integer $k$ as the code dimension.
+	    
+   Outputs
+       :LinearCode
+           a random linear code of length $n$ and dimension $k$. 
+   Description
+       Example
+       	   F = GF(2, 4)
+	   C = random ( F , 3, 5 )
+///
 
 doc ///
    Key
