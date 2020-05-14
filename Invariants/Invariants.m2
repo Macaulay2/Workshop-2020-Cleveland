@@ -285,7 +285,7 @@ generatorsFromHilbertIdeal (Ideal, Matrix, Ideal) := List => (A, M, I) -> (
     	KB := gens kernel B;
 	generatorList = join(generatorList, flatten entries (L * KB));
     ));
-    return generatorList
+    return apply(generatorList, q -> sub(q, join(apply(n, i -> x_(i+1) => R_i), apply(l, i -> z_(i+1) => 0))))
 )
 
 linearInvariants = method(TypicalValue => List)
