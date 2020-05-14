@@ -10,7 +10,7 @@ newPackage(
     	Headline => "canonical subalgebra bases (sagbi bases)"
     	)
 
-export {"subalgebraBasis", "sagbi" => "subalgebraBasis", "PrintLevel"}
+export {"subalgebraBasis", "sagbi" => "subalgebraBasis", "PrintLevel", "combinedBasis"}
 
 load "SubalgebraBases/sagbi-common.m2"
 load "SubalgebraBases/sagbitop.m2"
