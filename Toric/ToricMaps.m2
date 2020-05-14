@@ -1245,13 +1245,12 @@ doc ///
 	    f = map(X,Y,matrix{{1,0},{0,1}})
 	    isSurjective f
 	Text
-	    The inclusion of the A^2 in P^2 is not surjective
+	    Inclusion of an affine open into a blowup is not surjective
 	Example
 	    X = affineSpace 2
-	    Y = toricProjectiveSpace 2
-	    f = map(Y,X,matrix{{1,0},{0,1}})
+	    Y = toricBlowup({0,1},X) 
+	    f = map(Y,X,matrix{{1,0},{1,1}})
 	    isSurjective f
- 
     SeeAlso
         (ToricMap)
 /// 
