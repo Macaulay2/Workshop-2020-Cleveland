@@ -486,6 +486,7 @@ ideal ToricMap := Ideal => f -> (
 --    saturate (kernel inducedMap f, B)
 --    )
 
+
 weilDivisorGroup ToricMap := Matrix => f -> (
     X := source f;
     Y := target f;
@@ -1258,12 +1259,70 @@ doc ///
     SeeAlso
         (ToricMap)
 /// 
+
+doc ///
+    Key
+        (weilDivisorGroup, ToricMap)
+    Headline
+        make the induced map between the corresponding groups of torus-invariant Weil divisors.
+    Usage
+        weilDivisorGroup f
+    Inputs
+        f : ToricMap
+    Outputs
+        : Matrix
+	    representing the map of abelian groups between the corresponding
+	    groups of torus-invariant Weil divisors
+    Description
+        Text
+	    Given a toric map $f : X \to Y$ with Y a smooth toric variety,
+            this method returns the induced map of abelian groups from
+            the group of torus-invariant Weil divisors on $Y$ to
+            the group of torus-invariant Weil divisors on $X$.
+            For general (toric) varieties, {\tt weilDivisorGroup} is not a functor.
+            However, {\tt weilDivisorGroup} gives a contravariant functor on the
+            category of smooth normal toric varieties.
+	Text
+	    Our first example produces the induced map from the group of
+            torus-invariant Weil divisors on the projective line to the group of
+            torus-invariant Weil divisors on the first Hirzebruch surface.
+	Example
+	    X = hirzebruchSurface 1;
+	    Y = toricProjectiveSpace 1;
+	    f = map(Y, X, matrix {{1, 0}})
+	    f' = weilDivisorGroup f
+	    assert (source f' == weilDivisorGroup Y)
+	    assert (target f' == weilDivisorGroup X)
+	Text
+	    The next example gives the induced map from the group of
+            torus-invariant Weil divisors on the projective plane to the group
+            of torus-invariant Weil divisors on the first Hirzebruch surface.
+	Example
+	    nefGenerators X
+	    Z = toricProjectiveSpace 2;
+	    g = map(Z, X, matrix {{1, 0}, {0,-1}})
+	    assert isWellDefined g
+	    g' = weilDivisorGroup g
+	    assert (source g' == weilDivisorGroup Z)
+	    assert (target g' == weilDivisorGroup X)
+        Text
+            The next example demonstrates that the induced map on the group of
+            torus-invariant Weil divisors is compatible with the induced map
+            on the class group
+        Example
+            gPic = classGroup g
+            assert(gPic * fromWDivToCl(Z) == fromWDivToCl(X) * g')
+    SeeAlso
+        (weilDivisorGroup, NormalToricVariety)
+        (classGroup, ToricMap)
+        (pullback, ToricMap, ToricDivisor)
+///
    
 doc ///
     Key
         (classGroup, ToricMap)
     Headline 
-        make the induce map between the corresponding class groups
+        make the induced map between the corresponding class groups
     Usage 
         classGroup f
     Inputs 
@@ -1274,10 +1333,12 @@ doc ///
 	    class groups
     Description
         Text
-	    Given a toric map $f : X \to Y$, this method returns the induced
-	    map of abelian groups from the class group of $Y$ to the class
-	    group of $X$.  In other words, {\tt classGroup} is a contravariant
-	    functor on the category of normal toric varieties.	    
+	    Given a toric map $f : X \to Y$ with Y a smooth toric variety,
+            this method returns the induced
+            map of abelian groups from the class group of $Y$ to the class
+	    group of $X$.  For general (toric) varieties, {\tt classGroup}
+            is not a functor. However, {\tt classGroup} gives a contravariant
+            functor on the category of smooth normal toric varieties.
 	Text
 	    Our first example produces the induced map from the class group of
 	    the projective line to the class group of the first Hirzebruch
@@ -1291,25 +1352,27 @@ doc ///
 	    assert (target f' == classGroup X) 
 	Text
 	    The next example gives the induced map from the class group of the
-	    projective plane to the class group of the first Hirzebruch
-	    surface.
+	    projective plane to the class group of the first Hirzebruch surface.
 	Example
 	    nefGenerators X
 	    Z = toricProjectiveSpace 2;
 	    g = map(Z, X, matrix {{1, 0}, {0,-1}})
 	    assert isWellDefined g
-	    g' = classGroup f
-	    assert (source g' == classGroup Y)
+	    g' = classGroup g
+	    assert (source g' == classGroup Z)
 	    assert (target g' == classGroup X) 	    
     SeeAlso
         (classGroup, NormalToricVariety)
-/// 
+        (weilDivisorGroup, ToricMap)
+        (picardGroup, ToricMap)
+        (pullback, ToricMap, ToricDivisor)
+///
 
 doc ///
     Key
         (picardGroup, ToricMap)
     Headline
-        make the induce map between the corresponding Picard groups
+        make the induced map between the corresponding Picard groups
     Usage
         picardGroup f
     Inputs
@@ -1327,7 +1390,7 @@ doc ///
 	Text
 	    Our first example produces the induced map from the Picard group of
 	    the projective line to the Picard group of the first Hirzebruch
-	    surface.
+            surface.
 	Example
 	    X = hirzebruchSurface 1;
 	    Y = toricProjectiveSpace 1;
@@ -1344,11 +1407,70 @@ doc ///
 	    Z = toricProjectiveSpace 2;
 	    g = map(Z, X, matrix {{1, 0}, {0,-1}})
 	    assert isWellDefined g
-	    g' = picardGroup f
-	    assert (source g' == picardGroup Y)
+	    g' = picardGroup g
+	    assert (source g' == picardGroup Z)
 	    assert (target g' == picardGroup X)
     SeeAlso
         (picardGroup, NormalToricVariety)
+        (cartierDivisorGroup, ToricMap)
+        (classGroup, ToricMap)
+        (pullback, ToricMap, ToricDivisor)
+///
+
+doc ///
+    Key
+        (cartierDivisorGroup, ToricMap)
+    Headline
+        make the induced map between the corresponding groups of torus-invariant Cartier divisors.
+    Usage
+        cartierDivisorGroup f
+    Inputs
+        f : ToricMap
+    Outputs
+        : Matrix
+	    representing the map of abelian groups between the corresponding
+	    groups of torus-invariant Cartier divisors
+    Description
+        Text
+	    Given a toric map $f : X \to Y$, this method returns the induced
+	    map of abelian groups from the group of torus-invariant Cartier
+            divisors on $Y$ to the group of torus-invariant Cartier divisors
+            on $X$. In other words, {\tt cartierDivisorGroup} is a contravariant
+	    functor on the category of normal toric varieties.
+	Text
+	    Our first example produces the induced map from the group of
+            torus-invariant Cartier divisors on the projective line to the group
+            of torus-invariant Cartier divisors on the first Hirzebruch surface.
+	Example
+	    X = hirzebruchSurface 1;
+	    Y = toricProjectiveSpace 1;
+	    f = map(Y, X, matrix {{1, 0}})
+	    f' = cartierDivisorGroup f
+	    assert (source f' == cartierDivisorGroup Y)
+	    assert (target f' == cartierDivisorGroup X)
+	Text
+	    The next example gives the induced map from the group of
+            torus-invariant Cartier divisors on the projective plane to the group
+            of torus-invariantCartier divisors on the first Hirzebruch surface.
+	Example
+	    nefGenerators X
+	    Z = toricProjectiveSpace 2;
+	    g = map(Z, X, matrix {{1, 0}, {0,-1}})
+	    assert isWellDefined g
+	    g' = cartierDivisorGroup g
+	    assert (source g' == cartierDivisorGroup Z)
+	    assert (target g' == cartierDivisorGroup X)
+        Text
+            The next example demonstrates that the induced map on the group of
+            torus-invariant Cartier divisors is compatible with the induced map
+            on the Picard group
+        Example
+            gPic = picardGroup g
+            assert(gPic * fromCDivToPic(Z) == fromCDivToPic(X) * g')
+    SeeAlso
+        (cartierDivisorGroup, NormalToricVariety)
+        (picardGroup, ToricMap)
+        (pullback, ToricMap, ToricDivisor)
 ///
 
     	
