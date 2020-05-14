@@ -42,20 +42,18 @@ numgens Subring := A -> numcols gens A
 ambient Subring := A -> A#"AmbientRing"
 isAlgebra := A -> instance(coefficientRing ambient A, Field)
 
-presentation Subring := A -> (
+presentation (Matrix, Subring) := (G, A) -> (
     if not A.cache.?presentation then (
     	B := ambient A;
     	k := coefficientRing B;
 	(nB, nA) := (numgens B, numgens A);
-	(dB, dA) := (degrees source vars R, degrees source vars G);
 	-- introduce nA "tag variables" w/ monomial order that eliminates non-tag variables
     	Cmonoid := monoid [Variables => nB + nA,
-	                   MonomialOrder => {nB, nA},
-			   Degrees=>join(dB, dA)];
+	                   MonomialOrder => (options B).MonomialOrder];
     	C := k Cmonoid;
-    	A.cache.presentation 
-	<< "hi " << endl;
-    	A.cache.presentation = ker C2B;
+	B2C := map(C,B,(vars C)_{0..nB-1});
+    	I := ideal(B2C G - (vars C)_{nB..numgens C-1});
+    	A.cache.presentation = selectInSubring(1, gens gb I);
 	);
     A.cache.presentation
     )
@@ -100,3 +98,4 @@ A = subring matrix{{x+y,x*y,x*y^2}}
 gens A -- gets the use-specified generators 
 subalgebraBasis(A, Limit=>10)
 options A
+presentation(gens A, A)
