@@ -34,6 +34,10 @@ newPackage(
       Email => "loper012@umn.edu",
       HomePage => "https://www.math.umn.edu/~loper012"},  
       {
+      Name => "Diane Maclagan",
+      Email => "D.Maclagan@warwick.ac.uk",
+      HomePage => "http://homepages.warwick.ac.uk/staff/D.Maclagan/"},
+      {
       Name => "Julie Rana",
       Email => "ranaj@lawrence.edu",
       HomePage => "https://sites.google.com/site/jranamath"},  
@@ -343,7 +347,7 @@ isFibration ToricMap := Boolean => f -> (
 
 
 isDominant = method()
-isDominant ToricMap := Boolean => f -> (rank matrix f == rank matrix rays target f)
+isDominant ToricMap := Boolean => f -> (rank matrix f == dim target f)
 
 outerNorm = method()
 outerNorm (NormalToricVariety,List) := Sequence => (X,sigma) -> (
@@ -1591,9 +1595,26 @@ X = hirzebruchSurface 1
 f = map(Y, X, matrix{{1,0},{0,-1}})
 assert isDominant (f)
 assert isSurjective f
-isDominant f
-isSurjective f
 assert isWellDefined f
+///
+
+TEST ///
+Y = toricProjectiveSpace 3
+X = affineSpace 3
+f = map(Y, X, matrix{{2,0,0},{1,1,0},{3,1,0}})
+assert not isDominant f
+assert isWellDefined f
+assert not isSurjective f
+///
+
+TEST ///
+--Erika's test
+Y = toricProjectiveSpace 1
+X = toricProjectiveSpace 1
+f = map(Y, X, 1)
+assert isWellDefined f
+assert isDominant f
+assert isSurjective f
 ///
 
 -------------------------------------------------------
@@ -1607,16 +1628,14 @@ f = map(Y,X,matrix{{1,0}})
 assert isSurjective f
 ///
 
--- Test 2: When a fan lies in a hyerplane 
+-- Test 2:
 TEST ///
 X = affineSpace 2
--- A^2 for which the fan lies in the hypereplane
 Y = normalToricVariety({{1,0,0},{0,1,0}},{{0,1}})
--- Isomorphisms between X, Y
 f1 = map(X,Y,matrix{{1,0,0},{0,1,0}})
 f2 = map(Y,X,matrix{{1,0},{0,1},{0,0}})
 assert isSurjective f1
-assert isSurjective f2
+assert not isSurjective f2
 ///
 
 -- Test 3: Embedding open subsets I
