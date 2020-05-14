@@ -202,9 +202,8 @@ rawLinearCode(List) := LinearCode => (inputVec) -> (
 	
 	-- coerce generators and generator matrix into base field, if possible:
 	try {
-	    tempGens := apply(inputVec_2, codeword -> apply(codeword, entry -> sub(entry, inputVec_1)));
-	    newGenMat := reduceRankDeficientMatrix(matrix(tempGens));
-	    newGens := entries newGenMat;
+	    newGens := apply(inputVec_2, codeword -> apply(codeword, entry -> sub(entry, inputVec_1)));
+	    newGenMat := matrix(newGens);
 	    } else {
 	    error "Elements do not live in base field/ring.";
 	    };
@@ -220,9 +219,8 @@ rawLinearCode(List) := LinearCode => (inputVec) -> (
 	
 	-- coerce parity check rows and parity check matrix into base field, if possible:
 	try {
-	    tempParRow := apply(inputVec_3, codeword -> apply(codeword, entry -> sub(entry, inputVec_1)));
-	    newParMat := reduceRankDeficientMatrix(matrix(tempParRow));
-	    newParRow := entries newParMat;
+	    newParRow := apply(inputVec_3, codeword -> apply(codeword, entry -> sub(entry, inputVec_1)));
+	    newParMat := matrix(newParRow);
 	    } else {
 	    error "Elements do not live in base field/ring.";
 	    };
@@ -239,7 +237,7 @@ rawLinearCode(List) := LinearCode => (inputVec) -> (
     };
     
     -- coerce code matrix into base field:
-    codeSpace := if (reduceMatrix(generators inputVec_4) == generators inputVec_4) then sub(inputVec_4,inputVec_1) else image groebnerBasis inputVec_4;
+    codeSpace := if (reduceMatrix(generators inputVec_4) == generators inputVec_4) then sub(inputVec_4,inputVec_1) else image groebnerBasis sub(inputVec_4,inputVec_1);
     
     
     return new LinearCode from {
