@@ -892,7 +892,7 @@ document {
 	"r" => Vector => {"Dimension of the dual of the Hamming code."}	
 	},
     Outputs => {
-	:LinearCode
+	"C" => LinearCode => {"Hamming code."}
 	},
     "q and r and integers",
     "Returns the Hamming code over GF(q) and dimensino of the dual r.",
