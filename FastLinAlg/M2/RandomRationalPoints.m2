@@ -2,19 +2,18 @@
 newPackage(
 	"RandomRationalPoints",
     	Version => "1.0", 
-    	Date => "April 28, 2005",
+    	Date => "May 13, 2020",
     	Authors => {
-	     {Name => "Sankhaneel Bisui", Email => "sbisu@tulane.edu"},
-	     {Name=> "Thai Nguyen", Email =>"tnguyen11@tulane.edu"}
+	     {Name => "Sankhaneel Bisui", Email => "sbisu@tulane.edu", HomePage=>"https://sites.google.com/view/sankhaneelbisui/home"},
+	     {Name=> "Thai Nguyen", Email =>"tnguyen11@tulane.edu", HomePage=>"https://sites.google.com/view/thainguyenmath "}
 	     },
-    	HomePage => "http://www.math.uiuc.edu/~doe/",
     	Headline => "an example Macaulay2 package",
 	AuxiliaryFiles => false -- set to true if package comes with auxiliary files
     	)
 
 -- Any symbols or functions that the user is to have access to
 -- must be placed in one of the following two lists
-export {"randomPoint", "fieldElements","createRandomPoints", "GenericProjection"}
+export {"randomPoint","createRandomPoints"}
 exportMutable {}
 
 
@@ -153,18 +152,11 @@ doc ///
        Text
          Give a random point in the ambient space of the V(I).  
        	 
-	    
-	Example
-	  
---	    
---	Text
-	    --This function is a fix for that. See following example
-
-      --  Example
-           -- K2 = GF(8, Variable=>b); L2 = GF(64, Variable=>c);
-	   -- fieldExtension(L2, K2)
-	    
 	   
+       Example
+         R=ZZ/5[x,y,z]
+	 I = ideal(x,y^2)
+	 createRandomPoints(I)
        -- Text
        	  -- The function is implemented by composing the isomorphism $K_2\cong K_1$, the natural embedding $K_1\to L_1$ and the isomorphism $L_1\cong L_2$.
 	   
@@ -186,7 +178,7 @@ doc ///
 	I:Ideal
 	   Ideal inside a polynomial ring
     --Outputs
-        :List
+       -- :List
 	   -- ($T$ ,$f$) where $T = R  \otimes_L K$ is the base-changed ring, $f:R\to T$ is the ring map $R\otimes_L L\to R\otimes_L K$ induced from $L\to K$.
    -- Description
         --Text  
@@ -234,8 +226,6 @@ doc ///
         --Text
        	   -- More words, but don't forget to indent. 
 	   
-    SeeAlso
-         fieldElements 
         
           
     
