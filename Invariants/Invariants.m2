@@ -6,10 +6,15 @@ newPackage(
         Authors => {
              {Name => "Luigi Ferraro", Email => "ferrarl@wfu.edu", HomePage => "http://users.wfu.edu/ferrarl/"},
              {Name => "Federico Galetto", Email => "f.galetto@csuohio.edu", HomePage => "https://math.galetto.org"},
+<<<<<<< HEAD
              {Name => "Francesca Gandini", Email => "fra.gandi.phd@gmail.com", HomePage => "https://sites.google.com/a/umich.edu/gandini/home"},
 	     {Name => "Hang Huang", Email => "hhuang235@tamu.edu", HomePage => "https://math.tamu.edu/~hhuang"},
 	     {Name => "Matthew Mastroeni", Email => "mmastro@okstate.edu", HomePage => "https://mnmastro.github.io/"},
              {Name => "Xianglong Ni", Email => "xlni@berkeley.edu", HomePage => "https://math.berkeley.edu/~xlni/"}
+=======
+             {Name => "Xianglong Ni", Email => "xlni@berkeley.edu", HomePage => "https://math.berkeley.edu/~xlni/"},
+	     {Name => "Hang Huang", Email => "hhuang235@tamu.edu", HomePage => "https://math.tamu.edu/~hhuang"}
+>>>>>>> d16bfad0cb6eb0ff5c9dee2c48531736d012b20a
              },
         Headline => "Computing Invariants for Tori and Abelian Groups",
         DebuggingMode => true,
@@ -144,12 +149,13 @@ invariants = method()
 invariants RingOfInvariants := B -> invariants(action B, ambient B)
 
 invariants (TorusAction, PolynomialRing) := List => (T, R) -> (
-    r := rank T;
-    n := dim R;
+    r := rank T; -- r is the dimension of the torus
+    n := dim R; -- n is the dimension of the ring R
+    if (n =!= rank source vars R) then (error "invariants: Dimension of the polynomial ring does not match size of the weight matrix");
     W := weights T;
     local C;
     if r == 1 then C = convexHull W else C = convexHull( 2*r*W|(-2*r*W) );
-    C = (latticePoints C)/vector;
+    C = (latticePoints C)/vector; -- C is a list of weights we are testing
     S := new MutableHashTable from apply(C, w -> w => {});
     scan(n, i -> S#(W_i) = {R_i});
     U := new MutableHashTable from S;
@@ -194,7 +200,7 @@ abelianInvariants (Matrix, PolynomialRing, List) := List => (W, R, L) -> (
     n := numColumns W;
     t := 1; -- t is the size of abelian group
     --sanity check 
-    if #L =!= r then print "Size of the group does not match the weight";
+    if #L =!= r then error "Size of the group does not match the weight matrix";
     scan(L,i->t = t*i);
     local C; -- C is a list of all possible weights
     for i from 0 to #L-1 do(
