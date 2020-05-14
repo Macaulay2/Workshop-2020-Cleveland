@@ -31,7 +31,8 @@ export {
 	"NumPointsToCheck", 
 	"Codimension",
 	"MaxChange",
-	"BruteForce"}
+	"BruteForce",
+	"ProjectionAttempts"}
 exportMutable {}
 
 pointToIdeal = method(Options =>{Homogeneous => false});
@@ -247,7 +248,7 @@ randomRatPt(Ideal, Boolean) := opts -> (I,b) -> ( --this is temporary, it's just
 --Function to check if random point is in the variety
 randomPoint = method( Options=>{Strategy=>BruteForce, Homogeneous => true, MaxChange => 0, Codimension => null});
 
-randomPointViaGenericProjection = method(Options => {Strategy=>null, Homogeneous => true, MaxChange => 0, Codimension => null});
+randomPointViaGenericProjection = method(Options => {Strategy=>null, Homogeneous => true, MaxChange => 0, Codimension => null, ProjectionAttempts => 20});
 randomPointViaGenericProjection(ZZ, Ideal) := opts -> (n1, I1) -> (
 	flag := true;
 	local phi;
@@ -256,7 +257,8 @@ randomPointViaGenericProjection(ZZ, Ideal) := opts -> (n1, I1) -> (
 	local pt;
 	local ptList;
 	local j;
-	while(flag) do (
+	i = 0;
+	while(flag) and (i < opts.ProjectionAttempts) do (
 		(phi, I0) = projectionToHypersurface(I1, Homogeneous=>opts.Homogeneous, MaxChange => opts.MaxChange, Codimension => null);
 		if (codim I0 == 1) then (
 			pt = randomPoint(n1, I0, Strategy=>BruteForce); --find a point on the generic projection
@@ -275,6 +277,7 @@ randomPointViaGenericProjection(ZZ, Ideal) := opts -> (n1, I1) -> (
 			);  
 		);
 		if (debugLevel >0) then print "That didn't work, trying again...";
+		i = i+1;
 	);
 );
 
