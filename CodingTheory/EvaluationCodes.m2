@@ -189,7 +189,7 @@ apply(Polynums1,y->apply(0..length XX -1,x->(flatten entries evaluate(y,XX#x))#0
 )
 
 
-
+-------------------------------------------------------------------------
 
 
 cartesianCode = method(Options => {})
