@@ -166,6 +166,14 @@ image G
 
 )
 
+------------------
+--This an example of a incidence matrix code---------
+--Petersen graph
+G=graph({1,2,3,4,5,6,7,8,9,10}, {{1,2},{1,3},{1,4},{1,5},{1,6},{2,3},{2,4},{2,5},{2,7},{3,4},{3,5},{3,6},{3,8},{4,5},{4,9},{5,10},{6,7},{6,10},{7,8},{8,9},{9,10}})
+M=incidenceMatrix G
+codeGrahpIncM(M,3)
+---------------------------------------------
+
 
 --2-- this an alternative process. It computes all the points in the code. It computes all the linear forms. 
 
