@@ -33,7 +33,8 @@ export {
     "FirstBetti",
     "GradedBettis",
     "KnownDim",
-    "IgnorePrimes"
+    "IgnorePrimes",
+    "SquareFree"
     }
 exportMutable {
     "ScipPrintLevel"
@@ -153,7 +154,8 @@ monomialIdealsWithHilbertFunction = method(
     Options => {
 	BoundGenerators => -1,
 	FirstBetti => "",
-	GradedBettis => ""
+	GradedBettis => "",
+	SquareFree => false
 	}
     );
 monomialIdealsWithHilbertFunction (List, Ring) := o -> (D, R) -> (
@@ -278,7 +280,8 @@ hilbertIPFormulation = method(
     Options => {
 	BoundGenerators => -1,
 	FirstBetti => "",
-	GradedBettis => ""
+	GradedBettis => "",
+	SquareFree => false
 	}
     );
 hilbertIPFormulation (List, ZZ) := o -> (D, n) -> (
@@ -288,6 +291,14 @@ hilbertIPFormulation (List, ZZ) := o -> (D, n) -> (
     altVarsCommas := demark(",", toList vars(n..2*n-1));    
     altVarsPluses := demark("+", toList vars(n..2*n-1));
     bettiLines := "";
+    sfLines := "";
+    if o.SquareFree then(
+	sfLines = concatenate({
+	    "\nset F := {0 .. 1};\n",
+	    "subto squarefree: forall <",varsCommas,"> in M without ",demark("*", n:"F"), " do\n",
+	    "    Y[",varsCommas,"] == 0;"
+	    });
+    );
     if o.GradedBettis =!= "" then (
 	G := o.GradedBettis; 
 	if #G-1 > db then error("degrees of generators cannot be higher than degree bound");
@@ -331,6 +342,7 @@ hilbertIPFormulation (List, ZZ) := o -> (D, n) -> (
 	    "    sum <",altVarsCommas,"> in BELOW[",varsCommas,"]: X[",altVarsCommas,"] + Y[",varsCommas,"] - X[",varsCommas,"] >= 0;\n",
 	    "subto genDegreeBound: forall <",varsCommas,"> in M with ",varsPluses," >= maxGenD+1 do\n",
 	    "    Y[",varsCommas,"] == 0;",
+	    sfLines,
 	    bettiLines
 	    })
     )
@@ -1076,6 +1088,28 @@ assert(#monomialIdealsWithHilbertFunction({1,4,3,1,0}, R) == 244)
 assert(all(monomialIdealsWithHilbertFunction({1,4,10,19,31}, R), I -> numgens I == 1))
 ///
 
+TEST /// -- squarefree and bound generators
+R = QQ[x,y,z,w];
+M = monomialIdealsWithHilbertFunction({1,4,9,14,19}, R, BoundGenerators => 4);
+SF = monomialIdealsWithHilbertFunction({1,4,9,14,19}, R, BoundGenerators => 4, SquareFree => true);
+assert(#SF == 6)
+assert(set select(M, isSquareFree) === set SF) 
+-- squarefree and first betti
+R = QQ[x,y,z,w,v]
+sf = monomialIdealsWithHilbertFunction({1,5,10,15}, R, SquareFree => true);
+assert(#sf == 252)
+assert(all(sf, isSquareFree))
+sf7 = monomialIdealsWithHilbertFunction({1,5,10,15}, R, SquareFree => true, FirstBetti => 7);
+assert(set sf7 === set select(sf, m -> numgens m == 7))
+assert(member(monomialIdeal (x*y, x*z, y*z, y*w, y*v, x*w*v, z*w*v), sf7))
+-- squarefree and graded bettis
+R = QQ[a..f]
+I = monomialIdeal (b*d,  a*b*c*e, d*e, a*c*d*f, a*b*e*f, a*c*e*f)
+S = monomialIdealsWithHilbertFunction({1,6,19,45,86}, R, SquareFree => true, GradedBettis => {0,0,2,0,4});
+assert(member(I,S))
+assert(#S == #(unique S))
+///
+
 TEST /// --bettis
 R = QQ[x,y,z];
 assert(#bettiTablesWithHilbertFunction({1,2,1,0}, R) == 2)
@@ -1122,4 +1156,3 @@ loadPackage("MonomialIntegerPrograms", Configuration => {"CustomScipPrintLevel" 
 viewHelp("sample session in Monomial Integer Programs")
 needsPackage("MonomialIntegerPrograms")
 check("MonomialIntegerPrograms")
-
