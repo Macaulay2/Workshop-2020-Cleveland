@@ -351,6 +351,22 @@ assert (4 ==degree witnessCriticalIdeal({7,99},{x-a,y-b},LVW))--ED degree of ell
 --TODO : bertiniSolve
 --TODO : monodromySolve
 
+TEST///
+R=QQ[a,b][x,y]
+I=ideal(x^2+y^2-1)
+WI=I
+LVW = witnessLagrangeVariety(WI,I)
+ring LVW
+needsPackage"Bertini"
+
+bertiniZeroDimSolve (WCI_0+WCI_2)_*)
+
+makeB'InputFile(storeBM2Files,
+    ring LVW
+    AffVariableGroup=>{basis({1,0},R),basis({0,2},R)}
+    )
+
+
 
 
 -*
