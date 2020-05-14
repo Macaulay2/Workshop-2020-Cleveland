@@ -385,37 +385,25 @@ doc ///
 
 doc ///
     Key
-        randomPoint
-	(randomPoint,ZZ,Ideal)
+        (randomPoint,ZZ,Ideal)
     Headline
         a function to find  a random point  in a variety upto a given number of trials
     Usage
         randomPoint(n,I)
     Inputs
-	I:Ideal
-	   Ideal inside a polynomial ring
         n: ZZ
             An integer 
+        I:Ideal
+            Ideal inside a polynomial ring
     Outputs
         :List
-	-- False   -- ($T$ ,$f$) where $T = R  \otimes_L K$ is the base-changed ring, $f:R\to T$ is the ring map $R\otimes_L L\to R\otimes_L K$ induced from $L\to K$.
     Description
         Text  
        	   Gives a point in a variety V(I), after n trials. 
---
         Example
-           R=ZZ/5[t_1..t_3];
-           I = ideal(t_1,t_2+t_3);
-	   randomPoint(1000,I)
-	   
-        --Text
-       	   -- More words, but don't forget to indent. 
-	   
-        
-          
-    
-    
-    
+            R=ZZ/5[t_1..t_3];
+            I = ideal(t_1,t_2+t_3);
+            randomPoint(1000,I)
 ///
  ----- TESTS -----   
 
