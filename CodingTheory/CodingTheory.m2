@@ -37,6 +37,7 @@ export {
     -- Families of Codes
     "cyclicMatrix",
     "quasiCyclicCode",
+    "HammingCode",
     -- Methods
     "field",
     "vectorSpace",
@@ -455,7 +456,35 @@ quasiCyclicCode(List) := LinearCode => V -> (
     try quasiCyclicCode(baseField,V) else error "Entries not over a field."
     
     )
- 
+
+HammingCode = method(TypicalValue => LinearCode)
+
+HammingCode(ZZ,ZZ) := LinearCode => (q,r) -> (
+        
+    -- produce Hamming code
+    -- q is the size of the field
+    -- r is the dimension of the dual
+    K:=GF(q);
+    -- setK is the set that contains all the elements of the field
+    setK:=set(  {0}| apply(toList(1..q-1),i -> K_1^i));
+    -- C is the transpose of the parity check matrix of the code. Its rows are the the points of the
+    -- projective space P(r-1,q)
+    j:=1;
+    C:= matrix(apply(toList(1..q^(r-j)), i -> apply(toList(1..1),j -> 1))) | matrix apply(toList(toList setK^**(r-j)/deepSplice),i->toList i);
+    for j from 2 to r do C=C|| matrix(apply(toList(1..q^(r-j)), i -> apply(toList(1..(j-1)),j -> 0))) | matrix(apply(toList(1..q^(r-j)), i -> apply(toList(1..1),j -> 1))) | matrix apply(toList(toList setK^**(r-j)/deepSplice),i->toList i);
+	
+    -- The Hamming code is defined by its parity check matrix
+    linearCode(transpose C, ParityCheck => true)
+    )
+
+-*
+Example:
+HammingCode(2,3)
+ParityCheckMatrix => | 1 1 1 1 0 0 0 |
+                     | 0 1 0 1 1 1 0 |
+                     | 0 1 1 0 0 1 1 |
+*-
+
 
 ------------------------------------------
 ------------------------------------------
@@ -787,6 +816,18 @@ assert( shorten( C3, K ) == linearCode(F, shortL) )
 ///
 
 
+TEST ///
+-- Hamming code over GF(2) and dimension of the dual 3
+C1= HammingCode(2,3)
+C1.ParityCheckMatrix
+///
+
+TEST ///
+-- Hamming code over GF(2) and dimension of the dual 4
+C2= HammingCode(2,4)
+C2.ParityCheckMatrix
+///
+
 ------------------------------------------
 ------------------------------------------
 -- Documentation
@@ -841,6 +882,28 @@ document {
 	"bitflipDecode(H,v)"
 	}
     }
+
+document {
+    Key => {HammingCode, (HammingCode,ZZ,ZZ)},
+    Headline => "Generates the Hamming code over GF(q) and dimension of the dual r.",
+    Usage => "HammingCode(q,r)",
+    Inputs => {
+	"q" => ZZ => {"Size of the field."},
+	"r" => Vector => {"Dimension of the dual of the Hamming code."}	
+	},
+    Outputs => {
+	:LinearCode
+	},
+    "q and r and integers",
+    "Returns the Hamming code over GF(q) and dimensino of the dual r.",
+    EXAMPLE {
+	"C1= HammingCode(2,3);",
+	"C1.ParityCheckMatrix",
+	"C2= HammingCode(2,3);",
+	"C2.ParityCheckMatrix"
+	}
+    }
+
 document {
     Key => MaxIterations,
     Headline => "Specifies the maximum amount of iterations before giving up. Default is 100.",
