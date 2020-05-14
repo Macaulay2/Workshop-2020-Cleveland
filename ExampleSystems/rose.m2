@@ -20,18 +20,20 @@ doc ///
 	rose(kk)
     Inputs
 	kk:Ring
+	    	the coefficient ring
     Outputs
 	:List
-		of solutions
+		of polynomials in the system
     Description
     	Text
-	    The Bezout bound is 216. 
+	    This system was solved in May 2020, using @TO solveSystem@ in Macaulay2 v1.15
+	     with an Intel(R) Core(TM) i5-5250U CPU at 1.60GHz.
+	   
+	    There were 136 solutions found in 4.954 seconds (with a Bezout bound of 216). 
 	    
 	    Reference: PoSSo test suite.
 	    
 	    See also: http://homepages.math.uic.edu/~jan/Demo/rose.html.
 	Example
 	    F = rose(QQ)
-	    time sols = solveSystem F;
-	    #sols
     ///
