@@ -290,32 +290,37 @@ net LinearCode := c -> (
 toString LinearCode := c -> toString c.Generators
 
 
+shorten = method(TypicalValue => LinearCode)
+-- input: An [n,k] linear code C and a set S of distinct integers { i1, ..., ir} such that 1 <= ik <= n.
+-- output: A new code from C by selecting only those codewords of C having a zeros in each of the coordinate 
+--     positions i1, ..., ir, and deleting these components. Thus, the resulting 
+--     code will have length n - r. 
+shorten ( LinearCode, List ) := LinearCode => ( C, L ) -> (
+    local newL; local codeGens;
+    
+    codeGens = C.Generators;
+    newL = delete(0, apply( codeGens, c -> (
+	if sum apply( L, l -> c#l ) == 0
+	then c
+	else 0
+	)));
+    
+    if newL == {} then return C else (
+	newL = entries submatrix' ( matrix newL, L );
+	return linearCode ( C.BaseField , newL );
+	)
+    )
+
+
 -- input: An [n,k] linear code C and an iteger i such that 1 <= i <= n.
 -- output: A new code from C by selecting only those codewords of C having a zero as their 
 --     i-th component and deleting the i-th component from these codewords. Thus, the resulting 
 --     code will have length n - 1. 
-
-shorten = method(TypicalValue => LinearCode)
 shorten ( LinearCode, ZZ ) := LinearCode => ( C, i ) -> (
-    local newL;
-        
-    newL = delete(0,apply(C.Generators, c -> if c#i == 0 then c else 0 ));
-    newL = entries submatrix' ( matrix newL, {i} );
-            
-    return linearCode ( C.BaseField , newL )    
+    
+    return shorten(C, {i})
+    
     )
-
-
--- Given an [n, k] code C and a set S of distinct integers { i1, ..., ir}, each of which lies in 
--- the range [1, n], construct a new code from C by selecting only those codewords of C having 
--- zeros in each of the coordinate positions i1, ..., ir, and deleting these components. Thus, 
--- the resulting code will have length n - r. 
-shorten ( LinearCode, List ) := LinearCode => ( C, i ) -> (
-
-    -- Branden will write this tomorrow. 
-            
-    )
-
 
 ------------------------------------------
 ------------------------------------------
@@ -580,7 +585,7 @@ for i from 1 to 50 do(
 ///
 
 TEST///
--- shorten test
+-- shorten test, integer
 F = GF(2)
 codeLen = 10
 codeDim = 4
@@ -596,6 +601,26 @@ assert( numColumns ( C2.GeneratorMatrix ) == numColumns (shorten( C2, 3)).Genera
 assert( numColumns ( C3.GeneratorMatrix ) == numColumns (shorten( C3, 3)).GeneratorMatrix + 1 )
 assert( shorten( C2, 3 ) == linearCode(F, shortL) )
 assert( shorten( C3, 3 ) == linearCode(F, shortL) )
+///
+
+TEST///
+-- shorten test, list
+F = GF(2)
+codeLen = 10
+codeDim = 4
+L = {{0, 1, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 1, 0, 1, 1, 0, 1, 0, 0}, {1, 1, 0, 0, 0, 1, 0, 0, 1, 0}, {1, 0, 0, 1, 0, 0, 0, 1, 1, 1}}
+H = L|L
+
+C2 = linearCode(F,codeLen,H)
+C3 = linearCode(F,codeLen,L)
+K = {3,6,8,9}
+
+shortL = {{0, 1, 0, 0, 0, 0}, {0, 0, 1, 1, 1, 1}}
+
+assert( numColumns ( C2.GeneratorMatrix ) == numColumns (shorten( C2, K)).GeneratorMatrix + 4 )
+assert( numColumns ( C3.GeneratorMatrix ) == numColumns (shorten( C3, K)).GeneratorMatrix + 4 )
+assert( shorten( C2, K ) == linearCode(F, shortL) )
+assert( shorten( C3, K ) == linearCode(F, shortL) )
 ///
 
 
@@ -737,6 +762,8 @@ end
 -- package.  None of it will be executed when the file is loaded,
 -- because loading stops when the symbol "end" is encountered.
 
+restart
+uninstallPackage "CodingTheory"
 installPackage "CodingTheory"
 installPackage("CodingTheory", RemakeAllDocumentation=>true)
 check CodingTheory
