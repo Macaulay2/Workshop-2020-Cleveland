@@ -343,7 +343,7 @@ isFibration ToricMap := Boolean => f -> (
 
 
 isDominant = method()
-isDominant ToricMap := Boolean => f -> (rank matrix f == rank matrix rays target f)
+isDominant ToricMap := Boolean => f -> (rank matrix f == dim target f)
 
 outerNorm = method()
 outerNorm (NormalToricVariety,List) := Sequence => (X,sigma) -> (
@@ -1561,16 +1561,14 @@ f = map(Y,X,matrix{{1,0}})
 assert isSurjective f
 ///
 
--- Test 2: When a fan lies in a hyerplane 
+-- Test 2:
 TEST ///
 X = affineSpace 2
--- A^2 for which the fan lies in the hypereplane
 Y = normalToricVariety({{1,0,0},{0,1,0}},{{0,1}})
--- Isomorphisms between X, Y
 f1 = map(X,Y,matrix{{1,0,0},{0,1,0}})
 f2 = map(Y,X,matrix{{1,0},{0,1},{0,0}})
 assert isSurjective f1
-assert isSurjective f2
+assert not isSurjective f2
 ///
 
 -- Test 3: Embedding open subsets I
