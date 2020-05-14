@@ -1170,23 +1170,25 @@ doc ///
     Key
         (inducedMap, ToricMap)
     Headline
-        make the induced map of Cox rings for a toric map 
+        make the induced map between the Cox rings of the source and target
     Usage
         inducedMap f
     Inputs
         f : ToricMap
-	    a map between toric varieties
+	    in which the target is assumed to be smooth
+	Degree =>
+	    unused
+	Verify =>
+	    unused
     Outputs
         : RingMap 
-	    induced map of Cox rings for f
-    Caveat
-    	We assume that target f is smooth. One may verify this with
-	the command @TO (isSmooth, NormalToricVariety)@.
+	    between the total homogeneous coordinate rings (aka Cox rings)
     Description
         Text
-	    Given a toric map, there is an induced map between
-	    the Cox rings as in "Cox Rings and Algebraic Maps" by 
-	    Mandziuk, Thm 2.10. This function returns that map.
+	    Given a toric map, there is an induced map between the Cox rings
+	    as in "Cox Rings and Algebraic Maps" by Mandziuk, Thm 2.10; see
+	    @HREF("https://arxiv.org/abs/1703.04794",
+	    "arXiv:math/1703.04794")@. This function returns that map.
 	Example 
     	    AA2 = affineSpace 2;	
 	    PP2 = toricProjectiveSpace 2;
@@ -1204,8 +1206,14 @@ doc ///
 	    S = ring PP1;
 	    g' = inducedMap g
 	    g' vars S
+    Caveat
+    	This method implicitly assumes that the target is smooth. One may
+	verify this with the command @TO (isSmooth, NormalToricVariety)@.
     SeeAlso
     	(pullback, ToricMap, ToricDivisor)
+	(map, NormalToricVariety, NormalToricVariety, Matrix)
+	(ring, NormalToricVariety)
+	
 ///
 
 doc ///
