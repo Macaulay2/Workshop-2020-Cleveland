@@ -38,13 +38,16 @@ newPackage(
       Email => "D.Maclagan@warwick.ac.uk",
       HomePage => "http://homepages.warwick.ac.uk/staff/D.Maclagan/"},
       {
-      Name => "Julie Rana",
-      Email => "ranaj@lawrence.edu",
-      HomePage => "https://sites.google.com/site/jranamath"},  
+      Name => "Maryam Nowroozi",
+      Email => "nowroozm@mcmaster.ca"},
       {
       Name => "Ritvik Ramkumar",
       Email => "ritvik@berkeley.edu",
       HomePage => "https://math.berkeley.edu/~ritvik/index.html"}, 
+      {
+      Name => "Julie Rana",
+      Email => "ranaj@lawrence.edu",
+      HomePage => "https://sites.google.com/site/jranamath"},
       {
       Name => "Mahrud Sayrafi",
       Email => "mahrud@umn.edu",
@@ -66,10 +69,10 @@ newPackage(
       Email => "thomasjyahl@tamu.edu",
       HomePage => "https://www.math.tamu.edu/~thomasjyahl"},
       {
-      Name => "Maryam Nowroozi",
-      Email => "nowroozm@mcmaster.ca"
-      }
-      },
+      Name => "Jay Yang",
+      Email => "jkyang@umn.edu",
+      HomePage => "https://www-users.math.umn.edu/~jkyang/"}
+  },
   Headline => "routines for working with toric morphisms",
   PackageExports => {
       "NormalToricVarieties"
