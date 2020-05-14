@@ -264,37 +264,6 @@ net LinearCode := c -> (
 toString LinearCode := c -> toString c.Generators
 
 
-shorten = method(TypicalValue => LinearCode)
--- input: An [n,k] linear code C and a set S of distinct integers { i1, ..., ir} such that 1 <= ik <= n.
--- output: A new code from C by selecting only those codewords of C having a zeros in each of the coordinate 
---     positions i1, ..., ir, and deleting these components. Thus, the resulting 
---     code will have length n - r. 
-shorten ( LinearCode, List ) := LinearCode => ( C, L ) -> (
-    local newL; local codeGens;
-    
-    codeGens = C.Generators;
-    newL = delete(0, apply( codeGens, c -> (
-	if sum apply( L, l -> c#l ) == 0
-	then c
-	else 0
-	)));
-    
-    if newL == {} then return C else (
-	newL = entries submatrix' ( matrix newL, L );
-	return linearCode ( C.BaseField , newL );
-	)
-    )
-
-
--- input: An [n,k] linear code C and an iteger i such that 1 <= i <= n.
--- output: A new code from C by selecting only those codewords of C having a zero as their 
---     i-th component and deleting the i-th component from these codewords. Thus, the resulting 
---     code will have length n - 1. 
-shorten ( LinearCode, ZZ ) := LinearCode => ( C, i ) -> (
-    
-    return shorten(C, {i})
-    
-    )
 
 ------------------------------------------
 ------------------------------------------
@@ -391,6 +360,7 @@ quasiCyclicCode(List) := LinearCode => V -> (
 -- writing methods to convert between 
 -- different Types of codes
 
+
  
 --input: A linear code C
 --output: The field C is a code over
@@ -469,6 +439,54 @@ alphabet(LinearCode) := List => C -> (
 generic = method(TypicalValue => LinearCode)
 generic(LinearCode) := LinearCode => C -> (
     linearCode(C.AmbientModule)
+    )
+
+
+
+shorten = method(TypicalValue => LinearCode)
+-- input: An [n,k] linear code C and a set S of distinct integers { i1, ..., ir} such that 1 <= ik <= n.
+-- output: A new code from C by selecting only those codewords of C having a zeros in each of the coordinate 
+--     positions i1, ..., ir, and deleting these components. Thus, the resulting 
+--     code will have length n - r. 
+shorten ( LinearCode, List ) := LinearCode => ( C, L ) -> (
+    local newL; local codeGens;
+    
+    codeGens = C.Generators;
+    newL = delete(0, apply( codeGens, c -> (
+	if sum apply( L, l -> c#l ) == 0
+	then c
+	else 0
+	)));
+    
+    if newL == {} then return C else (
+	newL = entries submatrix' ( matrix newL, L );
+	return linearCode ( C.BaseField , newL );
+	)
+    )
+
+
+-- input: An [n,k] linear code C and an iteger i such that 1 <= i <= n.
+-- output: A new code from C by selecting only those codewords of C having a zero as their 
+--     i-th component and deleting the i-th component from these codewords. Thus, the resulting 
+--     code will have length n - 1. 
+shorten ( LinearCode, ZZ ) := LinearCode => ( C, i ) -> (
+    
+    return shorten(C, {i})
+    
+    )
+
+
+
+-- input: A module as the base field/ring, an integer n as the code length, and an integer
+--    k as the code dimension.
+-- output: a random codeword with AmbientModule M^n of dimension k
+
+--random (Module, ZZ, ZZ) := LinearCode => (M, n, k) -> (
+--    linearCode( M, apply(toList(1..n),j-> apply(toList(1..k),i-> random(M))) )
+--    )
+
+random (GaloisField, ZZ, ZZ) := LinearCode => opts -> (F, n, k) -> (
+    linearCode( F, apply(toList(1..n),j-> apply(toList(1..k),i-> random(F, opts)) ) )
     )
     
     
@@ -710,6 +728,26 @@ assert( shorten( C3, K ) == linearCode(F, shortL) )
 ///
 
 
+TEST ///
+-- random test
+F = GF(2, 4)
+n = 3
+k = 5
+C = random ( F , n, k )
+
+assert( length C == k )
+assert( dim C == 3 )
+
+F = GF 2
+n = 3
+k = 5
+C = random ( F , n, k )
+
+assert( length C == k )
+assert( dim C == 3 )
+///
+
+
 ------------------------------------------
 ------------------------------------------
 -- Documentation
@@ -815,6 +853,28 @@ doc ///
 --   Caveat
 --       myDegree is was Problem 2 in the tutorial yesterday.
 
+doc ///
+   Key
+       (random, GaloisField, ZZ, ZZ)
+   Headline
+       a random linear code 
+   Usage
+       shorten(GaloisField, ZZ, ZZ)
+   Inputs
+        F:GaloisField
+	n:ZZ
+	    an integer $n$ as the code length. 
+	k:ZZ
+	    an integer $k$ as the code dimension.
+	    
+   Outputs
+       :LinearCode
+           a random linear code of length $n$ and dimension $k$. 
+   Description
+       Example
+       	   F = GF(2, 4)
+	   C = random ( F , 3, 5 )
+///
 
 doc ///
    Key
