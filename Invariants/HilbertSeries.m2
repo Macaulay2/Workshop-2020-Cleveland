@@ -5,7 +5,7 @@ partialToricHilbertSeries (Matrix, ZZ) := Thing => (W, d) -> (
     W=-W;
     z := getSymbol "z";
     t := getSymbol "t";
-    R := QQ[z_1..z_n,t, Inverses => true, MonomialOrder=>Lex];
+    R := QQ[z_1..z_r,t, Inverses => true, MonomialOrder=>Lex];
     ms := apply(n, i -> R_(flatten entries W_{i}));
     fs := apply(n, i -> sum apply(d, j -> (ms#i*(t_R))^j));
     g := product fs;
@@ -16,7 +16,7 @@ partialToricHilbertSeries (Matrix, ZZ) := Thing => (W, d) -> (
 TEST ///
 W=matrix {{-1,0,1},{0,-1,1}};
 d=9;
-s=PartialToricHilbertSeries(W,d)
+s=partialToricHilbertSeries(W,d)
 R= ring s;
 series=1+t^3+t^6+t^9
 assert(s === series)
