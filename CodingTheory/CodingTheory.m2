@@ -328,14 +328,12 @@ shorten ( LinearCode, ZZ ) := LinearCode => ( C, i ) -> (
 ------------------------------------------
 ------------------------------------------
 
--- equality of linear codes
+-- mathematical equality of linear codes
 LinearCode == LinearCode := (C,D) -> ( 
     MC := matrix apply(C.Generators, a -> vector a );
     MD := matrix apply(D.Generators, a -> vector a );
     image MC == image MD
     )
-
-
 
 
 ------------------------------------------
@@ -558,7 +556,7 @@ bitflipDecode(Matrix, Vector) := opts -> (H, v) -> (
 
 
 TEST ///
--- Equality Test
+-- Mathematical Equality Test
 F = GF(2)
 codeLen = 10
 codeDim = 4
@@ -588,7 +586,6 @@ TEST///
 -- shorten test, integer
 F = GF(2)
 codeLen = 10
-codeDim = 4
 L = {{0, 1, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 1, 0, 1, 1, 0, 1, 0, 0}, {1, 1, 0, 0, 0, 1, 0, 0, 1, 0}, {1, 0, 0, 1, 0, 0, 0, 1, 1, 1}}
 H = L|L
 
@@ -685,6 +682,90 @@ document {
     PARA{},
     "This symbol is provided by the package ", TO CodingTheory, "."
     }
+
+doc ///
+   Key
+       shorten
+       (shorten, LinearCode, List)
+       (shorten, LinearCode, ZZ)
+   Headline
+       shortens a linear code 
+   Usage
+       shorten(LinearCode, List)
+       shorten(LindearCode, ZZ)
+   Inputs
+        C:LinearCode
+	    a codeword of length $n$.
+	L:List
+	    a list of coordinate positions.
+	i:ZZ
+	    an integer representing a single coordinate position.
+   Outputs
+       :LinearCode
+           a shortened linear code. 
+   Description
+       Text  
+       	   A new code from $C$ by selecting only those codewords of $C$ 
+	   having a zeros in each of the coordinate positions in the list $L$ (or the integer $i$) and deleting these 
+	   components. Thus, the resulting code will have length $n - r$, where $r$ is the number
+	   of elements in $L$ (or 1 when the integer $i$ is used). 
+
+       Example
+           F = GF(2)
+	   codeLen = 10
+	   L = {{0, 1, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 1, 0, 1, 1, 0, 1, 0, 0}, {1, 1, 0, 0, 0, 1, 0, 0, 1, 0}, {1, 0, 0, 1, 0, 0, 0, 1, 1, 1}}
+	   C = linearCode(F,codeLen,L)
+	   shorten(C, {3,6,8,9})
+	   shorten(C, 3)
+	   
+--   SeeAlso
+       --codim
+       --assPrimesHeight
+--   Caveat
+--       myDegree is was Problem 2 in the tutorial yesterday.
+///
+
+-*
+doc ///
+   Key
+       ==
+   Headline
+       determines if two linear codes are equal
+   Usage
+       LinearCode == LinearCode
+   Inputs
+        C:LinearCode
+	    a codeword of length $n$.
+	L:List
+	    a list of coordinate positions.
+	i:ZZ
+	    an integer representing a single coordinate position.
+   Outputs
+       :LinearCode
+           a shortened linear code. 
+   Description
+       Text  
+       	   A new code from $C$ by selecting only those codewords of $C$ 
+	   having a zeros in each of the coordinate positions in the list $L$ (or the integer $i$) and deleting these 
+	   components. Thus, the resulting code will have length $n - r$, where $r$ is the number
+	   of elements in $L$ (or 1 when the integer $i$ is used). 
+
+       Example
+           F = GF(2)
+	   codeLen = 10
+	   L = {{0, 1, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 1, 0, 1, 1, 0, 1, 0, 0}, {1, 1, 0, 0, 0, 1, 0, 0, 1, 0}, {1, 0, 0, 1, 0, 0, 0, 1, 1, 1}}
+	   C = linearCode(F,codeLen,L)
+	   shorten(C, {3,6,8,9})
+	   shorten(C, 3)
+	   
+--   SeeAlso
+       --codim
+       --assPrimesHeight
+--   Caveat
+--       myDegree is was Problem 2 in the tutorial yesterday.
+///
+*-
+
 document {
 	Key => {firstFunction, (firstFunction,ZZ)},
 	Headline => "a silly first function",
@@ -767,7 +848,7 @@ uninstallPackage "CodingTheory"
 installPackage "CodingTheory"
 installPackage("CodingTheory", RemakeAllDocumentation=>true)
 check CodingTheory
-
+viewHelp CodingTheory
 
 -----------------------------------------------------
 -- Codes from Generator Matrices (as lists):
