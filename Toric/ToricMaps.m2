@@ -429,14 +429,17 @@ pullback (ToricMap, Module) := Module => (f, M) -> (
 pullback (ToricMap, CoherentSheaf) := CoherentSheaf => (f, F) -> sheaf(source f, pullback(f, module F))
 
 -- Given ToricMap f: X -> Y, with simplicial X and Y, returns the RingMap Cox Y -> Cox X
+-- FIXME: correct degreeMaps
 inducedMap ToricMap := RingMap => opts -> (cacheValue inducedMap) (f -> (
     Y := target f;
     S := ring Y;
     R := ring source f;
+    m := classGroup f; -- degree map
     map(R, S, apply(numgens S, i -> (
 		exps := entries pullback(f, Y_i);
 		product(numgens R, j -> R_j^(exps#j))
-	    )))
+	    )), DegreeMap => (deg -> first entries (matrix{deg} * transpose m))
+    )
     ))
 
 ideal ToricMap := Ideal => f -> (
@@ -1519,16 +1522,45 @@ TEST ///
 --Test PE3 target f has higher dimension than source f
 Y = toricProjectiveSpace 2
 X = toricProjectiveSpace 1
+S = ring Y
+R = ring X
 f = map(Y, X, matrix{{-2},{3}})
 assert isWellDefined f
 DY = toricDivisor({1,0,1},Y)
 pullback(f,DY)
 assert (pullback(f,DY) == toricDivisor({3,7}, X))
- -- assert (pullback(f,OO DY) === OO toricDivisor({3,7},X))   -- BUG
- -- assert (module pullback(f,OO DY) === module OO toricDivisor({3,7},X)) -- BUG
+--F = cotangentSheaf Y
+--pullback(f, cotangentSheaf Y)
+assert (pullback(f,OO DY) === OO toricDivisor({3,7},X))   -- BUG
+assert (module pullback(f,OO DY) === module OO toricDivisor({3,7},X)) -- BUG
 ///
 
+TEST ///
+-- Test for inducedMap
+X = hirzebruchSurface 1
+R = ring X
+PP2 = toricProjectiveSpace 2
+S = ring PP2
+f = map(PP2, X, matrix{{1,0},{0,-1}})
+assert(isWellDefined f)
+assert(matrix inducedMap f == matrix{{1,R_0,R_1}})
+D = toricDivisor({1,2,3}, PP2)
+assert(pullback(f, OO D) === OO pullback(f, D))
+///
 
+TEST ///
+-- Test for inducedMap
+AA2 = affineSpace 2
+R = ring AA2
+PP2 = toricProjectiveSpace 2
+S = ring PP2
+f = map(PP2, AA2, matrix{{1,0},{0,1}})
+assert(isWellDefined f)
+assert(matrix inducedMap f == matrix{{1,R_0,R_1}})
+D = toricDivisor({1,2,3}, PP2)
+-- there is only one line bundle on AA2, so there's only one place to go
+assert(pullback(f, OO D) === OO pullback(f, D))
+///
 
 TEST ///
 --Test for isDominant
@@ -1614,8 +1646,7 @@ assert(target fPic == picardGroup source f);
 assert(source fCD == cartierDivisorGroup target f);
 assert(target fCD == cartierDivisorGroup source f);
 assert(fPic * fromCDivToPic(X) == fromCDivToPic(Y) * fCD)
-
-TEST ///
+///
 
 TEST ///
 X = toricProjectiveSpace 2;
