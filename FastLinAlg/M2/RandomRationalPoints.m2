@@ -257,7 +257,7 @@ randomPointViaGenericProjection(ZZ, Ideal) := opts -> (n1, I1) -> (
 	local pt;
 	local ptList;
 	local j;
-	i = 0;
+	i := 0;
 	while(flag) and (i < opts.ProjectionAttempts) do (
 		(phi, I0) = projectionToHypersurface(I1, Homogeneous=>opts.Homogeneous, MaxChange => opts.MaxChange, Codimension => null);
 		if (codim I0 == 1) then (
