@@ -26,6 +26,8 @@ export {
     "secondFunction",
     "MyOption",
     -- Types and Constructors
+    "generatorToParityCheck",
+    "parityCheckToGenerator",
     "LinearCode",
     "linearCode",
     "AmbientModule",
@@ -84,10 +86,42 @@ secondFunction(ZZ,List) := o -> (m,n) -> (
 ------------------------------------------
 ------------------------------------------
 
+------------------------------------------
+-- Helper functions for constructors:
+------------------------------------------
+
+-- WARNING: These will do some funky things
+-- if your parity check or generator matrices
+-- are not of full rank...
+generatorToParityCheck = method(TypicalValue => Matrix)
+generatorToParityCheck(Matrix) := Matrix => M -> (
+    -- produce canonical form of the generating matrix:
+    G := transpose groebnerBasis transpose M;
+    
+    -- this code assumes that generator matrix
+    -- can be put into standard form without any
+    -- swapping of columns:
+    
+    -- take (n-k) columns of standard generating matrix above:
+    redG := G_{0..(rank G.source - rank G -1)};
+    
+    -- vertically concatenate an identity matrix of rank (n-k),
+    -- then transpose :
+    return transpose (id_(redG.source) || -redG)
+    
+    )
+
+parityCheckToGenerator = method(TypicalValue => Matrix)
+parityCheckToGenerator(Matrix) := Matrix => M -> (
+    return(transpose generators kernel M)
+    )
+
+
+
 -- Use this section to add basic types and
 -- constructors for error correcting codes
  
-LinearCode = new Type of MutableHashTable
+LinearCode = new Type of HashTable
 
 -- internal function to validate inputs:
 rawLinearCode = method()
@@ -128,9 +162,16 @@ rawLinearCode(List) := LinearCode => (inputVec) -> (
 	    } else {
 	    error "Elements do not live in base field/ring.";
 	    };
+	print("in parity check case");
     } else {
-	newParRow = {};
-	newParMat = matrix({newParRow});
+	newParMat = generatorToParityCheck(newGenMat);
+	newParRow = entries newParMat ;
+    };
+
+    -- compute generating matrix from parity check matrix, if not already set:
+    if newGens == {} then {
+        newGenMat = parityCheckToGenerator(newParMat);
+	newGens = entries newGenMat;
     };
     
     -- coerce code matrix into base field:
@@ -195,7 +236,7 @@ linearCode(GaloisField,List) := LinearCode => opts -> (F,L) -> (
     -- calculate length of code via elements of L:
     n := # L_0;
         
-    linearCode(F,n,L)
+    linearCode(F,n,L,opts)
     
     )
 
@@ -453,15 +494,8 @@ generic(LinearCode) := LinearCode => C -> (
     linearCode(C.AmbientModule)
     )
 
-parityCheck = method(TypicalValue => Matrix)
 
-parityCheck(LinearCode) := Matrix => C -> (
-    -- produce canonical form of the generating matrix:
-    G := transpose groebnerBasis generators C.Code;
-    G
-    
-    )
-
+   
 
 -*
 
@@ -706,6 +740,31 @@ end
 installPackage "CodingTheory"
 installPackage("CodingTheory", RemakeAllDocumentation=>true)
 check CodingTheory
+
+
+-----------------------------------------------------
+-- Codes from Generator Matrices (as lists):
+-----------------------------------------------------
+F = GF(3,4)
+codeLen = 7
+codeDim = 3
+L = apply(toList(1..codeDim),j-> apply(toList(1..codeLen),i-> random(F)))
+C = linearCode(F,L)
+peek C
+-- check that dimension and length are correct:
+dim C
+length C
+-- check that G*H^t = 0:
+C.GeneratorMatrix * (transpose C.ParityCheckMatrix)
+
+-----------------------------------------------------
+-- Codes from Parity Check Matrices (as a matrix):
+-----------------------------------------------------
+F = GF(2)
+L = {{1,0,1,0,0,0,1,1,0,0},{0,1,0,0,0,0,0,1,1,0},{0,0,1,0,1,0,0,0,1,1},{1,0,0,1,0,1,0,0,0,1},{0,1,0,0,1,1,1,0,0,0}}
+C = linearCode(F,L,ParityCheck => true)
+peek C
+
 
 -- Local Variables:
 -- compile-command: "make -C $M2BUILDDIR/Macaulay2/packages PACKAGES=CodingTheory pre-install"
