@@ -421,7 +421,7 @@ NormalToricVariety _ List := (X,L) -> (toricCycle({(L,1)},X))
 normalToricVariety(ToricCycle) := opts -> C -> (
     s := support C;
     if #s > 1 then error "Expected a cycle of a cone";
-    normalToricVariety(first s, variety C);
+    normalToricVariety(first s, variety C)
 )
 
 normalToricVariety(List,NormalToricVariety) := opts -> (r,X) -> (
@@ -518,8 +518,8 @@ doc ///
 	 Intersection Theory on toric varieties (Topology, 1996). 
       Text
          It is cached in X.cache.Chow#i.
-      Text 
-         ???say something about pruning map.
+--      Text 
+--         ???say something about pruning map.
       Text 
          These groups are all one-dimensional for projective space.  
       Example 
@@ -715,7 +715,19 @@ doc ///
         C:ToricCycle
     Outputs
         :List
-            a list of integer vectors describing cones in the fan of variety(C)
+            a list of integer vectors describing cones in the
+	    fan of variety(C)
+    Description
+        Text
+	    This function returns the list of cones, corresponding 
+	    to torus-invariant cycles, appearing in the support of
+	    a ToricCycle.
+	Example
+	    X = toricProjectiveSpace 4
+	    Z1 = toricCycle({({0,1},3),({0,2},7),({1,2},82)},X)
+	    Z2 = toricCycle({({0,1},4),({0,2},5)},X)
+	    support Z1
+	    support Z2
 ///
 
 doc ///
@@ -729,6 +741,14 @@ doc ///
         C:ToricCycle
     Outputs
         :NormalToricVariety
+    Description
+        Text
+	    This function returns the underlying toric variety of
+	    the toric cycle.
+	Example
+	    X = toricProjectiveSpace 2
+	    Z = toricCycle({({0,1},3),({0,2},7),({1,2},82)},X)
+	    variety Z	    
 ///
      
 -- doc ///
@@ -936,6 +956,30 @@ doc ///
 	-cyc
 ///
 
+doc ///
+    Key
+        (normalToricVariety, ToricCycle)
+    Headline
+        the toric variety corresponding to an irreducible cycle.
+    Usage
+        normalToricVariety Z
+    Inputs
+        Z:ToricCycle
+    Outputs
+        X:NormalToricVariety
+    Description
+        Text
+	    Given an irreducible ToricCycle Z, supported on only
+	    one cone, this function returns
+	    the toric variety of the corresponding orbit closure.
+	Example
+	    X = toricProjectiveSpace 4
+	    Z = 4*X_{0,1}
+	    Y = normalToricVariety Z
+	    dim Y
+	    rays Y
+///
+
 
 ---------------------------------------------------------------------------
 -- TEST
@@ -1108,6 +1152,8 @@ needsPackage "Chow"
 installPackage "NormalToricVarieties"
 installPackage "Chow"
 check "Chow"
+
+viewHelp Chow
 
 X = toricProjectiveSpace 4
 D = X_1
