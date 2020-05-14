@@ -65,32 +65,45 @@ ToricCode(ZZ,Matrix) := EvaluationCode => opts -> (q,M) -> (
     -- Constructor for a toric code.
     -- inputs: size of a field, an integer matrix 
     -- outputs: the evaluation code defined by evaluating all monomials corresponding to integer 
-    ---         points in the convex hull of the columns of M at the points of the algebraic torus (F*)^n
+    ---         points in the convex hull (lattice polytope) of the columns of M at the points of the algebraic torus (F*)^n
     
-    F:=GF(q, Variable=>z);
-    s:=set apply(q-1,i->z^i);
-    m:=numgens target M;
-    ss:=s;
+    F:=GF(q, Variable=>z);  --- finite field of q elements
+    s:=set apply(q-1,i->z^i); -- set of non-zero elements in the field
+    m:=numgens target M; --- the length of the exponent vectors, i.e. number of variables for monomials, i.e.the dim of the ambient space containing the polytope
+    ss:=s; 
     for i from 1 to m-1 do (
-    	ss=set toList ss/splice**s;
+    	ss=set toList ss/splice**s;  
     );
-    P:=toList ss/splice;
-    R:=F[t_1..t_m];
-    Polytop:=convexHull M;
-    L:=latticePoints Polytop;
-    LL:=transpose matrix apply(L, i-> first entries transpose i);
-    G:=matrix apply(entries LL,i->apply(P,j->product apply(m,k->(j#k)^(i#k))));
+    P:=toList ss/splice;   -- the loop above creates the list of all m-tuples of non-zero elements of F, i.e. the list of points in the algebraic torus (F*)^m
+    Polytop:=convexHull M; -- the convex hull of the columns of M
+    L:=latticePoints Polytop; -- the list of lattice points in Polytop
+    LL:=matrix apply(L, i-> first entries transpose i); --converts the list of lattice points to a matrix of exponents
+    G:=matrix apply(entries LL,i->apply(P,j->product apply(m,k->(j#k)^(i#k)))); -- the matrix of generators; rows form a generating set of codewords
+    
+    R:=F[t_1..t_m]; --- defines the ring containing monomials corresponding to exponents
+    I := ideal apply(m,j->R_j^(q-1)-1); --  the vanishing ideal of (F*)^m
     
     new EvaluationCode from{
 	symbol AmbientSpace => F^(#P),
-	symbol ExponentsMatrix => LL,
-	symbol LinearCode => linearCode(G)
+
+	symbol ExponentsMatrix => transpose LL, -- the matrix of exponents, exponent vectors are columns
+	symbol LinearCode => linearCode(transpose G), -- the code 
+	symbol Points => P,  --- the points of (F*)^m
+	symbol Dimension => rank image G, -- dimension of the code
+	symbol Length => (q-1)^m,  -- length of the code
+	symbol VanishingIdeal => I --the vanishing ideal of (F*)^m
+
 	}
 )   
     
 ----------------- Example of ToricCode method ----
 
-M=matrix{{1,2,8},{4,5,6}}
+M=matrix{{1,2,10},{4,5,6}} -- martrix of exponent vectors definind the polytope P, exponents vectors are columns
+T=ToricCode(4,M) --- a toric code over F_4 with polytope P
+T.Code
+T.ExponentsMatrix
+
+M=matrix{{1,2,10,1},{4,5,6,1},{2,1,0,1}}
 T=ToricCode(4,M)
 
 ------------------    
@@ -98,6 +111,9 @@ T=ToricCode(4,M)
     
        
 ------------This an example of an evaluation code----------------------------------------
+
+needsPackage "NormalToricVarieties"
+needsPackage "NAGtypes"
 
 d=2
 q=2
@@ -125,6 +141,47 @@ C_d=apply(Polynum,y->apply(0..length f -1,x->(flatten entries evaluate(y,XX#x))#
    
     
 ------------------------------------------------------------------------------------------------------------------------------
+
+
+
+----------The incidence matrix code of a Graph G-------
+needsPackage  "Graphs"
+needsPackage  "NAGtypes"
+
+--These are two procedure for obtain an incidence matrix code of a Graph G
+-- be sure that p is a prime number 
+
+
+--1-- this procedure computes the generatrix matrix of the code---
+-- M is the incidence matrix of the Graph G
+
+codeGrahpIncM = method(TypicalValue => Module);
+codeGrahpIncM (Matrix,ZZ):= (M,p)->(
+tInc:=transpose M;
+X:=entries tInc;
+R:=ZZ/p[t_(0)..t_(numgens target M-1)];
+SetPol:=flatten entries basis(1,R);
+SetPolSys:=apply(0..length SetPol-1, x->polySystem{SetPol#x});
+XX:=apply(X,x->point{x});
+C:=apply(apply(SetPolSys,y->apply(0..length XX -1,x->(flatten entries evaluate(y,XX#x))#0)),toList);
+image transpose matrix{C}
+)
+
+
+--2-- this an alternative process. It computes all the points in the code. It computes all the linear forms. 
+
+codeGrahpInc = method(TypicalValue => Sequence);
+codeGrahpInc (Graph,ZZ):= (G,p)->(
+tInc:=transpose incidenceMatrix G;
+X:=entries tInc;
+R:=ZZ/p[t_(0)..t_(lentgh vertexSet G-1)];
+Poly1:=apply(apply(toList (set(0..p-1))^**(hilbertFunction(1,R))-(set{0})^**(hilbertFunction(1,R)),toList),x -> basis(1,R)*vector deepSplice x); 
+Polynums1:=apply(0..length Poly1-1, x->polySystem{Poly1#x#0});
+XX:=apply(X,x->point{x});
+apply(Polynums1,y->apply(0..length XX -1,x->(flatten entries evaluate(y,XX#x))#0))
+)
+
+
 
 
 
