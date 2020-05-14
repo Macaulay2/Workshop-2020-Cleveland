@@ -10,22 +10,19 @@ integralClosure(Ideal, RingElement, ZZ) := opts -> (I,a,D) -> (
     psi := map(Rbar,S,DegreeMap =>d->prepend(0,d));
     zIdeal := ideal(map(Rbar,Reesi))((vars Reesi)_{0..numgens I -1});
     zIdealD := module zIdeal^D;
-    zwIdeal := ideal((vars Rbar)_{0..numgens Rbar - numgens S-1});
-    L := prepend(D,toList(degreeLength S:null));
-    RbarPlusD := image basisOfDegreeD(L,Rbar); --all gens of first-degree D.
-    M := pushForward(psi,zwIdeal^D/zwIdeal^(D+1));
-    gD := matrix inducedMap(RbarPlusD, zIdealD);
+    ID := (trim I)^D;
+    LD := prepend(D,toList(degreeLength S:null));
+    LDplus := prepend(D+1,toList(degreeLength S:null));    
+    degD := image basisOfDegreeD(LD,Rbar); --all gens of first-degree D.
+    degDplus := image basisOfDegreeD(LDplus,Rbar); --all gens of first-degree D.
+    M := pushForward(psi,degD/degDplus);
     mapback := map(S,Rbar, matrix{{numgens Rbar-numgens S:0_S}}|(vars S), DegreeMap => d -> drop(d, 1));
---    M := coker mapback presentation RbarPlusD;
---    ID := I^D;
-    ID = (trim I)^D;
-    phi := map(M, module ID, mapback gD);
+    phi := map(M,module ID, mapback matrix inducedMap(degD,zIdealD));
     assert(isHomogeneous phi);
     assert(isWellDefined phi);
-    error "debug me";
---    extendIdeal(ID,a^D,phi)
-error();
-    extendIdeal(ID, phi)
+--error();
+--    extendIdeal(ID,phi)
+    extendIdeal phi
     )
 
 findGrade2Ideal = method()
@@ -62,15 +59,17 @@ extendIdeal(Ideal, Matrix) := Ideal => (I, phi) -> (
     ideal (sz * preimageInc)
     )
 
-extendIdeal(Matrix) := Ideal => phi -> (
+extendIdeal(Matrix) := Ideal => phi -> ( --This method is WRONG on integralClosure ideal"a2,b2".
     --input: f: (module I) --> M, an inclusion from an ideal 
     --to a module that is isomorphic to the inclusion of I into an ideal J containing I.
     --output: the ideal J, so that f becomes the inclusion I subset J.
     inc := transpose gens source phi;
     phi0 := transpose matrix phi;
-    (q,r) = quotientRemainder(inc,phi0);
+    sz := syz transpose presentation target phi;    
+    (q,r) = quotientRemainder(inc,phi0*sz);
     if r !=0 then error "phi is not isomorphic to an inclusion of ideals";
-    trim ideal q -- is the "trim" doing anything?
+error();
+    ideal (sz*q) -- is the "trim" doing anything?
     )
 --    sz := syz transpose presentation target phi;
 --    assert(source phi0 == target sz);
@@ -134,6 +133,8 @@ TEST///
     assert(isWellDefined phi)
     assert(extendIdeal phi == c*K)
     assert(extendIdeal phi'== d*K)    
+    assert(integralClosure I == I)
+    assert(integralClosure ideal"a2,b2" == ideal"a2,ab,b2")
 ///
 
 TEST///
@@ -148,7 +149,7 @@ TEST///
     assert(isWellDefined phi')    
     assert(extendIdeal phi == c*K)
     assert(extendIdeal phi'== (b+c)*K)    
-    integralClosure I == I
+    assert(integralClosure I == I) 
 ///
 
 TEST///
@@ -167,56 +168,16 @@ TEST///
     assert(isWellDefined phi')    
     assert(extendIdeal(I,phi)== c*K)
     assert(extendIdeal(I,phi')== (b+c)*K)    
-    integralClosure I -- wrong!!
-    -- inside the debugger, during `integralClosure I`
-    isWellDefined phi -- true.
-    
-    S = ZZ/101[a,b,c]/ideal(a^3-b^2*c)
-    ID = ideal(b^2*c+b*c^2,a*b*c+a*c^2)
-    M = (cokernel matrix {{-a, 0, 0, -c}, {b, -a, 0, 0}})
-    phi = map(M, module ID, matrix {{1_S, 0}, {0, 1}})
-    isWellDefined phi
-    extendIdeal(ID, phi) -- should not be 0, must contain I?
-      -- unless the hypothesis that M is isomorphic to an ideal
-      -- containing ID is incorrect...?
+    assert(integralClosure I == I)
+    assert(integralClosure(ideal(a^2,b^2))==ideal"a2,ab,b2")
 ///
 
 
 
-
-S=ZZ/32003[a,b,c,d,e,f]
-I=ideal(a*b*d,a*c*e,b*c*f,d*e*f);
-trim(J=I^2)
-K=integralClosure(I,I_0,2) -- integral closure of J = I^2
-assert(K == J+ideal"abcdef") --doesn't work yet on this example!
-
-Ibar = extendIdeal(ID,I_0^2,phi)
-F=ideal(a*b*c*d*e*f);
-gens(F^2)%J^2 -- so F satisfies X^2-m, with m\in J^2.
-assert(isSubset(F, K)) -- F should be contained in the integral closure.
-assert(K != J)
-
-R = Rbar
-L = {2,null}
-
--- stopped at extendIdeal.
--- Let's figure out the lift.
-isWellDefined phi -- false!! This is the first order of business.
-extendIdeal(ID, phi)
-sz = syz transpose presentation M -- this is the answer in this example.
-ff = ((transpose matrix phi) * sz)
-
-inc = transpose gens source phi
-transpose matrix phi
-(inc // ff)
-source phi
-target phi
-
--- One possible bug:
-L = reesIdeal(I,I_0,Variable => z)
-g = map(ring I, ring L, (gens I))
-g L -- nonzero!!
-last (flattenRing ring L)
-oo L
-
-reesAlgebra(I, I_0, Variable => getSymbol "z")
+TEST ///
+    S=ZZ/32003[a,b,c,d,e,f]
+    I=ideal(a*b*d,a*c*e,b*c*f,d*e*f);
+    trim(J=I^2)
+    K=integralClosure(I,I_0,2) -- integral closure of J = I^2
+    assert(K == J+ideal"abcdef") 
+///
