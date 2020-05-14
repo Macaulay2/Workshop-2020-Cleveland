@@ -287,7 +287,7 @@ TEST///
 
 --witnessCriticalVariety and Optimization degree
 witnessCriticalIdeal = method(Options => options makeLagrangeRing);
-witnessCriticalIdeal (List,List,LagrangeVarietyWitness) := Ideal => opts  -> (v,g,LVW) ->(
+witnessCriticalIdeal (List,List,LagrangeVarietyWitness) := (Ideal,Ideal) => opts  -> (v,g,LVW) ->(
     if degreeLength  LVW#LagrangeRing#PrimalRing==2 then(
 	u:=gens coefficientRing (LVW);
 	if #v=!=#u then error "data does not agree with number of parameters. ";
@@ -299,10 +299,11 @@ witnessCriticalIdeal (List,List,LagrangeVarietyWitness) := Ideal => opts  -> (v,
 	gradSub := map(ring LVW,ring LVW,subVars);	
 	subData :=apply(u,v,(i,j)->i=>j);
 	--TODO: Issue with denominators.
-	return sub(gradSub(LVW#PrimalIdeal+LVW#JacobianConstraint),subData)
+	return (sub(gradSub(LVW#PrimalIdeal),subData),sub(gradSub(LVW#JacobianConstraint),subData))
 	)
     else error"degreeLength is not 2."
     )
+
 
 witnessCriticalIdeal (List,RingElement,LagrangeVarietyWitness) := Ideal =>opts -> (v,psi,LVW) -> (
     g := apply(gens ring psi,x->diff(x,psi));
@@ -328,12 +329,12 @@ assert (4 ==degree witnessCriticalIdeal({7,99},{x-a,y-b},LVW))--ED degree of ell
 
 
 -*
-optimizationDegree(v,g,LVW)-> (
+optimizationDegree = method(Options => options makeLagrangeRing);
+optimizationDegree (List,List,LagrangeVarietyWitness) := ZZ => opts  -> (v,g,LVW) ->(
     CI:=witnessCriticalIdeal(v,g,LVW);
     CI = CI+LVW#PrimalIdeal;
     scan(g,i->if ring g ==frac ring CI then CI:=saturate(CI,denominator g))
     )
-
 *-
 
 -- Documentation below
