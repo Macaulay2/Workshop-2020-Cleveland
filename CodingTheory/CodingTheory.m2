@@ -55,30 +55,8 @@ export {
     "MaxIterations",
     "shorten"
     }
-exportMutable {}
 
-firstFunction = method(TypicalValue => String)
-firstFunction ZZ := String => n -> (
-	if n == 1
-	then "Hello, World!"
-	else "D'oh!"	
-	)
-   
--- A function with an optional argument
-secondFunction = method(
-     TypicalValue => ZZ,
-     Options => {MyOption => 0}
-     )
-secondFunction(ZZ,ZZ) := o -> (m,n) -> (
-     if not instance(o.MyOption,ZZ)
-     then error "The optional MyOption argument must be an integer";
-     m + n + o.MyOption
-     )
-secondFunction(ZZ,List) := o -> (m,n) -> (
-     if not instance(o.MyOption,ZZ)
-     then error "The optional MyOption argument must be an integer";
-     m + #n + o.MyOption
-     )
+exportMutable {}
 
 ------------------------------------------
 ------------------------------------------
@@ -503,8 +481,8 @@ generic(LinearCode) := LinearCode => C -> (
 --------------------------------------------------------------
  --================= v-number function ========================
  
- fun_gen = method(TypicalValue);
- fun_gen (Ideal,ZZ) := (I,n) -> (
+ fungen = method();
+ fungen (Ideal,ZZ) := (I,n) -> (
  L:=ass I;
  flatten flatten degrees mingens(quotient(I,L#n)/I)
  )
@@ -515,8 +493,8 @@ generic(LinearCode) := LinearCode => C -> (
 -- gens gb ideal(flatten mingens(quotient(I,L#n)/I))
  --)
  
- gg_fun = method();
- gg_fun (List) := (a) -> (
+ ggfun = method();
+ ggfun (List) := (a) -> (
  toList(set a-set{0}) 
  )
  
@@ -524,7 +502,7 @@ generic(LinearCode) := LinearCode => C -> (
   vnumber (Ideal) := (I) ->
     (
       L:=ass I;     
-      N:=apply(apply(0..#L-1,i->fun_gen(I,i)),i->gg_fun(i));
+      N:=apply(apply(0..#L-1,i->fungen(I,i)),i->ggfun(i));
       min flatten N 
     )
     
@@ -532,8 +510,8 @@ generic(LinearCode) := LinearCode => C -> (
  -----------------------------------------------------------
  --****************** Footprint Function ********************
  
- mset_func = method();
- mset_func (Ideal,Ideal) := (I,x) -> (
+ msetfunc = method();
+ msetfunc (Ideal,Ideal) := (I,x) -> (
  if not quotient(ideal(leadTerm gens gb I),x)==ideal(leadTerm gens gb I) then 
     degree coker gens gb ideal(ideal(leadTerm gens gb I),x) 
  else 0 
@@ -541,7 +519,7 @@ generic(LinearCode) := LinearCode => C -> (
  
  maxdegree = method();
  maxdegree (ZZ,ZZ,Ideal) := (d,r,I) -> (
- max apply(apply(apply(subsets(flatten entries basis(d,coker gens gb I),r),toSequence),ideal),i->mset_func(I,i))
+ max apply(apply(apply(subsets(flatten entries basis(d,coker gens gb I),r),toSequence),ideal),i->msetfunc(I,i))
  )
  
  footPrint = method();
@@ -555,7 +533,7 @@ generic(LinearCode) := LinearCode => C -> (
  --****************** GMD Function ********************
  
  elem = method();
- elem (ZZ,ZZ,ZZ,Ideal) := (q,d,I) ->(
+ elem (ZZ,ZZ,Ideal) := (q,d,I) ->(
  apply(toList (set(0..q-1))^**(hilbertFunction(d,coker gens gb I))-(set{0})^**(hilbertFunction(d,coker gens gb I)),toList)
  )
  
@@ -570,9 +548,9 @@ generic(LinearCode) := LinearCode => C -> (
  )
  
  --------------------------------------------------------
- -=====================hyp function======================
+ --=====================hyp function======================
  
- hYpFunction = method();
+ hypFunction = method();
  hypFunction (ZZ,ZZ,ZZ,Ideal) := (q,d,r,I) ->(
  max apply(
  apply(
@@ -587,7 +565,7 @@ generic(LinearCode) := LinearCode => C -> (
  
  gMdFunction = method();
  gMdFunction (ZZ,ZZ,ZZ,Ideal) := (q,d,r,I) ->(
- degree(coker gens gb I)-hYp(q,d,r,I)
+ degree(coker gens gb I)-hypFunction(q,d,r,I)
  )
  
  
@@ -599,14 +577,14 @@ generic(LinearCode) := LinearCode => C -> (
  
  vasFunction = method();
  vasFunction (ZZ,ZZ,ZZ,Ideal) := (q,d,r,I) ->(
- min apply(
- apply(
- setBas(q,d,r,I),ideal),
- x -> if #set flatten entries mingens ideal(leadTerm gens x)==r and not quotient(I,x)==I
-         then degree(coker gens gb quotient(I,x)
-      else degree(coker gens gb I)
+     min apply(
+         apply(setBas(q,d,r,I),ideal), x -> if (#set flatten entries mingens ideal(leadTerm gens x)==r and not quotient(I,x)==I) then {
+             degree(coker gens gb quotient(I,x))
+         } else {
+             degree(coker gens gb I)
+         };
+    )
 )
- )
 
 
 
@@ -870,78 +848,6 @@ doc ///
 	   C1 == C2
        
 ///
-
-document {
-	Key => {firstFunction, (firstFunction,ZZ)},
-	Headline => "a silly first function",
-	Usage => "firstFunction n",
-	Inputs => {
-		"n" => ZZ => {}
-		},
-	Outputs => {
-		String => {}
-		},
-	"This function is provided by the package ", TO CodingTheory, ".",
-	EXAMPLE {
-		"firstFunction 1",
-		"firstFunction 0"
-		}
-	}
-document {
-	Key => secondFunction,
-	Headline => "a silly second function",
-	"This function is provided by the package ", TO CodingTheory, "."
-	}
-document {
-	Key => (secondFunction,ZZ,ZZ),
-	Headline => "a silly second function",
-	Usage => "secondFunction(m,n)",
-	Inputs => {
-	     "m" => {},
-	     "n" => {}
-	     },
-	Outputs => {
-	     {"The sum of ", TT "m", ", and ", TT "n", 
-	     ", and "}
-	},
-	EXAMPLE {
-		"secondFunction(1,3)",
-		"secondFunction(23213123,445326264, MyOption=>213)"
-		}
-	}
-document {
-     Key => MyOption,
-     Headline => "optional argument specifying a level",
-     TT "MyOption", " -- an optional argument used to specify a level",
-     PARA{},
-     "This symbol is provided by the package ", TO CodingTheory, "."
-     }
- 
- 
-document {
-     Key => [secondFunction,MyOption],
-     Headline => "add level to result",
-     Usage => "secondFunction(...,MyOption=>n)",
-     Inputs => {
-	  "n" => ZZ => "the level to use"
-	  },
-     Consequences => {
-	  {"The value ", TT "n", " is added to the result"}
-	  },
-     "Any more description can go ", BOLD "here", ".",
-     EXAMPLE {
-	  "secondFunction(4,6,MyOption=>3)"
-	  },
-     SeeAlso => {
-	  "firstFunction"
-	  }
-     }
-TEST ///
-  assert(firstFunction 1 === "Hello, World!")
-  assert(secondFunction(1,3) === 4)
-  assert(secondFunction(1,3,MyOption=>5) === 9)
-///
-  
 
        
 end
