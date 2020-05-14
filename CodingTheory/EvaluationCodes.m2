@@ -137,18 +137,33 @@ needsPackage  "NAGtypes"
 
 
 --1-- this procedure computes the generatrix matrix of the code---
--- M is the incidence matrix of the Graph G
+
 
 codeGrahpIncM = method(TypicalValue => Module);
+-- M is the incidence matrix of the Graph G
+--inputs: The incidence matrix of a Graph G, a prime number  
+-- outputs: f-module
+
 codeGrahpIncM (Matrix,ZZ):= (M,p)->(
+K:=ZZ/p;
 tInc:=transpose M;
 X:=entries tInc;
-R:=ZZ/p[t_(0)..t_(numgens target M-1)];
+R:=K[t_(0)..t_(numgens target M-1)];
 SetPol:=flatten entries basis(1,R);
 SetPolSys:=apply(0..length SetPol-1, x->polySystem{SetPol#x});
 XX:=apply(X,x->point{x});
 C:=apply(apply(SetPolSys,y->apply(0..length XX -1,x->(flatten entries evaluate(y,XX#x))#0)),toList);
-image transpose matrix{C}
+G:=transpose matrix{C};
+image G
+
+
+  new EvaluationCode from{
+	symbol AmbientSpace => K^(#X),
+	symbol IncidenceMatrix => M,
+	symbol Code => image G
+	}
+
+
 )
 
 
