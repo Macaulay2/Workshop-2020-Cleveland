@@ -6,7 +6,15 @@ R = QQ[x,y,z];
 F = polySystem {x^3-y*z,y^3-x*z,z^3-x*y};
 p = point matrix{{0/1,0/1,0/1}};
 
-V = computeOrthoBasis(F,p)
+M = random(QQ^3, QQ^3)
+M = rationalUnitaryMatrix 3
+randomTransform = flatten entries(M * transpose vars R)
+F' = polySystem sub(transpose matrix{{x^3-y*z,y^3-x*z,z^3-x*y}}
+   , {x=>randomTransform#0, y=>randomTransform#1, z=>randomTransform#2})
+V = computeOrthoBasis(F',p)
+A = Aoper2(F',p,V)
+
+
 A = Aoperator(F,p,V)
 det A
 
