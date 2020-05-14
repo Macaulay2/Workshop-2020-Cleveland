@@ -80,30 +80,105 @@ exportMutable {}
 -- Helper functions for constructors:
 ------------------------------------------
 
--- WARNING: These will do some funky things
--- if your parity check or generator matrices
--- are not of full rank...
+findPivots = method(TypicalValue => List)
+findPivots(Matrix) := List => M -> (
+    -- if the reduced basis for the code does NOT
+    -- have an identity matrix on the right, 
+    -- find positions of each column:
+    
+    colsOfM := entries transpose M;
+    
+    -- extract (ordered) positions of standard basis vectors:
+    return apply(entries id_(M.target), col -> position(colsOfM, colM -> colM == col))
+    
+    )
+
+permuteMatrixColumns = method(TypicalValue => Matrix)
+permuteMatrixColumns(Matrix,List) := (M,P) -> (
+    -- given a list P representing a permutation,
+    -- permute the columns via P:
+
+    return transpose matrix((entries transpose M)_P)
+    
+    
+    
+    )
+
+permuteMatrixRows = method(TypicalValue => Matrix)
+permuteMatrixRows(Matrix,List)  := (M,P) -> (
+    -- given a list P representing a permutation,
+    -- permute the columns via P:
+    return matrix((entries M)_P)
+    )
+
+
+permuteToStandardForm = method()
+permuteToStandardForm(Matrix) := M -> (
+    -- input: matrix M
+    -- output: matrix P*M (permuted to move pivots to right identity block) and permutation P used
+    
+    pivotPositions := findPivots(M);
+    
+    P := select(toList(0..rank M.source -1), i-> not member(i,pivotPositions)) | pivotPositions;
+    
+    return {permuteMatrixColumns(M,P),P}
+    
+    )
+
+
+
+
 generatorToParityCheck = method(TypicalValue => Matrix)
 generatorToParityCheck(Matrix) := Matrix => M -> (
+    -- this function assumes M is of full rank:
+    if rank M != min(rank M.source, rank M.target) then error "Matrix M is not of full rank.";
+    
     -- produce canonical form of the generating matrix:
     G := transpose groebnerBasis transpose M;
+    
+    -- save permutation of G to standard form and permutation used:
+    GandP := permuteToStandardForm(M);    
+    
+    -- update G to use this correct version, save P to variable:
+    Gred  := GandP_0;
+    P := GandP_1;
+    
     
     -- this code assumes that generator matrix
     -- can be put into standard form without any
     -- swapping of columns:
     
     -- take (n-k) columns of standard generating matrix above:
-    redG := G_{0..(rank G.source - rank G -1)};
+    redG := Gred_{0..(rank Gred.source - rank Gred -1)};
     
     -- vertically concatenate an identity matrix of rank (n-k),
     -- then transpose :
-    return transpose (id_(redG.source) || -redG)
+    return permuteMatrixColumns(transpose (id_(redG.source) || -redG),inversePermutation(P))
     
     )
+
+
+
+--The example @henry-chimal noted of a rank deficient code (a generator matrix with repeats) is corrected by this. The user inputted generator or parity check matrix will not be altered UNLESS the matrix is rank deficient, in which case a reduced presentation will be computed and returned.
 
 parityCheckToGenerator = method(TypicalValue => Matrix)
 parityCheckToGenerator(Matrix) := Matrix => M -> (
     return(transpose generators kernel M)
+    )
+
+-- If generator or parity check is not full rank, 
+-- choose a subset of rows that are generators:
+reduceMatrix = method(TypicalValue => Matrix)
+reduceMatrix(Matrix) := Matrix => M -> (
+    return transpose groebnerBasis transpose M
+    )
+
+reduceRankDeficientMatrix = method(TypicalValue => Matrix)
+reduceRankDeficientMatrix(Matrix) := Matrix => M -> (
+    -- check if matrix is of full rank, otherwise return reduced:
+    if (rank M == min(rank M.source,rank M.target)) then {
+	return M
+	} else return reduceMatrix(M)
     )
 
 
@@ -130,8 +205,9 @@ rawLinearCode(List) := LinearCode => (inputVec) -> (
 	
 	-- coerce generators and generator matrix into base field, if possible:
 	try {
-	    newGens := apply(inputVec_2, codeword -> apply(codeword, entry -> sub(entry, inputVec_1)));
-	    newGenMat := matrix(newGens);
+	    tempGens := apply(inputVec_2, codeword -> apply(codeword, entry -> sub(entry, inputVec_1)));
+	    newGenMat := reduceRankDeficientMatrix(matrix(tempGens));
+	    newGens := entries newGenMat;
 	    } else {
 	    error "Elements do not live in base field/ring.";
 	    };
@@ -147,14 +223,15 @@ rawLinearCode(List) := LinearCode => (inputVec) -> (
 	
 	-- coerce parity check rows and parity check matrix into base field, if possible:
 	try {
-	    newParRow := apply(inputVec_3, codeword -> apply(codeword, entry -> sub(entry, inputVec_1)));
-	    newParMat := matrix(newParRow);
+	    tempParRow := apply(inputVec_3, codeword -> apply(codeword, entry -> sub(entry, inputVec_1)));
+	    newParMat := reduceRankDeficientMatrix(matrix(tempParRow));
+	    newParRow := entries newParMat;
 	    } else {
 	    error "Elements do not live in base field/ring.";
 	    };
 	print("in parity check case");
     } else {
-	newParMat = generatorToParityCheck(newGenMat);
+	newParMat = generatorToParityCheck(reduceMatrix(newGenMat));
 	newParRow = entries newParMat ;
     };
 
@@ -165,7 +242,7 @@ rawLinearCode(List) := LinearCode => (inputVec) -> (
     };
     
     -- coerce code matrix into base field:
-    codeSpace := sub(inputVec_4,inputVec_1);
+    codeSpace := if (reduceMatrix(generators inputVec_4) == generators inputVec_4) then sub(inputVec_4,inputVec_1) else image groebnerBasis inputVec_4;
     
     
     return new LinearCode from {
@@ -275,7 +352,7 @@ linearCode(Matrix) := LinearCode => opts -> M -> (
     )
 
 net LinearCode := c -> (
-     "Code with Generator Matrix: " | net transpose generators c.Code
+     "Code with Generator Matrix: " | net c.GeneratorMatrix
      )
 toString LinearCode := c -> toString c.Generators
 
@@ -1010,7 +1087,7 @@ document {
 	"r" => Vector => {"Dimension of the dual of the Hamming code."}	
 	},
     Outputs => {
-	:LinearCode
+	"C" => LinearCode => {"Hamming code."}
 	},
     "q and r and integers",
     "Returns the Hamming code over GF(q) and dimensino of the dual r.",
@@ -1079,7 +1156,7 @@ doc ///
    Headline
        a random linear code 
    Usage
-       shorten(GaloisField, ZZ, ZZ)
+       random(GaloisField, ZZ, ZZ)
    Inputs
         F:GaloisField
 	n:ZZ
@@ -1160,6 +1237,15 @@ C.GeneratorMatrix * (transpose C.ParityCheckMatrix)
 F = GF(2)
 L = {{1,0,1,0,0,0,1,1,0,0},{0,1,0,0,0,0,0,1,1,0},{0,0,1,0,1,0,0,0,1,1},{1,0,0,1,0,1,0,0,0,1},{0,1,0,0,1,1,1,0,0,0}}
 C = linearCode(F,L,ParityCheck => true)
+peek C
+
+
+-----------------------------------------------------
+-- Codes with Rank Deficient Matrices:
+-----------------------------------------------------
+R=GF 4
+M=R^4
+C = linearCode(R,{{1,0,1,0},{1,0,1,0}})
 peek C
 
 
