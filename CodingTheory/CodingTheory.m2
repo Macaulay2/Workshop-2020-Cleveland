@@ -21,10 +21,6 @@ newPackage(
 -- must be placed in one of the following two lists
 
 export {
-    -- toy functions as examples
-    "firstFunction",
-    "secondFunction",
-    "MyOption",
     -- Types and Constructors
     "generatorToParityCheck",
     "parityCheckToGenerator",
@@ -55,30 +51,8 @@ export {
     "MaxIterations",
     "shorten"
     }
-exportMutable {}
 
-firstFunction = method(TypicalValue => String)
-firstFunction ZZ := String => n -> (
-	if n == 1
-	then "Hello, World!"
-	else "D'oh!"	
-	)
-   
--- A function with an optional argument
-secondFunction = method(
-     TypicalValue => ZZ,
-     Options => {MyOption => 0}
-     )
-secondFunction(ZZ,ZZ) := o -> (m,n) -> (
-     if not instance(o.MyOption,ZZ)
-     then error "The optional MyOption argument must be an integer";
-     m + n + o.MyOption
-     )
-secondFunction(ZZ,List) := o -> (m,n) -> (
-     if not instance(o.MyOption,ZZ)
-     then error "The optional MyOption argument must be an integer";
-     m + #n + o.MyOption
-     )
+exportMutable {}
 
 ------------------------------------------
 ------------------------------------------
@@ -290,32 +264,37 @@ net LinearCode := c -> (
 toString LinearCode := c -> toString c.Generators
 
 
+shorten = method(TypicalValue => LinearCode)
+-- input: An [n,k] linear code C and a set S of distinct integers { i1, ..., ir} such that 1 <= ik <= n.
+-- output: A new code from C by selecting only those codewords of C having a zeros in each of the coordinate 
+--     positions i1, ..., ir, and deleting these components. Thus, the resulting 
+--     code will have length n - r. 
+shorten ( LinearCode, List ) := LinearCode => ( C, L ) -> (
+    local newL; local codeGens;
+    
+    codeGens = C.Generators;
+    newL = delete(0, apply( codeGens, c -> (
+	if sum apply( L, l -> c#l ) == 0
+	then c
+	else 0
+	)));
+    
+    if newL == {} then return C else (
+	newL = entries submatrix' ( matrix newL, L );
+	return linearCode ( C.BaseField , newL );
+	)
+    )
+
+
 -- input: An [n,k] linear code C and an iteger i such that 1 <= i <= n.
 -- output: A new code from C by selecting only those codewords of C having a zero as their 
 --     i-th component and deleting the i-th component from these codewords. Thus, the resulting 
 --     code will have length n - 1. 
-
-shorten = method(TypicalValue => LinearCode)
 shorten ( LinearCode, ZZ ) := LinearCode => ( C, i ) -> (
-    local newL;
-        
-    newL = delete(0,apply(C.Generators, c -> if c#i == 0 then c else 0 ));
-    newL = entries submatrix' ( matrix newL, {i} );
-            
-    return linearCode ( C.BaseField , newL )    
+    
+    return shorten(C, {i})
+    
     )
-
-
--- Given an [n, k] code C and a set S of distinct integers { i1, ..., ir}, each of which lies in 
--- the range [1, n], construct a new code from C by selecting only those codewords of C having 
--- zeros in each of the coordinate positions i1, ..., ir, and deleting these components. Thus, 
--- the resulting code will have length n - r. 
-shorten ( LinearCode, List ) := LinearCode => ( C, i ) -> (
-
-    -- Branden will write this tomorrow. 
-            
-    )
-
 
 ------------------------------------------
 ------------------------------------------
@@ -323,14 +302,12 @@ shorten ( LinearCode, List ) := LinearCode => ( C, i ) -> (
 ------------------------------------------
 ------------------------------------------
 
--- equality of linear codes
+-- mathematical equality of linear codes
 LinearCode == LinearCode := (C,D) -> ( 
     MC := matrix apply(C.Generators, a -> vector a );
     MD := matrix apply(D.Generators, a -> vector a );
     image MC == image MD
     )
-
-
 
 
 ------------------------------------------
@@ -493,6 +470,121 @@ generic = method(TypicalValue => LinearCode)
 generic(LinearCode) := LinearCode => C -> (
     linearCode(C.AmbientModule)
     )
+    
+    
+    
+-----------------------Generalized functions in coding theory---------------------
+--------------------------------------------------------------
+ --================= v-number function ========================
+ 
+ fungen = method();
+ fungen (Ideal,ZZ) := (I,n) -> (
+ L:=ass I;
+ flatten flatten degrees mingens(quotient(I,L#n)/I)
+ )
+ 
+-- pp_grobner = method();
+-- pp_grobner (Ideal,ZZ) := (I,n) -> (
+-- L:=ass I;
+-- gens gb ideal(flatten mingens(quotient(I,L#n)/I))
+ --)
+ 
+ ggfun = method();
+ ggfun (List) := (a) -> (
+ toList(set a-set{0}) 
+ )
+ 
+ vnumber = method();
+  vnumber (Ideal) := (I) ->
+    (
+      L:=ass I;     
+      N:=apply(apply(0..#L-1,i->fungen(I,i)),i->ggfun(i));
+      min flatten N 
+    )
+    
+   
+ -----------------------------------------------------------
+ --****************** Footprint Function ********************
+ 
+ msetfunc = method();
+ msetfunc (Ideal,Ideal) := (I,x) -> (
+ if not quotient(ideal(leadTerm gens gb I),x)==ideal(leadTerm gens gb I) then 
+    degree coker gens gb ideal(ideal(leadTerm gens gb I),x) 
+ else 0 
+ )
+ 
+ maxdegree = method();
+ maxdegree (ZZ,ZZ,Ideal) := (d,r,I) -> (
+ max apply(apply(apply(subsets(flatten entries basis(d,coker gens gb I),r),toSequence),ideal),i->msetfunc(I,i))
+ )
+ 
+ footPrint = method();
+ footPrint (ZZ,ZZ,Ideal) := (d,r,I) ->(
+ degree coker gens gb I - maxdegree(d,r,I)
+ )
+    
+    
+ 
+-----------------------------------------------------------
+ --****************** GMD Function ********************
+ 
+ elem = method();
+ elem (ZZ,ZZ,Ideal) := (q,d,I) ->(
+ apply(toList (set(0..q-1))^**(hilbertFunction(d,coker gens gb I))-(set{0})^**(hilbertFunction(d,coker gens gb I)),toList)
+ )
+ 
+ elemBas = method();
+ elemBas (ZZ,ZZ,Ideal) := (q,d,I) ->(
+ apply(elem(q,d,I),x -> basis(d,coker gens gb I)*vector deepSplice x)
+ )
+ 
+ setBas = method();
+ setBas (ZZ,ZZ,ZZ,Ideal) := (q,d,r,I) ->(
+ subsets(apply(elemBas(q,d,I),z->ideal(flatten entries z)),r)
+ )
+ 
+ --------------------------------------------------------
+ --=====================hyp function======================
+ 
+ hypFunction = method();
+ hypFunction (ZZ,ZZ,ZZ,Ideal) := (q,d,r,I) ->(
+ max apply(
+ apply(
+ setBas(q,d,r,I),ideal),
+ x -> if #set flatten entries mingens ideal(leadTerm gens x)==r and not quotient(I,x)==I
+         then degree(I+x)
+      else 0
+)
+ )
+ 
+ --------------------------------------------------------
+ 
+ gMdFunction = method();
+ gMdFunction (ZZ,ZZ,ZZ,Ideal) := (q,d,r,I) ->(
+ degree(coker gens gb I)-hypFunction(q,d,r,I)
+ )
+ 
+ 
+ 
+ 
+ --------------------------------------------------------------
+ --===================== Vasconcelos Function ================
+ 
+ 
+ vasFunction = method();
+ vasFunction (ZZ,ZZ,ZZ,Ideal) := (q,d,r,I) ->(
+     min apply(
+         apply(setBas(q,d,r,I),ideal), x -> if (#set flatten entries mingens ideal(leadTerm gens x)==r and not quotient(I,x)==I) then {
+             degree(coker gens gb quotient(I,x))
+         } else {
+             degree(coker gens gb I)
+         };
+    )
+)
+
+
+
+----------------------------------------------------------------------------------
 
 
    
@@ -553,7 +645,7 @@ bitflipDecode(Matrix, Vector) := opts -> (H, v) -> (
 
 
 TEST ///
--- Equality Test
+-- Mathematical Equality Test
 F = GF(2)
 codeLen = 10
 codeDim = 4
@@ -580,10 +672,9 @@ for i from 1 to 50 do(
 ///
 
 TEST///
--- shorten test
+-- shorten test, integer
 F = GF(2)
 codeLen = 10
-codeDim = 4
 L = {{0, 1, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 1, 0, 1, 1, 0, 1, 0, 0}, {1, 1, 0, 0, 0, 1, 0, 0, 1, 0}, {1, 0, 0, 1, 0, 0, 0, 1, 1, 1}}
 H = L|L
 
@@ -596,6 +687,26 @@ assert( numColumns ( C2.GeneratorMatrix ) == numColumns (shorten( C2, 3)).Genera
 assert( numColumns ( C3.GeneratorMatrix ) == numColumns (shorten( C3, 3)).GeneratorMatrix + 1 )
 assert( shorten( C2, 3 ) == linearCode(F, shortL) )
 assert( shorten( C3, 3 ) == linearCode(F, shortL) )
+///
+
+TEST///
+-- shorten test, list
+F = GF(2)
+codeLen = 10
+codeDim = 4
+L = {{0, 1, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 1, 0, 1, 1, 0, 1, 0, 0}, {1, 1, 0, 0, 0, 1, 0, 0, 1, 0}, {1, 0, 0, 1, 0, 0, 0, 1, 1, 1}}
+H = L|L
+
+C2 = linearCode(F,codeLen,H)
+C3 = linearCode(F,codeLen,L)
+K = {3,6,8,9}
+
+shortL = {{0, 1, 0, 0, 0, 0}, {0, 0, 1, 1, 1, 1}}
+
+assert( numColumns ( C2.GeneratorMatrix ) == numColumns (shorten( C2, K)).GeneratorMatrix + 4 )
+assert( numColumns ( C3.GeneratorMatrix ) == numColumns (shorten( C3, K)).GeneratorMatrix + 4 )
+assert( shorten( C2, K ) == linearCode(F, shortL) )
+assert( shorten( C3, K ) == linearCode(F, shortL) )
 ///
 
 
@@ -661,90 +772,78 @@ document {
     "This symbol is provided by the package ", TO CodingTheory, "."
     }
 
-document {
-    Key => {symbol ==, (symbol ==,LinearCode,LinearCode)},
-    Headline => "equality for linear codes",
-    Usage => "C1 == C2",
-    Inputs => {
-	"C1" => LinearCode,
-        "C2" => LinearCode
-	},
-    Outputs => {
-	"E" => Boolean => {"whether the two codes define the same subspace"}
-    }
-}
+doc ///
+   Key
+       shorten
+       (shorten, LinearCode, List)
+       (shorten, LinearCode, ZZ)
+   Headline
+       shortens a linear code 
+   Usage
+       shorten(LinearCode, List)
+       shorten(LindearCode, ZZ)
+   Inputs
+        C:LinearCode
+	    a codeword of length $n$.
+	L:List
+	    a list of coordinate positions.
+	i:ZZ
+	    an integer representing a single coordinate position.
+   Outputs
+       :LinearCode
+           a shortened linear code. 
+   Description
+       Text  
+       	   A new code from $C$ by selecting only those codewords of $C$ 
+	   having a zeros in each of the coordinate positions in the list $L$ (or the integer $i$) and deleting these 
+	   components. Thus, the resulting code will have length $n - r$, where $r$ is the number
+	   of elements in $L$ (or 1 when the integer $i$ is used). 
 
-document {
-	Key => {firstFunction, (firstFunction,ZZ)},
-	Headline => "a silly first function",
-	Usage => "firstFunction n",
-	Inputs => {
-		"n" => ZZ => {}
-		},
-	Outputs => {
-		String => {}
-		},
-	"This function is provided by the package ", TO CodingTheory, ".",
-	EXAMPLE {
-		"firstFunction 1",
-		"firstFunction 0"
-		}
-	}
-document {
-	Key => secondFunction,
-	Headline => "a silly second function",
-	"This function is provided by the package ", TO CodingTheory, "."
-	}
-document {
-	Key => (secondFunction,ZZ,ZZ),
-	Headline => "a silly second function",
-	Usage => "secondFunction(m,n)",
-	Inputs => {
-	     "m" => {},
-	     "n" => {}
-	     },
-	Outputs => {
-	     {"The sum of ", TT "m", ", and ", TT "n", 
-	     ", and "}
-	},
-	EXAMPLE {
-		"secondFunction(1,3)",
-		"secondFunction(23213123,445326264, MyOption=>213)"
-		}
-	}
-document {
-     Key => MyOption,
-     Headline => "optional argument specifying a level",
-     TT "MyOption", " -- an optional argument used to specify a level",
-     PARA{},
-     "This symbol is provided by the package ", TO CodingTheory, "."
-     }
- 
- 
-document {
-     Key => [secondFunction,MyOption],
-     Headline => "add level to result",
-     Usage => "secondFunction(...,MyOption=>n)",
-     Inputs => {
-	  "n" => ZZ => "the level to use"
-	  },
-     Consequences => {
-	  {"The value ", TT "n", " is added to the result"}
-	  },
-     "Any more description can go ", BOLD "here", ".",
-     EXAMPLE {
-	  "secondFunction(4,6,MyOption=>3)"
-	  },
-     SeeAlso => {
-	  "firstFunction"
-	  }
-     }
-TEST ///
-  assert(firstFunction 1 === "Hello, World!")
-  assert(secondFunction(1,3) === 4)
-  assert(secondFunction(1,3,MyOption=>5) === 9)
+       Example
+           F = GF(2)
+	   codeLen = 10
+	   L = {{0, 1, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 1, 0, 1, 1, 0, 1, 0, 0}, {1, 1, 0, 0, 0, 1, 0, 0, 1, 0}, {1, 0, 0, 1, 0, 0, 0, 1, 1, 1}}
+	   C = linearCode(F,codeLen,L)
+	   shorten(C, {3,6,8,9})
+	   shorten(C, 3)
+	   
 ///
-  
+	   
+--   SeeAlso
+       --codim
+       --assPrimesHeight
+--   Caveat
+--       myDegree is was Problem 2 in the tutorial yesterday.
+
+
+doc ///
+   Key
+       (symbol ==,LinearCode,LinearCode)
+   Headline
+       determines if two linear codes are equal
+   Usage
+       LinearCode == LinearCode
+   Inputs
+        C1:LinearCode
+	    a linear code
+	C2:LinearCode
+	    a linear code
+   Outputs
+       :Boolean
+           whether two codes define the same subspace
+   Description
+       Text  
+       	   Given linear codes C1 and C2, this code determines if they
+	   define the same subspace over the same field or ring.
+       Example
+           F = GF(3,4)
+           codeLen = 7; codeDim = 3;
+           L = apply(toList(1..codeDim),j-> apply(toList(1..codeLen),i-> random(F)))
+           C1 = linearCode(F,L)
+	   C2 = linearCode(matrix L)
+	   C1 == C2
+       
+///
 
        
 end
@@ -753,10 +852,12 @@ end
 -- package.  None of it will be executed when the file is loaded,
 -- because loading stops when the symbol "end" is encountered.
 
+restart
+uninstallPackage "CodingTheory"
 installPackage "CodingTheory"
 installPackage("CodingTheory", RemakeAllDocumentation=>true)
 check CodingTheory
-
+viewHelp CodingTheory
 
 -----------------------------------------------------
 -- Codes from Generator Matrices (as lists):
@@ -785,4 +886,5 @@ peek C
 -- Local Variables:
 -- compile-command: "make -C $M2BUILDDIR/Macaulay2/packages PACKAGES=CodingTheory pre-install"
 -- End:
+
 
