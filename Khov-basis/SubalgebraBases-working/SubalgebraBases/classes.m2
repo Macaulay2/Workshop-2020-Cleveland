@@ -13,10 +13,11 @@ monomialValuation Ring := R -> new MonomialValuation from {
     target => ZZ^(numgens R),
     "evaluate" => (f -> matrix exponents leadTerm f)
     }
-MonomialValuation RingElement := (v, f) -> (
+leadTerm (MonomialValuation, RingElement) := (v, f) -> (
     assert(ring f === source v);
-    matrix exponents leadTerm f
+    leadTerm f
     )
+MonomialValuation RingElement := (v, f) -> matrix exponents leadTerm(v, f)
 
 R=QQ[x,y]
 f = x+y^2
@@ -24,6 +25,8 @@ v = monomialValuation R
 source v
 target v
 v f
+leadTerm(v,f) < y
+
 
 Subring = new Type of HashTable
 subring = method()
