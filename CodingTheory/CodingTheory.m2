@@ -999,7 +999,7 @@ doc ///
    Headline
        a random linear code 
    Usage
-       shorten(GaloisField, ZZ, ZZ)
+       random(GaloisField, ZZ, ZZ)
    Inputs
         F:GaloisField
 	n:ZZ
