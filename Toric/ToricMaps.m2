@@ -19,7 +19,7 @@ newPackage(
   "ToricMaps",
   AuxiliaryFiles => false,
   Version => "0.3",
-  Date => "13 May 2020",
+  Date => "14 May 2020",
   Authors => {
       {
       Name => "Chris Eur", 
@@ -37,6 +37,10 @@ newPackage(
       Name => "Julie Rana",
       Email => "ranaj@lawrence.edu",
       HomePage => "https://sites.google.com/site/jranamath"},  
+      {
+      Name => "Mahrud Sayrafi",
+      Email => "mahrud@umn.edu",
+      HomePage => "https://math.umn.edu/~mahrud/"},
       {
       Name => "Gregory G. Smith", 
       Email => "ggsmith@mast.queensu.ca", 
@@ -1049,7 +1053,6 @@ doc ///
         (isProper, ToricMap)
 /// 
 
--- TODO: add (isSmooth, ToricDivisor) under SeeAlso
 doc ///
     Key
         (pullback, ToricMap, Module)
@@ -1090,7 +1093,7 @@ doc ///
 	    pullback(f, M)
     SeeAlso
         "Total coordinate rings and coherent sheaves"
-	(isSmooth, NormalToricVariety)
+	(isSimplicial, NormalToricVariety)
 	(symbol SPACE, OO, ToricDivisor)
         (pullback, ToricMap, ToricDivisor)
 ///
@@ -1137,6 +1140,9 @@ doc ///
 	   rays AA2
 	   DAA2=toricDivisor({1,0},AA2)
            pullback(f, DAA2)
+       Text
+           See Theorem 4.2.12.b and Proposition 6.2.7 in Cox-Little-Schenck for
+           more information.
     SeeAlso
         (isCartier, ToricDivisor)
         (pullback, ToricMap, Module)
@@ -1518,11 +1524,12 @@ TEST ///
 Y = toricProjectiveSpace 2
 X = toricProjectiveSpace 1
 f = map(Y, X, matrix{{-2},{3}})
-DY=toricDivisor({1,0,1},Y)
+assert isWellDefined f
+DY = toricDivisor({1,0,1},Y)
 pullback(f,DY)
-assert (pullback(f,DY)==toricDivisor({3,7},X))
-assert (pairs pullback(f,OO DY) === pairs OO toricDivisor({3,7},X))
-assert (module pullback(f,OO DY) === module OO toricDivisor({3,7},X))
+assert (pullback(f,DY) == toricDivisor({3,7}, X))
+ -- assert (pullback(f,OO DY) === OO toricDivisor({3,7},X))   -- BUG
+ -- assert (module pullback(f,OO DY) === module OO toricDivisor({3,7},X)) -- BUG
 ///
 
 
@@ -1598,6 +1605,33 @@ R=ring Y;
 assert(ideal f == ideal(R_1-R_2))
 assert(ideal g == ideal(R_0*R_1-R_2^2))
 ///
+
+--Tests for induced maps on divisors
+TEST ///
+X = toricProjectiveSpace 1;
+Y = hirzebruchSurface 2;
+f = map(X,Y,matrix{{1,0}});
+fCD = cartierDivisorGroup f;
+fPic = picardGroup f;
+assert(source fPic == picardGroup target f);
+assert(target fPic == picardGroup source f);
+assert(source fCD == cartierDivisorGroup target f);
+assert(target fCD == cartierDivisorGroup source f);
+assert(fPic * fromCDivToPic(X) == fromCDivToPic(Y) * fCD)
+
+TEST ///
+
+TEST ///
+X = toricProjectiveSpace 2;
+Y = hirzebruchSurface (-1);
+-- Y is a blowup of X
+E = Y_3;
+f = map(X,Y,1);
+fCD = cartierDivisorGroup f;
+assert(fCD*(vector X_0) == vector (Y_2+E))
+assert(fCD*(vector X_1) == vector (Y_0+E))
+TEST ///
+
 
 
 end---------------------------------------------------------------------------     
