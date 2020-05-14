@@ -81,7 +81,11 @@ permuteMatrixColumns = method(TypicalValue => Matrix)
 permuteMatrixColumns(Matrix,List) := (M,P) -> (
     -- given a list P representing a permutation,
     -- permute the columns via P:
+
     return transpose matrix((entries transpose M)_P)
+    
+    
+    
     )
 
 permuteMatrixRows = method(TypicalValue => Matrix)
@@ -120,15 +124,16 @@ generatorToParityCheck(Matrix) := Matrix => M -> (
     GandP := permuteToStandardForm(M);    
     
     -- update G to use this correct version, save P to variable:
-    G = GandP_0;
+    Gred  := GandP_0;
     P := GandP_1;
+    
     
     -- this code assumes that generator matrix
     -- can be put into standard form without any
     -- swapping of columns:
     
     -- take (n-k) columns of standard generating matrix above:
-    redG := G_{0..(rank G.source - rank G -1)};
+    redG := Gred_{0..(rank Gred.source - rank Gred -1)};
     
     -- vertically concatenate an identity matrix of rank (n-k),
     -- then transpose :
@@ -149,10 +154,15 @@ parityCheckToGenerator(Matrix) := Matrix => M -> (
 -- choose a subset of rows that are generators:
 reduceMatrix = method(TypicalValue => Matrix)
 reduceMatrix(Matrix) := Matrix => M -> (
-    -- check if matrix is of full rank:
+    return transpose groebnerBasis transpose M
+    )
+
+reduceRankDeficientMatrix = method(TypicalValue => Matrix)
+reduceRankDeficientMatrix(Matrix) := Matrix => M -> (
+    -- check if matrix is of full rank, otherwise return reduced:
     if (rank M == min(rank M.source,rank M.target)) then {
 	return M
-	} else return transpose groebnerBasis transpose M
+	} else return reduceMatrix(M)
     )
 
 
@@ -180,7 +190,7 @@ rawLinearCode(List) := LinearCode => (inputVec) -> (
 	-- coerce generators and generator matrix into base field, if possible:
 	try {
 	    tempGens := apply(inputVec_2, codeword -> apply(codeword, entry -> sub(entry, inputVec_1)));
-	    newGenMat := reduceMatrix(matrix(tempGens));
+	    newGenMat := reduceRankDeficientMatrix(matrix(tempGens));
 	    newGens := entries newGenMat;
 	    } else {
 	    error "Elements do not live in base field/ring.";
@@ -198,14 +208,14 @@ rawLinearCode(List) := LinearCode => (inputVec) -> (
 	-- coerce parity check rows and parity check matrix into base field, if possible:
 	try {
 	    tempParRow := apply(inputVec_3, codeword -> apply(codeword, entry -> sub(entry, inputVec_1)));
-	    newParMat := reduceMatrix(matrix(tempParRow));
+	    newParMat := reduceRankDeficientMatrix(matrix(tempParRow));
 	    newParRow := entries newParMat;
 	    } else {
 	    error "Elements do not live in base field/ring.";
 	    };
 	print("in parity check case");
     } else {
-	newParMat = generatorToParityCheck(newGenMat);
+	newParMat = generatorToParityCheck(reduceMatrix(newGenMat));
 	newParRow = entries newParMat ;
     };
 
@@ -326,7 +336,7 @@ linearCode(Matrix) := LinearCode => opts -> M -> (
     )
 
 net LinearCode := c -> (
-     "Code with Generator Matrix: " | net transpose generators c.Code
+     "Code with Generator Matrix: " | net c.GeneratorMatrix
      )
 toString LinearCode := c -> toString c.Generators
 
@@ -957,7 +967,6 @@ R=GF 4
 M=R^4
 C = linearCode(R,{{1,0,1,0},{1,0,1,0}})
 peek C
-
 
 
 -- Local Variables:
