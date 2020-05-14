@@ -555,6 +555,19 @@ doc ///
    Additionally, any research that uses SCIP needs a proper citation. See the
    {\bf How to Cite} tab on their home page.  
      
+   Finally, because this package relies on temporary files, Windows users must
+   ensure the directory @TT"/tmp"@ exists as stated in the documentation of
+   @TO temporaryFileName@.
+     
+   {\bf Behavior of package on load.}
+   
+   The value of @TO symbol ScipPrintLevel@ determines the verbositey.
+   It is set to @TT"1"@ when the package is loaded.
+   
+   The functions @TO codim@, and @TO degree@ are overwritten for inputs with
+   type @TO MonomialIdeal@. Specifically, @TO loadSCIPCodimAndDegree@ is run
+   when the package is loaded.
+     
  SeeAlso
   codimensionIP
   degreeIP
@@ -760,7 +773,9 @@ doc ///
  Key
   monomialIdealsWithHilbertFunction
   (monomialIdealsWithHilbertFunction, List, Ring)
-  [monomialIdealsWithHilbertFunction, BoundGenerators]
+  BoundGenerators
+  FirstBetti
+  GradedBettis
  Headline
   find all monomial ideals in a polynomial ring with a particular (partial or complete) Hilbert function
  Usage
@@ -833,8 +848,14 @@ doc ///
    #monomialIdealsWithHilbertFunction({1,3,4,2,1}, R, BoundGenerators => 4)   
    #monomialIdealsWithHilbertFunction({1,3,4,2,1}, R, BoundGenerators => 3)
   Text
-   At this point it is not possible to specify an entire degree sequence for
-   the generators, but stay tuned.
+   To specify the total number of minimal generators, use @TO FirstBetti@.
+   For example, to find all the ideals with exactly $5$ generators:
+  Example
+   #monomialIdealsWithHilbertFunction({1,3,4,2,1}, R, FirstBetti => 5)
+  Text
+   To specify the number of minimal generators in each degree, use @TO GradedBettis@:
+  Example
+   #monomialIdealsWithHilbertFunction({1,3,4,2,1}, R, GradedBettis => {0,0,2,2,1})
  SeeAlso
   hilbertFunct
   isHF
@@ -1033,6 +1054,45 @@ doc ///
   degreeIP
 ///
 
+doc ///
+    Key
+        minimalPrimesIP
+        (minimalPrimesIP, MonomialIdeal)
+        (minimalPrimesIP, MonomialIdeal, ZZ)
+    Headline
+        one line description if different from minimalPrimesIP
+    Usage
+        minimalPrimesIP I
+        minimalPrimesIP (I, iterations)
+    Inputs
+        I:MonomialIdeal
+        iterations:ZZ
+            how many iterations of topMinimalPrimesIP should be called
+    Outputs
+        :List
+            the minimal primes of I
+    Description
+        Text
+            This is basically an alternative version of @TO minimalPrimes@.            
+            
+            This function calls @TO topMinimalPrimesIP@ repeatedly, collecting the primes
+            and passing them in with @TO IgnorePrimes@. This is repeated @TT"iterations"@ many times
+            or until there are no primes remaining. If @TT"iterations"@ is excluded, all minimal primes are returned.
+        Example
+            R = QQ[x,y,z,w,v];
+            I = monomialIdeal(y^12, x*y^3, z*w^3, z*v*y^10, z*x^10, v*z^10, w*v^10, y*v*x*z*w);
+            ScipPrintLevel = 0;
+            minimalPrimesIP(I, 1)
+            minimalPrimesIP I
+            minimalPrimes I
+    Caveat
+        Warning: more than likely, this with take longer than @TO minimalPrimes@ to return the same output.
+        It some situations @TO topMinimalPrimesIP@ is much faster than @TO minimalPrimes@, but not all.
+    SeeAlso
+        minimalPrimes
+        topMinimalPrimesIP
+        IgnorePrimes
+///
 
 
 
@@ -1101,17 +1161,19 @@ L = monomialIdeal(y^12, x*y^3, z*w^3, z*v*y^10, z*x^10, v*z^10, w*v^10, y*v*x*z*
 assert(set(topMinimalPrimesIP(L))===set(select(minimalPrimes(L), p -> 2 == dim p)))
 ///
 
---TEST /// --min primes
---R = QQ[x,y,z,w,v];
---I = monomialIdeal(x*y*w, x*z*v, y*x, y*z*v);
---assert(set(minimalPrimesIP I) === set(minimalPrimes I))
---J = monomialIdeal(x^2*y*w^3*z, x*y*z*w*v, y*x^8*v, y^5*z*v, x^10, z^10, v^10);
---assert(set(minimalPrimesIP J) === set(minimalPrimes J) )
---K = monomialIdeal(x^2*y*w^3*z, x*y*z*w*v, y*x^8*v, y^5*z*v, y*x^10, v*z^10, w*v^10);
---assert(set(minimalPrimesIP K) === set(minimalPrimes K) )
---L = monomialIdeal(y^12, x*y^3, z*w^3, z*v*y^10, z*x^10, v*z^10, w*v^10, y*v*x*z*w);
---assert(set(minimalPrimesIP L) === set(minimalPrimes L) )
---///
+
+
+TEST /// --min primes
+R = QQ[x,y,z,w,v];
+I = monomialIdeal(x*y*w, x*z*v, y*x, y*z*v);
+assert(set(minimalPrimesIP I) === set(minimalPrimes I))
+J = monomialIdeal(x^2*y*w^3*z, x*y*z*w*v, y*x^8*v, y^5*z*v, x^10, z^10, v^10);
+assert(set(minimalPrimesIP J) === set(minimalPrimes J) )
+K = monomialIdeal(x^2*y*w^3*z, x*y*z*w*v, y*x^8*v, y^5*z*v, y*x^10, v*z^10, w*v^10);
+assert(set(minimalPrimesIP K) === set(minimalPrimes K) )
+L = monomialIdeal(y^12, x*y^3, z*w^3, z*v*y^10, z*x^10, v*z^10, w*v^10, y*v*x*z*w);
+assert(set(minimalPrimesIP L) === set(minimalPrimes L) )
+///
 
 end--
 
