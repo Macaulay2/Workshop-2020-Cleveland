@@ -237,7 +237,7 @@ rawLinearCode(List) := LinearCode => (inputVec) -> (
     };
     
     -- coerce code matrix into base field:
-    codeSpace := if (reduceMatrix(generators inputVec_4) == generators inputVec_4) then sub(inputVec_4,inputVec_1) else image groebnerBasis inputVec_4;
+    codeSpace := if (reduceMatrix(generators inputVec_4) == generators inputVec_4) then sub(inputVec_4,inputVec_1) else image groebnerBasis sub(inputVec_4,inputVec_1);
     
     
     return new LinearCode from {
