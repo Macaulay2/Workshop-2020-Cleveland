@@ -60,7 +60,11 @@ newPackage(
       {
       Name => "Thomas Yahl",
       Email => "thomasjyahl@tamu.edu",
-      HomePage => "https://www.math.tamu.edu/~thomasjyahl"}
+      HomePage => "https://www.math.tamu.edu/~thomasjyahl"},
+      {
+      Name => "Maryam Nowroozi",
+      Email => "nowroozm@mcmaster.ca"
+      }
       },
   Headline => "routines for working with toric morphisms",
   PackageExports => {
