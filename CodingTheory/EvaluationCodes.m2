@@ -62,32 +62,43 @@ ToricCode(ZZ,Matrix) := EvaluationCode => opts -> (q,M) -> (
     -- Constructor for a toric code.
     -- inputs: size of a field, an integer matrix 
     -- outputs: the evaluation code defined by evaluating all monomials corresponding to integer 
-    ---         points in the convex hull of the columns of M at the points of the algebraic torus (F*)^n
+    ---         points in the convex hull (lattice polytope) of the columns of M at the points of the algebraic torus (F*)^n
     
-    F:=GF(q, Variable=>z);
-    s:=set apply(q-1,i->z^i);
-    m:=numgens target M;
-    ss:=s;
+    F:=GF(q, Variable=>z);  --- finite field of q elements
+    s:=set apply(q-1,i->z^i); -- set of non-zero elements in the field
+    m:=numgens target M; --- the length of the exponent vectors, i.e. number of variables for monomials, i.e.the dim of the ambient space containing the polytope
+    ss:=s; 
     for i from 1 to m-1 do (
-    	ss=set toList ss/splice**s;
+    	ss=set toList ss/splice**s;  
     );
-    P:=toList ss/splice;
-    R:=F[t_1..t_m];
-    Polytop:=convexHull M;
-    L:=latticePoints Polytop;
-    LL:=transpose matrix apply(L, i-> first entries transpose i);
-    G:=matrix apply(entries LL,i->apply(P,j->product apply(m,k->(j#k)^(i#k))));
+    P:=toList ss/splice;   -- the loop above creates the list of all m-tuples of non-zero elements of F, i.e. the list of points in the algebraic torus (F*)^m
+    Polytop:=convexHull M; -- the convex hull of the columns of M
+    L:=latticePoints Polytop; -- the list of lattice points in Polytop
+    LL:=matrix apply(L, i-> first entries transpose i); --converts the list of lattice points to a matrix of exponents
+    G:=matrix apply(entries LL,i->apply(P,j->product apply(m,k->(j#k)^(i#k)))); -- the matrix of generators; rows form a generating set of codewords
+    
+    R:=F[t_1..t_m]; --- defines the ring containing monomials corresponding to exponents
+    I := ideal apply(m,j->R_j^(q-1)-1); --  the vanishing ideal of (F*)^m
     
     new EvaluationCode from{
 	symbol AmbientSpace => F^(#P),
-	symbol ExponentsMatrix => LL,
-	symbol Code => image G
+	symbol ExponentsMatrix => transpose LL, -- the matrix of exponents, exponent vectors are columns
+	symbol Code => image G, -- the code 
+	symbol Points => P,  --- the points of (F*)^m
+	symbol Dimension => rank image G, -- dimension of the code
+	symbol Length => (q-1)^m,  -- length of the code
+	symbol VanishingIdeal => I --the vanishing ideal of (F*)^m
 	}
 )   
     
 ----------------- Example of ToricCode method ----
 
-M=matrix{{1,2,8},{4,5,6}}
+M=matrix{{1,2,10},{4,5,6}} -- martrix of exponent vectors definind the polytope P, exponents vectors are columns
+T=ToricCode(4,M) --- a toric code over F_4 with polytope P
+T.Code
+T.ExponentsMatrix
+
+M=matrix{{1,2,10,1},{4,5,6,1},{2,1,0,1}}
 T=ToricCode(4,M)
 
 ------------------    
