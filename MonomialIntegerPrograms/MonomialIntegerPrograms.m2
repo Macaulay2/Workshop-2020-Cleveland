@@ -50,12 +50,12 @@ userPrintLevel = MonomialIntegerPrograms#Options#Configuration#"CustomScipPrintL
 ScipPrintLevel = if userPrintLevel == "" then(
     print("Current value of ScipPrintLevel is 1.\nTo set a custom default value, load package using CustomScipPrintLevel option.");
     1) else userPrintLevel;
----------------------
--- codim, dim, degree
----------------------
+------------------------
+-- codim, dim, degree --
+------------------------
 codimensionIP = method();
 codimensionIP (MonomialIdeal) := I -> (
-    if I.cache#?codim then return I.cache#codim;
+    if I.cache#?(symbol codim) then return I.cache#(symbol codim);
     (dir, zimplFile, solFile, errorFile, detailsFile) := tempDirectoryAndFiles("codim");
     zimplFile << codimensionIPFormulation(I) << close;
     run(concatenate("(",ScipPath, 
@@ -80,17 +80,17 @@ degreeIP = method(
     Options => {KnownDim => -1}
     );
 degreeIP (MonomialIdeal) := o -> I -> (
-  if I.cache#?degree then return I.cache#degree;
+    if I.cache#?(symbol degree) then return I.cache#(symbol degree);
+    if (cokernel generators I).cache#?(symbol poincare) then return oldDegree I;
     objValue := if o.KnownDim >= 0 then o.KnownDim else dimensionIP(I);
     (dir, zimplFile, solFile, errorFile, detailsFile) := tempDirectoryAndFiles("deg");        
-    if not isSquareFree I then(
-	J := polarize(I);
-	newDim := numgens ring J - numgens ring I + objValue;
+    if not isSquareFree I then (
+    	J := polarize(I);
+    	newDim := numgens ring J - numgens ring I + objValue;
     	zimplFile << degreeIPFormulation(J, newDim) << close;
-	)
-    else(
+  	) else (
     	zimplFile << degreeIPFormulation(I, objValue) << close;
-	);
+  	);
     run(concatenate("(",ScipPath, 
 	    " -c 'set emphasis counter'",
 	    " -c 'set constraints countsols collect FALSE'",     	    
@@ -112,20 +112,20 @@ oldCodim = lookup(codim, MonomialIdeal);
 oldDegree = lookup(degree, MonomialIdeal);
 loadSCIPCodimAndDegree = method();
 installMethod(loadSCIPCodimAndDegree,() -> (
-  codim MonomialIdeal := {  } >> opts -> m -> ((cacheValue codim) codimensionIP) m;
-  degree MonomialIdeal := m -> ((cacheValue degree) degreeIP) m;
-))
+  codim MonomialIdeal := {} >> opts -> m -> ((cacheValue symbol codim) codimensionIP) m;
+  degree MonomialIdeal := m -> ((cacheValue symbol degree) degreeIP) m;
+));
 loadBuiltinCodimAndDegree = method();
 installMethod(loadBuiltinCodimAndDegree, () -> (
   codim MonomialIdeal := oldCodim;
   degree MonomialIdeal := oldDegree;
-))
+));
 loadSCIPCodimAndDegree();
 
 
------------------------
--- betti tables with HF
------------------------
+--------------------------
+-- betti tables with HF --
+--------------------------
 bettiTablesWithHilbertFunction = method(
     Options => {
 	Count => false,
@@ -184,6 +184,11 @@ monomialIdealsWithHilbertFunction (List, Ring) := o -> (D, R) -> (
     readAllMonomialIdeals(solFile, R)
     )
 
+
+----------------------
+-- topMinimalPrimes --
+----------------------
+
 topMinimalPrimesIP = method(
     Options => {KnownDim => -1, IgnorePrimes => {}}
     );
@@ -218,10 +223,14 @@ topMinimalPrimesIP (MonomialIdeal) := o -> I -> (
 	    detailsFile,
 	    " 2>",
 	    errorFile));
-    printStatement({zimplFile, solFile, errorFile, "Minimal primes of codim "|k, dir});
+    printStatement({zimplFile, solFile, errorFile, "Minimal primes of codim " | (numgens ring I - k), dir});
     L := readAllPrimes(solFile, ring I);
     if squarefree then L else unPolarizeSome(L, R)
 )
+
+---------------------
+-- minimalPrimesIP --
+---------------------
 
 minimalPrimesIP = method();
 minimalPrimesIP (MonomialIdeal, ZZ) := (I, iterations) -> (
@@ -388,13 +397,11 @@ tempDirectoryAndFiles (String) := (bname) -> (
 )
 
 
-firstIndexOf := first@@last@@baseName;    --This is a function that takes z_{i,j,k,...} and maps it to i
-                                          --baseName: turns the variable into an IndexedVariable
-                                          --last: an IndexedVariable is a list where the last element is the index list
-                                          --first: we want to get the first index of each variable
-lastIndexOf := last@@last@@baseName;      --This function finds the lastIndex of a variable
 
 
+-----------------------------------------------------
+-- internal methods related to IgnorePrimes option --
+-----------------------------------------------------
 
 ignorePrimesConstraints = method();
 ignorePrimesConstraints (List, Boolean) := (L, squarefree) -> (
@@ -404,8 +411,8 @@ ignorePrimesConstraints (List, Boolean) := (L, squarefree) -> (
     
     if not squarefree then (
       polarizedVariables := (ring(L#i))_*;
-      varindices := firstIndexOf \ primeVars;
-      primeVars = select(polarizedVariables, v->member(firstIndexOf v, varindices));
+      varindices := first@@last@@baseName \ primeVars;
+      primeVars = select(polarizedVariables, v->member(first@@last@@baseName v, varindices));
     );
     
     concatenate(
@@ -464,7 +471,7 @@ unPolarize (MonomialIdeal, Ring) := (I, R) -> (
 
   polarizedVariables := (ring I)_*;         --This gets all the variable names in I.
   substitutions := polarizedVariables / (   --We get a list of all the substitutions.
-    v -> v => R_(firstIndexOf v)            --All the substitutions look like z_{i, j} => R_i.
+    v -> v => R_(first@@last@@baseName v)            --All the substitutions look like z_{i, j} => R_i.
                                             --first@@indices would not work because z_{i,j} is not the ith variable in the ring containing I
   );
   monomialIdeal substitute(I, substitutions)              --Finally, we apply all these substitutions to I.
@@ -474,9 +481,9 @@ unPolarize (MonomialIdeal, Ring) := (I, R) -> (
 unPolarizeSome = method();
 unPolarizeSome (List, Ring) := (L, R) -> (
   --This applies unPolarize to the ideals in L where all the last indices are 0.
-  for I in L list (                                     --loop through the list
-    if not all(I_*, zero@@lastIndexOf) then continue;   --If one of the last indices is zero, we skip this and go to the next ideal and add nothing.
-    monomialIdeal unPolarize(I, R)                                    --Otherwise, we unPolarize the ideal and add it to the list
+  for I in L list (                                               --loop through the list
+    if not all(I_*, zero@@last@@last@@baseName) then continue;    --If one of the last indices is zero, we skip this and go to the next ideal and add nothing.
+    unPolarize(I, R)                                --Otherwise, we unPolarize the ideal and add it to the list
   )
 )
 
@@ -946,31 +953,90 @@ doc ///
   MonomialIntegerPrograms
 ///
 
+
+doc ///
+ Key
+  loadBuiltinCodimAndDegree
+ Headline
+  change codim and degree to use the default, built-in methods.
+ Usage
+  loadBuiltinCodimAndDegree()
+ Description
+  Text
+   When the package gets loaded, codim and degree are replaced with
+   {\tt codimensionIP} and {\tt degreeIP} respectively for a {\tt MonomialIdeal}.
+   {\tt loadBuiltinCodimAndDegree} reloads the built-in methods.
+  Example
+   R = QQ[a,b,c];
+   ScipPrintLevel = 1;
+   codim(monomialIdeal(a^2, b*a, c*b))
+   degree(monomialIdeal(a^2, b*a, c*b))
+   loadBuiltinCodimAndDegree();
+   codim(monomialIdeal(a^2, b*a, c*b))
+   degree(monomialIdeal(a^2, b*a, c*b))
+ SeeAlso
+  loadSCIPCodimAndDegree
+  codimensionIP
+  degreeIP
+///
+doc ///
+ Key
+  loadSCIPCodimAndDegree
+ Headline
+  change codim and degree to use the default, built-in methods.
+ Usage
+  loadBuiltinCodimAndDegree()
+ Description
+  Text
+   When the package gets loaded, codim and degree are replaced with
+   {\tt codimensionIP} and {\tt degreeIP} respectively for a {\tt MonomialIdeal}.
+   {\tt loadSCIPCodimAndDegree} can be used to reload the the SCIP methods in the
+   event that @TO loadBuiltinCodimAndDegree@ was called.
+  Example
+   R = QQ[a,b,c];
+   ScipPrintLevel = 1;
+   loadBuiltinCodimAndDegree();
+   codim(monomialIdeal(a^2, b*a, c*b))
+   degree(monomialIdeal(a^2, b*a, c*b))
+   loadSCIPCodimAndDegree();
+   codim(monomialIdeal(a^2, b*a, c*b))
+   degree(monomialIdeal(a^2, b*a, c*b))
+ SeeAlso
+  loadBuiltinCodimAndDegree
+  codimensionIP
+  degreeIP
+///
+
+
+
+
 -----------
 -- tests --
 -----------
 
 TEST /// --dim and codim
+loadBuiltinCodimAndDegree();
 R = QQ[x_1..x_10];
 I = monomialIdeal(x_1*x_4*x_7^3,x_1^2*x_8^3,x_1*x_2*x_8^2*x_9,x_1*x_4^2*x_9^2,x_1*x_7^2*x_9^2);
-assert(codimensionIP(I) == codim I)
-assert(dimensionIP(I) == dim I)
+assert(codimensionIP monomialIdeal(I_*) == codim monomialIdeal(I_*))
+assert(dimensionIP monomialIdeal(I_*) == dim monomialIdeal(I_*))
 J = monomialIdeal(x_3^2*x_5*x_6*x_8,x_4^4*x_9,x_7^2*x_8^2*x_9,x_4*x_5*x_8*x_9^2,x_2^2*x_4*x_10^2);
-assert(codimensionIP(J) == codim J)
-assert(dimensionIP(J) == dim J)
+assert(codimensionIP monomialIdeal(J_*) == codim monomialIdeal(J_*))
+assert(dimensionIP monomialIdeal(J_*) == dim monomialIdeal(J_*))
 K = monomialIdeal(x_4^5,x_2*x_3*x_5^2*x_7,x_2*x_5*x_7^3,x_2*x_3^2*x_7*x_8,x_1^4*x_9,x_4*x_6*x_8*x_9^2,x_1*x_4^3*x_10,x_1^2*x_5*x_6*x_10,x_3^3*x_7*x_10,x_1^2*x_7*x_9*x_10,x_1*x_5*x_8*x_10^2,x_2*x_7*x_8*x_10^2,x_3^2*x_10^3,x_3*x_9*x_10^3);
-assert(codimensionIP(K) == codim K)
-assert(dimensionIP(K) == dim K)
+assert(codimensionIP monomialIdeal(K_*) == codim monomialIdeal(K_*))
+assert(dimensionIP monomialIdeal(K_*) == dim monomialIdeal(K_*))
 ///
 
 TEST /// --degree 
+loadBuiltinCodimAndDegree();
 R = QQ[x_1..x_10];
 I = monomialIdeal(x_1*x_4*x_7^3,x_1^2*x_8^3,x_1*x_2*x_8^2*x_9,x_1*x_4^2*x_9^2,x_1*x_7^2*x_9^2);
-assert(degreeIP(I) == degree I)
+assert(degreeIP monomialIdeal(I_*) == degree monomialIdeal(I_*))
 J = monomialIdeal(x_3^2*x_5*x_6*x_8,x_4^4*x_9,x_7^2*x_8^2*x_9,x_4*x_5*x_8*x_9^2,x_2^2*x_4*x_10^2);
-assert(degreeIP(J) == degree J)
+assert(degreeIP monomialIdeal(J_*) == degree monomialIdeal(J_*))
 K = monomialIdeal(x_4^5,x_2*x_3*x_5^2*x_7,x_2*x_5*x_7^3,x_2*x_3^2*x_7*x_8,x_1^4*x_9,x_4*x_6*x_8*x_9^2,x_1*x_4^3*x_10,x_1^2*x_5*x_6*x_10,x_3^3*x_7*x_10,x_1^2*x_7*x_9*x_10,x_1*x_5*x_8*x_10^2,x_2*x_7*x_8*x_10^2,x_3^2*x_10^3,x_3*x_9*x_10^3);
-assert(degreeIP K == degree K)
+assert(degreeIP monomialIdeal(K_*) == degree monomialIdeal(K_*))
 ///
 
 TEST /// --hilbert
