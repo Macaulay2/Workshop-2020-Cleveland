@@ -24,7 +24,9 @@ export {
   -- Options
   "DualVariable",
   --Types and keys
-  "ConormalRing","CNRing","PrimalRing","DualRing","PrimalCoordinates","DualCoordinates"
+  "ConormalRing","CNRing","PrimalRing","DualRing","PrimalCoordinates","DualCoordinates",
+  --More Keys
+  "LagrangeVariable","PrimalIdeal","JacobianConstraint","AmbientRing","LagrangeCoordinates","PrimalWitnessSystem"
 }
 
 ConormalRing = new Type of HashTable;
@@ -103,9 +105,148 @@ assert(multiDegreeEDDegree(J) == 13)
 
 
 
+--Code for Lagrange multipliers
 
 
+LagrangeRing = new Type of HashTable;
+LagrangeVarietyWitness = new Type of MutableHashTable;
 
+newRingFromSymbol = (n,s,kk)->(
+    kk[s_0..s_(n - 1)]
+    )
+
+makeLagrangeRing = method(Options => {DualVariable => null,LagrangeVariable => null});
+-- Creates a LagrangeRing from a primal ring R
+makeLagrangeRing (ZZ,Ring) := LagrangeRing => opts -> (c,R) -> (
+  if not member(degreeLength R, {1,2}) then error "expected degree length 1 or 2";
+  u := if opts.DualVariable === null then symbol u else opts.DualVariable;
+  dualR := newRingFromSymbol(#gens R,u, (coefficientRing R));
+  lambda := if opts.LagrangeVariable === null then symbol lambda else opts.LagrangeVariable;
+  lagrangeR := newRingFromSymbol(c,lambda, (coefficientRing R));
+  new LagrangeRing from {
+    AmbientRing => R ** dualR**lagrangeR,
+    LagrangeRing => lagrangeR,
+    PrimalRing => R,
+    DualRing => dualR,
+    PrimalCoordinates => gens R,
+    DualCoordinates => gens dualR,
+    LagrangeCoordinates => gens lagrangeR
+  }
+)
+makeLagrangeRing Ideal := LagrangeRing => opts -> I -> makeLagrangeRing(codim I,ring I)
+
+isCofficientRingInexact = R -> (
+ -- This checks if kk is a ComplexField or RealField 
+    kk:=ultimate(coefficientRing,R);
+    member(kk,{ComplexField,RealField}) 
+    )
+
+findRegularSequence = I -> (
+    c:=codim I;
+    WI := sub(ideal(),ring I);
+    b:=0;
+    scan(numgens I, i -> (
+	J := ideal  WI + ideal I_i;
+	if codim J == b + 1 then (WI=J; b=b+1)
+	)
+    );
+    WI)
+
+witnessLagrangeVariety = method(Options => options makeLagrangeRing);
+-- Computes a witness system for a lagrange variety 
+witnessLagrangeVariety (Ideal,Ideal, LagrangeRing) := LagrangeVarietyWitness => opts -> (WI,I,AR) -> (
+  if not ring I === AR.PrimalRing then error "expected ideal in primal ring";  
+  c := #AR.LagrangeCoordinates;
+  if numgens I =!= c then error "expected numgens WI to equal the number of lagrange coordinates";  
+  jacWI := sub(diff(matrix{AR.PrimalCoordinates}, transpose gens WI), AR.AmbientRing);
+  jacBar := sub(matrix{AR.DualCoordinates}, AR.AmbientRing) || sub(jacWI,AR.AmbientRing);
+  J0 := sub(WI,AR.AmbientRing);
+  J1 := sub(I,AR.AmbientRing);
+  J2 := ideal (sub(matrix{{1}|AR.LagrangeCoordinates},AR.AmbientRing)*jacBar);
+  new LagrangeVarietyWitness from {
+      LagrangeRing =>AR,
+      PrimalWitnessSystem =>J0,
+      PrimalIdeal=>J1,
+      JacobianConstraint=>J2}
+)
+witnessLagrangeVariety (Ideal,Ideal) := LagrangeVarietyWitness => opts -> (WI,I) -> (
+    AR:=makeLagrangeRing(numgens WI,ring I,opts);
+    witnessLagrangeVariety(WI,I,AR,opts)
+    )
+witnessLagrangeVariety (Ideal) := LagrangeVarietyWitness => opts -> I -> (
+  R:= ring I; 
+  if isCofficientRingInexact(R) then error"Not implemented for RR or CC coefficient ring. Try makeLagrangeRing(ZZ,Ring).";
+  WI := findRegularSequence I;--This may not be generically reduced.
+  makeLagrangeRing(numgens WI,R,opts)
+  )
+-*
+-- Degree of LagrangeVarietyWitness
+degree (List,LagrangeVarietyWitness) := (v,LVW) -> (
+    if degreeLength LVW#PrimalRing==2 then(
+	u:=gens coefficientRing (LVW#PrimalRing);
+	if #v=!=#u then error "data does not agree with number of parameters. ";
+    	subData :=apply(u,v,(i,j)->i=>j);
+	return degree sub(LVW#PrimalIdeal+LVW#JacobianConstraint,subData)
+	)
+    else error"degreeLength is not 2."
+    )
+degree (Nothing,LagrangeVarietyWitness) := LVW -> (
+    if degreeLength LVW#PrimalRing==2 then(
+	u:=gens coefficientRing (LVW#PrimalRing);
+	kk:=coefficientRing first u;
+    	v :=apply(u,i->i=>random kk);
+	return degree(v,LVW)
+	)
+    else error"degreeLength is not 2."
+    )
+degree (LagrangeVarietyWitness) := LVW -> degree(LVW#PrimalIdeal+LVW#JacobianConstraint)
+
+
+--witnessCriticalVariety and Optimization degree
+witnessCriticalIdeal := (List,List,LagrangeVarietyWitness) := (v,g,LVW) -> (
+    if degreeLength LVW#PrimalRing==2 then(
+	u:=gens coefficientRing (LVW#PrimalRing);
+	if #v=!=#u then error "data does not agree with number of parameters. ";
+    	AR:=LVW.LagrangeRing;
+	y := drop(drop(gens AR,#gens AR.PrimalRing),# gens AR.LagrangeRing);
+	subDualVars := apply(y,g,(i,j)->i=>j);
+	gradSub := map(AR,ring LVW#PrimalRing,subDualVars);--back in primalRing.	
+	subData :=apply(u,v,(i,j)->i=>j);
+	--Issue with denominators.
+	return sub(gradSub(LVW#PrimalIdeal+LVW#JacobianConstraint),subData)
+	)
+    else error"degreeLength is not 2."
+    )
+
+witnessCriticalIdeal := (List,RingElement,LagrangeVarietyWitness) := (v,psi,LVW) -> (
+    g := apply(gens ring psi,x->diff(x,psi));
+    witnessCriticalIdeal(v,g,LVW);
+    )
+
+optimizationDegree(v,g,LVW)-> (
+    CI:=witnessCriticalIdeal(v,g,LVW);
+    CI = CI+LVW#PrimalIdeal;
+    scan(g,i->if ring g ==frac ring CI then CI:=saturate(CI,denominator g))
+    )
+
+
+TEST ///
+--lagrangeRing(2,QQ[x1,x2])
+
+R=QQ[x,y]
+I=ideal(x^2+y^2-1)
+LR = makeLagrangeRing(1,ring I)
+LVW = witnessLagrangeVariety(I,I,LR)
+peek LVW
+
+R=QQ[x,y]
+I=ideal(x^2+y^2-1)
+LVW = witnessLagrangeVariety(I,I)
+peek LVW
+degree (LVW)
+
+///
+*-
 
 -- Documentation below
 
@@ -254,9 +395,9 @@ end
 
 
 --Example
-path={"/Users/jo/Documents/GoodGit/M2020/Workshop-2020-Cleveland/alg-stat/AlgebraicOptimization"}|path  
 restart
-loadPackage "AlgebraicOptimization"
+path={"/Users/jo/Documents/GoodGit/M2020/Workshop-2020-Cleveland/alg-stat/AlgebraicOptimization"}|path  
+loadPackage("AlgebraicOptimization",Reload=>true)
 M= QQ[x_1..x_2]
 I = ideal(4*(x_1^4+x_2^4),4*x_1^3,4*x_2^3)
 dualI = projectiveDual(I)
