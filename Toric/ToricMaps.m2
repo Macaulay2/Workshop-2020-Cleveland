@@ -72,6 +72,10 @@ newPackage(
       Name => "Jay Yang",
       Email => "jkyang@umn.edu",
       HomePage => "https://www-users.math.umn.edu/~jkyang/"}
+      {
+      Name => "Rachel Webb",
+      Email => "webbra@umich.edu",
+      HomePage => "sites.google.com/view/rachel-webb"}
   },
   Headline => "routines for working with toric morphisms",
   PackageExports => {
@@ -482,6 +486,8 @@ ideal ToricMap := Ideal => f -> (
 	    ));    
     	   mon1-mon2
     ));
+    ---bug in the following line: this breaks when Igens is empty
+    ---append 0*R_0 to Igens
     I:=ideal Igens;
     scan(gens R, x->(I=saturate(I,x)));
     I
@@ -1164,6 +1170,46 @@ doc ///
         (isCartier, ToricDivisor)
         (pullback, ToricMap, Module)
         (pullback, ToricMap, CoherentSheaf)
+///
+
+doc ///
+    Key
+    	(ideal, ToricMap)
+    Headline
+    	make the ideal of the (closure of the) image of the map
+    Usage
+    	ideal f
+    Inputs
+    	f : ToricMap
+    Outputs
+    	: Ideal
+	    in the homogeneous coordinate ring (Cox ring) of the target
+    Description
+    	Text
+	    The image of f is a closed subvariety of the target of f. This
+	    closed subvariety uniquely determines a radical ideal of the 
+	    Cox ring of the target of f (see "The homogeneous coordinate
+	    ring of a toric variety, revised version" by Cox, Prop 2.4).
+	    This function returns that ideal.
+	Text
+	    The closure of the image of a distinguished affine open set
+	    in P^2 is all of P^2.
+	Example
+	    AA2 = affineSpace 2;
+	    PP2 = toricProjectiveSpace 2;
+	    f = map(PP2, AA2, 1)
+	    R = ring PP2;
+	    ideal f
+	Text
+	    The rational normal curve of degree 2 is the image of a map
+	    from P^1 to P^2.
+	Example
+	    PP1 = toricProjectiveSpace 1;
+	    PP2 = toricProjectiveSpace 2;
+	    f = map(PP2, PP1, matrix{{2},{1}})
+	    R = ring PP2;
+	    ideal f
+	    
 ///
 
 doc ///
@@ -1860,6 +1906,16 @@ assert(ideal f == ideal(R_1-R_2))
 assert(ideal g == ideal(R_0*R_1-R_2^2))
 ///
 
+--Open embedding of an affine chart
+--Currently this test fails
+TEST ///
+AA2 = affineSpace 2;
+PP2 = toricProjectiveSpace 2;
+f = map(PP2, AA2, 1)
+R = ring PP2;
+ideal f
+///
+
 --Tests for induced maps on divisors
 TEST ///
 X = toricProjectiveSpace 1;
@@ -1899,7 +1955,7 @@ restart
 installPackage "ToricMaps"
 check ToricMaps
 
-viewHelp ToricMaps
+help ToricMaps
 
 ------------------------------------------------------------------------------
 needsPackage "ToricMaps";
