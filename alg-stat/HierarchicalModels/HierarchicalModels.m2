@@ -68,12 +68,9 @@ hierToric42(List, List) := Ideal => opts -> (r, Facets) -> (
 hierDim = method();
 hierDim(List,List) := (r,Facets) ->(
     n := #r;
-
     -- maybe cache faces
     Sim := delete({}, Facets / subsets // flatten // unique);
-
     dimI := Sim / (i -> i / (j -> r_j)) / product // sum;
-
     dimI
     )
 
@@ -81,36 +78,78 @@ hierDim(List,List) := (r,Facets) ->(
 -- Produces a ring map from the Probability ring to the Parameter Ring. The kernel of this map is the toric ideal of the hierarchical model
 hierMap = method(Options => {});
 hierMap(List, List) := List => opts -> (r, Facets) -> (
-
     R := probRing(r);
     S := parameterRing(r, Facets);
-
     y := (first baseName S_0);
-
     listOfImages := {};
-
     for var in gens(R) do (
-
 	ind := last baseName var;
-
 	facetIndices := for k from 0 to (#Facets-1) list prepend(k, ind_(Facets_k));
-
 	listOfImages = append(listOfImages, product apply(facetIndices, k -> (y_k)_S ));
-
 	);
-
-
     listOfImages
     );
 
-TEST
-r={2,3,2}
-Facets={{0,1},{1,2}}
-probRing(r)
-parameterRing(r,Facets)
-hierMatrix(r,Facets)
-hierToric42(r,Facets)
-hierDim(r,Facets)
+-----------------------------------------------------------------------------------
+----- TESTS -----
+-----------------------------------------------------------------------------------
+
+
+-- This tests the method probRing by ensuring it has the right number of variables
+
+TEST ///
+r = {2,2,3}
+R = probRing(r)
+assert(dim R == product(r))
+///
+
+-- This tests the method parameterRing by ensuring it has the right number of variables
+
+TEST ///
+r = {2,2,3}
+Delta = {{0,1}, {1,2}}
+S = parameterRing(r, Delta)
+assert(dim R == 17)
+///
+
+-- This tests the method hierMatrix function using a matrix that was computed by hand
+
+TEST ///
+r = {2,2,2}
+Delta = {{0,1},{1,2}}
+assert(hierMatrix(r, Delta) == matrix {{1, 1, 0, 0, 0, 0, 0, 0}, {0, 0, 1, 1, 0, 0, 0, 0}, {0, 0, 0, 0, 1, 1, 0, 0}, 
+ {0, 0, 0, 0, 0, 0, 1, 1}, {1, 0, 0, 0, 1, 0, 0, 0}, {0, 1, 0, 0, 0, 1, 0, 0}, 
+ {0, 0, 1, 0, 0, 0, 1, 0}, {0, 0, 0, 1, 0, 0, 0, 1}})
+///
+
+-- This tests the method hierToric42 by explicitly constructing the parameterization of the ideal
+-- and computing the kernel of this parameterization. 
+
+TEST ///
+r = {2,2,3}
+Delta = {{0,1}, {1,2}}
+S = probRing(r)
+R = parameterRing(r, Delta)
+phi = map(R, S,  
+    {y_{0, 1, 1}*y_{1, 1, 1}, 
+     y_{0, 1, 1}*y_{1, 1, 2}, 
+     y_{0, 1, 2}*y_{1, 2, 1}, 
+     y_{0, 1, 2}*y_{1, 2, 2}, 
+     y_{0, 2, 1}*y_{1, 1, 1}, 
+     y_{0, 2, 1}*y_{1, 1, 2}, 
+     y_{0, 2, 2}*y_{1, 2, 1},
+     y_{0, 2, 2}*y_{1, 2, 2}})
+assert(hierToric42(r, Delta) == ker phi)
+///
+
+-- This tests hierDim using a known example
+
+TEST ///
+r = {2,2,3}
+Delta = {{0,1}, {1,2}}
+assert(hierDim(r, Delta) == 17)
+///
+
 
 
 end
