@@ -343,9 +343,51 @@ makeB'InputFile(storeBM2Files,
     B'Polynomials=>(WCI_0+WCI_2)_*   
     )
 runBertini(storeBM2Files)
-#importSolutionsFile(storeBM2Files)
+assert(4==#importSolutionsFile(storeBM2Files))
 ///
 
+--code for witness points.
+needsPackage"NumericalAlgebraicGeometry"
+CriticalPointSet = new Type of WitnessSet;---Change this to a ring. 
+new IsolatedCriticalPointSet of CriticalPointSet from LagrangeVarietyWitness := (CPS,LVW)->(
+
+
+     LVW#LagrangeRing)
+R=QQ[a,b][x,y]
+I=ideal(x^2+y^2-1)
+WI=I
+LVW = witnessLagrangeVariety(WI,I)
+
+
+ring LVW
+assert (2 ==degree witnessCriticalIdeal({7,99},{x-a,y-b},LVW))--ED degree of circle
+
+R=QQ[a,b][x,y]
+I=ideal(x^2+3*y^2-1)
+WI=I
+LVW = witnessLagrangeVariety(WI,I)
+ring LVW
+assert (4 ==degree witnessCriticalIdeal({7,99},{x-a,y-b},LVW))--ED degree of ellipse
+
+
+isolatedCriticalPointSet = method(Options => options makeLagrangeRing);
+witnessCriticalIdeal (List,List,LagrangeVarietyWitness) := (Ideal,Ideal,Ideal) => opts  -> (v,g,LVW) ->(
+--Output: substitution of (WI,I,LVW) 
+    if degreeLength  LVW#LagrangeRing#PrimalRing==2 then(
+	u:=gens coefficientRing (LVW);
+	if #v=!=#u then error "data does not agree with number of parameters. ";
+    	LR:=LVW#LagrangeRing;
+	y := drop(drop(gens ring LVW,#gens LR#PrimalRing),-# gens LR#LagrangeRing);
+	subDualVars := apply(y,g,(i,j)->i=>sub(j,ring LVW));
+	subVars:=subDualVars;
+	scan(gens ring LVW,X->if not member(X,y) then subVars=append(subVars,X=>X) );
+	gradSub := map(ring LVW,ring LVW,subVars);	
+	subData :=apply(u,v,(i,j)->i=>j);
+	--TODO: Issue with denominators.
+	return (sub(gradSub(LVW#PrimalWitnessSystem),subData),sub(gradSub(LVW#PrimalIdeal),subData),sub(gradSub(LVW#JacobianConstraint),subData))
+	)
+    else error"degreeLength is not 2."
+    )
 
 
 
@@ -635,3 +677,5 @@ I = ideal(4*(x_1^4+x_2^4),4*x_1^3,4*x_2^3)
 dualI = projectiveDual(I)
 radical I==I
 S = ring dualI
+
+
