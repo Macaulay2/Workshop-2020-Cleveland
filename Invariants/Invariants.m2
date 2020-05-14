@@ -29,6 +29,8 @@ export {
     "weights",
     "abelianInvariants",
     "hilbertIdeal",
+    "generatorsFromHilbertIdeal",
+    "linearInvariants",
     "isInvariant"
     }
 --exportMutable {}
@@ -256,6 +258,41 @@ hilbertIdeal (Ideal, Matrix, PolynomialRing) := Ideal => (A, M, R) -> (
     return trim(sub(II, join(apply(n, i -> x_(i+1) => R_i),apply(n, i -> y_(i+1) => 0), apply(l, i -> z_(i+1) => 0))))
 )
 
+generatorsFromHilbertIdeal = method(TypicalValue => List)
+generatorsFromHilbertIdeal (Ideal, Matrix, Ideal) := List => (A, M, I) -> (
+    R := ring(I);
+    if (numColumns M =!= numRows M) or (numRows M =!= #(gens R)) then print "Matrix size does not match polynomial ring";
+    x := local x, z := local z;
+    n := numColumns M;
+    K := coefficientRing(ring(I));
+    l := #(gens ring M);
+    X := K[x_1..x_n];
+    
+    S := K[x_1..x_n, z_1..z_l];
+    M' := sub(M, apply(l, i -> (ring M)_i => z_(i+1)));
+    A' := sub(A, apply(l, i -> (ring M)_i => z_(i+1)));
+    
+    degreeList := sort toList set apply(flatten entries gens I, i -> first degree i);
+    
+    generatorList := {};
+    scan (degreeList, d -> (
+	L := sub(basis(d,X), S);
+    	r := numColumns L;
+    	NFDL := apply(r, i -> (sub(L_(0,i), apply(n, j -> x_(j+1) => sum(n, k -> M'_(k,j) * x_(k+1)))) - L_(0,i)) % A');
+    	monomialsNFDL := flatten entries monomials(matrix{NFDL});
+    	m := #monomialsNFDL;
+    	B := matrix(apply(m, i -> apply(r, j -> coefficient(monomialsNFDL#i, NFDL#j))));
+    	KB := gens kernel B;
+	generatorList = join(generatorList, flatten entries (L * KB));
+    ));
+    return generatorList
+)
+
+linearInvariants = method(TypicalValue => List)
+linearInvariants (Ideal, Matrix, PolynomialRing) := List => (A,M,R) -> (
+    return generatorsFromHilbertIdeal(A,M,hilbertIdeal(A,M,R))
+)
+
 isInvariant = method(TypicalValue => Boolean)
 isInvariant (Ideal, Matrix, Thing) := Boolean => (A, M, f) -> (
     R := ring(f);
@@ -443,4 +480,3 @@ check Invariants
 -- Local Variables:
 -- compile-command: "make -C $M2BUILDDIR/Macaulay2/packages PACKAGES=Invariants pre-install"
 -- End:
-
