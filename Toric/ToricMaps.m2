@@ -34,6 +34,10 @@ newPackage(
       Email => "loper012@umn.edu",
       HomePage => "https://www.math.umn.edu/~loper012"},  
       {
+      Name => "Diane Maclagan",
+      Email => "D.Maclagan@warwick.ac.uk",
+      HomePage => "http://homepages.warwick.ac.uk/staff/D.Maclagan/"},
+      {
       Name => "Julie Rana",
       Email => "ranaj@lawrence.edu",
       HomePage => "https://sites.google.com/site/jranamath"},  
