@@ -1745,7 +1745,8 @@ PP2 = toricProjectiveSpace 2
 S = ring PP2
 f = map(PP2, X, matrix{{1,0},{0,-1}})
 assert(isWellDefined f)
-assert(matrix inducedMap f == matrix{{1,R_0,R_1}})
+matrix inducedMap f
+assert(matrix inducedMap f == matrix{{R_1*R_2, R_0*R_1, R_3}})
 D = toricDivisor({1,2,3}, PP2)
 assert(pullback(f, OO D) === OO pullback(f, D))
 ///
