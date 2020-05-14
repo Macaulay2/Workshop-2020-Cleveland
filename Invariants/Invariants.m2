@@ -518,6 +518,29 @@ document {
 		},
 }
 
+document {
+	Key => {torusAction, (torusAction,Matrix)},
+	Headline => "Torus action from a weight matrix",
+	Usage => "torusAction(M)",
+	Inputs => {
+	    	"M" => Matrix => {"of weights of a torus action"},
+		},
+	Outputs => {
+		GroupAction => {"the (diagonal) torus action with given weight matrix"}
+		},
+	"This function is provided by the package ", TO Invariants,". ",
+	    PARA {
+	"The following example defines an action of a 
+	two-dimensional torus on a four-dimensional vector space
+	with a basis of weight vectors whose weights are
+	the columns of the input matrix."
+	},
+    	
+	EXAMPLE {
+		"T = torusAction matrix{{0,1,-1,1},{1,0,-1,-1}}"
+		},
+}
+
 TEST ///
 R1 = QQ[x_1..x_4]
 T1 = torusAction matrix {{-3, -1, 1, 2}}
