@@ -8,14 +8,48 @@ newPackage(
 	     },
     	HomePage => "http://www.math.uiuc.edu/~doe/",
     	Headline => "an example Macaulay2 package",
-	AuxiliaryFiles => false -- set to true if package comes with auxiliary files
+		DebuggingMode => true, 
+		Reload=>true,
+		AuxiliaryFiles => false -- set to true if package comes with auxiliary files
     	)
 
 -- Any symbols or functions that the user is to have access to
 -- must be placed in one of the following two lists
-export {"randomPoint", "fieldElements", "firstFunction", "secondFunction", "MyOption", "GenericProjection", "NumPointsToCheck"}
+export {
+	"genericProjection", 
+	"projectionToHypersurface",
+	"randomCoordinateChange", 
+	"randomPoint", 
+	"fieldElements", 
+	"pointToIdeal",
+	"idealToPoint",
+	"firstFunction", 
+	"secondFunction", 
+	"MyOption", 
+	"GenericProjection", 
+	"NumPointsToCheck", 
+	"Codimension",
+	"MaxChange",
+	"BruteForce"}
 exportMutable {}
 
+pointToIdeal = method(Options =>{Homogeneous => false});
+
+pointToIdeal(Ring, List) := opts -> (R1, L1) -> (
+	if (opts.Homogeneous == false) then (
+		genList := gens R1;
+		return ideal( apply(#genList, i->genList#i - (sub(L1#i, R1)) ));
+	);
+);
+
+idealToPoint = method(Options => {Homogeneous => false});
+
+idealToPoint(Ideal) := opts -> (I1) -> (
+	if (opts.Homogeneous == false) then (
+		genList := gens ring I1;
+		return apply(genList, s -> s%I1);
+	)
+);
 
 --this function was taken directly from an internal function in RationalPoints.m2 by Nathaniel Stapleton
 fieldElements = (k) -> (
@@ -64,21 +98,133 @@ createRandomPoints=(I1)->(
     return toList apply(noVar, i ->random(K) )
 ) 
 
-randomRatPt = I -> (
+randomCoordinateChange = method(Options=>{Homogeneous=>true, MaxChange => infinity});
+
+randomCoordinateChange(Ring) := opts -> (R1) -> (
+	local phi;
+	if not class R1 === PolynomialRing then error "randomCoordinateChange: expected an ideal in a polynomial ring";
+	myMon := monoid R1;
+	S1 := (coefficientRing R1)(myMon);
+	if (opts.MaxChange == infinity) then (
+		if (opts.Homogeneous) then (
+			phi = map(R1, S1, apply(gens R1, t -> random(1, R1)));
+		)
+		else(
+			phi = map(R1, S1, apply(gens R1, t -> random(1, R1)+random(0, R1)));
+		);
+	)
+	else( --if we only want to really change some (MaxChange) of the variables, and randomize the others
+		genList := random gens R1;
+		if (opts.Homogeneous) then (
+			genList = random apply(#(genList), t -> (if (t < opts.MaxChange) then random(1, R1) else genList#t) );
+		)
+		else(
+			genList = random apply(#(genList), t -> (if (t < opts.MaxChange) then random(1, R1)+random(0, R1) else random(0, R1)	) );
+		);
+		phi = map(R1, S1, genList);
+	);
+	return phi;
+);
+
+genericProjection = method(Options =>{Homogeneous => true, MaxChange => infinity});
+
+genericProjection(Ideal) := opts -> (I1) -> (
+	R1 := ring I1;
+	psi := randomCoordinateChange(R1, opts);
+	S1 := source psi;
+	I2 := psi^-1(I1);
+	kk:=coefficientRing R1;
+	local Re;
+	local Rs;
+	Re=kk(monoid[apply(dim S1,i->S1_i),MonomialOrder => Eliminate 1]);
+	rs:=(entries selectInSubring(1,vars Re))_0;
+	Rs=kk(monoid[rs]);
+	f:=ideal substitute(selectInSubring(1, generators gb substitute(I2,Re)),Rs);
+	phi := map(S1, Rs);
+	return(psi*phi, f);
+);
+
+genericProjection(ZZ, Ideal) := opts -> (n1, I1) -> (
+	R1 := ring I1;
+	psi := randomCoordinateChange(R1, opts);
+	S1 := source psi;
+	I2 := psi^-1(I1);
+	kk:=coefficientRing R1;
+	local Re;
+	local Rs;
+	Re=kk(monoid[apply(dim S1,i->S1_i),MonomialOrder => Eliminate n1]);
+	rs:=(entries selectInSubring(1,vars Re))_0;
+	Rs=kk(monoid[rs]);
+	f:=ideal substitute(selectInSubring(1, generators gb substitute(I2,Re)),Rs);
+	phi := map(S1, Rs);
+	return(psi*phi, f);
+);
+
+projectionToHypersurface = method(Options =>{Homogeneous => true, MaxChange => infinity, Codimension => null});
+
+projectionToHypersurface(Ideal) := opts -> (I1) -> (
+	local c1;
+	if (opts.Codimension === null) then (
+		c1 = codim I1;
+	) else (c1 = opts.Codimension);
+	local curMap;
+	return genericProjection(c1-1, I1, Homogeneous => opts.Homogeneous, MaxChange => opts.MaxChange);
+);
+
+-*
+projectionToHypersurface(Ideal) := opts -> (I1) -> (
+	local c1;
+	if (opts.Codimension === null) then (
+		c1 = codim I1;
+	) else (c1 = opts.Codimension);
+	local curMap;
+	tempList := genericProjection(I1, Homogeneous => opts.Homogeneous, MaxChange => opts.MaxChange);
+	assert(target (tempList#0) === ring I1);
+	if (c1 == 2) then (
+		return tempList; --if we are done, stop
+	);
+	assert(source (tempList#0) === ring (tempList#1));
+	--otherwise recurse
+	tempList2 := projectionToHypersurface(tempList#1, Homogeneous => opts.Homogeneous, MaxChange => opts.MaxChange, Codimension=>c1-1);
+	assert(target(tempList2#0) === ring (tempList#1));
+	return ((tempList#0)*(tempList2#0), tempList2#1);
+);
+*-
+
+randomRatPt = method(Options=>{Homogeneous=>true, Codimension => null});
+
+randomRatPt(Ideal) := opts -> (I1) -> (
+	local c1;
+	if (opts.Codimension === null) then (
+		c1 = codim I1;
+	) else (c1 = opts.Codimension);
+
+);
+
+randomRatPtInhomog := (I1) -> (
+
+);
+
+randomRatPt(Ideal, Boolean) := opts -> (I,b) -> ( --this is temporary, it's just a copy of randomKRationalPoint from M2, so we can explore it
 	R:=ring I;
-	if char R == 0 then error "expected a finite ground field";
-	if not class R === PolynomialRing then error "expected an ideal in a polynomial ring";
-	if not isHomogeneous I then error "expected a homogenous ideal";
+	if char R == 0 then error "randomRatPt: expected a finite ground field";
+	if not class R === PolynomialRing then error "randomRatPt: expected an ideal in a polynomial ring";
+	if (not opts.Homogeneous) then return randomRatPtInhomog(I);
+	if not isHomogeneous I then error "randomRatPt: expected a homogeneous ideal with Homogeneous => true";
+
 	n:=dim I;
 	if n<=1 then error "expected a positive dimensional scheme";
 	c:=codim I;
 	Rs:=R;
 	Re:=R;
 	f:=I;
+	phi := null;
 	if not c==1 then (
 		-- projection onto a hypersurface
 		parametersystem:=ideal apply(n,i->R_(i+c));
-		if not dim(I+parametersystem)== 0 then return print "make coordinate change";
+		while not dim(I+parametersystem)== 0 do (
+			phi = randomCoordinateChange(I, Homogeneous=>opts.Homogeneous);
+		);
 		kk:=coefficientRing R;
 		Re=kk(monoid[apply(dim R,i->R_i),MonomialOrder => Eliminate (c-1)]);
 		rs:=(entries selectInSubring(1,vars Re))_0;
@@ -95,11 +241,44 @@ randomRatPt = I -> (
 		if ok then (pt=saturate(substitute(pts1_0,R)+I);ok==(degree pt==1 and dim pt==0));
 		not ok) do (trial=trial+1);
 	pt
-)
+);
+
+
 
 
 --Function to check if random point is in the variety
-randomPoint = method( Options=>{});
+randomPoint = method( Options=>{Strategy=>BruteForce, Homogeneous => true, MaxChange => 0, Codimension => null});
+
+randomPointViaGenericProjection = method(Options => {Strategy=>null, Homogeneous => true, MaxChange => 0, Codimension => null});
+randomPointViaGenericProjection(ZZ, Ideal) := opts -> (n1, I1) -> (
+	flag := true;
+	local phi;
+	local I0;
+	local J0;
+	local pt;
+	local ptList;
+	local j;
+	while(flag) do (
+		(phi, I0) = projectionToHypersurface(I1, Homogeneous=>opts.Homogeneous, MaxChange => opts.MaxChange, Codimension => null);
+		if (codim I0 == 1) then (
+			pt = randomPoint(n1, I0, Strategy=>BruteForce); --find a point on the generic projection
+			if (not pt === false) then (
+				J0 = I1 + sub(ideal apply(dim source phi, i -> (first entries matrix phi)#i - pt#i), target phi); --lift the point to the original locus
+				if dim(J0) == 0 then( --hopefully the preimage is made of points
+					ptList = decompose(J0);
+					j = 0;
+					while (j < #ptList) do (
+						if (degree (ptList#j) == 1) then (
+							return apply(gens ring I1, x -> x%(ptList#j));
+						);
+						j = j+1;
+					)
+				)
+			);  
+		);
+		if (debugLevel >0) then print "That didn't work, trying again...";
+	);
+);
 
 randomPoint(Ideal) :=opts->(I1)->(
 	genList:= first entries gens I1;
@@ -115,14 +294,19 @@ randomPoint(Ideal) :=opts->(I1)->(
 )
  
 randomPoint(ZZ,Ideal):=opts->(n1,I1)->(
-    j:=0;
-    local point;
-    while( j<n1) do (
-		point=randomPoint(I1);
-	    if not (point===false ) then return point; 
-	  	j=j+1;
+	if (opts.Strategy == BruteForce) then (
+    	j:=0;
+    	local point;
+		while( j<n1) do (
+			point=randomPoint(I1);
+			if not (point===false ) then return point; 
+			j=j+1;
+		);
+		return false;
+	)
+	else if (opts.Strategy == GenericProjection) then (
+		return randomPointViaGenericProjection(n1, I1, opts)
 	);
-    return false;
 );
   
    
