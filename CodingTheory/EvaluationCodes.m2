@@ -1,5 +1,7 @@
 needsPackage "SRdeformations"
 needsPackage "Polyhedra"
+needsPackage  "Graphs"
+needsPackage  "NAGtypes"
 
 EvaluationCode = new Type of HashTable
 
@@ -91,60 +93,104 @@ M=matrix{{1,2,8},{4,5,6}}
 T=ToricCode(4,M)
 
 ------------------    
+
+
+
+---------------------------Reed–Muller-type code of degree d over a graph using the our function of evaluationCode
+
+
+evCodeGraph  = method(Options => {});
+
+evCodeGraph (Ring,Matrix,List) := evCodeGraph  => opts -> (F,M,S) -> (
+    -- input: a field, Incidence matrix of the graph , a set of polynomials.
+    -- outputs: a monomial code over the list of points.
+    
+    -- We should check if all the points lives in the same F-vector space.
+    -- Should we check if all the monomials lives in the same ring?
+    
+    P := entries transpose M;
+ 
+    R := ring S#0;
+
+    I := intersect apply(P,i->ideal apply(numgens R-1,j->R_j-i#j)); -- Vanishing ideal of the set of points.
+
+    S = toList apply(apply(S,i->promote(i,R/I)),j->lift(j,R))-set{0*S#0}; -- Drop the elements in S that was already in I.
+
+    G := matrix apply(P,i->flatten entries sub(matrix(R,{S}),matrix(F,{i}))) -- Evaluate the elements in S over the elements on P.
+    
+    
+    new EvaluationCode from{
+	symbol AmbientSpace => F^(#P),
+	symbol Points => P,
+	symbol VanishingIdeal => I,
+	symbol PolynomialSet => S,
+	symbol Code => image G
+	}
+    )
+
+----------------------This an example of Reed-Muller-type code of degree 1--------------------
+G = graph({1,2,3,4}, {{1,2},{2,3},{3,4},{4,3}})
+B=incidenceMatrix G
+S=ZZ/2[t0,t1,t2,t3]
+evCodeGraph(ZZ/2,B,flatten entries basis(1,S))
+------------------------------------------------------------------
+
     
     
        
-------------This an example of an evaluation code----------------------------------------
 
-needsPackage "NormalToricVarieties"
-needsPackage "NAGtypes"
+-------Reed–Muller-type code of degree d over a graph using the function evaluate from package "NAGtypes"---------------
 
-d=2
-q=2
-S=3
-F_2=GF 2-- Galois fiel
----------------------Defining  points in the Fano plane-----
-A=affineSpace(S, CoefficientRing => F_2, Variable => y)
-aff=rays A
-matrix aff
---------------Points in Fano plane------------------
-LL=apply(apply(toList (set(0..q-1))^**(S)-(set{0})^**(3),toList),x -> (matrix aff)*vector deepSplice x)
-X=apply(LL,x->flatten entries x)
-------------------Defining the ring and the vector space of  homogeneous polynomials with degree 2----------------------------------
-R=F_2[vars(0..2)]
-LE=apply(apply(toList (set(0..q-1))^**(hilbertFunction(2,R))-(set{0})^**(hilbertFunction(2,R)),toList),x -> basis(2,R)*vector deepSplice x)
-Poly=apply(LE,x-> entries x)
------------------------for each point p_k in Fano plane exists a polynomial f_i s.t f_i(p_k)not=0 ---------------------------------------
-f={b^2,c^2,a^2,a^2,b^2,a^2,a^2}
-----------------------------Using the package  numerial algebraic geometry----------------------------------
-Polynum=apply(0..length LE-1, x->polySystem{LE#x#0})
-PolyDem=apply(f,x->polySystem{x})
-XX=apply(X,x->point{x})
----------------------Reed-Muller-type code of order 2------------------------------------------
-C_d=apply(Polynum,y->apply(0..length f -1,x->(flatten entries evaluate(y,XX#x))#0/(flatten entries evaluate(PolyDem#x,XX#x))#0))
-   
-    
-------------------------------------------------------------------------------------------------------------------------------
 
+codeGraph  = method(TypicalValue => Module);
+
+
+codeGraph (Matrix,ZZ,ZZ) := (M,d,p)->(
+K:=ZZ/p;
+tMatInc:=transpose M;
+X:=entries tMatInc;
+R:=K[t_(0)..t_(numgens target M-1)];
+SetPoly:=flatten entries basis(d,R);
+SetPolySys:=apply(0..length SetPoly-1, x->polySystem{SetPoly#x});
+XX:=apply(X,x->point{x});
+C:=apply(apply(SetPolySys,y->apply(0..length XX -1,x->(flatten entries evaluate(y,XX#x))#0)),toList);
+G:=transpose matrix{C};
+image G
+
+new EvaluationCode from{
+	symbol AmbientSpace => K^(#X),
+	symbol IncidenceMatrix => M,
+	symbol Code => image G
+	}
+
+
+
+)
+
+
+
+----------------------This an example of Reed-Muller-type code of degree 4--------------------
+G = graph({1,2,3,4}, {{1,2},{2,3},{3,4},{4,3}})
+B=incidenceMatrix G
+codeGraph(B,4,2)
+------------------------------------------------------------------
 
 
 ----------The incidence matrix code of a Graph G-------
-needsPackage  "Graphs"
-needsPackage  "NAGtypes"
-
+-- Recall that types of codes are Reed-Muller-type code of degree d=1 over a graph. 
 --This a procedure for obtain an incidence matrix code of a Graph G
 -- be sure that p is a prime number 
 
 
---1-- this procedure computes the generatrix matrix of the code---
+--this procedure computes the generatrix matrix of the code---
 
 
-codeGrahpIncM = method(TypicalValue => Module);
+codeGraphInc = method(TypicalValue => Module);
 -- M is the incidence matrix of the Graph G
 --inputs: The incidence matrix of a Graph G, a prime number  
--- outputs: f-module
+-- outputs: K-module
 
-codeGrahpIncM (Matrix,ZZ):= (M,p)->(
+codeGraphInc (Matrix,ZZ):= (M,p)->(
 K:=ZZ/p;
 tInc:=transpose M;
 X:=entries tInc;
@@ -171,7 +217,7 @@ image G
 --Petersen graph
 G=graph({1,2,3,4,5,6,7,8,9,10}, {{1,2},{1,3},{1,4},{1,5},{1,6},{2,3},{2,4},{2,5},{2,7},{3,4},{3,5},{3,6},{3,8},{4,5},{4,9},{5,10},{6,7},{6,10},{7,8},{8,9},{9,10}})
 M=incidenceMatrix G
-codeGrahpIncM(M,3)
+codeGraphIncM(M,3)
 ---------------------------------------------
 
 
