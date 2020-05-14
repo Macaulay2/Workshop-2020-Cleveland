@@ -132,7 +132,7 @@ C_d=apply(Polynum,y->apply(0..length f -1,x->(flatten entries evaluate(y,XX#x))#
 needsPackage  "Graphs"
 needsPackage  "NAGtypes"
 
---These are two procedure for obtain an incidence matrix code of a Graph G
+--This a procedure for obtain an incidence matrix code of a Graph G
 -- be sure that p is a prime number 
 
 
@@ -175,21 +175,7 @@ codeGrahpIncM(M,3)
 ---------------------------------------------
 
 
---2-- this an alternative process. It computes all the points in the code. It computes all the linear forms. 
 
-codeGrahpInc = method(TypicalValue => Sequence);
-codeGrahpInc (Graph,ZZ):= (G,p)->(
-tInc:=transpose incidenceMatrix G;
-X:=entries tInc;
-R:=ZZ/p[t_(0)..t_(lentgh vertexSet G-1)];
-Poly1:=apply(apply(toList (set(0..p-1))^**(hilbertFunction(1,R))-(set{0})^**(hilbertFunction(1,R)),toList),x -> basis(1,R)*vector deepSplice x); 
-Polynums1:=apply(0..length Poly1-1, x->polySystem{Poly1#x#0});
-XX:=apply(X,x->point{x});
-apply(Polynums1,y->apply(0..length XX -1,x->(flatten entries evaluate(y,XX#x))#0))
-)
-
-
--------------------------------------------------------------------------
 
 
 cartesianCode = method(Options => {})
