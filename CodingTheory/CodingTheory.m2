@@ -660,6 +660,20 @@ document {
     PARA{},
     "This symbol is provided by the package ", TO CodingTheory, "."
     }
+
+document {
+    Key => {symbol ==, (symbol ==,LinearCode,LinearCode)},
+    Headline => "equality for linear codes",
+    Usage => "C1 == C2",
+    Inputs => {
+	"C1" => LinearCode,
+        "C2" => LinearCode
+	},
+    Outputs => {
+	"E" => Boolean => {"whether the two codes define the same subspace"}
+    }
+}
+
 document {
 	Key => {firstFunction, (firstFunction,ZZ)},
 	Headline => "a silly first function",
@@ -705,6 +719,8 @@ document {
      PARA{},
      "This symbol is provided by the package ", TO CodingTheory, "."
      }
+ 
+ 
 document {
      Key => [secondFunction,MyOption],
      Headline => "add level to result",
