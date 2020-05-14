@@ -2,11 +2,11 @@
 newPackage(
 	"RandomRationalPoints",
     	Version => "1.0", 
-    	Date => "April 28, 2005",
+    	Date => "May 13, 2020",
     	Authors => {
-	     {Name => "Jane Doe", Email => "doe@math.uiuc.edu"}
+	     {Name => "Sankhaneel Bisui", Email => "sbisu@tulane.edu", HomePage=>"https://sites.google.com/view/sankhaneelbisui/home"},
+	     {Name=> "Thai Nguyen", Email =>"tnguyen11@tulane.edu", HomePage=>"https://sites.google.com/view/thainguyenmath "}
 	     },
-    	HomePage => "http://www.math.uiuc.edu/~doe/",
     	Headline => "an example Macaulay2 package",
 		DebuggingMode => true, 
 		Reload=>true,
@@ -20,6 +20,7 @@ export {
 	"projectionToHypersurface",
 	"randomCoordinateChange", 
 	"randomPoint", 
+	"createRandomPoints",
 	"fieldElements", 
 	"pointToIdeal",
 	"idealToPoint",
@@ -84,19 +85,16 @@ fieldElements = (k) -> (
      return els;
      );
 
-firstFunction = method(TypicalValue => String)
-firstFunction ZZ := String => n -> (
-	if n == 1
-	then "Hello, World!"
-	else "D'oh!"	
-	)
+
     
   --Function to create a random point 
-createRandomPoints=(I1)->(
+createRandomPoints= method(TypicalValue => List, Options => {})
+createRandomPoints(Ideal):=List => opts->(I1) ->(
     noVar := #generators ring I1;
     K:=coefficientRing ring (I1);
-    return toList apply(noVar, i ->random(K) )
-) 
+    L:=toList apply(noVar, i ->random(K));
+    return L )
+
 
 randomCoordinateChange = method(Options=>{Homogeneous=>true, MaxChange => infinity});
 
@@ -280,7 +278,7 @@ randomPointViaGenericProjection(ZZ, Ideal) := opts -> (n1, I1) -> (
 	);
 );
 
-randomPoint(Ideal) :=opts->(I1)->(
+randomPoint(Ideal) := List => opts->(I1)->(
 	genList:= first entries gens I1;
 	K:=coefficientRing ring I1;point:=createRandomPoints(I1);
 	eval:= map(K,ring I1,point);
@@ -290,7 +288,7 @@ randomPoint(Ideal) :=opts->(I1)->(
         if not (tempEval==0) then return false;
 		j=j+1
 	);
-    if (tempEval ==0) then return point else return false;
+        if (tempEval ==0) then return point else return "Failed to  find";
 )
  
 randomPoint(ZZ,Ideal):=opts->(n1,I1)->(
@@ -311,102 +309,120 @@ randomPoint(ZZ,Ideal):=opts->(n1,I1)->(
   
    
 -- A function with an optional argument
-secondFunction = method(
-     TypicalValue => ZZ,
-     Options => {MyOption => 0}
-     )
-secondFunction(ZZ,ZZ) := o -> (m,n) -> (
-     if not instance(o.MyOption,ZZ)
-     then error "The optional MyOption argument must be an integer";
-     m + n + o.MyOption
-     )
-secondFunction(ZZ,List) := o -> (m,n) -> (
-     if not instance(o.MyOption,ZZ)
-     then error "The optional MyOption argument must be an integer";
-     m + #n + o.MyOption
-     )
+
 
 beginDocumentation()
-
 document { 
 	Key => RandomRationalPoints,
-	Headline => "an example Macaulay2 package",
-	EM "RandomRationalPoints", " is an example package which can be used as a template for user packages."
-	}
-document {
-	Key => {firstFunction, (firstFunction,ZZ)},
-	Headline => "a silly first function",
-	Usage => "firstFunction n",
-	Inputs => {
-		"n" => ZZ => {}
-		},
-	Outputs => {
-		String => {}
-		},
-	"This function is provided by the package ", TO RandomRationalPoints, ".",
-	EXAMPLE {
-		"firstFunction 1",
-		"firstFunction 0"
-		}
-	}
-document {
-	Key => secondFunction,
-	Headline => "a silly second function",
-	"This function is provided by the package ", TO RandomRationalPoints, "."
-	}
-document {
-	Key => (secondFunction,ZZ,ZZ),
-	Headline => "a silly second function",
-	Usage => "secondFunction(m,n)",
-	Inputs => {
-	     "m" => {},
-	     "n" => {}
-	     },
-	Outputs => {
-	     {"The sum of ", TT "m", ", and ", TT "n", 
-	     ", and "}
-	},
-	EXAMPLE {
-		"secondFunction(1,3)",
-		"secondFunction(23213123,445326264, MyOption=>213)"
-		}
-	}
-document {
-     Key => MyOption,
-     Headline => "optional argument specifying a level",
-     TT "MyOption", " -- an optional argument used to specify a level",
-     PARA{},
-     "This symbol is provided by the package ", TO RandomRationalPoints, "."
-     }
-document {
-     Key => [secondFunction,MyOption],
-     Headline => "add level to result",
-     Usage => "secondFunction(...,MyOption=>n)",
-     Inputs => {
-	  "n" => ZZ => "the level to use"
-	  },
-     Consequences => {
-	  {"The value ", TT "n", " is added to the result"}
-	  },
-     "Any more description can go ", BOLD "here", ".",
-     EXAMPLE {
-	  "secondFunction(4,6,MyOption=>3)"
-	  },
-     SeeAlso => {
-	  "firstFunction"
-	  }
-     }
-TEST ///
-  assert(firstFunction 1 === "Hello, World!")
-  assert(secondFunction(1,3) === 4)
-  assert(secondFunction(1,3,MyOption=>5) === 9)
+	Headline => "Give a random point in a variety",
+	EM "RandomRationalPoints", "Give a random point inside a affine space that lies inside a variety ."
+}
+    
+
+doc ///
+    Key
+        createRandomPoints
+	(createRandomPoints, Ideal)
+    Headline
+        Finds a Random Point
+    Usage
+        createRandomPoints(I)
+    Inputs
+        I:Ideal 
+	    ideal inside a polynomial Ring
+    Outputs
+        :List
+         --   Point in affine space.
+    Description
+       Text
+         Give a random point in the ambient space of the V(I).  
+       	 
+	   
+       Example
+         R=ZZ/5[x,y,z]
+	 I = ideal(x,y^2)
+	 createRandomPoints(I)
+       -- Text
+       	  -- The function is implemented by composing the isomorphism $K_2\cong K_1$, the natural embedding $K_1\to L_1$ and the isomorphism $L_1\cong L_2$.
+	   
+   --SeeAlso
+    
+   -- Caveat
+       -- The function depends on the implementation of map(GaloisField,GaloisField).
+    
 ///
-  
- --Need help to write this part 
+doc ///
+    Key
+        randomPoint
+	(randomPoint, Ideal)
+    Headline
+        a function to check if  a random point is  in a variety
+    Usage
+        randomPoint(I)
+    Inputs
+	I:Ideal
+	   Ideal inside a polynomial ring
+    --Outputs
+       -- :List
+	   -- ($T$ ,$f$) where $T = R  \otimes_L K$ is the base-changed ring, $f:R\to T$ is the ring map $R\otimes_L L\to R\otimes_L K$ induced from $L\to K$.
+   -- Description
+        --Text  
+       	   -- Some words to say things. You can even use LaTeX $R = k[x,y,z]$. 
+--
+      --  Example
+           -- R=ZZ/5[t_1..t_3];
+           -- I = ideal(t_1,t_2+t_3^2);
+	  -- randomPoint(I)
+        --Text
+       	   -- More words, but don't forget to indent. 
+	   
+    --SeeAlso
+    
+    --Caveat
+    
+///
+
+
+doc ///
+    Key
+        randomPoint
+	(randomPoint,ZZ,Ideal)
+    Headline
+        a function to find  a random point  in a variety upto a given number of trials
+    Usage
+        randomPoint(n,I)
+    Inputs
+	I:Ideal
+	   Ideal inside a polynomial ring
+        n: ZZ
+            An integer 
+    Outputs
+        :List
+	-- False   -- ($T$ ,$f$) where $T = R  \otimes_L K$ is the base-changed ring, $f:R\to T$ is the ring map $R\otimes_L L\to R\otimes_L K$ induced from $L\to K$.
+    Description
+        Text  
+       	   Gives a point in a variety V(I), after n trials. 
+--
+        Example
+           R=ZZ/5[t_1..t_3];
+           I = ideal(t_1,t_2+t_3);
+	   randomPoint(1000,I)
+	   
+        --Text
+       	   -- More words, but don't forget to indent. 
+	   
+        
+          
+    
+    
+    
+///
+ ----- TESTS -----   
+
 TEST///
  R=QQ[t_1..t_3];
  I = ideal(t_1,t_2+t_3);
- assert(#(createRandomPoints(I))==3)
+ assert(#(createRandomPoints(I))===3)
 ///
    
 TEST///
