@@ -523,7 +523,7 @@ doc ///
       Text 
          These groups are all one-dimensional for projective space.  
       Example 
-         X = projectiveSpace 4
+         X = toricProjectiveSpace 4
 	 rank chowGroup(1,X) 
 	 rank chowGroup(2,X) 
 	 rank chowGroup(3,X)
@@ -555,7 +555,7 @@ doc ///
          This method returns the cached basis for the Chow group of dimension-i cycles on X.  
 	 If called without i, it returns a list so that chowGroupBasis(X)#i = chowGroupBasis(X,i).
        Example
-         X = projectiveSpace 4 
+         X = toricProjectiveSpace 4 
          chowGroupBasis(X)
        Example
          X=normalToricVariety({{1,0,0},{0,1,0},{0,0,1},{-1,-1,-1},{1,1,1}, {-1,0,0}}, {{0,2,4},{0,1,4},{1,2,4},{1,2,5},{2,3,5},{1,3,5},{0,1,3},{0,2,3}})
@@ -583,7 +583,7 @@ doc ///
          The columns should be given in a basis for the i-th Chow group
          recorded in X.cache.ChowGroupBas#i and accessed via chowGroupBasis(X).
        Example
-         X = projectiveSpace 4
+         X = toricProjectiveSpace 4
          effCone(2,X)
        Example 
          X = hirzebruchSurface 1;
@@ -650,7 +650,7 @@ doc ///
 	 The columns are given in a basis for the i-th Chow group
          recorded in X.cache.ChowGroupBas#i and accessed via chowGroupBasis(X).
        Example
-         X=projectiveSpace 4
+         X=toricProjectiveSpace 4
          nefCone(2,X)
        Example 
          X=hirzebruchSurface 1;
@@ -777,7 +777,7 @@ doc ///
          This assumes that X is smooth.  Eventually it will be
          implemented for simplicial toric varieties.
        Example
-         X = projectiveSpace 2
+         X = toricProjectiveSpace 2
          R = iintersectionRing X
          for i from 0 to 2 do <<hilbertFunction(i,R)<<endl
        Text 
@@ -792,7 +792,7 @@ doc ///
          Note that a coefficient ring can also be specified by inputting a parameter S. 
 	 By default, the coefficient ring is the rational numbers.
        Example
-         X = projectiveSpace 2
+         X = toricProjectiveSpace 2
 	 R = iintersectionRing(X,ZZ)
 	 for i from 0 to 2 do <<hilbertFunction(i,R)<<endl
        Text
@@ -951,7 +951,7 @@ doc ///
 
 --Replace X by something more interesting
 TEST ///
-X=projectiveSpace 4
+X=toricProjectiveSpace 4
 assert(rank chowGroup(3,X) == rank chowGroup(1,X))
 assert(rank chowGroup(3,X) == rank picardGroup X)
 R = iintersectionRing X
@@ -1073,7 +1073,7 @@ Y=normalToricVariety(raysY,Sigma2);
 --      Outputs => {},
 
 --      EXAMPLE lines ///
--- 	  PP1 = projectiveSpace 1;
+-- 	  PP1 = toricProjectiveSpace 1;
 -- 	  ///,
 --      SeeAlso => {normalToricVariety, weightedProjectiveSpace,
 -- 	  (ring,NormalToricVariety), (ideal,NormalToricVariety)}
@@ -1109,7 +1109,7 @@ installPackage "NormalToricVarieties"
 installPackage "Chow"
 check "Chow"
 
-X = projectiveSpace 4
+X = toricProjectiveSpace 4
 D = X_1
 u = vector({1,2,3,4})
 Z = tDivisor(u,X)
@@ -1131,7 +1131,7 @@ cs = for r in rays X list (
     )
 sum apply(cs,0..(#(rays X) - 1), (c,i) -> c*X_i)
 
--- X = projectiveSpace 4
+-- X = toricProjectiveSpace 4
 D = X_0 + 2*X_1 - 7*X_3
 assert(isCartier(D))
 orbits(X)
@@ -1155,7 +1155,7 @@ installPackage("Chow",RemakeAllDocumentation=>false,RunExamples=>false,RerunExam
 installPackage "Chow"
 check "Chow"
 
-X = projectiveSpace 4
+X = toricProjectiveSpace 4
 E = X_2
 D = X_2 + 3*X_3 - 7*X_4
 E * D
