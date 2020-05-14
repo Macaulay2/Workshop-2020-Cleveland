@@ -31,7 +31,10 @@ doc ///
 	    of the polynomials in the system
     Description
     	Text
-	    The Bezout bound is 1024.
+	    This system was solved in May 2020, using @TO solveSystem@ in Macaulay2 v1.15
+	     with an Intel(R) Core(TM) i5-4258U CPU at 2.40GHz
+	   
+	    There were 8 solutions found in 10.1037 seconds (with a Bezout bound of 1024).
 	    
 	    Reference: 
 	    P. Van Hentenryck, D. McAllester and D. Kapur:
@@ -43,6 +46,5 @@ doc ///
 	    See also: http://homepages.math.uic.edu/~jan/Demo/boon.html	    
 	Example
 	    F = boon(QQ)
-	    time sols = solveSystem F;
-	    #sols
+
     ///
