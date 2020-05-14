@@ -23,9 +23,10 @@ det A
 restart
 loadPackage("NumericalCertification",FileName=>"../../NumericalCertification.m2",Reload=>true)
 
-R = QQ[x,y];
+S = QQ[i]/(i^2+1);
+R = S[x,y];
 F = polySystem {x-y+x^2,x-y+y^2};
-p = point matrix{{0/1,0/1}};
+p = point matrix{{i/10^12,(1+i)/10^12}};
 
 V = computeOrthoBasis(F,p)
 A = Aoperator(F,p,V)
@@ -39,9 +40,10 @@ certifyRootMultiplicityBound(F,p)
 restart
 loadPackage("NumericalCertification",FileName=>"../../NumericalCertification.m2",Reload=>true)
 
-R = QQ[x,y,z];
+S = QQ[i]/(i^2+1)
+R = S[x,y,z];
 F = polySystem {(y-z)^3-(x+y+z)*((x-z)-(x-z)^3/6),(x-z)^3-(y-z)*((x+y+z)-(x+y+z)^3/6),-(x+y+z)^3+(x-z)*((y-z)-(y-z)^3/6)};
-p = point matrix{{0/1,0/1,0/1}};
+p = point matrix{{1/10^15,(1+i)/10^15,(2+3*i)/10^15}};
 
 V = computeOrthoBasis(F,p)
 A = Aoperator(F,p,V)
@@ -59,7 +61,10 @@ certifyRootMultiplicityBound(F,p)
 
 
 -- mth191, kappa : 2, multiplicity : 4
-R = QQ[x,y,z]
+restart
+loadPackage("NumericalCertification",FileName=>"../../NumericalCertification.m2",Reload=>true)
+
+R = CC[x,y,z]
 F = polySystem {x^3+(y+1)^2+z^2-1, x^2+(y+1)^3+z^2-1, x^2+(y+1)^2+z^3-1}
 P = last solveSystem F;
 
