@@ -41,6 +41,19 @@ Change branch
 Start a new branch
 
 
+--Notes from Mike Dan
+R=QQ[x_1 .. x_19]
+baseName x_4
+peek baseName x_4
+(peek baseName x_4)#1
+GF(4)--what is this.
+smithNormalForm
+LLL 
+benchMark 
+random(ZZ^4, ZZ^10, Height=>100)
+benchMark ("M=matrix  entries M; image M== target M")
+
+
 
 
 
