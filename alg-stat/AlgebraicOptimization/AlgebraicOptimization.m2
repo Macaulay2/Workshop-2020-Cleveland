@@ -1,17 +1,57 @@
 newPackage(
   "AlgebraicOptimization",
   Version => "0.1", 
-  Date => "1",
-  Authors => {{Name => "a", 
-  Email => "b", 
-  HomePage => "c"}},
-  Headline => "a",
-  DebuggingMode => false
+  Date => "May 12, 2020",
+  Authors => {
+    {Name => "Marc Harkonen", 
+    Email => "harkonen@gatech.edu", 
+    HomePage => "https://people.math.gatech.edu/~mharkonen3/"},
+    {Name => "Your name here",
+    Email => "Your email here",
+    HomePage => "Your page here"}
+  },
+  Headline => "A package for algebraic optimization",
+  DebuggingMode => true,
+  PackageImports => {"Elimination"}
 )
 
-export {}
+export {
+  -- Methods
+  "projectiveDual",
+  -- Options
+  "DualVariable"
+}
 
 -- Code here
+
+projectiveDual = method(Options => {DualVariable => null}); -- Maybe options are needed?
+-- (Alg. 5.1 in SIAM book)
+-- Takes homogeneous ideal as input, returns ideal of dual of the projective variety
+projectiveDual Ideal := Ideal => opts -> I -> (
+  if not isHomogeneous I then error("Ideal has to be homogeneous");
+  c := codim I;
+  jacI := transpose jacobian I;
+  R := ring I;
+  numVars := #gens R;
+  u := if opts.DualVariable === null then symbol u else opts.DualVariable;
+  dualR := (coefficientRing R)[u_0..u_(numVars-1)];
+  S := R ** dualR;
+  jacBar := sub(vars dualR, S) || sub(jacI, S);
+  J' := sub(I, S) + minors(c+1, jacBar);
+  J := saturate(J', minors(c, sub(jacI,S)));
+  xVars := (gens R) / (i -> sub(i,S));
+  sub(eliminate(xVars, J), dualR)
+)
+
+
+TEST ///
+S = QQ[x_0..x_2]
+I = ideal(x_2^2-x_0^2+x_1^2)
+dualI = projectiveDual(I)
+S = ring dualI
+assert( dualI == ideal(S_0^2 - S_1^2 - S_2^2)) 
+///
+
 
 
 -- Documentation below
@@ -19,49 +59,66 @@ export {}
 beginDocumentation()
 
 -- template for package documentation
---  doc ///
---  Key
---    AlgebraicOptimization
---  Headline
---    TODO
---  Description
---    Text
---      Todo
---    Example
---      todo
---  Caveat
---  SeeAlso
---  ///
+doc ///
+Key
+  AlgebraicOptimization
+Headline
+  Package for algebraic optimization
+Description
+  Text
+    Todo
+  Example
+    todo
+Caveat
+SeeAlso
+///
 
 
 -- template for function documentation
---  doc ///
---  Key
+doc ///
+Key
+  projectiveDual
+  (projectiveDual, Ideal)
+  [projectiveDual, DualVariable]
+Headline
+  Compute projective dual
+Usage
+  projectiveDual(I)
+Inputs
+  I:
+    a homogeneous @TO2{Ideal, "ideal"}@
+Outputs
+  :Ideal
+    the projective dual of {\tt I}
+--Consequences
+--  asd
+Description
+  Text
+    Compute the projective dual of a homogeneous ideal.
+    For example, the snippet below shows that the dual of a circle is a circle.
+
+  Example
+    S = QQ[x_0..x_2]
+    I = ideal(x_2^2-x_0^2+x_1^2)
+    projectiveDual(I)
+
+  Text
+    The option {\tt DualVariable} specifies the basename for the dual variables
+  Example
+    projectiveDual(I,DualVariable => y)
+--  Code
 --    todo
---  Headline
+--  Pre
 --    todo
---  Usage
---    todo
---  Inputs
---    todo
---  Outputs
---    todo
---  Consequences
---    todo
---  Description
---    Text
---      todo
---    Example
---      todo
---    Code
---      todo
---    Pre
---  Caveat
---  SeeAlso
-  ///
+--Caveat
+--  todo
+--SeeAlso
+--  todo
+///
 
   TEST ///
   -- test code and assertions here
   -- may have as many TEST sections as needed
   ///
 
+  

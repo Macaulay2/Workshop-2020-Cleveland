@@ -1,37 +1,28 @@
 restart
 
 --Change your FileName to wherever your copy of the package lives:
-loadPackage("CodingTheory", FileName => "/Users/gwynethwhieldon/M2develop/Workshop-2020-Cleveland/CodingTheory/CodingTheory.m2")
+installPackage("CodingTheory", FileName => "/Users/gwynethwhieldon/M2develop/Workshop-2020-Cleveland/CodingTheory/CodingTheory.m2")
 
-F = GF(2,4)
+-----------------------------------------------------
+-- Codes from Generator Matrices (as lists):
+-----------------------------------------------------
+F = GF(3,4)
 codeLen = 7
 codeDim = 3
 L = apply(toList(1..codeDim),j-> apply(toList(1..codeLen),i-> random(F)))
-
--- Constructor via GF(p,q) (p=2,q=4):
-C1 = linearCode(2,4,codeLen,L)
-
-
--- Sample Code
+C = linearCode(F,L)
+peek C
+-- check that dimension and length are correct:
+dim C
+length C
+-- check that G*H^t = 0:
+C.GeneratorMatrix * (transpose C.ParityCheckMatrix)
+-----------------------------------------------------
+-- Codes from Parity Check Matrices (as a matrix):
+-----------------------------------------------------
 F = GF(2)
-codeLen = 10
-codeDim = 4
-L = apply(toList(1..codeDim),j-> apply(toList(1..codeLen),i-> random(F)))
+L = {{1,0,1,0,0,0,1,1,0,0},{0,1,0,0,0,0,0,1,1,0},{0,0,1,0,1,0,0,0,1,1},{1,0,0,1,0,1,0,0,0,1},{0,1,0,0,1,1,1,0,0,0}}
+C = linearCode(F,L,ParityCheck => true)
+peek C
 
--- Constructor via basefield, dimension of ambient space, list of codewords:
-C2 = linearCode(F,codeLen,L)
-peek C2
-
--- Constructor via submodule:
-C3 = linearCode(C2.Code)
-
-
--- Sample method usages:
-dualCode(C1)
-dualCode(C2)
-dualCode(C3)
-
-alphabet(C1)
-alphabet(C2)
-alphabet(C3)
 
