@@ -152,6 +152,16 @@ setMonomialOrderFlag = (R) -> (
     else if temp === RevLex then (tempflag = 5);
     tempflag)
 
+submatrixBelowDegree = (m,d) -> (
+    want := positions(0..numgens source m - 1,
+    i -> (degrees source m)_i < {d});
+    m_want)
+
+submatrixByDegrees (Matrix,ZZ) := (m,d) -> (
+    want := positions(0..numgens source m - 1,
+    i -> (degrees source m)_i === {d});
+    m_want)
+
 -- END COPY OF ROW REDUCE
 
 -- Reduces the lowest degree list in the pending list.  Adds the results to Pending.  The new lowest degree list in pending is added to the subalgebra basis.  Returns the number of elements added.
@@ -235,112 +245,66 @@ subalgebraBasis Subring := opts -> R -> (
     currDegree := null;     -- d
     nLoops := null;         -- nloops
     nNewGenerators := null; -- numnewsagbi
+    isDone := false;
+    sagbiGB := null;
+    syzygyPairs := null;
+    newElems := null;
+                                           -- maxdeg
+    R.cache.Pending = new MutableList from toList(Limit+1:{}); -- Pending
 
-    maxDegree := Limit;                                            -- maxdeg
-    R.cache.Pending = new MutableList from toList(maxDegree+1:{}); -- Pending
+    -- missing inGmap, newguys, isDone ...
 
-    -- missing inGmap, newguys, ...
+    -- Create an empty matrix of generators.
+    R.cache.SagbiGens = matrix(R.AmbientRing,{{}});
 
+    -- Get the maximum degree of the generators.
+        -- This is used as a stopping condition.
+    maxGensDeg := (max degrees source R.Generators)_0;
 
--- Current edit line
+    -- Only look at generators below degree limit.  Add those generators to the SubalgebraGenerators
+    reducedGens := compress submatrixBelowDegree(R.Generators, Limit+1);
+    insertPending(R, reducedGens, Limit);
 
+    -- Remove elements of coefficient ring
+    R.cache.Pending#0 = {};
 
+    -- Get the lowest degree of the pending list.  Add 1 and initialize to number of loops
+    currDegree = grabLowestDegree(R, Limit) + 1;
+    nLoops = currDegree;
 
+    -- While the number of loops is within the limit and the isDone flag is false, continue to process
+    while nLoops <= Limit and not isDone do (
+        nLoops = nLoops + 1;
 
+        -- Construct a Groebner basis to eliminiate the base elements generators from the SyzygyIdeal.
+        sagbiGB = gb(R.cache.SyzygyIdeal, DegreeLimit=>currDegree);
+        syzygyPairs = R.cache.Substitution(submatrixByDegrees(selectInSubring(1, gens sagbiGB), currDegree));
 
+        if R.cache.Pending#currDegree != {} then (
+            syzygyPairs = syzygyPairs | R.cache.InclusionBase(matrix{R.cache.Pending#currDegree});
+            R.cache.Pending#currDegree = {};
+        );
 
+        newElems = compress R.cache.ProjectionBase(map(R.cache.TensorRing,rawSubduction(rawMonoidNumberOfBlocks raw monoid R.Ambient, raw syzygyPairs, raw R.cache.InclusionBase, raw sagbiGB));
 
-
-
-
-
-
-     G = matrix(R, {{}});
-     Gensmaxdeg := (max degrees source Gens)_0;
-     Gens = compress submatrixBelowDegree(Gens, maxdeg+1);
-     insertPending Gens;
-
-<< "=================" << endl;
-<< "MAIN FUNCTION DATA" << endl;
-<< "G = " << G << endl;
-<< "Gensmaxdeg = " << Gensmaxdeg << endl;
-<< "max degrees = " << max degrees source Gens << endl;
-<< "Gens = " << Gens << endl;
-<< "Pending = " << Pending << endl;
-<< "Elements of Pending = " << peek(Pending) << endl;
-<< "=================" << endl;
-
-     Pending#0 = {};
-     d = grabLowestDegree();  -- initializes G
-
-<< "=================" << endl;
-<< "d = " << d << endl;
-<< "G = " << G << endl;
-<< "=================" << endl;
-
-     d = d+1;
-     nloops = d;
-     isdone := false;
-     while nloops <= maxnloops and not isdone do (
-       ttotal := timing(
-	  nloops = nloops+1;
-	  if printlevel > 0 then
-	    << "--- degree " << d << " ----" << endl;
-     	  tgbJ := timing gb(J, DegreeLimit=>d);
-
-<< "=================" << endl;
-<< "J = " << J << endl;
-<< "tgbJ = " << peek(tgbJ#1) << endl;
-<< "tgbJ Generators = " << gens(tgbJ#1) << endl;
-<< "=================" << endl;
-
-	  gbJ := tgbJ#1;
-	  if printlevel > 0 then 
-	    << "    gb comp done in " << tgbJ#0 << " seconds" << endl;
-	  -- spairs = time mingens ideal selectInSubring(1, gens gbJ);
-	  spairs := submatrixByDegrees(selectInSubring(1, gens gbJ), d);
-	  if printlevel > 1 then
-	    << "spairs = " << transpose spairs << endl;
-	  tGmap := timing Gmap(spairs);
-	  spairs = tGmap#1;
-	  if printlevel > 0 then 
-	    << "    Gmap    done in " << tGmap#0 << " seconds" << endl;
-	  if Pending#d != {} then (
-	       newgens := RtoRS(matrix{Pending#d});
-	       spairs = spairs | newgens;
-	       Pending#d = {};);
-	  tsub := timing map(RS,rawSubduction(rawMonoidNumberOfBlocks raw monoid R, raw spairs, raw Gmap, raw gbJ));
-	  if printlevel > 0 then 
-	    << "    subduct done in " << tsub#0 << " seconds" << endl;
-     	  tRS := timing compress RStoR(tsub#1);
-	  newguys := tRS#1;
-	  if printlevel > 0 then
-	    << "    RStoR   done in " << tRS#0 << " seconds" << endl;
-	  if numgens source newguys > 0 
-	  then (
-	       if printlevel > 0 then 
-     	         << "    GENERATORS ADDED!" << endl;
-	       insertPending newguys;
-	       d = grabLowestDegree();
-	       if printlevel > 0 then 	       
-	         << "    " << numnewsagbi << " NEW GENERATORS!" << endl;
-	       )
-	  else (
-	       numnewsagbi = 0;
-	       ngens := sum apply(toList Pending,i -> #i);
-	       if ngens === 0 and gbDone gbJ and d>Gensmaxdeg then (
-	           isdone = true;
-		   if printlevel > 0 then 
-		     << "    SAGBI basis is FINITE!" << endl;
-		   );
-	      );
-	   );
-	 if printlevel > 0 then (
-	   << "    deg " << d << "  done in " << ttotal#0 << " seconds" << endl;
-	   );
-	 d=d+1;
-	 );
-     G)
+        if numcols newElems > 0 then (
+            << numcols newElems << "Generators added" << endl;
+            insertPending(R, newElems);
+            nNewGenerators = grabLowestDegree(R, Limit);
+            if nNewGenerators != 0 then
+                currDegree = degree((R.cache.SagbiGens)_(0,numcols R.cache.SagbiGens - 1))
+                else currDegree = Limit + 1;
+        )
+        else (
+            nNewGenerators = 0;
+            -- There was a toList here before.  Unnecessary (I think), so I deleted it.
+            -- Is the rawStatus even needed?
+            if sum apply(R.cache.Pending, i -> #i) === 0 and rawStatus1 raw sagbiGB == 6 and currDegree > maxGensDeg then (
+                isDone = true;
+                << "SAGBI basis is FINITE!" << endl;
+            )
+        );
+    R)
 
 -- Main function for computing a subalgebraBasis.
     -- Input is a matrix of generators for the algebra.
