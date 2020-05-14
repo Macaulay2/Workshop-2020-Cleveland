@@ -91,25 +91,56 @@ hierDim = method();
 hierDim(List,List) := (r,Facets) ->(  
     n := #r;
     
-    Sim:=delete({},unique flatten for f in Facets list delete(null, for a in subsets(n) list if isSubset(a,f) then a));
+    -- maybe cache faces
+    Sim := delete({}, Facets / subsets // flatten // unique); 
     
-    dimI:=0;
+    dimI := Sim / (i -> i / (j -> r_j)) / product // sum;
+  
+    dimI
+    )
+
+
+-- Produces a ring map from the Probability ring to the Parameter Ring. The kernel of this map is the toric ideal of the hierarchical model
+hierMap = method(Options => {});
+hierMap(List, List) := List => opts -> (r, Facets) -> (
     
-    for j from 0 to #Sim-1 do(
+    R := probRing(r);
+    S := parameterRing(r, Facets);
+    
+    y := (first baseName S_0);
+   
+    listOfImages := {};
+    
+    for var in gens(R) do (
 	
-	for i from 0 to #Sim_j-1 do(
-	    
-    	    f := 1;
-	    
-    	    f = f*r_(Sim_j_i);
-	    
-    	    dimI = dimI+f 
-	    );
-    	);
-dimI
-)
+	ind := last baseName var;
+	
+	facetIndices := for k from 0 to (#Facets-1) list prepend(k, ind_(Facets_k));
+	
+	listOfImages = append(listOfImages, product apply(facetIndices, k -> (y_k)_S ));
+	
+	);
+    
+    
+    listOfImages
+    );
 
 
+-- Facets1 simplicial complex on [n]. 
+-- Facets2 simplicial complex on [n + k]\[n] \cup S
+-- need to check S \subset [n] is a face in each complex 
+glueSimpComp(Facets1, Facets2, S)
+
+hierTFP:= method(Options => {});
+hierTFP(List, List, List) := Ideal => opts -> (Facets1, Facets2, S) -> (
+    
+    
+    
+    
+    
+    )
+    
+    
 
 
 end
