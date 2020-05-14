@@ -1305,6 +1305,52 @@ doc ///
         (classGroup, NormalToricVariety)
 /// 
 
+doc ///
+    Key
+        (picardGroup, ToricMap)
+    Headline
+        make the induce map between the corresponding Picard groups
+    Usage
+        picardGroup f
+    Inputs
+        f : ToricMap
+    Outputs
+        : Matrix
+	    representing the map of abelian groups between the corresponding
+	    Picard groups
+    Description
+        Text
+	    Given a toric map $f : X \to Y$, this method returns the induced
+	    map of abelian groups from the Picard group of $Y$ to the Picard
+	    group of $X$.  In other words, {\tt picardGroup} is a contravariant
+	    functor on the category of normal toric varieties.
+	Text
+	    Our first example produces the induced map from the Picard group of
+	    the projective line to the Picard group of the first Hirzebruch
+	    surface.
+	Example
+	    X = hirzebruchSurface 1;
+	    Y = toricProjectiveSpace 1;
+	    f = map(Y, X, matrix {{1, 0}})
+	    f' = picardGroup f
+	    assert (source f' == picardGroup Y)
+	    assert (target f' == picardGroup X)
+	Text
+	    The next example gives the induced map from the Picard group of the
+	    projective plane to the Picard group of the first Hirzebruch
+	    surface.
+	Example
+	    nefGenerators X
+	    Z = toricProjectiveSpace 2;
+	    g = map(Z, X, matrix {{1, 0}, {0,-1}})
+	    assert isWellDefined g
+	    g' = picardGroup f
+	    assert (source g' == picardGroup Y)
+	    assert (target g' == picardGroup X)
+    SeeAlso
+        (picardGroup, NormalToricVariety)
+///
+
     	
 
 ------------------------------------------------------------------------------
