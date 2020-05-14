@@ -90,6 +90,16 @@ parityCheckToGenerator(Matrix) := Matrix => M -> (
     return(transpose generators kernel M)
     )
 
+-- If generator or parity check is not full rank, 
+-- choose a subset of rows that are generators:
+reduceMatrix = method(TypicalValue => Matrix)
+reduceMatrix(Matrix) := Matrix => M -> (
+    -- check if matrix is of full rank:
+    if (rank M == min(rank M.source,rank M.target)) then {
+	return M
+	} else return transpose groebnerBasis transpose M
+    )
+
 
 
 -- Use this section to add basic types and
@@ -114,8 +124,9 @@ rawLinearCode(List) := LinearCode => (inputVec) -> (
 	
 	-- coerce generators and generator matrix into base field, if possible:
 	try {
-	    newGens := apply(inputVec_2, codeword -> apply(codeword, entry -> sub(entry, inputVec_1)));
-	    newGenMat := matrix(newGens);
+	    tempGens := apply(inputVec_2, codeword -> apply(codeword, entry -> sub(entry, inputVec_1)));
+	    newGenMat := reduceMatrix(matrix(tempGens));
+	    newGens := entries transpose newGenMat;
 	    } else {
 	    error "Elements do not live in base field/ring.";
 	    };
@@ -131,8 +142,9 @@ rawLinearCode(List) := LinearCode => (inputVec) -> (
 	
 	-- coerce parity check rows and parity check matrix into base field, if possible:
 	try {
-	    newParRow := apply(inputVec_3, codeword -> apply(codeword, entry -> sub(entry, inputVec_1)));
-	    newParMat := matrix(newParRow);
+	    tempParRow := apply(inputVec_3, codeword -> apply(codeword, entry -> sub(entry, inputVec_1)));
+	    newParMat := reduceMatrix(matrix(tempParRow));
+	    newParRow := entries newParMat;
 	    } else {
 	    error "Elements do not live in base field/ring.";
 	    };
@@ -149,7 +161,7 @@ rawLinearCode(List) := LinearCode => (inputVec) -> (
     };
     
     -- coerce code matrix into base field:
-    codeSpace := sub(inputVec_4,inputVec_1);
+    codeSpace := if (reduceMatrix(generators inputVec_4) == generators inputVec_4) then sub(inputVec_4,inputVec_1) else image groebnerBasis inputVec_4;
     
     
     return new LinearCode from {
@@ -881,6 +893,18 @@ F = GF(2)
 L = {{1,0,1,0,0,0,1,1,0,0},{0,1,0,0,0,0,0,1,1,0},{0,0,1,0,1,0,0,0,1,1},{1,0,0,1,0,1,0,0,0,1},{0,1,0,0,1,1,1,0,0,0}}
 C = linearCode(F,L,ParityCheck => true)
 peek C
+
+
+-----------------------------------------------------
+-- Codes with Rank Deficient Matrices:
+-----------------------------------------------------
+R=GF 4
+M=R^4
+C = linearCode(R,{{1,0,1,0},{1,0,1,0}})
+peek C
+C.GeneratorMatrix
+C.Code
+
 
 
 -- Local Variables:
