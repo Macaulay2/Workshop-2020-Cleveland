@@ -53,6 +53,7 @@ evaluationCode(Ring,List,Matrix) := EvaluationCode => opts -> (F,P,M) -> (
 ------------This an example of an evaluation code----------------------------------------
 loadPackage "NormalToricVarieties"
 loadPackage "NAGtypes"
+
 d=2
 q=2
 S=3
@@ -79,3 +80,56 @@ C_d=apply(Polynum,y->apply(0..length f -1,x->(flatten entries evaluate(y,XX#x))#
    
     
 ------------------------------------------------------------------------------------------------------------------------------
+
+
+
+----------The incidence matrix code of a Graph G-------
+needsPackage  "Graphs"
+needsPackage  "NAGtypes"
+
+--These are two procedure for obtain an incidence matrix code of a Graph G
+-- be sure that p is a prime number 
+
+
+--1-- this procedure computes the generatrix matrix of the code---
+-- M is the incidence matrix of the Graph G
+
+codeGrahpIncM = method(TypicalValue => Module);
+codeGrahpIncM (Matrix,ZZ):= (M,p)->(
+tInc:=transpose M;
+X:=entries tInc;
+R:=ZZ/p[t_(0)..t_(numgens target M-1)];
+SetPol:=flatten entries basis(1,R);
+SetPolSys:=apply(0..length SetPol-1, x->polySystem{SetPol#x});
+XX:=apply(X,x->point{x});
+C:=apply(apply(SetPolSys,y->apply(0..length XX -1,x->(flatten entries evaluate(y,XX#x))#0)),toList);
+image transpose matrix{C}
+)
+
+
+--2-- this an alternative process. It computes all the points in the code. It computes all the linear forms. 
+
+codeGrahpInc = method(TypicalValue => Sequence);
+codeGrahpInc (Graph,ZZ):= (G,p)->(
+tInc:=transpose incidenceMatrix G;
+X:=entries tInc;
+R:=ZZ/p[t_(0)..t_(lentgh vertexSet G-1)];
+Poly1:=apply(apply(toList (set(0..p-1))^**(hilbertFunction(1,R))-(set{0})^**(hilbertFunction(1,R)),toList),x -> basis(1,R)*vector deepSplice x); 
+Polynums1:=apply(0..length Poly1-1, x->polySystem{Poly1#x#0});
+XX:=apply(X,x->point{x});
+apply(Polynums1,y->apply(0..length XX -1,x->(flatten entries evaluate(y,XX#x))#0))
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
