@@ -37,9 +37,7 @@ export {
     -- Families of Codes
     "cyclicMatrix",
     "quasiCyclicCode",
-<<<<<<< Updated upstream
     "HammingCode",
-=======
     -- LRC codes
     "TargetParameters",
     "targetParameters",
@@ -52,7 +50,6 @@ export {
     "Length",
     "Dimension",
     "Locality",
->>>>>>> Stashed changes
     -- Methods
     "field",
     "vectorSpace",
