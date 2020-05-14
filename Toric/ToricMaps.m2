@@ -1549,9 +1549,26 @@ X = hirzebruchSurface 1
 f = map(Y, X, matrix{{1,0},{0,-1}})
 assert isDominant (f)
 assert isSurjective f
-isDominant f
-isSurjective f
 assert isWellDefined f
+///
+
+TEST ///
+Y = toricProjectiveSpace 3
+X = affineSpace 3
+f = map(Y, X, matrix{{2,0,0},{1,1,0},{3,1,0}})
+assert not isDominant f
+assert isWellDefined f
+assert not isSurjective f
+///
+
+TEST ///
+--Erika's test
+Y = toricProjectiveSpace 1
+X = toricProjectiveSpace 1
+f = map(Y, X, 1)
+assert isWellDefined f
+assert isDominant f
+assert isSurjective f
 ///
 
 -------------------------------------------------------
