@@ -49,7 +49,7 @@ userPrintLevel = MonomialIntegerPrograms#Options#Configuration#"CustomScipPrintL
 
 ScipPrintLevel = if userPrintLevel == "" then(
     print("Current value of ScipPrintLevel is 1.\nTo set a custom default value, load package using CustomScipPrintLevel option.");
-    1) else userPrintLevel;
+    1) else value userPrintLevel;
 ------------------------
 -- codim, dim, degree --
 ------------------------
@@ -1122,3 +1122,4 @@ loadPackage("MonomialIntegerPrograms", Configuration => {"CustomScipPrintLevel" 
 viewHelp("sample session in Monomial Integer Programs")
 needsPackage("MonomialIntegerPrograms")
 check("MonomialIntegerPrograms")
+
