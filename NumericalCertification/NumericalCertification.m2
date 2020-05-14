@@ -55,9 +55,6 @@ export {"pointNorm",
     "toACertifiedPoly",
     "pointBlock",
     "toACertifiedPoint",
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
     "alphaCertified",
     "ALGORITHM",
     "ARITHMETICTYPE",
@@ -70,7 +67,6 @@ export {"pointNorm",
     "NUMITERATIONS",
     "REALITYCHECK",
     "REALITYTEST",
-    "alphaCertified",
     "Hessian",--                                                                                                                      
     "computeOrthoBasis",--                                                                                                            
     "Aoperator",--these are added                                                                                                     
@@ -408,6 +404,24 @@ Aoperator(PolySystem,Point,Matrix) := (F,x0,V)->(
     return(A)
     )
 
+-- Aoperator code that Kisun used    
+Aoper2 = method()
+Aoper2(PolySystem, Point, Matrix) := (I, P, V) -> (
+    baseRing := ring I;
+    J := jacobian I;
+    n := numcols J;
+    Jeval := evaluate(J, P);
+    r := numericalRank sub(Jeval,CC);
+    k := n - r;
+    orthVecs := toList apply(k, i -> sub(matrix V_i, baseRing));
+    secondTerm := apply(orthVecs, j -> transpose jacobian transpose(J*j));
+    secondTerm = sum apply(length orthVecs, i -> 
+	secondTerm#i * orthVecs#i * (1/2)* transpose orthVecs#i);
+    Jeval + evaluate(secondTerm, P)
+    )
+
+
+
 Hoperator = method(TypicalValue => Matrix)
 Hoperator(PolySystem,Point,Matrix) := (F,x0,V)->(
     J := evaluate(jacobian F,x0);
@@ -426,9 +440,20 @@ gammaKBound(PolySystem,Point) := (F,x0)->(
     A := Aoperator(F,x0,V);
     H := Hoperator(F,x0,V);
     --where does the square come from?
-    mu := max {1, polySysNorm(F) * (norm(2,inverse(A-H) * deltaF))^2};
+--    mu := max {1, polySysNorm(F) * (norm(2,inverse(A-H) * deltaF))^2};
+    mu := max {1, polySysNorm(F) * norm(2,inverse(A-H) * deltaF)};
     gammaK := mu*(max degs)^(3/2)/(2*pointNormx);
     return(gammaK)
+    )
+
+computeD = method()
+computeD(Number) := k -> (
+    d := symbol d;
+    R := RR[d];
+    f := (1-d^2)-(k+1)^2 * k^2 * d^2 * (1-d^2) - k*d^2 - d;
+    listOfRoots := roots f;
+    min delete( ,apply(listOfRoots, i -> 
+	    if (imaginaryPart i) == 0 and (realPart i) > 0 then i))
     )
 
 --needs better name and output
@@ -447,8 +472,11 @@ certifyRootMultiplicityBound(PolySystem,Point) := (F,x0)->(
     mu := max {1, polySysNorm(F) * (norm(2,inverse(A-H) * deltaF))^2};
     --I think d is the min real sol of #### not max degs?
     --used d<.3
-    lhs := norm(2,evaluate(F,x0)) + (.3)/4*norm(2,H);
-    rhs := pointNormx^4/(2*mu^4*(.3)^5*norm(2,inverse(A-H)));
+    d := computeD kappa;
+--    lhs := norm(2,evaluate(F,x0)) + (.3)/4*norm(2,H);
+    lhs := norm(2,evaluate(F,x0)) + (d)*norm(2,H)/(4*(gammaKBound(F,x0))^2);
+--    rhs := pointNormx^4/(2*mu^4*(.3)^5*norm(2,inverse(A-H)));
+    rhs := (d)^3/(32*(gammaKBound(F,x0))^4*norm(2,inverse(A-H)));
     return(lhs < rhs,2^kappa)
     )
 

@@ -42,3 +42,45 @@ det A
 --We are able to verify that this is a multiple root of multiplicity 8 or more. 
 certifyRootMultiplicityBound(F,p)
 
+
+
+
+
+--- More examples
+
+
+
+-- mth191, kappa : 2, multiplicity : 4
+R = QQ[x,y,z]
+F = polySystem {x^3+(y+1)^2+z^2-1, x^2+(y+1)^3+z^2-1, x^2+(y+1)^2+z^3-1}
+P = last solveSystem F;
+
+V = computeOrthoBasis(F,P)
+A = Aoper2(F,P,V)
+
+certifyRootMultiplicityBound(F,P) -- false
+
+
+
+
+-- Ojika 2, kappa : 1, multiplicity : 2 
+R = QQ[x,y,z]
+F = polySystem {(x+1)^2+y+z-1, (x+1)+y^2+z-1, (x+1)+y+z^2-1}
+P = (solveSystem F)#-3
+
+V = computeOrthoBasis(F,P)
+A = Aoper2(F,P,V)
+
+certifyRootMultiplicityBound(F,P) -- false
+
+
+-- KSS, kappa : 4, multiplicity : 16
+R = QQ[x1,x2,x3,x4,x5]
+F = polySystem ideal((x1+1)^2-2*(x1+1)+1+x1+x2+x3+x4+x5, (x2+1)^2-2*(x2+1)+1+x1+x2+x3+x4+x5, (x3+1)^2-2*(x3+1)+1+x1+x2+x3+x4+x5, (x4+1)^2-2*(x4+1)+1+x1+x2+x3+x4+x5, (x5+1)^2-2*(x5+1)+1+x1+x2+x3+x4+x5)
+P = last solveSystem F
+-- P = point {{0/1,0/1,0/1,0/1,0/1}}
+
+V = computeOrthoBasis(F,P)
+A = Aoper2(F,P,V)
+
+certifyRootMultiplicityBound(F,P) -- false
