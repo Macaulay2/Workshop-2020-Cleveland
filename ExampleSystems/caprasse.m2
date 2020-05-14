@@ -29,7 +29,10 @@ doc ///
 	    of the polynomials in the system
     Description
     	Text
-	    The Bezout bound is 144.
+	   This system was solved in May 2020, using @TO solveSystem@ in Macaulay2 v1.15
+	     with an Intel(R) Core(TM) i5-4258U CPU at 2.40GHz
+	   
+	    There were 64 solutions found in 0.525506 seconds (with a Bezout bound of 144).
 	    
 	    Reference: 
 	    
@@ -38,6 +41,4 @@ doc ///
 	    See also: http://homepages.math.uic.edu/~jan/Demo/caprasse.html
 	Example
 	    F = caprasse(QQ)
-	    time sols = solveSystem F;
-	    #sols
     ///

@@ -32,7 +32,7 @@ doc ///
 	   This system was solved in May 2020, using @TO solveSystem@ in Macaulay2 v1.15
 	     with an Intel(R) Core(TM) i5-4258U CPU at 2.40GHz
 	   
-	    There were 1 solutions found in 27.1926 seconds (with a Bezout bound of 1344).
+	    There was 1 solution found in 27.1926 seconds (with a Bezout bound of 1344).
 	    
 	    Reference: 
 	    Obtained by electronic mail by Carlo Traverso.From Carlo Traverso.  

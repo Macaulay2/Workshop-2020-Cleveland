@@ -33,7 +33,10 @@ doc ///
 	    a list of the polynomials in this example
     Description
     	Text
-	    The Bezout bound is 4608.
+	    This system was solved in May 2020, using @TO solveSystem@ in Macaulay2 v1.15
+	     with an Intel(R) Core(TM) i5-4258U CPU at 2.40GHz
+	   
+	    There were 368 solutions found in 82.589 seconds (with a Bezout bound of 4608).
 	    
 	    References: 
 	    
