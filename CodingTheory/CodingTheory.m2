@@ -725,46 +725,30 @@ doc ///
 --       myDegree is was Problem 2 in the tutorial yesterday.
 ///
 
--*
+
 doc ///
    Key
-       ==
+       symbol ==
+       (symbol ==,LinearCode,LinearCode)
    Headline
        determines if two linear codes are equal
    Usage
        LinearCode == LinearCode
    Inputs
-        C:LinearCode
-	    a codeword of length $n$.
-	L:List
-	    a list of coordinate positions.
-	i:ZZ
-	    an integer representing a single coordinate position.
+        C1:LinearCode
+	    a linear code
+	C2:LinearCode
+	    a linear code
    Outputs
-       :LinearCode
-           a shortened linear code. 
+       :Boolean
+           whether two codes define the same subspace
    Description
        Text  
-       	   A new code from $C$ by selecting only those codewords of $C$ 
-	   having a zeros in each of the coordinate positions in the list $L$ (or the integer $i$) and deleting these 
-	   components. Thus, the resulting code will have length $n - r$, where $r$ is the number
-	   of elements in $L$ (or 1 when the integer $i$ is used). 
-
+       	   Given linear codes C1 and C2, this code determines if they
+	   define the same subspace over the same field or ring.
        Example
-           F = GF(2)
-	   codeLen = 10
-	   L = {{0, 1, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 1, 0, 1, 1, 0, 1, 0, 0}, {1, 1, 0, 0, 0, 1, 0, 0, 1, 0}, {1, 0, 0, 1, 0, 0, 0, 1, 1, 1}}
-	   C = linearCode(F,codeLen,L)
-	   shorten(C, {3,6,8,9})
-	   shorten(C, 3)
-	   
---   SeeAlso
-       --codim
-       --assPrimesHeight
---   Caveat
---       myDegree is was Problem 2 in the tutorial yesterday.
+       
 ///
-*-
 
 document {
 	Key => {firstFunction, (firstFunction,ZZ)},
@@ -811,6 +795,8 @@ document {
      PARA{},
      "This symbol is provided by the package ", TO CodingTheory, "."
      }
+ 
+ 
 document {
      Key => [secondFunction,MyOption],
      Headline => "add level to result",
