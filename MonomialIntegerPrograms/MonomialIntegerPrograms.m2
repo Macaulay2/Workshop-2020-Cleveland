@@ -848,6 +848,7 @@ doc ///
   topMinimalPrimesIP
   (topMinimalPrimesIP, MonomialIdeal)
   [topMinimalPrimesIP, KnownDim]
+  KnownDim
  Headline
   compute the minimal primes of maximum dimension using integer programming
  Usage
@@ -892,6 +893,31 @@ doc ///
   MonomialIntegerPrograms
   symbol ScipPrintLevel
 ///
+
+doc ///
+ Key
+  IgnorePrimes
+  [topMinimalPrimesIP, IgnorePrimes]
+ Headline
+  Ignores certain primes when computing top minimal primes.
+ Description
+  Text
+   The option @TO IgnorePrimes@ should be a list of prime ideals.
+   If a @TO IgnorePrimes@ is provided, @TO topMinimalPrimesIP@ will not include
+   any primes containing those ideals in the computation and will find the
+   minimal primes with maximal dimension other than the ignored ones.
+  Example
+   R = QQ[x,y,z,w,v];
+   I = monomialIdeal(y^12, x*y^3, z*w^3, z*v*y^10, z*x^10, v*z^10, w*v^10, y*v*x*z*w);
+   ScipPrintLevel = 0;
+   L1 = topMinimalPrimesIP I
+   L2 = topMinimalPrimesIP(I, IgnorePrimes=>L1)
+   minimalPrimes I
+ Caveat
+  This may not be faster than simply using @TO minimalPrimes@ and counting generators.
+///
+
+
 
 doc ///
  Key
