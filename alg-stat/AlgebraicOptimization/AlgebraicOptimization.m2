@@ -21,6 +21,8 @@ export {
   "conormalRing",
   "conormalVariety",
   "multiDegreeEDDegree",
+  --More Methods
+  "makeLagrangeRing",
   -- Options
   "DualVariable",
   --Types and keys
@@ -115,6 +117,8 @@ newRingFromSymbol = (n,s,kk)->(
     kk[s_0..s_(n - 1)]
     )
 
+--TODO: decide if we want to create or make. 
+
 makeLagrangeRing = method(Options => {DualVariable => null,LagrangeVariable => null});
 -- Creates a LagrangeRing from a primal ring R
 makeLagrangeRing (ZZ,Ring) := LagrangeRing => opts -> (c,R) -> (
@@ -134,6 +138,19 @@ makeLagrangeRing (ZZ,Ring) := LagrangeRing => opts -> (c,R) -> (
   }
 )
 makeLagrangeRing Ideal := LagrangeRing => opts -> I -> makeLagrangeRing(codim I,ring I)
+
+TEST ///
+R=QQ[x,y]
+I=ideal(x^2+y^2-1)
+LR = makeLagrangeRing(1,ring I)
+--TODO: make a better test.
+--Check keys
+assert( sort\\toString\keys LR == sort\\toString\{AmbientRing, LagrangeRing, PrimalCoordinates, DualRing, DualCoordinates, LagrangeCoordinates, PrimalRing})
+--Check values LR
+assert (sort\\toString\values LR==sort\\toString\{QQ[x, y, u_0, u_1, lambda_0], QQ[lambda_0], {x, y}, QQ[u_0, u_1], {u_0, u_1}, {lambda_0}, R})
+///
+
+
 
 isCofficientRingInexact = R -> (
  -- This checks if kk is a ComplexField or RealField 
@@ -231,19 +248,12 @@ optimizationDegree(v,g,LVW)-> (
 
 
 TEST ///
---lagrangeRing(2,QQ[x1,x2])
 
 R=QQ[x,y]
 I=ideal(x^2+y^2-1)
-LR = makeLagrangeRing(1,ring I)
-LVW = witnessLagrangeVariety(I,I,LR)
-peek LVW
-
-R=QQ[x,y]
-I=ideal(x^2+y^2-1)
-LVW = witnessLagrangeVariety(I,I)
-peek LVW
-degree (LVW)
+--LVW = witnessLagrangeVariety(I,I)
+--peek LVW
+--degree (LVW)
 
 ///
 *-
@@ -390,6 +400,46 @@ TEST ///
   -- may have as many TEST sections as needed
 ///
 
+
+doc ///
+Key
+  makeLagrangeRing
+  (makeLagrangeRing, ZZ,Ring)
+  (makeLagrangeRing, Ideal)
+Headline
+  Make a ring for using Lagrange multipliers
+Usage
+  makeLagrangeRing(I)
+  makeLagrangeRing(c,I)  
+Inputs
+  I:
+    an  @TO2{Ideal, "ideal"}@    
+  c:
+    the number of Lagrange multipliers
+    
+Outputs
+  :LagrangeRing
+    a desciption of the output is needed TODO
+--Consequences
+--  asd
+Description
+  Text
+    TODO.
+
+  Example
+    R=QQ[x,y]
+    I=ideal(x^2+y^2-1)
+    LR = makeLagrangeRing(1,ring I)
+
+--  Code
+--    todo
+--  Pre
+--    todo
+--Caveat
+--  todo
+--SeeAlso
+--  todo
+///
   
 end
 
