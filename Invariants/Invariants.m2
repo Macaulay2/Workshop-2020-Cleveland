@@ -144,12 +144,13 @@ invariants = method()
 invariants RingOfInvariants := B -> invariants(action B, ambient B)
 
 invariants (TorusAction, PolynomialRing) := List => (T, R) -> (
-    r := rank T;
-    n := dim R;
+    r := rank T; -- r is the dimension of the torus
+    n := dim R; -- n is the dimension of the ring R
+    if (n =!= rank source vars R) then (error "invariants: Dimension of the polynomial ring does not match size of the weight matrix");
     W := weights T;
     local C;
     if r == 1 then C = convexHull W else C = convexHull( 2*r*W|(-2*r*W) );
-    C = (latticePoints C)/vector;
+    C = (latticePoints C)/vector; -- C is a list of weights we are testing
     S := new MutableHashTable from apply(C, w -> w => {});
     scan(n, i -> S#(W_i) = {R_i});
     U := new MutableHashTable from S;
@@ -194,7 +195,7 @@ abelianInvariants (Matrix, PolynomialRing, List) := List => (W, R, L) -> (
     n := numColumns W;
     t := 1; -- t is the size of abelian group
     --sanity check 
-    if #L =!= r then print "Size of the group does not match the weight";
+    if #L =!= r then error "Size of the group does not match the weight matrix";
     scan(L,i->t = t*i);
     local C; -- C is a list of all possible weights
     for i from 0 to #L-1 do(
