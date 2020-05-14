@@ -99,6 +99,25 @@ subalgebraBasis Matrix := opts -> (M) -> (
        sagbiToplevel(M, opts.Limit, opts.PrintLevel)     
      )
 
+
+--previously internal functions
+insertPending = (m, Pending) -> (
+	-- append the entries of the one row matrix 'm' to Pending.
+	i := 0;
+	while i < numgens source m do (
+	    f := m_(0,i);
+	    e := (degree f)_0;
+	    Pending#e = append(Pending#e, f);
+	    i = i+1;
+	    ));
+lowestDegree = (maxdeg, Pending) -> (
+        -- returns maxdeg+1 if Pending list is empty, otherwise
+        -- returns the smallest non-empty strictly positive degree.
+	i := 0;
+	while i <= maxdeg and Pending#i === {} do i=i+1;
+	i);
+
+
 combinedBasis = method(Options => {
     Strategy => null,
     Limit => 100,
@@ -439,3 +458,4 @@ d = d+1;
 G)
 
 --END TOP LEVEL--
+
