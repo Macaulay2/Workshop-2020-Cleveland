@@ -126,21 +126,5 @@ hierMap(List, List) := List => opts -> (r, Facets) -> (
     );
 
 
--- Facets1 simplicial complex on [n]. 
--- Facets2 simplicial complex on [n + k]\[n] \cup S
--- need to check S \subset [n] is a face in each complex 
-glueSimpComp(Facets1, Facets2, S)
-
-hierTFP:= method(Options => {});
-hierTFP(List, List, List) := Ideal => opts -> (Facets1, Facets2, S) -> (
-    
-    
-    
-    
-    
-    )
-    
-    
-
 
 end
