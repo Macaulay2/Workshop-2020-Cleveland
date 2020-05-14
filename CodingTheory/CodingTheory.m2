@@ -26,6 +26,8 @@ export {
     "secondFunction",
     "MyOption",
     -- Types and Constructors
+    "generatorToParityCheck",
+    "parityCheckToGenerator",
     "LinearCode",
     "linearCode",
     "AmbientModule",
@@ -84,10 +86,42 @@ secondFunction(ZZ,List) := o -> (m,n) -> (
 ------------------------------------------
 ------------------------------------------
 
+------------------------------------------
+-- Helper functions for constructors:
+------------------------------------------
+
+-- WARNING: These will do some funky things
+-- if your parity check or generator matrices
+-- are not of full rank...
+generatorToParityCheck = method(TypicalValue => Matrix)
+generatorToParityCheck(Matrix) := Matrix => M -> (
+    -- produce canonical form of the generating matrix:
+    G := transpose groebnerBasis transpose M;
+    
+    -- this code assumes that generator matrix
+    -- can be put into standard form without any
+    -- swapping of columns:
+    
+    -- take (n-k) columns of standard generating matrix above:
+    redG := G_{0..(rank G.source - rank G -1)};
+    
+    -- vertically concatenate an identity matrix of rank (n-k),
+    -- then transpose :
+    return transpose (id_(redG.source) || -redG)
+    
+    )
+
+parityCheckToGenerator = method(TypicalValue => Matrix)
+parityCheckToGenerator(Matrix) := Matrix => M -> (
+    return(transpose generators kernel M)
+    )
+
+
+
 -- Use this section to add basic types and
 -- constructors for error correcting codes
  
-LinearCode = new Type of MutableHashTable
+LinearCode = new Type of HashTable
 
 -- internal function to validate inputs:
 rawLinearCode = method()
@@ -128,9 +162,16 @@ rawLinearCode(List) := LinearCode => (inputVec) -> (
 	    } else {
 	    error "Elements do not live in base field/ring.";
 	    };
+	print("in parity check case");
     } else {
-	newParRow = {};
-	newParMat = matrix({newParRow});
+	newParMat = generatorToParityCheck(newGenMat);
+	newParRow = entries newParMat ;
+    };
+
+    -- compute generating matrix from parity check matrix, if not already set:
+    if newGens == {} then {
+        newGenMat = parityCheckToGenerator(newParMat);
+	newGens = entries newGenMat;
     };
     
     -- coerce code matrix into base field:
@@ -164,7 +205,7 @@ linearCode(Module,List) := LinearCode => opts -> (S,L) -> (
     if opts.ParityCheck then {
 	outputVec := {S, S.ring, {}, L, kernel matrix L};
 	} else {
-	outputVec =  {S, S.ring, L , {}, image matrix L};
+	outputVec =  {S, S.ring, L , {}, image transpose matrix L};
 	};
     
     return rawLinearCode(outputVec)
@@ -181,8 +222,8 @@ linearCode(GaloisField,ZZ,List) := LinearCode => opts -> (F,n,L) -> (
     if opts.ParityCheck then {
 	outputVec := {S, F, {}, L, kernel matrix L};
 	} else {
-	outputVec =  {S, F, L , {}, image matrix L};
-	};    
+	outputVec =  {S, F, L , {}, image transpose matrix L};
+	};
     
     return rawLinearCode(outputVec)
     
@@ -195,7 +236,7 @@ linearCode(GaloisField,List) := LinearCode => opts -> (F,L) -> (
     -- calculate length of code via elements of L:
     n := # L_0;
         
-    linearCode(F,n,L)
+    linearCode(F,n,L,opts)
     
     )
 
@@ -212,49 +253,39 @@ linearCode(ZZ,ZZ,ZZ,List) := LinearCode => opts -> (p,q,n,L) -> (
     )
 
 
-linearCode(Module,Module) := LinearCode => opts -> (S,V) -> (
-    -- constructor for a linear code
-    -- input: ambient vector space/module S, submodule V of S
-    -- outputs: code defined by submodule V
-    
-    if not isField(S.ring) then print "Warning: Codes over non-fields unstable.";
-     
-    new LinearCode from {
-	symbol AmbientModule => S,
-	symbol BaseField => S.ring,
-	symbol Generators => try V.gens then V.gens else gens V,
-	symbol Code => V,
-	symbol cache => {}
-	}
-    
-    )
-
 linearCode(Module) := LinearCode => opts -> V -> (
     -- constructor for a linear code
     -- input: some submodule V of S
     -- outputs: code defined by submodule V
     
-    linearCode(ambient V, V)
+    -- produce a set of generators for the specified submodule V:
+    generatorMatrix := transpose generators V;
+    
+    outputVec := {generatorMatrix.source, generatorMatrix.ring, entries generatorMatrix, {}, V};
+    
+    rawLinearCode(outputVec)
     
     )
 
 linearCode(Matrix) := LinearCode => opts -> M -> (
     -- constructor for a linear code
     -- input: a generating matrix for a code
-    -- output: code defined by the columns of M
+    -- output: if ParityCheck => true then code defined by kernel of M
+    --         if ParityCheck => false then code defined by rows of M
     
-    new LinearCode from {
-	symbol AmbientModule => M.target,
-	symbol BaseField => M.ring,
-	symbol Generators => entries transpose M,
-	symbol Code => image M,
-	symbol cache => {}
-	}
+
+    if opts.ParityCheck then {
+	outputVec := {M.source, M.ring, {}, entries M, kernel M};
+	} else {
+	outputVec =  {M.target, M.ring, entries M, {}, image transpose M};
+	};
     
+    rawLinearCode(outputVec)
+      
     )
 
 net LinearCode := c -> (
-     "Code: " | net c.Code
+     "Code with Generator Matrix: " | net transpose generators c.Code
      )
 toString LinearCode := c -> toString c.Generators
 
@@ -463,15 +494,8 @@ generic(LinearCode) := LinearCode => C -> (
     linearCode(C.AmbientModule)
     )
 
-parityCheck = method(TypicalValue => Matrix)
 
-parityCheck(LinearCode) := Matrix => C -> (
-    -- produce canonical form of the generating matrix:
-    G := transpose groebnerBasis generators C.Code;
-    G
-    
-    )
-
+   
 
 -*
 
@@ -716,6 +740,31 @@ end
 installPackage "CodingTheory"
 installPackage("CodingTheory", RemakeAllDocumentation=>true)
 check CodingTheory
+
+
+-----------------------------------------------------
+-- Codes from Generator Matrices (as lists):
+-----------------------------------------------------
+F = GF(3,4)
+codeLen = 7
+codeDim = 3
+L = apply(toList(1..codeDim),j-> apply(toList(1..codeLen),i-> random(F)))
+C = linearCode(F,L)
+peek C
+-- check that dimension and length are correct:
+dim C
+length C
+-- check that G*H^t = 0:
+C.GeneratorMatrix * (transpose C.ParityCheckMatrix)
+
+-----------------------------------------------------
+-- Codes from Parity Check Matrices (as a matrix):
+-----------------------------------------------------
+F = GF(2)
+L = {{1,0,1,0,0,0,1,1,0,0},{0,1,0,0,0,0,0,1,1,0},{0,0,1,0,1,0,0,0,1,1},{1,0,0,1,0,1,0,0,0,1},{0,1,0,0,1,1,1,0,0,0}}
+C = linearCode(F,L,ParityCheck => true)
+peek C
+
 
 -- Local Variables:
 -- compile-command: "make -C $M2BUILDDIR/Macaulay2/packages PACKAGES=CodingTheory pre-install"
