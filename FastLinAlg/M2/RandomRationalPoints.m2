@@ -7,7 +7,7 @@ newPackage(
 	     {Name => "Sankhaneel Bisui", Email => "sbisu@tulane.edu", HomePage=>"https://sites.google.com/view/sankhaneelbisui/home"},
 	     {Name=> "Thai Nguyen", Email =>"tnguyen11@tulane.edu", HomePage=>"https://sites.google.com/view/thainguyenmath "}
 	     },
-    	Headline => "an example Macaulay2 package",
+    	Headline => "A Package To Compute A Random Point In A Given Variety",
 		DebuggingMode => true, 
 		Reload=>true,
 		AuxiliaryFiles => false -- set to true if package comes with auxiliary files
@@ -257,7 +257,7 @@ randomPointViaGenericProjection(ZZ, Ideal) := opts -> (n1, I1) -> (
 	local pt;
 	local ptList;
 	local j;
-	i = 0;
+	i := 0;
 	while(flag) and (i < opts.ProjectionAttempts) do (
 		(phi, I0) = projectionToHypersurface(I1, Homogeneous=>opts.Homogeneous, MaxChange => opts.MaxChange, Codimension => null);
 		if (codim I0 == 1) then (
@@ -303,7 +303,7 @@ randomPoint(ZZ,Ideal):=opts->(n1,I1)->(
 			if not (point===false ) then return point; 
 			j=j+1;
 		);
-		return false;
+		return "Failed to find";
 	)
 	else if (opts.Strategy == GenericProjection) then (
 		return randomPointViaGenericProjection(n1, I1, opts)
@@ -327,18 +327,18 @@ doc ///
         createRandomPoints
 	(createRandomPoints, Ideal)
     Headline
-        Finds a Random Point
+        Finds a Random Point in the affine space.
     Usage
         createRandomPoints(I)
     Inputs
         I:Ideal 
-	    ideal inside a polynomial Ring
+	    inside a polynomial Ring
     Outputs
         :List
-         --   Point in affine space.
+            a point in affine space.
     Description
        Text
-         Give a random point in the ambient space of the V(I).  
+         Gives a random point in the ambient space of $V(I)$.  
        	 
 	   
        Example
@@ -364,7 +364,7 @@ doc ///
         randomPoint(I)
     Inputs
 	I:Ideal
-	   Ideal inside a polynomial ring
+	    inside a polynomial ring
     --Outputs
        -- :List
 	   -- ($T$ ,$f$) where $T = R  \otimes_L K$ is the base-changed ring, $f:R\to T$ is the ring map $R\otimes_L L\to R\otimes_L K$ induced from $L\to K$.
@@ -395,14 +395,14 @@ doc ///
         randomPoint(n,I)
     Inputs
         n: ZZ
-            An integer 
+            an integer denoting the number of desired trials.
         I:Ideal
-            Ideal inside a polynomial ring
+            inside a polynomial ring
     Outputs
         :List
     Description
         Text  
-       	   Gives a point in a variety V(I), after n trials. 
+       	   Gives a point in a variety $V(I)$, by $n$ trials. 
         Example
             R=ZZ/5[t_1..t_3];
             I = ideal(t_1,t_2+t_3);
