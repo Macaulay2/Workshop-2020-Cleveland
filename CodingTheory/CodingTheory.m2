@@ -718,17 +718,17 @@ doc ///
 	   shorten(C, {3,6,8,9})
 	   shorten(C, 3)
 	   
+///
+	   
 --   SeeAlso
        --codim
        --assPrimesHeight
 --   Caveat
 --       myDegree is was Problem 2 in the tutorial yesterday.
-///
 
 
 doc ///
    Key
-       symbol ==
        (symbol ==,LinearCode,LinearCode)
    Headline
        determines if two linear codes are equal
@@ -747,6 +747,12 @@ doc ///
        	   Given linear codes C1 and C2, this code determines if they
 	   define the same subspace over the same field or ring.
        Example
+           F = GF(3,4)
+           codeLen = 7; codeDim = 3;
+           L = apply(toList(1..codeDim),j-> apply(toList(1..codeLen),i-> random(F)))
+           C1 = linearCode(F,L)
+	   C2 = linearCode(matrix L)
+	   C1 == C2
        
 ///
 
