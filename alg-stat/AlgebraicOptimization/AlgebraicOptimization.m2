@@ -115,7 +115,7 @@ assert(multiDegreeEDDegree(J) == 13)
 --Code for Lagrange multipliers
 
 
-LagrangeRing = new Type of HashTable;
+LagrangeRing = new Type of HashTable;---Change this to a ring. 
 LagrangeVarietyWitness = new Type of MutableHashTable;
 
 newRingFromSymbol = (n,s,kk)->(
@@ -123,6 +123,7 @@ newRingFromSymbol = (n,s,kk)->(
     )
 
 --TODO: decide if we want to create or make. 
+--constructors of types are lower case and the name of the type. 
 
 makeLagrangeRing = method(Options => {DualVariable => null,LagrangeVariable => null});
 -- Creates a LagrangeRing from a primal ring R
@@ -159,10 +160,13 @@ assert (sort\\toString\values LR==sort\\toString\{QQ[x, y, u_0, u_1, lambda_0], 
 
 isCofficientRingInexact = R -> (
  -- This checks if kk is a ComplexField or RealField 
-    kk:=ultimate(coefficientRing,R);
+    kk := ultimate(coefficientRing,R);
+--    instance(kk,InexactField)--This is probably better, but not sure. 
     member(kk,{ComplexField,RealField}) 
     )
 
+
+--We could also take a random linear combination. 
 findRegularSequence = I -> (
     c:=codim I;
     WI := sub(ideal(),ring I);
@@ -174,8 +178,13 @@ findRegularSequence = I -> (
     );
     WI)
 
+--rename to lagrangeVarietyWitness.
+--langrangeRing Could inherit from conormalRing. 
+--This is analagous to conormal variety.
+---Variety WI contains the variety of I. 
 witnessLagrangeVariety = method(Options => options makeLagrangeRing);
 -- Computes a witness system for a lagrange variety 
+-- AR plays the role of conormalRing
 witnessLagrangeVariety (Ideal,Ideal, LagrangeRing) := LagrangeVarietyWitness => opts -> (WI,I,AR) -> (
   if not ring I === AR.PrimalRing then error "expected ideal in primal ring";  
   c := #AR.LagrangeCoordinates;
@@ -235,6 +244,7 @@ ring (LagrangeVarietyWitness) := LVW -> ring LVW#JacobianConstraint
 
 -- Degree of LagrangeVarietyWitness
 --TODO: How to document this?
+
 degree (List,LagrangeVarietyWitness) := (v,LVW) -> (    
     if degreeLength  LVW.LagrangeRing#PrimalRing==2 then(
 	u:=gens coefficientRing LVW;
@@ -327,6 +337,13 @@ LVW = witnessLagrangeVariety(WI,I)
 ring LVW
 WCI = witnessCriticalIdeal({7,99},{x-a,y-b},LVW)
 assert (4 ==degree (WCI_1+WCI_2))--ED degree of ellipse
+needsPackage"Bertini"
+makeB'InputFile(storeBM2Files,
+    AffVariableGroup=>{x,y,lambda_0},
+    B'Polynomials=>(WCI_0+WCI_2)_*   
+    )
+runBertini(storeBM2Files)
+#importSolutionsFile(storeBM2Files)
 ///
 
 
