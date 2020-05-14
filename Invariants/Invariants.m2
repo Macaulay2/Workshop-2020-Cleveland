@@ -125,11 +125,11 @@ net RingOfInvariants := B -> (
 
 invariantRing = method()
 
-invariantRing (TorusAction, PolynomialRing) := RingOfInvariants => (T, R) -> (
-    new RingOfInvariants from {AmbientRing => R, Action => T }
+invariantRing (GroupAction, PolynomialRing) := RingOfInvariants => (G, R) -> (
+    new RingOfInvariants from {AmbientRing => R, Action => G }
     )
 
-PolynomialRing^TorusAction := RingOfInvariants => (R, T) -> invariantRing(T, R)
+PolynomialRing^TorusAction := RingOfInvariants => (R, G) -> invariantRing(G, R)
 
 action = method()
 
@@ -548,6 +548,80 @@ document {
     	
 	EXAMPLE {
 		"T = torusAction matrix{{0,1,-1,1},{1,0,-1,-1}}"
+		},
+}
+
+document {
+	Key => {invariantRing, (invariantRing,GroupAction,PolynomialRing)},
+	Headline => "The ring of invariants of a group action",
+	Usage => "invariantRing(G,R)\nR^G",
+	Inputs => {
+	    	"G" => GroupAction => {""},
+	    	"R" => PolynomialRing => {""},
+		},
+	Outputs => {
+		RingOfInvariants => {"of the given group action"}
+		},
+	"This function is provided by the package ", TO Invariants,". ",
+	PARA {
+	"The following example defines an action of a 
+	two-dimensional torus on a four-dimensional vector space
+	with a basis of weight vectors whose weights are
+	the columns of the input matrix."
+	},
+    	
+	EXAMPLE {
+		"R=QQ[x_1..x_4]",
+		"T=torusAction matrix{{0,1,-1,1},{1,0,-1,-1}}",
+		"S=invariantRing(T,R)",
+		},
+	PARA {
+	"Note that this function sets up the ring of invariants
+	but does not perform any computations. To obtain
+	generators for the ring of invariants use ",
+	TO invariants,". Here is a shortcut for this method."
+	},
+    	
+	EXAMPLE {
+		"S=R^T",
+		},
+}
+
+document {
+	Key => {invariants, (invariants,RingOfInvariants)},
+	Headline => "Compute generators for a ring of invariants",
+	Usage => "invariants(S)",
+	Inputs => {
+	    	"S" => RingOfInvariants => {""},
+		},
+	Outputs => {
+		List => {"of generators for the ring of invariants"}
+		},
+	"This function is provided by the package ", TO Invariants,". ",
+	PARA {
+	    "This method computes generators for a ring of
+	    invariants as an algebra over the field of coefficients
+	    of the ambient polynomial ring.
+	    The algorithm used depends on the group action."
+	    },
+	PARA {
+	"The following example computes generators for the ring of
+	invariants of a finite group action."
+	},
+    	
+	EXAMPLE {
+		"null",
+		},
+	PARA {
+	"The next example computes generators for the ring of
+	invariants of a torus action."
+	},
+    	
+	EXAMPLE {
+		"R=QQ[x_1..x_4]",
+		"T=torusAction matrix{{0,1,-1,1},{1,0,-1,-1}}",
+		"S=invariantRing(T,R)",
+		"invariants(S)",
 		},
 }
 
