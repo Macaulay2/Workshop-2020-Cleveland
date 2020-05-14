@@ -358,14 +358,7 @@ WI=I
 LVW = witnessLagrangeVariety(WI,I)
 ring LVW
 needsPackage"Bertini"
-
-bertiniZeroDimSolve (WCI_0+WCI_2)_*)
-
-makeB'InputFile(storeBM2Files,
-    ring LVW
-    AffVariableGroup=>{basis({1,0},R),basis({0,2},R)}
-    )
-
+///
 
 
 
