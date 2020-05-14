@@ -21,10 +21,6 @@ newPackage(
 -- must be placed in one of the following two lists
 
 export {
-    -- toy functions as examples
-    "firstFunction",
-    "secondFunction",
-    "MyOption",
     -- Types and Constructors
     "generatorToParityCheck",
     "parityCheckToGenerator",
