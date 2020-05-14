@@ -34,9 +34,20 @@ newPackage(
       Email => "loper012@umn.edu",
       HomePage => "https://www.math.umn.edu/~loper012"},  
       {
+      Name => "Diane Maclagan",
+      Email => "D.Maclagan@warwick.ac.uk",
+      HomePage => "http://homepages.warwick.ac.uk/staff/D.Maclagan/"},
+      {
+      Name => "Maryam Nowroozi",
+      Email => "nowroozm@mcmaster.ca"},
+      {
+      Name => "Ritvik Ramkumar",
+      Email => "ritvik@berkeley.edu",
+      HomePage => "https://math.berkeley.edu/~ritvik/index.html"}, 
+      {
       Name => "Julie Rana",
       Email => "ranaj@lawrence.edu",
-      HomePage => "https://sites.google.com/site/jranamath"},  
+      HomePage => "https://sites.google.com/site/jranamath"},
       {
       Name => "Mahrud Sayrafi",
       Email => "mahrud@umn.edu",
@@ -56,8 +67,12 @@ newPackage(
       {
       Name => "Thomas Yahl",
       Email => "thomasjyahl@tamu.edu",
-      HomePage => "https://www.math.tamu.edu/~thomasjyahl"}
-      },
+      HomePage => "https://www.math.tamu.edu/~thomasjyahl"},
+      {
+      Name => "Jay Yang",
+      Email => "jkyang@umn.edu",
+      HomePage => "https://www-users.math.umn.edu/~jkyang/"}
+  },
   Headline => "routines for working with toric morphisms",
   PackageExports => {
       "NormalToricVarieties"
@@ -159,7 +174,7 @@ outerNormals (NormalToricVariety,List) := Matrix => (X, sigma) -> (
 
 
 
-isWellDefined ToricMap := Boolean => f -> (
+isWellDefined ToricMap := Boolean => (cacheValue isWellDefined) (f -> (
     -- CHECK DATA STRUCTURE
     -- check keys
     K := keys f;
@@ -224,7 +239,7 @@ isWellDefined ToricMap := Boolean => f -> (
 	return false
 	);
     true
-)
+    ))
 
 isProper = method()
 isProper ToricMap := Boolean => (cacheValue symbol isProper) (
@@ -329,12 +344,14 @@ isFibration = method()
 -- chapter 7, but it needs work.
 -- 
 -- We follow proposition 2.1 in DMM 
+isFibration ToricMap := Boolean => (cacheValue isFibration) (f -> (
+    isProper f and gens gb matrix f == id_(ZZ^(dim target f))))
 
-isFibration ToricMap := Boolean => f -> (
-    isProper f and gens gb matrix f == id_(ZZ^(dim target f)))
+
 
 isDominant = method()
-isDominant ToricMap := Boolean => f -> (rank matrix f == rank matrix rays target f)
+isDominant ToricMap := Boolean => (cacheValue isDominant) (f -> (
+    rank matrix f == dim target f))
 
 outerNorm = method()
 outerNorm (NormalToricVariety,List) := Sequence => (X,sigma) -> (
@@ -475,6 +492,7 @@ ideal ToricMap := Ideal => f -> (
 --    B := ideal ring target f;
 --    saturate (kernel inducedMap f, B)
 --    )
+
 
 weilDivisorGroup ToricMap := Matrix => f -> (
     X := source f;
@@ -1239,22 +1257,79 @@ doc ///
 	    f = map(X,Y,matrix{{1,0},{0,1}})
 	    isSurjective f
 	Text
-	    The inclusion of the A^2 in P^2 is not surjective
+	    Inclusion of an affine open into a blowup is not surjective
 	Example
 	    X = affineSpace 2
-	    Y = toricProjectiveSpace 2
-	    f = map(Y,X,matrix{{1,0},{0,1}})
+	    Y = toricBlowup({0,1},X) 
+	    f = map(Y,X,matrix{{1,0},{1,1}})
 	    isSurjective f
- 
     SeeAlso
         (ToricMap)
 /// 
+
+doc ///
+    Key
+        (weilDivisorGroup, ToricMap)
+    Headline
+        make the induced map between the corresponding groups of torus-invariant Weil divisors.
+    Usage
+        weilDivisorGroup f
+    Inputs
+        f : ToricMap
+    Outputs
+        : Matrix
+	    representing the map of abelian groups between the corresponding
+	    groups of torus-invariant Weil divisors
+    Description
+        Text
+	    Given a toric map $f : X \to Y$ with Y a smooth toric variety,
+            this method returns the induced map of abelian groups from
+            the group of torus-invariant Weil divisors on $Y$ to
+            the group of torus-invariant Weil divisors on $X$.
+            For general (toric) varieties, {\tt weilDivisorGroup} is not a functor.
+            However, {\tt weilDivisorGroup} gives a contravariant functor on the
+            category of smooth normal toric varieties.
+	Text
+	    Our first example produces the induced map from the group of
+            torus-invariant Weil divisors on the projective line to the group of
+            torus-invariant Weil divisors on the first Hirzebruch surface.
+	Example
+	    X = hirzebruchSurface 1;
+	    Y = toricProjectiveSpace 1;
+	    f = map(Y, X, matrix {{1, 0}})
+	    f' = weilDivisorGroup f
+	    assert (source f' == weilDivisorGroup Y)
+	    assert (target f' == weilDivisorGroup X)
+	Text
+	    The next example gives the induced map from the group of
+            torus-invariant Weil divisors on the projective plane to the group
+            of torus-invariant Weil divisors on the first Hirzebruch surface.
+	Example
+	    nefGenerators X
+	    Z = toricProjectiveSpace 2;
+	    g = map(Z, X, matrix {{1, 0}, {0,-1}})
+	    assert isWellDefined g
+	    g' = weilDivisorGroup g
+	    assert (source g' == weilDivisorGroup Z)
+	    assert (target g' == weilDivisorGroup X)
+        Text
+            The next example demonstrates that the induced map on the group of
+            torus-invariant Weil divisors is compatible with the induced map
+            on the class group
+        Example
+            gPic = classGroup g
+            assert(gPic * fromWDivToCl(Z) == fromWDivToCl(X) * g')
+    SeeAlso
+        (weilDivisorGroup, NormalToricVariety)
+        (classGroup, ToricMap)
+        (pullback, ToricMap, ToricDivisor)
+///
    
 doc ///
     Key
         (classGroup, ToricMap)
     Headline 
-        make the induce map between the corresponding class groups
+        make the induced map between the corresponding class groups
     Usage 
         classGroup f
     Inputs 
@@ -1265,10 +1340,12 @@ doc ///
 	    class groups
     Description
         Text
-	    Given a toric map $f : X \to Y$, this method returns the induced
-	    map of abelian groups from the class group of $Y$ to the class
-	    group of $X$.  In other words, {\tt classGroup} is a contravariant
-	    functor on the category of normal toric varieties.	    
+	    Given a toric map $f : X \to Y$ with Y a smooth toric variety,
+            this method returns the induced
+            map of abelian groups from the class group of $Y$ to the class
+	    group of $X$.  For general (toric) varieties, {\tt classGroup}
+            is not a functor. However, {\tt classGroup} gives a contravariant
+            functor on the category of smooth normal toric varieties.
 	Text
 	    Our first example produces the induced map from the class group of
 	    the projective line to the class group of the first Hirzebruch
@@ -1282,19 +1359,126 @@ doc ///
 	    assert (target f' == classGroup X) 
 	Text
 	    The next example gives the induced map from the class group of the
-	    projective plane to the class group of the first Hirzebruch
+	    projective plane to the class group of the first Hirzebruch surface.
+	Example
+	    nefGenerators X
+	    Z = toricProjectiveSpace 2;
+	    g = map(Z, X, matrix {{1, 0}, {0,-1}})
+	    assert isWellDefined g
+	    g' = classGroup g
+	    assert (source g' == classGroup Z)
+	    assert (target g' == classGroup X) 	    
+    SeeAlso
+        (classGroup, NormalToricVariety)
+        (weilDivisorGroup, ToricMap)
+        (picardGroup, ToricMap)
+        (pullback, ToricMap, ToricDivisor)
+///
+
+doc ///
+    Key
+        (picardGroup, ToricMap)
+    Headline
+        make the induced map between the corresponding Picard groups
+    Usage
+        picardGroup f
+    Inputs
+        f : ToricMap
+    Outputs
+        : Matrix
+	    representing the map of abelian groups between the corresponding
+	    Picard groups
+    Description
+        Text
+	    Given a toric map $f : X \to Y$, this method returns the induced
+	    map of abelian groups from the Picard group of $Y$ to the Picard
+	    group of $X$.  In other words, {\tt picardGroup} is a contravariant
+	    functor on the category of normal toric varieties.
+	Text
+	    Our first example produces the induced map from the Picard group of
+	    the projective line to the Picard group of the first Hirzebruch
+            surface.
+	Example
+	    X = hirzebruchSurface 1;
+	    Y = toricProjectiveSpace 1;
+	    f = map(Y, X, matrix {{1, 0}})
+	    f' = picardGroup f
+	    assert (source f' == picardGroup Y)
+	    assert (target f' == picardGroup X)
+	Text
+	    The next example gives the induced map from the Picard group of the
+	    projective plane to the Picard group of the first Hirzebruch
 	    surface.
 	Example
 	    nefGenerators X
 	    Z = toricProjectiveSpace 2;
 	    g = map(Z, X, matrix {{1, 0}, {0,-1}})
 	    assert isWellDefined g
-	    g' = classGroup f
-	    assert (source g' == classGroup Y)
-	    assert (target g' == classGroup X) 	    
+	    g' = picardGroup g
+	    assert (source g' == picardGroup Z)
+	    assert (target g' == picardGroup X)
     SeeAlso
-        (classGroup, NormalToricVariety)
-/// 
+        (picardGroup, NormalToricVariety)
+        (cartierDivisorGroup, ToricMap)
+        (classGroup, ToricMap)
+        (pullback, ToricMap, ToricDivisor)
+///
+
+doc ///
+    Key
+        (cartierDivisorGroup, ToricMap)
+    Headline
+        make the induced map between the corresponding groups of torus-invariant Cartier divisors.
+    Usage
+        cartierDivisorGroup f
+    Inputs
+        f : ToricMap
+    Outputs
+        : Matrix
+	    representing the map of abelian groups between the corresponding
+	    groups of torus-invariant Cartier divisors
+    Description
+        Text
+	    Given a toric map $f : X \to Y$, this method returns the induced
+	    map of abelian groups from the group of torus-invariant Cartier
+            divisors on $Y$ to the group of torus-invariant Cartier divisors
+            on $X$. In other words, {\tt cartierDivisorGroup} is a contravariant
+	    functor on the category of normal toric varieties.
+	Text
+	    Our first example produces the induced map from the group of
+            torus-invariant Cartier divisors on the projective line to the group
+            of torus-invariant Cartier divisors on the first Hirzebruch surface.
+	Example
+	    X = hirzebruchSurface 1;
+	    Y = toricProjectiveSpace 1;
+	    f = map(Y, X, matrix {{1, 0}})
+	    f' = cartierDivisorGroup f
+	    assert (source f' == cartierDivisorGroup Y)
+	    assert (target f' == cartierDivisorGroup X)
+	Text
+	    The next example gives the induced map from the group of
+            torus-invariant Cartier divisors on the projective plane to the group
+            of torus-invariantCartier divisors on the first Hirzebruch surface.
+	Example
+	    nefGenerators X
+	    Z = toricProjectiveSpace 2;
+	    g = map(Z, X, matrix {{1, 0}, {0,-1}})
+	    assert isWellDefined g
+	    g' = cartierDivisorGroup g
+	    assert (source g' == cartierDivisorGroup Z)
+	    assert (target g' == cartierDivisorGroup X)
+        Text
+            The next example demonstrates that the induced map on the group of
+            torus-invariant Cartier divisors is compatible with the induced map
+            on the Picard group
+        Example
+            gPic = picardGroup g
+            assert(gPic * fromCDivToPic(Z) == fromCDivToPic(X) * g')
+    SeeAlso
+        (cartierDivisorGroup, NormalToricVariety)
+        (picardGroup, ToricMap)
+        (pullback, ToricMap, ToricDivisor)
+///
 
     	
 
@@ -1569,9 +1753,26 @@ X = hirzebruchSurface 1
 f = map(Y, X, matrix{{1,0},{0,-1}})
 assert isDominant (f)
 assert isSurjective f
-isDominant f
-isSurjective f
 assert isWellDefined f
+///
+
+TEST ///
+Y = toricProjectiveSpace 3
+X = affineSpace 3
+f = map(Y, X, matrix{{2,0,0},{1,1,0},{3,1,0}})
+assert not isDominant f
+assert isWellDefined f
+assert not isSurjective f
+///
+
+TEST ///
+--Erika's test
+Y = toricProjectiveSpace 1
+X = toricProjectiveSpace 1
+f = map(Y, X, 1)
+assert isWellDefined f
+assert isDominant f
+assert isSurjective f
 ///
 
 -------------------------------------------------------
@@ -1585,16 +1786,14 @@ f = map(Y,X,matrix{{1,0}})
 assert isSurjective f
 ///
 
--- Test 2: When a fan lies in a hyerplane 
+-- Test 2:
 TEST ///
 X = affineSpace 2
--- A^2 for which the fan lies in the hypereplane
 Y = normalToricVariety({{1,0,0},{0,1,0}},{{0,1}})
--- Isomorphisms between X, Y
 f1 = map(X,Y,matrix{{1,0,0},{0,1,0}})
 f2 = map(Y,X,matrix{{1,0},{0,1},{0,0}})
 assert isSurjective f1
-assert isSurjective f2
+assert not isSurjective f2
 ///
 
 -- Test 3: Embedding open subsets I
