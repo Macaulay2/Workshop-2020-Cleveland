@@ -1,5 +1,7 @@
 -- Copyright 1997 by Mike Stillman and Harry Tsai
 
+-- THIS SHOULD BE IN A DIFFERENT FILE
+
 Subring = new Type of HashTable
 subring = method()
 subring Matrix := M -> (
@@ -16,6 +18,7 @@ gens Subring := o -> A -> A#Generators
 numgens Subring := A -> numcols gens A
 ambient Subring := A -> A#AmbientRing
 
+-- REMOVE THIS WHEN CREATING A PACKAGE
 debug Core
 
 ---------------------------------
@@ -242,8 +245,6 @@ subalgebraBasis = method(Options => {
 
 subalgebraBasis Subring := o -> R -> (
 
-<< "Beginning of subalgebraBasis" << endl;
-
 -- Declaration of variables
     -- baseRing is the ring of the input matrix
     -- sagbiGens is a list/matrix of all the generators
@@ -276,7 +277,6 @@ subalgebraBasis Subring := o -> R -> (
 
     currDegree := null;     -- d
     nLoops := null;         -- nloops
-    nNewGenerators := null; -- numnewsagbi
     isDone := false;
     sagbiGB := null;
     syzygyPairs := null;
@@ -306,51 +306,32 @@ currDegree = grabLowestDegree(R, o.Limit) + 1;
     -- While the number of loops is within the limit and the isDone flag is false, continue to process
     while nLoops <= o.Limit and not isDone do (
         nLoops = nLoops + 1;
-        
-        << "Current Degree is " << currDegree << endl;
-        << "Sagbi gens is " << peek R.cache.SagbiGens << endl;
     
         -- Construct a Groebner basis to eliminiate the base elements generators from the SyzygyIdeal.
         sagbiGB = gb(R.cache.SyzygyIdeal, DegreeLimit=>currDegree);
-	<< "Current Degree is " << currDegree << endl;
-    << "generators of GB " << gens sagbiGB << endl;
-    << "selectInSubring is " << selectInSubring(1, gens sagbiGB) << endl;
-    << "submatrixByDegrees is " << submatrixByDegrees(selectInSubring(1, gens sagbiGB), currDegree) << endl;
         syzygyPairs = R.cache.Substitution(submatrixByDegrees(selectInSubring(1, gens sagbiGB), currDegree));
-    	<< "Syzygy pairs is " << syzygyPairs << endl;
         if R.cache.Pending#currDegree != {} then (
             syzygyPairs = syzygyPairs | R.cache.InclusionBase(matrix{R.cache.Pending#currDegree});
             R.cache.Pending#currDegree = {};
         );
         
-        << "Before rawsubduction" << endl;
-        << "R is " << describe R.AmbientRing << endl;
-        << "spairs is " << syzygyPairs << endl;
-        << "Gmap is " << R.cache.Substitution << endl;
-        << "gbJ is " << sagbiGB << endl;
-        
         subducted = R.cache.ProjectionBase(map(R.cache.TensorRing,rawSubduction(rawMonoidNumberOfBlocks raw monoid R.AmbientRing, raw syzygyPairs, raw R.cache.Substitution, raw sagbiGB)));
-	<< "subducted is " << subducted << endl;
         newElems = compress subducted;
-    	<< "number generators" << newElems << endl;
         if numcols newElems > 0 then (
             << numcols newElems << " generators added" << endl;
             insertPending(R, newElems, o.Limit);
             currDegree = grabLowestDegree(R, o.Limit);
         )
         else (
-            nNewGenerators = 0;
             -- There was a toList here before.  Unnecessary (I think), so I deleted it.
-	    -- T: no sum for MutableList
-            -- Is the rawStatus even needed?
+	            -- T: no sum for MutableList
+                -- Is the rawStatus even needed?
             if sum toList apply(R.cache.Pending, i -> #i) === 0 and rawStatus1 raw sagbiGB == 6 and currDegree > maxGensDeg then (
                 isDone = true;
                 << "SAGBI basis is FINITE!" << endl;
             	)
             );
             currDegree = currDegree + 1;
-	<< "is Done is " << isDone << endl;
-	<< "Loops is " << nLoops << endl;
     	);
     R
 )
@@ -371,4 +352,5 @@ needs "sagbi.m2"
 R=QQ[x,y]
 A = subring matrix{{x+y,x*y,x*y^2}}
 gens A -- gets the use-specified generators 
-subalgebraBasis(A, Limit=>100)
+S = subalgebraBasis(A, Limit=>10)
+peek S.cache.SagbiGens
