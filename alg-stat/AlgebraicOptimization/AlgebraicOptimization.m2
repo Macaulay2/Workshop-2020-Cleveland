@@ -33,9 +33,9 @@ export {
   "ConormalRing","CNRing","PrimalRing","DualRing","PrimalCoordinates","DualCoordinates",
   --More Types
   "LagrangeVarietyWitness","LagrangeRing",
+  "isolatedRegularCriticalPointSet",
   --More Keys
-  "LagrangeVariable","PrimalIdeal","JacobianConstraint","AmbientRing","LagrangeCoordinates","PrimalWitnessSystem",
-  "isolatedRegularCriticalPointSet"
+  "LagrangeVariable","PrimalIdeal","JacobianConstraint","AmbientRing","LagrangeCoordinates","PrimalWitnessSystem"
 }
 
 ConormalRing = new Type of HashTable;
