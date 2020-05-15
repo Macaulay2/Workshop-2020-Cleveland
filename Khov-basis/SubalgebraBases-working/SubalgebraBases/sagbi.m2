@@ -1,6 +1,7 @@
 -- Copyright 1997 by Mike Stillman and Harry Tsai
 
 -- THIS SHOULD BE IN A DIFFERENT FILE
+-- THIS SHOULD BE A TYPE OF RING, BUT NOT RIGHT NOW
 
 Subring = new Type of HashTable
 subring = method()
@@ -35,6 +36,8 @@ insertPending = (R, candidates, maxDegree) -> (
     -- Check R.cache.pending exists!!!
     -- ADD THIS!!!
 
+    subalgComp := R.cache.SubalgComputations;
+
     -- i steps through the columns of candiates
     i := 0;
     while i < numcols candidates do (
@@ -44,7 +47,7 @@ insertPending = (R, candidates, maxDegree) -> (
         level := (degree candidate)_0;
 
         -- if the degree isn't too large, then add f to the correct list
-        if level <= maxDegree then R.cache.Pending#level = append(R.cache.Pending#level, candidate);
+        if level <= maxDegree then subalgComp.Pending#level = append(subalgComp.Pending#level, candidate);
         i = i+1;
     );
 )
@@ -54,9 +57,12 @@ insertPending = (R, candidates, maxDegree) -> (
     -- Algorithm makes a pass through the lists of Pending until it finds something nonempty
 
 lowestDegree = (R, maxDegree) -> (
+
+    subalgComp := R.cache.SubalgComputations;
+
     -- i steps through the lists of Pending
     i := 0;
-    while i <= maxDegree and R.cache.Pending#i === {} do i=i+1;
+    while i <= maxDegree and subalgComp.Pending#i === {} do i=i+1;
     i
 )
 
@@ -65,10 +71,12 @@ lowestDegree = (R, maxDegree) -> (
     -- newGens is a matrix of generators to be added
 
 appendToBasis := (R, newGens) -> (
+
+    subalgComp := R.cache.SubalgComputations;
     
     -- Add the new generators to the subalgebra generators
     R.cache.SagbiGens = R.cache.SagbiGens | newGens;
-    R.cache.GensDegrees = R.cache.GensDegrees | flatten degrees source newGens;
+    R.cache.SagbiDegrees = R.cache.SagbiDegrees | flatten degrees source newGens;
     
     -- Find the number of generators of the ambient ring and the current list of subalgebra generators
     nBaseGens := numgens R.AmbientRing;
@@ -91,30 +99,30 @@ appendToBasis := (R, newGens) -> (
         MonomialOrder => newOrder];
     
     -- Construct the free monoid ring with coefficients in CoeffField and and variables for both the base and subalgebra.
-    R.cache.TensorRing = CoeffField NewVariables;
+    subalgComp.TensorRing = CoeffField NewVariables;
     
     -- Construct maps between our rings to allow us to move polynomials around
     -- ProjectionInclusion sets the variables corresponding to the base equal to 0.  The result is in the tensor ring.
     -- ProjectionBase sets the variables corresponding to the subalgebra generators equal to 0 and maps into the ambient ring.
     -- InclusionBase is the inclusion map from the base ring to the tensor ring.  The variables are mapped to themselves
     -- Substitution repalces elements of the tensor ring with their formulas in terms of the base ring.
-    R.cache.ProjectionInclusion = map(R.cache.TensorRing, R.cache.TensorRing,
-        matrix {toList(nBaseGens:0_(R.cache.TensorRing))} |
-	(vars R.cache.TensorRing)_{nBaseGens .. nBaseGens+nSubalgGens-1});
+    subalgComp.ProjectionInclusion = map(subalgComp.TensorRing, subalgComp.TensorRing,
+        matrix {toList(nBaseGens:0_(subalgComp.TensorRing))} |
+	(vars subalgComp.TensorRing)_{nBaseGens .. nBaseGens+nSubalgGens-1});
     
-    R.cache.ProjectionBase = map(R.AmbientRing, R.cache.TensorRing,
+    subalgComp.ProjectionBase = map(R.AmbientRing, subalgComp.TensorRing,
         (vars R.AmbientRing) | matrix {toList(nSubalgGens:0_(R.AmbientRing))});
     
-    R.cache.InclusionBase = map(R.cache.TensorRing, R.AmbientRing,
-        (vars R.cache.TensorRing)_{0..nBaseGens-1});
+    subalgComp.InclusionBase = map(subalgComp.TensorRing, R.AmbientRing,
+        (vars subalgComp.TensorRing)_{0..nBaseGens-1});
     
-    R.cache.Substitution = map(R.cache.TensorRing, R.cache.TensorRing,
-        (vars R.cache.TensorRing)_{0..nBaseGens-1} | R.cache.InclusionBase(R.cache.SagbiGens));
+    subalgComp.Substitution = map(subalgComp.TensorRing, subalgComp.TensorRing,
+        (vars subalgComp.TensorRing)_{0..nBaseGens-1} | subalgComp.InclusionBase(R.cache.SagbiGens));
     
     -- Construct an ideal consisting of variables repesenting subalgebra generators minus their leading term
-    R.cache.SyzygyIdeal = ideal(
-        (vars R.cache.TensorRing)_{nBaseGens..nBaseGens+nSubalgGens-1}-
-	R.cache.InclusionBase(leadTerm R.cache.SagbiGens));
+    subalgComp.SyzygyIdeal = ideal(
+        (vars subalgComp.TensorRing)_{nBaseGens..nBaseGens+nSubalgGens-1}-
+	subalgComp.InclusionBase(leadTerm R.cache.SagbiGens));
 )    
     
 -- ROW REDUCE FROM COMMON.
@@ -207,23 +215,26 @@ submatrixByDegrees (Matrix,ZZ) := (inputMatrix,currDegree) -> (
     -- R is the subalgebra
 
 grabLowestDegree = (R, maxDegree) -> (
+
+    subalgComp := R.cache.SubalgComputations;
+
     -- Finds the current lowest degree of the pending list.
     currentLowest := lowestDegree(R, maxDegree);
     -- If there are elements in the pending list, then work on them.
     if currentLowest <= maxDegree then (    
     	-- Row reduce the matrix of the pending elements of lowest degree
     	-- WHAT IS THIS DOING???
-    	reducedGenerators = rowReduce(matrix{R.cache.Pending#currentLowest}, currentLowest);
-    	R.cache.Pending#currentLowest = {};
+    	reducedGenerators = rowReduce(matrix{subalgComp.Pending#currentLowest}, currentLowest);
+    	subalgComp.Pending#currentLowest = {};
     	insertPending(R, reducedGenerators, maxDegree);
     	-- Find the lowest degree elements after reduction.
     	currentLowest = lowestDegree(R, maxDegree);
     	-- Count the number of new generators and add them to the basis
     	numNewGenerators := 0;
     	if currentLowest <= maxDegree then (
-            numNewGenerators = #R.cache.Pending#currentLowest;
-            appendToBasis(R, matrix{R.cache.Pending#currentLowest});
-            R.cache.Pending#currentLowest = {};
+            numNewGenerators = #subalgComp.Pending#currentLowest;
+            appendToBasis(R, matrix{subalgComp.Pending#currentLowest});
+            subalgComp.Pending#currentLowest = {};
 	    );
     	-- If number of new generators is zero, then nothing was added because pending was empty.  There is no way for pending to be empty unless currentLowest is maxDegree + 1.
     	);
@@ -265,14 +276,18 @@ subalgebraBasis Subring := o -> R -> (
 
     -- CHECK IF THESE EXIST to avoid recomputing???
 
-    R.cache.GensDegrees = {};
-    R.cache.TensorRing = null;  -- RS
-    R.cache.SyzygyIdeal = null; -- J
+    R.cache.SubalgComputations = new MutableHashTable;
 
-    R.cache.ProjectionInclusion = null; -- RStoS
-    R.cache.ProjectionBase = null;      -- RStoR
-    R.cache.InclusionBase = null;       -- RtoRS
-    R.cache.Substitution = null;        -- Gmap
+    subalgComp := R.cache.SubalgComputations;
+
+    R.cache.SagbiDegrees = {};
+    subalgComp.TensorRing = null;  -- RS
+    subalgComp.SyzygyIdeal = null; -- J
+
+    subalgComp.ProjectionInclusion = null; -- RStoS
+    subalgComp.ProjectionBase = null;      -- RStoR
+    subalgComp.InclusionBase = null;       -- RtoRS
+    subalgComp.Substitution = null;        -- Gmap
 
     currDegree := null;     -- d
     nLoops := null;         -- nloops
@@ -281,7 +296,7 @@ subalgebraBasis Subring := o -> R -> (
     syzygyPairs := null;
     newElems := null;
 
-    R.cache.Pending = new MutableList from toList(o.Limit+1:{}); -- Pending
+    subalgComp.Pending = new MutableList from toList(o.Limit+1:{}); -- Pending
 
     -- Create an empty matrix of generators.
     R.cache.SagbiGens = matrix(R.AmbientRing,{{}});
@@ -295,7 +310,7 @@ subalgebraBasis Subring := o -> R -> (
     insertPending(R, reducedGens, o.Limit);
 
     -- Remove elements of coefficient ring
-    R.cache.Pending#0 = {};
+    subalgComp.Pending#0 = {};
 
     -- Get the lowest degree of the pending list.  Add 1 and initialize to number of loops
 currDegree = grabLowestDegree(R, o.Limit) + 1;
@@ -307,14 +322,14 @@ currDegree = grabLowestDegree(R, o.Limit) + 1;
         nLoops = nLoops + 1;
     
         -- Construct a Groebner basis to eliminiate the base elements generators from the SyzygyIdeal.
-        sagbiGB = gb(R.cache.SyzygyIdeal, DegreeLimit=>currDegree);
-        syzygyPairs = R.cache.Substitution(submatrixByDegrees(selectInSubring(1, gens sagbiGB), currDegree));
-        if R.cache.Pending#currDegree != {} then (
-            syzygyPairs = syzygyPairs | R.cache.InclusionBase(matrix{R.cache.Pending#currDegree});
-            R.cache.Pending#currDegree = {};
+        sagbiGB = gb(subalgComp.SyzygyIdeal, DegreeLimit=>currDegree);
+        syzygyPairs = subalgComp.Substitution(submatrixByDegrees(selectInSubring(1, gens sagbiGB), currDegree));
+        if subalgComp.Pending#currDegree != {} then (
+            syzygyPairs = syzygyPairs | subalgComp.InclusionBase(matrix{subalgComp.Pending#currDegree});
+            subalgComp.Pending#currDegree = {};
         );
         
-        subducted = R.cache.ProjectionBase(map(R.cache.TensorRing,rawSubduction(rawMonoidNumberOfBlocks raw monoid R.AmbientRing, raw syzygyPairs, raw R.cache.Substitution, raw sagbiGB)));
+        subducted = subalgComp.ProjectionBase(map(subalgComp.TensorRing,rawSubduction(rawMonoidNumberOfBlocks raw monoid R.AmbientRing, raw syzygyPairs, raw subalgComp.Substitution, raw sagbiGB)));
         newElems = compress subducted;
         if numcols newElems > 0 then (
             << numcols newElems << " generators added" << endl;
@@ -325,7 +340,7 @@ currDegree = grabLowestDegree(R, o.Limit) + 1;
             -- There was a toList here before.  Unnecessary (I think), so I deleted it.
 	            -- T: no sum for MutableList
                 -- Is the rawStatus even needed?
-            if sum toList apply(R.cache.Pending, i -> #i) === 0 and rawStatus1 raw sagbiGB == 6 and currDegree > maxGensDeg then (
+            if sum toList apply(subalgComp.Pending, i -> #i) === 0 and rawStatus1 raw sagbiGB == 6 and currDegree > maxGensDeg then (
                 isDone = true;
                 << "SAGBI basis is FINITE!" << endl;
             	)
