@@ -22,7 +22,7 @@ export {
   -- Methods
   "projectiveDual",
   "conormalRing",
-  "conormalVariety",
+  "conormalIdeal",
   "multiDegreeEDDegree",
   --More Methods
   "makeLagrangeRing","witnessLagrangeVariety","witnessCriticalIdeal",
@@ -34,10 +34,11 @@ export {
   "LagrangeVarietyWitness","LagrangeRing",
   --More Keys
   "LagrangeVariable","PrimalIdeal","JacobianConstraint","AmbientRing","LagrangeCoordinates","PrimalWitnessSystem",
-  "Data", "Gradient", "isRootIndex", "MembershipTestResults", "WitnessSuperSet", "LogTolerance", "SaveFileDirectory"
+  "Data", "Gradient", "isRootIndex", "MembershipTestResults", "WitnessSuperSet", "LogTolerance", "SaveFileDirectory",
+  "Coordinates", "Factors"
 }
 
-ConormalRing = new Type of HashTable;
+ConormalRing = new Type of MutableHashTable;
 
 conormalRing = method(Options => {DualVariable => null});
 -- Creates a ConormalRing from a primal ring R
@@ -46,24 +47,22 @@ conormalRing Ring := ConormalRing => opts -> R -> (
   u := if opts.DualVariable === null then symbol u else opts.DualVariable;
   dualR := (coefficientRing R)[u_0..u_(#gens R - 1)];
   new ConormalRing from {
-    CNRing => R ** dualR,
-    PrimalRing => R,
-    DualRing => dualR,
-    PrimalCoordinates => gens R,
-    DualCoordinates => gens dualR
+    AmbientRing => R ** dualR,
+    Factors => {R, dualR},
+    Coordinates => {gens R, gens dualR}
   }
 )
 
 
-conormalVariety = method(Options => options conormalRing);
+conormalIdeal = method(Options => options conormalRing);
 -- Computes the conormal variety
-conormalVariety (Ideal, ConormalRing) := Ideal => opts -> (I,C) -> (
-  if not ring I === C.PrimalRing then error "expected ideal in primal ring";
+conormalIdeal (Ideal, ConormalRing) := Ideal => opts -> (I,C) -> (
+  if not ring I === C.Factors_0 then error "expected ideal in primal ring";
   
   c := codim I;
-  jacI := sub(diff(matrix{C.PrimalCoordinates}, transpose gens I), C.CNRing);
-  jacBar := sub(matrix{C.DualCoordinates}, C.CNRing) || jacI;
-  J' := sub(I,C.CNRing) + minors(c+1, jacBar);
+  jacI := sub(diff(matrix{C.Coordinates_0}, transpose gens I), C.AmbientRing);
+  jacBar := sub(matrix{C.Coordinates_1}, C.AmbientRing) || jacI;
+  J' := sub(I,C.AmbientRing) + minors(c+1, jacBar);
   J := saturate(J', minors(c, jacI));
   J
 )
@@ -80,12 +79,12 @@ projectiveDual Ideal := Ideal => opts -> I -> (
   R := ring I;
   S := conormalRing(R, opts);
 
-  primalCoordinates := S.PrimalCoordinates / (i->sub(i,S.CNRing));
-  dualCoordinates := S.DualCoordinates / (i->sub(i,S.CNRing));
+  primalCoordinates := S.Coordinates_0 / (i->sub(i,S.AmbientRing));
+  dualCoordinates := S.Coordinates_1 / (i->sub(i,S.AmbientRing));
 
-  J := conormalVariety(I, S);
+  J := conormalIdeal(I, S);
 
-  sub(eliminate(primalCoordinates, J), S.DualRing)
+  sub(eliminate(primalCoordinates, J), S.Factors_1)
 )
 
 TEST ///
@@ -100,7 +99,7 @@ assert( dualI == ideal(S_0^2 - S_1^2 - S_2^2))
 multiDegreeEDDegree = method();
 multiDegreeEDDegree Ideal := ZZ => I -> (
   S := conormalRing ring I;
-  N := conormalVariety(I,S);
+  N := conormalIdeal(I,S);
   (mon,coef) := coefficients multidegree N;
   sub(sum flatten entries coef, ZZ)
 )
@@ -589,13 +588,13 @@ Description
 Caveat
   The ring $R$ must have degree length 1
 SeeAlso
-  conormalVariety
+  conormalIdeal
 ///
 
 doc ///
 Key
-  conormalVariety
-  (conormalVariety, Ideal, ConormalRing)
+  conormalIdeal
+  (conormalIdeal, Ideal, ConormalRing)
 --Headline
 --  todo
 Inputs
@@ -603,7 +602,7 @@ Inputs
     defined in the primal variables only
   S:ConormalRing
 Usage
-  conormalVariety(I,S)
+  conormalIdeal(I,S)
 
 Caveat
   The ring containing $I$ and $p$ must have primal variables in degree $\{1,0\}$ and dual variables in degree $\{0,1\}$.
