@@ -8,27 +8,19 @@ evaluationCode = method(Options => {})
 evaluationCode(Ring,List,List) := EvaluationCode => opts -> (F,P,S) -> (
     -- constructor for the evaluation code
     -- input: a field, a list of points, a set of polynomials.
-    -- outputs: a monomial code over the list of points.
-    
-    -- We should check if all the points lives in the same F-vector space.
-    -- Should we check if all the monomials lives in the same ring?
+    -- outputs: The list of points, the list of polynomials, the vanishing ideal and the linear code.
     
     R := ring S#0;
 
     I := intersect apply(P,i->ideal apply(numgens R,j->R_j-i#j)); -- Vanishing ideal of the set of points.
 
-    S = toList apply(apply(S,i->promote(i,R/I)),j->lift(j,R))-set{0*S#0}; -- Drop the elements in S that was already in I.
-
-    G := matrix apply(P,i->flatten entries sub(matrix(R,{S}),matrix(F,{i}))); -- Evaluate the elements in S over the elements on P.
+    G := transpose matrix apply(P,i->flatten entries sub(matrix(R,{S}),matrix(F,{i}))); -- Evaluate the elements in S over the elements on P.
     
-    G = (transpose G)//(groebnerBasis transpose G);
-    
-    new EvaluationCode from{
-	symbol Points => P,
+    return new EvaluationCode from{
 	symbol VanishingIdeal => I,
-	symbol PolynomialSet => S,
-	symbol GeneratingMatrix => G,
-	symbol LinearCode => linearCode(G)
+	symbol Points => P,
+	symbol Polynomials => S,
+	symbol LinearCode => linearCode G
 	}
     )
 
@@ -41,27 +33,20 @@ evaluationCode(Ring,List,Matrix) := EvaluationCode => opts -> (F,P,M) -> (
 
     m := numgens image M; -- number of monomials.
 
-    R := F[t_1..t_m];
+    R := F[t_0..t_(m-1)];
 
-    I := intersect apply(P,i->ideal apply(m,j->R_j-i#(j))); -- Vanishing ideal of P.
-
-    G := transpose matrix apply(entries M,i->toList apply(P,j->product apply(m,k->(j#k)^(i#k))));    
-
-    G := transpose((transpose G)//(groebnerBasis transpose G));
+    S := apply(entries M, i -> vectorToMonomial(vector i,R)) 
     
-    new EvaluationCode from{,
-	symbol Points => P,
-	symbol VanishingIdeal => I,
-	symbol ExponentsMatrix => M,
-	symbol GeneratingMatrix => G,
-	symbol LinearCode => linearCode(G)
-	}
+    evaluationCode(F,P,S)
     )
 
+net EvaluationCode := c -> (
+    c.LinearCode
+    )
    
-ToricCode = method(Options => {})
+toricCode = method(Options => {})
 
-ToricCode(ZZ,Matrix) := EvaluationCode => opts -> (q,M) -> (
+toricCode(ZZ,Matrix) := EvaluationCode => opts -> (q,M) -> (
     -- Constructor for a toric code.
     -- inputs: size of a field, an integer matrix 
     -- outputs: the evaluation code defined by evaluating all monomials corresponding to integer 
@@ -198,15 +183,12 @@ cartesianCode(Ring,List,List) := EvaluationCode => opts -> (F,S,M) -> (
     P := set S#0;
     for i from 1 to m-1 do P=P**set S#i;
     P = apply(toList(P/deepSplice),i->toList i);
-    Mm := toList apply(apply(M,i->promote(i,R/I)),j->lift(j,R))-set{0*M#0};
-    G := matrix apply(P,i->flatten entries sub(matrix(R,{Mm}),matrix(F,{i})));
-    G = (transpose G)//(groebnerBasis transpose G);
+    G := transpose matrix apply(P,i->flatten entries sub(matrix(R,{M}),matrix(F,{i})));
     
     new EvaluationCode from{
 	symbol Sets => S,
 	symbol VanishingIdeal => I,
-	symbol PolynomialSet => Mm,
-	symbol GeneratingMatrix => G,
+	symbol PolynomialSet => M,
 	symbol LinearCode => linearCode(G)
 	}
     )
@@ -231,19 +213,9 @@ cartesianCode(Ring,List,Matrix) := EvaluationCode => opts -> (F,S,M) -> (
     
     m := #S;
     R := F[t_0..t_(m-1)];
-    I := ideal apply(m,i->product apply(S#i,j->R_i-j));
-    P := set S#0;
-    for i from 1 to m-1 do P=P**set S#i;
-    P = apply(toList(P/deepSplice),i->toList i);
-    G := transpose matrix apply(entries M,i->toList apply(P,j->product apply(m,k->(j#k)^(i#k))));
-    G := ((transpose G)//(groebnerBasis transpose G));
+    T := apply(entries M,i->vectorToMonomial(vector i,R));
     
-    new EvaluationCode from{
-	symbol VanishingIdeal => I,
-	symbol ExponentsMatrix => M,
-	symbol GeneratingMatrix => G,
-	symbol LinearCode => linearCode(G)
-	}
+    cartesianCode(F,S,T)
     )
 
 
