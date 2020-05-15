@@ -48,8 +48,8 @@ idealToPoint = method(Options => {Homogeneous => false});
 
 idealToPoint(Ideal) := opts -> (I1) -> (
         if (opts.Homogeneous == false) then (
-        genList := gens ring I1;
-        return apply(genList, s -> s%I1);
+            genList := gens ring I1;
+            return apply(genList, s -> s%I1);
         )
 );
 
@@ -200,35 +200,37 @@ randomPoint = method( Options=>{Strategy=>BruteForce, Homogeneous => true, MaxCh
 
 randomPointViaGenericProjection = method(Options => {Strategy=>null, Homogeneous => true, MaxChange => 0, Codimension => null, ProjectionAttempts => 20});
 randomPointViaGenericProjection(ZZ, Ideal) := opts -> (n1, I1) -> (
-        flag := true;
-        local phi;
-        local I0;
-        local J0;
-        local pt;
-        local ptList;
-        local j;
-        i := 0;
-        while(flag) and (i < opts.ProjectionAttempts) do (
+    flag := true;
+    local phi;
+    local I0;
+    local J0;
+    local pt;
+    local ptList;
+    local j;
+    local finalPoint;
+    i := 0;
+    while(flag) and (i < opts.ProjectionAttempts) do (
         (phi, I0) = projectionToHypersurface(I1, Homogeneous=>opts.Homogeneous, MaxChange => opts.MaxChange, Codimension => null);
         if (codim I0 == 1) then (
-        pt = randomPoint(n1, I0, Strategy=>BruteForce); --find a point on the generic projection
-        if (not pt === false) then (
-        J0 = I1 + sub(ideal apply(dim source phi, i -> (first entries matrix phi)#i - pt#i), target phi); --lift the point to the original locus
-        if dim(J0) == 0 then( --hopefully the preimage is made of points
-        ptList = decompose(J0);
-        j = 0;
-        while (j < #ptList) do (
-        if (degree (ptList#j) == 1) then (
-        return apply(gens ring I1, x -> x%(ptList#j));
-        );
-        j = j+1;
-        )
-        )
-        );
+            pt = randomPoint(n1, I0, Strategy=>BruteForce); --find a point on the generic projection
+            if (not pt === false) then (
+                J0 = I1 + sub(ideal apply(dim source phi, i -> (first entries matrix phi)#i - pt#i), target phi); --lift the point to the original locus
+                if dim(J0) == 0 then( --hopefully the preimage is made of points
+                    ptList = decompose(J0);
+                    j = 0;
+                    while (j < #ptList) do (
+                        if (degree (ptList#j) == 1) then (
+                            finalPoint = apply(idealToPoint(ptList#j), s -> sub(s, coefficientRing ring I1));
+                            return finalPoint;
+                        );
+                        j = j+1;
+                    )
+                )
+            );
         );
         if (debugLevel >0) then print "That didn't work, trying again...";
         i = i+1;
-        );
+    );
 );
 
 randomPoint(Ring) := opts -> (R1) -> (
