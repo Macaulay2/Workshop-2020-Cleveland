@@ -67,13 +67,13 @@ export {"pointNorm",
     "NUMITERATIONS",
     "REALITYCHECK",
     "REALITYTEST",
-    "Hessian",--
-    "computeOrthoBasis",--
+    "Hessian",
+    "computeOrthoBasis",
     "computeD",
-    "Aoperator",--these are added
-    "Hoperator",--these are added
-    "gammaKBound",--these are added 
-    "certifyRootMultiplicityBound"--these are added
+    "Aoperator",
+    "Hoperator",
+    "gammaKBound",
+    "certifyCluster"
     }
 exportMutable {}
 
@@ -479,28 +479,6 @@ alphaCertified(PolySystem, List) := o -> (P, L) -> (
 --------------------------------
 --Start Multiple Roots Section--
 --------------------------------
---make everything work with exact arithmetic.
-
-
-FrobeniusSquared = method()
-FrobeniusSquared(Matrix) := M->(
-    R := ring M;
-    if (R === QQ) then (
-	trace(transpose(M)*M)
-	) else if (numgens R == 1) then (
-	i := first gens R;
-	trace(transpose(M)*sub(M,i=>-i))
-	) else (
-	(norm(2,M))^2
-	)
-    )
-
---this is kind of dumb, but its an easy solution
-roundUp = method()
-roundUp(RR) := z->(
-    ceiling(10^30*z)/10^30
-    )
-
 Hessian = method(TypicalValue => Matrix)
 Hessian(PolySystem) := f->(
     return(jacobian jacobian f)
@@ -510,41 +488,24 @@ Hessian(PolySystem,Point) := (f,x0)->(
     return(evaluate(Hessian(f),x0))
     )
 
-rationalUnitaryMatrix = method(TypicalValue => Matrix)
-rationalUnitaryMatrix(ZZ) := n->(
-    M := random(QQ^n,QQ^n,UpperTriangular=>true);
-    S := M-transpose(M);
-    I := id_(QQ^n);
-    A := inverse(S-I)*(S+I);
-    return(A)
-    )
-
---this is currently non-deterministic. 
 computeOrthoBasis = method(TypicalValue => Matrix)
 computeOrthoBasis(PolySystem,Point) := (F,x0)->(
-    R := coefficientRing ring F;
     n := F#NumberOfPolys;
-    J := evaluate(jacobian F,x0);
-    --this if should basically be "if the ring is the Gaussian rationals"                                                                    
-    ----the map phi just makes Gaussian rationals into complex numbers                                                                     
-    if (numgens R == 1) then (
-        phi := map(CC,R,{ii+0p53});
-        J = phi(J)
-        ) else (
-        J = sub(J,CC)
-        );
+    J := sub(evaluate(jacobian F,x0),CC);
     kappa := n-numericalRank J;
-    V := submatrix(rationalUnitaryMatrix(n),0..kappa-1);
+    Q := last SVD J;
+    V := submatrix(inverse Q,n-kappa..n-1);
     return(V)
     )
 
 Aoperator = method(TypicalValue => Matrix)
-Aoperator(PolySystem,Point,Matrix) := (F,x0,V)->(
+Aoperator(PolySystem,Point) := (F,x0)->(
     n := F#NumberOfPolys;
     eqs := equations F;
     J := evaluate(jacobian F,x0);
     --is there a way to get individual equations as polySystems?
     HessianList := apply(eqs,f->Hessian(polySystem matrix{{f}},x0));
+    V := computeOrthoBasis(F,x0);
     kappa := numcols V;
     --this is bad, find a better way of writing this.
     A := J + 1/2*sum(kappa,i->fold(apply(n,j->transpose(V_{i})*HessianList#j*V_{i}*transpose(V_{i})),(A,B)->A||B));
@@ -554,23 +515,23 @@ Aoperator(PolySystem,Point,Matrix) := (F,x0,V)->(
 
 
 Hoperator = method(TypicalValue => Matrix)
-Hoperator(PolySystem,Point,Matrix) := (F,x0,V)->(
+Hoperator(PolySystem,Point) := (F,x0)->(
     J := evaluate(jacobian F,x0);
+    V := computeOrthoBasis(F,x0);
     H := J*V*(transpose V);
     return(H)
     )
 
---this is used only for finite precision currently.
 gammaKBound = method(TypicalValue => Number)
 gammaKBound(PolySystem,Point) := (F,x0)->(
     eqs := equations F;
-    pointNormx := pointNorm x0;
+    pointNormx := sqrt(pointNorm x0);
     degs := select(flatten apply(eqs, i -> degree i), i -> i =!= 0);
     V := computeOrthoBasis(F,x0);
-    A := Aoperator(F,x0,V);
-    H := Hoperator(F,x0,V);
+    A := Aoperator(F,x0);
+    H := Hoperator(F,x0);
     deltaF := diagonalMatrix flatten apply(degs, i -> sqrt(i * (pointNormx)^(i-1))); 
-    mu := max {1, polySysNorm(F) * norm(2,inverse(A-H) * deltaF)};
+    mu := max {1, sqrt(polySysNorm(F)) * norm(2,inverse(A-H) * deltaF)};
     gammaK := mu*(max degs)^(3/2)/(2*pointNormx);
     return(gammaK)
     )
@@ -585,49 +546,22 @@ computeD(Number) := k -> (
 	    if (imaginaryPart i) == 0 and (realPart i) > 0 then i))
     )
 
---needs better name and output
---needs to be checked a bit
-certifyRootMultiplicityBound = method(TypicalValue => ZZ)
-certifyRootMultiplicityBound(PolySystem,Point) := (F,x0)->(
-    R := coefficientRing ring F;
+--needs better output
+certifyCluster = method(TypicalValue => ZZ)
+certifyCluster(PolySystem,Point) := (F,x0)->(
     eqs := equations F;
     degs := select(flatten apply(eqs, i -> degree i), i -> i =!= 0);
-    pointNormx := pointNorm x0;
+    pointNormx := sqrt(pointNorm x0);
     V := computeOrthoBasis(F,x0);
-    A := Aoperator(F,x0,V);
-    H := Hoperator(F,x0,V);
+    A := Aoperator(F,x0);
+    H := Hoperator(F,x0);
     kappa := numcols V;
-    --worry about rounding this?
-    d := roundUp realPart computeD kappa;
-    rhs := 1;
-    lhs := 1;
+    d := realPart computeD kappa;
+    deltaF := diagonalMatrix flatten apply(degs, i -> sqrt(i * (pointNormx)^(i-1)));
     
-    if (numgens R == 1) then (
-	--this is to make gaussian rationals actual complex numbers
-	phi := map(CC,R,{ii+0p53});
-	--this computes the inequality differently to be more computable for exact computation.
-	deltaFNormSquared := sum(degs,di->di*pointNormx^(2*(di-1)));
-	muSquared := max {1, polySysNorm(F) * FrobeniusSquared(inverse(A-H)) * deltaFNormSquared};
-	gammaKSquared := (max degs)^3 * muSquared/(4*pointNormx);
-	Feval := evaluate(F,x0);
-	normFeval := roundUp norm(2,phi(evaluate(F,x0)));
-	normH := roundUp norm(2,phi(H));
-	normInverseAminusH := roundUp norm(2,phi(inverse(A-H)));
-	
-	--this needs a LOWER bound for gammaK. 
-	--1 is the lower bound used here.
-	lhs = sub(normFeval + normH*d/4,QQ);
-	rhs = sub(d / (32 * gammaKSquared^2 * normInverseAminusH),QQ);
-	return(lhs < rhs, 2^kappa)
-	
-	) else (
-	
-    	deltaF := diagonalMatrix flatten apply(degs, i -> sqrt(i * (pointNormx)^(i-1)));
-	
-    	lhs = norm(2,evaluate(F,x0)) + (d)*norm(2,H)/4;
-    	rhs = d/(32*(gammaKBound(F,x0))^4*norm(2,inverse(A-H)));
-    	return(lhs < rhs, 2^kappa)
-	)
+    lhs := norm(2,evaluate(F,x0))*(gammaKBound(F,x0))^2 + d*norm(2,H)/4;
+    rhs := d/(32*(gammaKBound(F,x0))^2*norm(2,inverse(A-H)));
+    return(lhs < rhs, 2^kappa)
     )
 
 
