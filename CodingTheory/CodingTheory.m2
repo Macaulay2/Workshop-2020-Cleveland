@@ -513,13 +513,9 @@ generic(LinearCode) := LinearCode => C -> (
     )
  
  
-
-    
    
  -----------------------------------------------------------
  --****************** Footprint Function ********************
- 
- 
  footPrint = method(TypicalValue => ZZ);
  footPrint (ZZ,ZZ,Ideal) := (d,r,I) ->(
  mD:=max apply(apply(apply(subsets(flatten entries basis(d,coker gens gb I),r),toSequence),ideal),x->if not quotient(ideal(leadTerm gens gb I),x)==ideal(leadTerm gens gb I) then 
@@ -527,8 +523,10 @@ generic(LinearCode) := LinearCode => C -> (
  else 0 );
  degree coker gens gb I - mD
  )
+ 
+ 
     
-    
+  
  
 -----------------------------------------------------------
  --****************** GMD Functions ********************
@@ -537,22 +535,23 @@ generic(LinearCode) := LinearCode => C -> (
  -=====================hyp function======================
  hYpFunction = method(TypicalValue => ZZ);
  hYpFunction (ZZ,ZZ,Ideal) := (d,r,I) ->(
- max apply(apply(subsets(apply(apply(apply(toList (set(0..q-1))^**(hilbertFunction(d,coker gens gb I))-(set{0})^**(hilbertFunction(d,coker gens gb I)),toList),x -> basis(d,coker gens gb I)*vector deepSplice x),z->ideal(flatten entries z)),r)
+ max apply(apply(subsets(apply(apply(apply(toList (set(0..char ring I-1))^**(hilbertFunction(d,coker gens gb I))-(set{0})^**(hilbertFunction(d,coker gens gb I)),toList),x -> basis(d,coker gens gb I)*vector deepSplice x),z->ideal(flatten entries z)),r)
 ,ideal),
  x -> if #set flatten entries mingens ideal(leadTerm gens x)==r and not quotient(I,x)==I
          then degree(I+x)
       else 0
 )
  )
+  
+ 
+ 
  ------------------------GMD Function--------------------------------
  
  gMdFunction = method(TypicalValue => ZZ);
  gMdFunction (ZZ,ZZ,Ideal) := (d,r,I) ->(
  degree(coker gens gb I)-hYpFunction(d,r,I)
  )
- 
- 
- 
+  
  
  --------------------------------------------------------------
  --===================== Vasconcelos Function ================
@@ -560,13 +559,16 @@ generic(LinearCode) := LinearCode => C -> (
  
  vasFunction = method(TypicalValue => ZZ);
  vasFunction (ZZ,ZZ,Ideal) := (d,r,I) ->(
- min apply(apply(subsets(apply(apply(apply(toList (set(0..q-1))^**(hilbertFunction(d,coker gens gb I))-(set{0})^**(hilbertFunction(d,coker gens gb I)),toList),x -> basis(d,coker gens gb I)*vector deepSplice x),z->ideal(flatten entries z)),r)
+ min apply(apply(subsets(apply(apply(apply(toList (set(0..char ring I-1))^**(hilbertFunction(d,coker gens gb I))-(set{0})^**(hilbertFunction(d,coker gens gb I)),toList),x -> basis(d,coker gens gb I)*vector deepSplice x),z->ideal(flatten entries z)),r)
 ,ideal),
  x -> if #set flatten entries mingens ideal(leadTerm gens x)==r and not quotient(I,x)==I
          then degree(coker gens gb quotient(I,x))
       else degree(coker gens gb I)
       )
 )
+ 
+ 
+
  
  
  
@@ -697,6 +699,55 @@ assert( numColumns ( C3.GeneratorMatrix ) == numColumns (shorten( C3, K)).Genera
 assert( shorten( C2, K ) == linearCode(F, shortL) )
 assert( shorten( C3, K ) == linearCode(F, shortL) )
 ///
+
+
+TEST ///
+ -- vNumner of the ideal I=ideal(t1*t2^2-t1^2*t2,t1*t3^3-t1^3t3,t2*t3^3-t2^3*t3)
+   K=ZZ/3 
+   R=K[t3,t2,t1,MonomialOrder=>Lex]
+   I=ideal(t1*t2^2-t1^2*t2,t1*t3^3-t1^3*t3,t2*t3^3-t2^3*t3)
+   v = vNumber(I)
+///
+
+
+ TEST ///
+ -- footPrint function of the ideal I=ideal(t1^3,t2*t3) with parameters d=2, r=3
+   K=QQ
+   R=K[t1,t2,t3]
+   I=ideal(t1^3,t2*t3)
+   footPrint(2,3,I)
+///
+
+
+
+ TEST ///
+ -- hYpFunction of the ideal I=ideal(t1*t6-t3*t4,t2*t6-t3*t5) with parameters d=1, r=1
+   K=ZZ/3
+   R=K[t1,t2,t3,t4,t5,t6]
+   I=ideal(t1*t6-t3*t4,t2*t6-t3*t5)
+   hYpFunction(1,1,I)
+///
+
+
+TEST ///
+ -- gMdFunction of the ideal I=ideal(t1*t6-t3*t4,t2*t6-t3*t5) with parameters d=1, r=1
+   K=ZZ/3
+   R=K[t1,t2,t3,t4,t5,t6]
+   I=ideal(t1*t6-t3*t4,t2*t6-t3*t5)
+   gMdFunction(1,1,I)
+///
+
+
+ TEST ///
+ -- vasFunction of the ideal I=ideal(t1^3,t2*t3) with parameters d=1, r=1
+   K=QQ
+   R=K[t1,t2,t3]
+   I=ideal(t1^3,t2*t3)
+   vasFunction(1,1,I)
+///
+
+
+
 
 
 ------------------------------------------
@@ -899,6 +950,125 @@ TEST ///
   assert(secondFunction(1,3,MyOption=>5) === 9)
 ///
   
+  
+document {
+   Key => {vNumber, (vNumber,Ideal)},
+   Headline => "Gives the v-number of a graded ideal.",
+   Usage => "vNumber(I)",
+   Inputs => {
+	"I" => Ideal => {"Graded ideal."},
+	},
+   Outputs => {
+	i:ZZ
+	    an integer. 
+	},
+	EXAMPLE {
+	"K=ZZ/3;", 
+        "R=K[t3,t2,t1,MonomialOrder=>Lex];",
+        "I=ideal(t1*t2^2-t1^2*t2,t1*t3^3-t1^3*t3,t2*t3^3-t2^3*t3);",
+        "vNumber(I)"
+	}
+ }
+ 
+ 
+ document {
+   Key => {footPrint, (footPrint,ZZ,ZZ,Ideal)},
+   Headline => "Gives the footPrint value of an ideal with parameters (d,r)",
+   Usage => "footPrint(d,r,I)",
+   Inputs => {
+	"I" => Ideal => {"Graded ideal."},
+	"d" => ZZ => {"Degree of the monomials in the Gröbner éscalier of I."},
+	"r" => ZZ => {"Length of the sequences in the Gröbner éscalier of I of degree d."}
+	},
+   Outputs => {
+	i:ZZ
+	    an integer. 
+	},
+	EXAMPLE {
+	2K=QQ;", 
+        "R=K[t1,t2,t3];",
+        "I=ideal(t1^3,t2*t3);",
+        "footPrint(2,3,I)"
+	}
+ }   
+    
+    
+document {
+   Key => {hYpFunction, (hYpFunction,ZZ,ZZ,Ideal)},
+   Headline => "Gives the hYp value of an ideal with parameters (d,r)",
+   Usage => "hYpFunction(d,r,I)",
+   Inputs => {
+	"I" => Ideal => {"Graded ideal."},
+	"d" => ZZ => {"Degree of certain homogenous component of ring I."},
+	"r" => ZZ => {"Length of the sequences in homogenous component of degree d."}
+	},
+   Outputs => {
+	i:ZZ
+	    an integer. 
+	},
+	EXAMPLE {
+	"K=ZZ/3;", 
+        "R=K[t1,t2,t3,t4,t5,t6];",
+        "I=ideal(t1*t6-t3*t4,t2*t6-t3*t5);",
+        "hYpFunction(1,1,I)"
+	}
+ }  
+ 
+ 
+ document {
+   Key => {gMdFunction, (gMdFunction,ZZ,ZZ,Ideal)},
+   Headline => "Gives the Generalized minimum distance value of an ideal with parameters (d,r)",
+   Usage => "gMdFunction(d,r,I)",
+   Inputs => {
+	"I" => Ideal => {"Graded ideal."},
+	“d” => ZZ => {"Degree of certain homogenous component of ring I."},
+	“r” => ZZ => {"Length of the sequences in homogenous component of degree d."}
+	},
+   Outputs => {
+	i:ZZ
+	    an integer. 
+	},
+	EXAMPLE {
+	"K=ZZ/3;", 
+        "R=K[t1,t2,t3,t4,t5,t6];",
+        "I=ideal(t1*t6-t3*t4,t2*t6-t3*t5);",
+        "gMdFunction(1,1,I)"
+	}
+ }   
+ 
+ 
+ 
+ 
+ 
+ document {
+   Key => {vasFunction , (vasFunction,ZZ,ZZ,Ideal)},
+   Headline => "Gives the Vasconcelos function of an ideal with parameters (d,r)",
+   Usage => "vasFunction (d,r,I)",
+   Inputs => {
+	"I" => Ideal => {"Graded ideal."},
+	"d" => ZZ => {"Degree of certain homogenous component of ring I."},
+	"r" => ZZ => {"Length of the sequences in homogenous component of degree d."}
+	},
+   Outputs => {
+	i:ZZ
+	    an integer. 
+	},
+	EXAMPLE {
+	"K=QQ;", 
+        "R=K[t1,t2,t3];",
+        "I=ideal(t1^3,t2*t3);",
+        "vasFunction(1,1,I)"
+	}
+ }   
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
 
        
 end
