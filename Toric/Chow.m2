@@ -418,11 +418,15 @@ ToricDivisor * List := (D, C) -> (
 
 NormalToricVariety _ List := (X,L) -> (toricCycle({(L,1)},X))
 
+-- Need to be careful when cycle class is supported on a point
+-- Output is the point normalToricVariet({{}},{{}}). The NormalToricVarieties 
+-- package doesn't treat this as a Toric variety.
 normalToricVariety(ToricCycle) := opts -> C -> (
     s := support C;
     if #s > 1 then error "Expected a cycle of a cone";
     normalToricVariety(first s, variety C)
 )
+
 
 normalToricVariety(List,NormalToricVariety) := opts -> (r,X) -> (
     if any(r, e -> class e === List) then error "Expected a list of rays"; 
@@ -939,6 +943,34 @@ doc ///
 
 doc ///
     Key
+      (symbol *, ToricDivisor, ToricCycle)
+    Headline
+      multiplication of a ToricDivisor and ToricCycle 
+    Usage
+      D*C
+    Inputs
+      D:ToricDivisor
+      C:ToricCycle
+    Description
+      Text
+        Computes the product of a ToricDivisor with a ToricCycle.
+      Example
+	X = toricProjectiveSpace 4
+	D = X_0 + 2*X_1+3*X_2+4*X_3
+	C = X_{2,3}
+	D*C   
+      Text
+      	Self intersection of the exceptional divisor.
+      Example
+	X = toricProjectiveSpace 2
+	Y = toricBlowup({0,1},X)
+	D = Y_3
+	C = Y_{3}
+	D*C       	
+/// 
+
+doc ///
+    Key
       (symbol +, ToricCycle, ToricCycle)
       (symbol -, ToricCycle, ToricCycle)
       (symbol -, ToricCycle)
@@ -971,7 +1003,6 @@ doc ///
 	cyc - altcyc
 	-cyc
 ///
-
 doc ///
     Key
         (normalToricVariety, ToricCycle)
@@ -985,8 +1016,8 @@ doc ///
         X:NormalToricVariety
     Description
         Text
-	    Given an irreducible ToricCycle Z, supported on only
-	    one cone, this function returns
+            Given an irreducible ToricCycle Z, supported on only
+            one cone, this function returns
 	    the toric variety of the corresponding orbit closure.
 	Example
 	    X = toricProjectiveSpace 4
