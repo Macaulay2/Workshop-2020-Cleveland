@@ -3,6 +3,7 @@ needsPackage "Polyhedra"
 needsPackage "CodingTheory"
 needsPackage  "Graphs"
 needsPackage  "NAGtypes"
+needsPackage "RationalPoints"
 
 EvaluationCode = new Type of HashTable
 
@@ -38,7 +39,7 @@ evaluationCode(Ring,List,Matrix) := EvaluationCode => opts -> (F,P,M) -> (
 
     R := F[t_0..t_(m-1)];
 
-    S := apply(entries M, i -> vectorToMonomial(vector i,R)) 
+    S := apply(entries M, i -> vectorToMonomial(vector i,R));
     
     evaluationCode(F,P,S)
     )
@@ -84,7 +85,7 @@ toricCode(Ring,Matrix) := EvaluationCode => opts -> (F,M) -> (
 
 M=matrix{{1,2,10},{4,5,6}} -- martrix of exponent vectors definind the polytope P, exponents vectors are columns
 T=toricCode(GF 4,M) --- a toric code over F_4 with polytope P
-T.Code
+T.LinearCode
 T.ExponentsMatrix
 
 M=matrix{{1,2,10,1},{4,5,6,1},{2,1,0,1}}
@@ -117,7 +118,7 @@ evCodeGraph (Ring,Matrix,List) := evCodeGraph  => opts -> (F,M,S) -> (
 
     S = toList apply(apply(S,i->promote(i,R/I)),j->lift(j,R))-set{0*S#0}; -- Drop the elements in S that was already in I.
 
-    G := matrix apply(P,i->flatten entries sub(matrix(R,{S}),matrix(F,{i}))) -- Evaluate the elements in S over the elements on P.
+    G := matrix apply(P,i->flatten entries sub(matrix(R,{S}),matrix(F,{i}))); -- Evaluate the elements in S over the elements on P.
     
     )
 
@@ -191,6 +192,7 @@ image G
 
 
 
+
 TEST ///
  -- Reed-Muller-type code over a graph 
    G = graph({1,2,3,4}, {{1,2},{2,3},{3,4},{4,3}})
@@ -258,6 +260,9 @@ image G
 
 
 
+
+
+
 TEST ///
  --This an example of a incidence matrix code---------
 --Petersen graph 
@@ -297,7 +302,9 @@ document {
 
 
 
-------------------
+
+---------------------------------------------
+
 
 
 
