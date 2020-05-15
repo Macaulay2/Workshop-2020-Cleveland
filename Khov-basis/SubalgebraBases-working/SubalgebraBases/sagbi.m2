@@ -324,7 +324,7 @@ currDegree = grabLowestDegree(R, o.Limit) + 1;
     
         -- Construct a Groebner basis to eliminiate the base elements generators from the SyzygyIdeal.
         sagbiGB = gb(subalgComp.SyzygyIdeal, DegreeLimit=>currDegree);
-        syzygyPairs = subalgComp.Substitution(submatrixByDegrees(selectInSubring(1, gens sagbiGB), currDegree));
+        syzygyPairs = subalgComp.Substitution(submatrixByDegrees(mingens ideal selectInSubring(1, gens sagbiGB), currDegree));
         if subalgComp.Pending#currDegree != {} then (
             syzygyPairs = syzygyPairs | subalgComp.InclusionBase(matrix{subalgComp.Pending#currDegree});
             subalgComp.Pending#currDegree = {};
