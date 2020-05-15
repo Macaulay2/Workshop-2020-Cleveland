@@ -694,7 +694,7 @@ doc ///
     Description	    
         Text
 	    Every toric map $f : X \to Y$ corresponds to a unique map of
-	    lattice $g : N_X \to N_Y$ such that, for every cone $\sigma$ in
+	    lattices $g : N_X \to N_Y$ such that, for every cone $\sigma$ in
 	    the fan of $X$, there is a cone in the fan of $Y$ that contains
 	    the image $g(\sigma)$.  This method returns an integer matrix
 	    representing $g$.	    
@@ -784,7 +784,7 @@ doc ///
 	    h = map (W, Z, matrix {{1, 0}, {0, 2}})
             assert isWellDefined h
     	Text
-            This method also checks that the following aspects of the data
+            This method also checks the following aspects of the data
             structure:	    
 	Text
     	    @UL {
@@ -868,7 +868,7 @@ doc ///
 	   assert (target g === A)
 	   assert (matrix g === id_(ZZ^2))	   
     Caveat
-        This method implicitly assumes that given matrix does determine a map
+        This method does not check that the given matrix determines a toric map
         between the toric varieties.  One can verify this by using 
 	@TO (isWellDefined, ToricMap)@.
     SeeAlso
@@ -950,9 +950,9 @@ doc ///
 	    assert (matrix id_A === id_(ZZ^(dim A)))	    	    
 	    assert (id_A === map(A,A,1))
     Caveat
-        This method implicitly assumes that given matrix does determine a map
-        between the toric varieties.  One can verify this by using 
-	@TO (isWellDefined, ToricMap)@.
+        This method does not check that the given integer determines a 
+	toric map between the toric varieties.  One can verify this by 
+	using @TO (isWellDefined, ToricMap)@.
     SeeAlso
     	(source, ToricMap)
 	(target, ToricMap)
@@ -974,7 +974,7 @@ doc ///
     Description
         Text	    
 	    For the identity map on a normal toric variety, the underlying map
-	    of lattices given by the identity matrix.
+	    of lattices is given by the identity matrix.
 	Example
 	    X = hirzebruchSurface 2;
 	    f = id_X
@@ -1042,8 +1042,8 @@ doc ///
 --Finding the right spot
 doc ///
     Key
-    	isFibration
         (isFibration, ToricMap)
+	isFibration
     Headline 
         whether a toric map is a fibration
     Usage 
@@ -1089,7 +1089,7 @@ doc ///
         F' = pullback(f, F)
     Inputs
         f : ToricMap
-	    a map between toric varieties
+	    a toric map between toric varieties with smooth target
 	M : Module
 	    a module, or coherent sheaf, on the target of f
     Outputs
@@ -1097,12 +1097,15 @@ doc ///
 	    the pullback of M under f
     Description
         Text
-            Given a toric map $f: X \to Y$ with simplicial $X$ and $Y$, modules
-	    and coherent sheaves on the Cox ring of $Y$ can be pulled back to
-	    a module or coherent sheaf on the Cox ring of $X$ via $f$.
+            If $Y$ is a normal toric variety and $R$ is its Cox ring, then any 
+	    finitely-generated $R$-module $M$ determines a coherent sheaf $F_M$
+	    on $Y$. If $f: X \to Y$ is a toric morphism with $Y$ smooth, then 
+	    $f$ induces a map of Cox rings and the pullback $f^*F_M$ is represented
+	    by the pullback of $M$ to the Cox ring of $X$. See "Cox Rings and
+	    Algebraic Maps" by Mandziuk, Thm 3.2.
 	Text
-	    In this example, we compute the pullback of the structure sheaf of
-	    a divisor.
+	    We compute the pullback of the structure sheaf of $P^1$
+	    twisted by a divisor.
 	Example
             PP1 = toricProjectiveSpace 1;
             X = PP1 ** PP1
@@ -1116,6 +1119,9 @@ doc ///
 	    R = ring X
 	    M = module F
 	    pullback(f, M)
+    Caveat
+    	This function assumes that the target of f is smooth. This can be
+	checked with the command @TO (isSmooth, NormalToricVariety)@.
     SeeAlso
         "Total coordinate rings and coherent sheaves"
 	(isSimplicial, NormalToricVariety)
@@ -1125,15 +1131,15 @@ doc ///
 
 doc ///
     Key
-         pullback
         (pullback, ToricMap, ToricDivisor)
+	pullback
     Headline
         compute the pullback of a Cartier divisor under a toric map
     Usage
         pullback(f, D)
     Inputs
         f : ToricMap
-	    a map between toric varieties
+	    a toric map between toric varieties
 	D : ToricDivisor
 	    a toric divisor on the target of f
     Outputs
@@ -1195,7 +1201,7 @@ doc ///
 	    This function returns that ideal.
 	Text
 	    The closure of the image of a distinguished affine open set
-	    in P^2 is all of P^2.
+	    in $P^2$ is all of $P^2$.
 	Example
 	    AA2 = affineSpace 2;
 	    PP2 = toricProjectiveSpace 2;
@@ -1204,7 +1210,7 @@ doc ///
 	    ideal f
 	Text
 	    The rational normal curve of degree 2 is the image of a map
-	    from P^1 to P^2.
+	    from $P^1$ to $P^2$.
 	Example
 	    PP1 = toricProjectiveSpace 1;
 	    PP2 = toricProjectiveSpace 2;
@@ -1268,20 +1274,20 @@ doc ///
     Key
     	(symbol *, ToricMap, ToricMap)
     Headline
-    	compute the composition of two toric maps
+    	make the composition of two toric maps
     Usage
     	g * f
     Inputs
     	f : ToricMap
-	    a map between toric varieties
+	    a toric map between toric varieties
 	g : ToricMap
-	    a map between toric varieties
+	    a toric map between toric varieties
     Outputs
     	: ToricMap
 	    the composition g*f from source f to target g
     Description
     	Text
-	    Given two maps with the target of f equal to the source of
+	    Given two toric maps with the target of f equal to the source of
 	    g, this function returns the toric map from source f to
 	    target g that is the composition of g and f.
 	Example
@@ -1297,8 +1303,8 @@ doc ///
 
 doc ///
     Key
-    	isSurjective
         (isSurjective, ToricMap)
+	isSurjective
     Headline 
         whether a toric map is surjective
     Usage 
@@ -1311,10 +1317,10 @@ doc ///
     Description
         Text
 	    A morphism $f : X\to Y$ is surjective if $f(X) = Y$ as sets. 
-	    A toric morphism is surjective, if the induced map of fans is 
+	    A toric morphism is surjective if the induced map of fans is 
 	    surjective.
 	Text
-	    Projections are surjective
+	    Projections are surjective.
 	Example
 	    X = toricProjectiveSpace 2
 	    Y = hirzebruchSurface 2
@@ -1324,14 +1330,14 @@ doc ///
 	    isSurjective p1
 	    isSurjective p2
 	Text
-	    Blowdowns are surjective
+	    Blowdowns are surjective.
 	Example	
     	    X = affineSpace 2
 	    Y = toricBlowup({0,1},X)
 	    f = map(X,Y,matrix{{1,0},{0,1}})
 	    isSurjective f
 	Text
-	    Inclusion of an affine open into a blowup is not surjective
+	    Inclusion of an affine open into a blowup is not surjective.
 	Example
 	    X = affineSpace 2
 	    Y = toricBlowup({0,1},X) 
@@ -1389,7 +1395,7 @@ doc ///
         Text
             The next example demonstrates that the induced map on the group of
             torus-invariant Weil divisors is compatible with the induced map
-            on the class group
+            on the class group.
         Example
             gPic = classGroup g
             assert(gPic * fromWDivToCl(Z) == fromWDivToCl(X) * g')
