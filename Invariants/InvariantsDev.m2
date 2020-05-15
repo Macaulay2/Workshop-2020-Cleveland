@@ -640,7 +640,6 @@ generators RingOfInvariants := List => opts -> S -> S.cache.generators
 
 -------------------------------------------
 -------------------------------------------
--- No FiniteAbelianAction type exists yet
 
 abelianInvariants = method()
 abelianInvariants FiniteAbelianAction := List => T -> (
