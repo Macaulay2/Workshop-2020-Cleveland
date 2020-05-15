@@ -278,16 +278,13 @@ randomPointViaGenericProjection(ZZ, Ideal) := opts -> (n1, I1) -> (
 );
 
 randomPoint(Ideal) := List => opts->(I1)->(
-	genList:= first entries gens I1;
-	K:=coefficientRing ring I1;point:=createRandomPoints(I1);
-	eval:= map(K,ring I1,point);
-	j:=0;
-	while(j< #genList) do (
-        tempEval:=eval(genList_j);
-        if not (tempEval==0) then return false;
-		j=j+1
-	);
-        if (tempEval ==0) then return point else return "Failed to  find";
+        genList:= first entries gens I1;
+        point:= matrix{createRandomPoints(I)};
+        S:=polySystem genList; -- Need the package NAGtypes
+        evalI1:=evaluate(S,point);
+        oList:= apply(#genList, i->0);
+       if(evalI1===oList) then return point 
+       else return false;
 )
  
 randomPoint(ZZ,Ideal):=opts->(n1,I1)->(
