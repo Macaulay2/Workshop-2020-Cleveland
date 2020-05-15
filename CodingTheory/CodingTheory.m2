@@ -21,11 +21,16 @@ newPackage(
 -- must be placed in one of the following two lists
 
 export {
-    -- Types and Constructors
+    -- helper/conversion methods
     "generatorToParityCheck",
     "parityCheckToGenerator",
+    "reduceMatrix",
+    
+    -- Types and Constructors
     "LinearCode",
     "linearCode",
+    "zeroCode",
+    "universeCode",
     "AmbientModule",
     "BaseField",
     "Generators",
@@ -34,14 +39,17 @@ export {
     "ParityCheckRows",
     "ParityCheckMatrix",
     "Code",
+    
     -- Families of Codes
     "cyclicMatrix",
     "quasiCyclicCode",
     "HammingCode",
+    
     -- LRC codes
     "TargetParameters",
     "targetParameters",
     "LRCencoding",
+
     "getEncodingPolynomial",
     "getCoefficientPolynomial",
     --"goodPolynomial",
@@ -50,11 +58,10 @@ export {
     "Length",
     "Dimension",
     "Locality",
+    
     -- Methods
     "field",
     "vectorSpace",
-    --"codeDim",
-    --"codeLength",
     "ambientSpace",
     "informationRate",
     "dualCode",
@@ -103,9 +110,6 @@ permuteMatrixColumns(Matrix,List) := (M,P) -> (
     -- permute the columns via P:
 
     return transpose matrix((entries transpose M)_P)
-    
-    
-    
     )
 
 permuteMatrixRows = method(TypicalValue => Matrix)
@@ -130,8 +134,6 @@ permuteToStandardForm(Matrix) := M -> (
     )
 
 
-
-
 generatorToParityCheck = method(TypicalValue => Matrix)
 generatorToParityCheck(Matrix) := Matrix => M -> (
     -- this function assumes M is of full rank:
@@ -147,11 +149,6 @@ generatorToParityCheck(Matrix) := Matrix => M -> (
     Gred  := GandP_0;
     P := GandP_1;
     
-    
-    -- this code assumes that generator matrix
-    -- can be put into standard form without any
-    -- swapping of columns:
-    
     -- take (n-k) columns of standard generating matrix above:
     redG := Gred_{0..(rank Gred.source - rank Gred -1)};
     
@@ -160,10 +157,6 @@ generatorToParityCheck(Matrix) := Matrix => M -> (
     return permuteMatrixColumns(transpose (id_(redG.source) || -redG),inversePermutation(P))
     
     )
-
-
-
---The example @henry-chimal noted of a rank deficient code (a generator matrix with repeats) is corrected by this. The user inputted generator or parity check matrix will not be altered UNLESS the matrix is rank deficient, in which case a reduced presentation will be computed and returned.
 
 parityCheckToGenerator = method(TypicalValue => Matrix)
 parityCheckToGenerator(Matrix) := Matrix => M -> (
@@ -185,6 +178,37 @@ reduceRankDeficientMatrix(Matrix) := Matrix => M -> (
 	} else return reduceMatrix(M)
     )
 
+ 
+-- internal function to validate user's input
+wellDefinedInput  = method(TypicalValue => List)
+
+wellDefinedInput(List) :=  UserInput -> (
+    -- user's input is used to create a list
+    -- UserInput={GaloisField or Ring, lengthCode, ListGenerators}
+    -- or UserInput = {GaloisField or Ring, lengthCode,ListParityCheckRows}
+    
+    -- check if "baseField" is a Galois field, throw an error otherwise:
+    if not isField UserInput_0 then  "Warning: Codes over non-fields may not unstable.";
+    
+    if UserInput_2 != {} then {
+    	-- check that the length of all generating codewords equals the rank of AmbienModule:
+    	if not all(UserInput_2,codeword -> (length codeword) == UserInput_1) then {
+	    error "Expected codewords all to be the same length and equal to the rank of the Module";
+	    } 
+	else {
+	    -- coerce generators into base field, if possible:
+	    return try apply(UserInput_2, codeword -> apply(codeword, entry -> sub(entry, UserInput_0)))
+	     else {
+	    error "Entries of codewords do not live in base field/ring.";
+	    }
+	   }
+	} else {
+	return  UserInput_2
+	};
+  )
+
+
+
 
 
 -- Use this section to add basic types and
@@ -198,22 +222,14 @@ rawLinearCode(List) := LinearCode => (inputVec) -> (
     -- use externally facing functions to create list:	
     -- { AmbientModule, BaseField, Generators, ParityCheckRows, Code}
     
-    -- use this function to validate inputs and provide warnings:
     
     -- check if "baseField" is a field, throw warning otherwise:
     if not isField(inputVec_1) then print "Warning: Working over non-field.";
    
     if inputVec_2 != {} then {
-	-- check that all generating codewords are of the same length:
-	if not all(inputVec_2, codeword -> length(codeword) == length(inputVec_2)_0) then error "Codewords not of same length.";
-	
-	-- coerce generators and generator matrix into base field, if possible:
-	try {
-	    newGens := apply(inputVec_2, codeword -> apply(codeword, entry -> sub(entry, inputVec_1)));
-	    newGenMat := matrix(newGens);
-	    } else {
-	    error "Elements do not live in base field/ring.";
-	    };
+	-- validate inputs and coerce into base field:
+	newGens := wellDefinedInput({inputVec_1,rank inputVec_0,inputVec_2});
+	newGenMat := matrix(newGens);
     } else {
 	-- if generators and generator matrix were undefined:
 	newGens = {};
@@ -221,17 +237,11 @@ rawLinearCode(List) := LinearCode => (inputVec) -> (
     };
     
     if inputVec_3 != {} then {
-	-- check that all parity check rows are of the same length:
-	if not all(inputVec_3, parityrow -> length(parityrow) == length(inputVec_3)_0) then error "Parity check row not of same length.";
+	-- validate inputs and coerce into base field:
+	newParRow := wellDefinedInput({inputVec_1, rank inputVec_0, inputVec_3});
+	newParMat := matrix(newParRow);	
 	
-	-- coerce parity check rows and parity check matrix into base field, if possible:
-	try {
-	    newParRow := apply(inputVec_3, codeword -> apply(codeword, entry -> sub(entry, inputVec_1)));
-	    newParMat := matrix(newParRow);
-	    } else {
-	    error "Elements do not live in base field/ring.";
-	    };
-    } else {
+     } else {
 	newParMat = generatorToParityCheck(reduceMatrix(newGenMat));
 	newParRow = entries newParMat ;
     };
@@ -357,6 +367,58 @@ net LinearCode := c -> (
      )
 toString LinearCode := c -> toString c.Generators
 
+------------------------------------------
+------------------------------------------
+-- Basic Code Types
+------------------------------------------
+------------------------------------------
+
+zeroCode = method()
+zeroCode(GaloisField,ZZ) := LinearCode =>(F,n)->(
+    -- Generates the zero code in F^n
+    -- check n is positive
+    
+    if n >0 then {    
+    	GenMat := matrix {apply(toList(0..n-1),i->0)};
+    	GenRow := {{}};
+    	ParMat := generators F^n;
+    	ParRows := entries ParMat;
+    	return new LinearCode from {
+            symbol AmbientModule => F^n,
+	    symbol BaseField => F,
+            symbol Generators => GenRow,
+	    symbol GeneratorMatrix => GenMat,
+	    symbol ParityCheckMatrix =>  ParMat,
+	    symbol ParityCheckRows  => ParRows,
+	    symbol cache => {}
+	    }
+    } else {
+    error "The length of the code should be positive."
+    };
+  )
+
+universeCode = method()
+universeCode(GaloisField,ZZ) := LinearCode => (F,n) -> (
+    -- construct the universe code F^n
+    -- check n is positive
+    if n>0 then {
+	GenMat := generators F^n;
+    	GenRow := entries GenMat;
+    	ParMat := matrix {apply(toList(0..n-1),i->0)};
+    	ParRows := {{}};
+    	return new LinearCode from {
+            symbol AmbientModule => F^n,
+	    symbol BaseField => F,
+            symbol Generators => GenRow,
+	    symbol GeneratorMatrix => GenMat,
+	    symbol ParityCheckMatrix =>  ParMat,
+	    symbol ParityCheckRows  => ParRows,
+	    symbol cache => {}
+	    }	
+	} else {
+	error "The length of the code should be positive."
+	};    
+    )
 
 
 ------------------------------------------
