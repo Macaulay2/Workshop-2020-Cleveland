@@ -338,9 +338,9 @@ doc ///
         :Ideal
             defining ideal of the projection of V(I)     
     Description
-       Text
+        Text
             If no integer $n$ is provided, this gives the projection map from $\mathbb{A}^N \mapsto\mathbb{A}^{N-1}$ and the defining ideal of the projection of $V(I)$.
-       Example
+        Example
             R=ZZ/5[x,y,z]
             I = ideal(x,y^2)
             genericProjection(I)
