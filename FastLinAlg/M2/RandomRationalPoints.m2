@@ -22,12 +22,13 @@ export {
 	"randomCoordinateChange", 
 	"randomPoint", 
 	"createRandomPoints",
-        "MyOption", 
+	"MyOption", 
 	"GenericProjection", 
 	"NumPointsToCheck", 
 	"Codimension",
 	"MaxChange",
 	"BruteForce",
+    "ModifiedBruteForce",
 	"ProjectionAttempts"}
 exportMutable {}
 
@@ -188,58 +189,6 @@ projectionToHypersurface(Ideal) := opts -> (I1) -> (
 );
 *-
 
-randomRatPt = method(Options=>{Homogeneous=>true, Codimension => null});
-
-randomRatPt(Ideal) := opts -> (I1) -> (
-        local c1;
-        if (opts.Codimension === null) then (
-        c1 = codim I1;
-        ) else (c1 = opts.Codimension);
-
-);
-
-randomRatPtInhomog := (I1) -> (
-
-);
-
-randomRatPt(Ideal, Boolean) := opts -> (I,b) -> ( --this is temporary, it's just a copy of randomKRationalPoint from M2, so we can explore it
-        R:=ring I;
-        if char R == 0 then error "randomRatPt: expected a finite ground field";
-        if not class R === PolynomialRing then error "randomRatPt: expected an ideal in a polynomial ring";
-        if (not opts.Homogeneous) then return randomRatPtInhomog(I);
-        if not isHomogeneous I then error "randomRatPt: expected a homogeneous ideal with Homogeneous => true";
-
-        n:=dim I;
-        if n<=1 then error "expected a positive dimensional scheme";
-        c:=codim I;
-        Rs:=R;
-        Re:=R;
-        f:=I;
-        phi := null;
-        if not c==1 then (
-        -- projection onto a hypersurface
-        parametersystem:=ideal apply(n,i->R_(i+c));
-        while not dim(I+parametersystem)== 0 do (
-        phi = randomCoordinateChange(I, Homogeneous=>opts.Homogeneous);
-        );
-        kk:=coefficientRing R;
-        Re=kk(monoid[apply(dim R,i->R_i),MonomialOrder => Eliminate (c-1)]);
-        rs:=(entries selectInSubring(1,vars Re))_0;
-        Rs=kk(monoid[rs]);
-        f=ideal substitute(selectInSubring(1, generators gb substitute(I,Re)),Rs);
-        if not degree I == degree f then return print "make coordinate change"
-        );
-        H:=0;pts:=0;pts1:=0;trial:=1;pt:=0;ok:=false;
-        while (
-        H=ideal random(Rs^1,Rs^{dim Rs-2:-1});
-        pts=decompose (f+H);
-        pts1=select(pts,pt-> degree pt==1 and dim pt ==1);
-        ok=( #pts1>0);
-        if ok then (pt=saturate(substitute(pts1_0,R)+I);ok==(degree pt==1 and dim pt==0));
-        not ok) do (trial=trial+1);
-        pt
-);
-
 
 
 
@@ -279,30 +228,62 @@ randomPointViaGenericProjection(ZZ, Ideal) := opts -> (n1, I1) -> (
         );
 );
 
+randomPoint(Ring) := opts -> (R1) -> (
+    noVar := #generators R1;
+    K:=coefficientRing R1;
+    L:=toList apply(noVar, i ->random(K));
+    if (opts.Homogeneous == true) then if (all(L, i->i==0)) then return randomPoint(R1);
+    return L
+);  
+
 randomPoint(Ideal) := List => opts->(I1)->(
-        genList:= first entries gens I1;
-	K:=coefficientRing ring I1;point:=createRandomPoints(I1);
+    genList:= first entries gens I1;
+	K:=coefficientRing ring I1;
+    point:=randomPoint(ring I1);
 	eval:= map(K,ring I1,point);
 	j:=0;
 	while(j< #genList) do (
         tempEval:=eval(genList_j);
         if not (tempEval==0) then return false;
         j=j+1
-        );
-        if (tempEval ==0) then return point else return "Failed to  find";
+    );
+    if (tempEval ==0) then return point else return false;
 )
 
 randomPoint(ZZ,Ideal):=opts->(n1,I1)->(
-        if (opts.Strategy == BruteForce) then (
-    	j:=0;
-    	local apoint;
+    local apoint;
+    local outpt;
+    local eval;
+    K:=coefficientRing ring I1;
+    local j;
+    local i;
+    local flag;
+    if (opts.Strategy == BruteForce) then (
+    	j=0;
 		while( j<n1) do (
-			apoint=randomPoint(I1);
+			apoint=randomPoint(I1, opts);
 			if not (apoint===false ) then return apoint; 
 			j=j+1;
 		);
-		return "Failed to find";
+		return false;
 	)
+    else if (opts.Strategy == ModifiedBruteForce) then (
+        j = 0;
+        genList := first entries gens I1;
+        while (j < n1) do (
+            i=0;
+            flag = true;
+	        while(i< #genList) do (
+                apoint=randomPoint(ring I1);
+                eval= map(K,ring I1,apoint);
+                outpt=eval(genList_i);
+                if not (outpt==0) then (flag = false; break);
+                i=i+1
+            );
+            if (flag == true) then return apoint;
+            j = j+1;
+        );
+    )
 	else if (opts.Strategy == GenericProjection) then (
 		return randomPointViaGenericProjection(n1, I1, opts)
 	);
@@ -432,16 +413,20 @@ doc ///
     Key
         randomPoint
         (randomPoint, Ideal)
+        (randomPoint, Ring)
+        [randomPoint, Strategy]
+        BruteForce
     Headline
         a function to check if  a random point is  in a variety
     Usage
         randomPoint(I)
+        randomPoint(R)
     Inputs
-	I:Ideal
-	    inside a polynomial ring
+        I:Ideal
+            inside a polynomial ring
     Outputs
         :List
-	  a point if it is in the variety otherwise false.
+            a point if it is in the variety otherwise false.
 ///  
 
 doc ///
