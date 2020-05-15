@@ -48,3 +48,42 @@ lf = pLikelihood F
 
 assert( lf == ) 
 ///
+
+
+doc ///
+Key
+  pLikelihood
+  (pLikelihood, List)
+Headline
+  Generators of the parametric likelihood ideal
+Usage
+  pLikelihood(Flist)
+Inputs
+  Flist:
+    list of function
+Outputs
+  :Ideal
+    Generators of the parametric likelihood ideal
+--Consequences
+--  asd
+Description
+  Text
+    ---
+  Example
+    R= QQ[p,s,t]
+    f_0=     p *       (1-s)^4 +     (1-p) *       (1-t)^4;
+    f_1= 4 * p * s   * (1-s)^3 + 4 * (1-p) * t   * (1-t)^3;
+    f_2= 6 * p * s^2 * (1-s)^2 + 6 * (1-p) * t^2 * (1-t)^2;
+    f_3= 4 * p * s^3 * (1-s)   + 4 * (1-p) * t^3 * (1-t);
+    f_4=     p * s^4           +     (1-p) * t^4;
+    F = {f_0,f_1,f_2,f_3,f_4}; --- list of function as input
+    pLikelihood(F)
+--  Code
+--    todo
+--  Pre
+--    todo
+--Caveat
+--  todo
+--SeeAlso
+--  
+///
