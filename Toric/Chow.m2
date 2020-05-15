@@ -418,11 +418,15 @@ ToricDivisor * List := (D, C) -> (
 
 NormalToricVariety _ List := (X,L) -> (toricCycle({(L,1)},X))
 
+-- Need to be careful when cycle class is supported on a point
+-- Output is the point normalToricVariet({{}},{{}}). The NormalToricVarieties 
+-- package doesn't treat this as a Toric variety.
 normalToricVariety(ToricCycle) := opts -> C -> (
     s := support C;
     if #s > 1 then error "Expected a cycle of a cone";
     normalToricVariety(first s, variety C)
 )
+
 
 normalToricVariety(List,NormalToricVariety) := opts -> (r,X) -> (
     if any(r, e -> class e === List) then error "Expected a list of rays"; 
