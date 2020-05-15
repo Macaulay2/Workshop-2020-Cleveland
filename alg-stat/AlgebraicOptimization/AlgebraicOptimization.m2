@@ -55,6 +55,23 @@ conormalRing Ring := ConormalRing => opts -> R -> (
   }
 )
 
+linearObjective = method();
+linearObjective ConormalRing := RingElement => C -> (
+  apply(C.Coordinates_0, C.Coordinates_1, (i,j) -> sub(i,C.AmbientRing) * sub(j, C.AmbientRing)) // sum
+)
+EDObjective = method();
+EDObjective ConormalRing := RingElement => C -> (
+  apply(C.Coordinates_0, C.Coordinates_1, (i,j) -> (sub(i,C.AmbientRing) - sub(j, C.AmbientRing))^2) // sum
+)
+randomizeObjective = method();
+randomizeObjective (RingElement, ConormalRing) := RingElement => (obj, S) -> (
+  if not ring obj === S.AmbientRing then error "expected objective function in ambient ring";
+  AR := S.AmbientRing;
+  rules := S.Coordinates_1 / (i -> sub(i, AR) => random(coefficientRing AR));
+  (map(AR, AR, rules)) obj
+)
+
+
 
 conormalIdeal = method(Options => options conormalRing);
 -- Computes the conormal variety
@@ -111,6 +128,20 @@ R = QQ[x_0..x_3]
 J = ideal det(matrix{{x_0, x_1, x_2}, {x_1, x_0, x_3}, {x_2, x_3, x_0}})
 assert(multiDegreeEDDegree(J) == 13)
 ///
+
+
+criticalIdeal = method(Options => options conormalRing);
+criticalIdeal (Ideal, RingElement, ConormalRing) := Ideal => opts -> (I, obj, C) -> (
+  obj = sub(obj, C.AmbientRing);
+  if not ring I === C.Factors_0 then "expected ideal in primal ring";
+  
+  c := codim I;
+  jacI := sub(diff(matrix{C.Coordinates_0}, transpose gens I), C.AmbientRing);
+  jacBar := diff( sub(matrix{C.Coordinates_0}, C.AmbientRing), obj ) || jacI;
+  J' := sub(I,C.AmbientRing) + minors(c+1, jacBar);
+  J := saturate(J', minors(c, jacI));
+  J
+)
 
 
 
