@@ -193,7 +193,7 @@ submatrixByDegrees (Matrix,ZZ) := (inputMatrix,currDegree) -> (
 
     -- Selected cols are the columns where the degree condition is satisfied.
     selectedCols := positions(0..numcols inputMatrix - 1,
-        i -> (degrees source inputMatrix)_i === {maxDegree});
+        i -> (degrees source inputMatrix)_i === {currDegree});
 
     -- Construct the submatrix using only the columns selected above.
     inputMatrix_selectedCols)
@@ -223,7 +223,7 @@ grabLowestDegree = (R, maxDegree) -> (
 	    );
     	-- If number of new generators is zero, then nothing was added because pending was empty.  There is no way for pending to be empty unless currentLowest is maxDegree + 1.
     	);
-    numNewGenerators
+    currentLowest
 )
 
 -- Declaration of default options
@@ -299,10 +299,7 @@ subalgebraBasis Subring := o -> R -> (
     R.cache.Pending#0 = {};
 
     -- Get the lowest degree of the pending list.  Add 1 and initialize to number of loops
-    nNewGenerators = grabLowestDegree(R, o.Limit);
-
-    if nNewGenerators != 0 then
-        currDegree = first degree((R.cache.SagbiGens)_(0,numcols R.cache.SagbiGens - 1)) + 1 else currDegree = o.Limit + 1;
+currDegree = grabLowestDegree(R, o.Limit) + 1;
 
     nLoops = currDegree;
 
@@ -317,6 +314,8 @@ subalgebraBasis Subring := o -> R -> (
         sagbiGB = gb(R.cache.SyzygyIdeal, DegreeLimit=>currDegree);
 	<< "Current Degree is " << currDegree << endl;
     << "generators of GB " << gens sagbiGB << endl;
+    << "selectInSubring is " << selectInSubring(1, gens sagbiGB) << endl;
+    << "submatrixByDegrees is " << submatrixByDegrees(selectInSubring(1, gens sagbiGB), currDegree) << endl;
         syzygyPairs = R.cache.Substitution(submatrixByDegrees(selectInSubring(1, gens sagbiGB), currDegree));
     	<< "Syzygy pairs is " << syzygyPairs << endl;
         if R.cache.Pending#currDegree != {} then (
@@ -337,10 +336,7 @@ subalgebraBasis Subring := o -> R -> (
         if numcols newElems > 0 then (
             << numcols newElems << " generators added" << endl;
             insertPending(R, newElems, o.Limit);
-            nNewGenerators = grabLowestDegree(R, o.Limit);
-            if nNewGenerators != 0 then
-                currDegree = first degree((R.cache.SagbiGens)_(0,numcols R.cache.SagbiGens - 1))
-                else currDegree = o.Limit + 1;
+            currDegree = grabLowestDegree(R, o.Limit);
         )
         else (
             nNewGenerators = 0;
