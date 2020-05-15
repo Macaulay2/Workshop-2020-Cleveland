@@ -65,6 +65,10 @@ newPackage(
       Email => "wwang888@math.umd.edu",
       HomePage => "https://wangweikun.com"},
       {
+      Name => "Rachel Webb",
+      Email => "webbra@umich.edu",
+      HomePage => "sites.google.com/view/rachel-webb"},  
+      {
       Name => "Thomas Yahl",
       Email => "thomasjyahl@tamu.edu",
       HomePage => "https://www.math.tamu.edu/~thomasjyahl"},
@@ -72,10 +76,6 @@ newPackage(
       Name => "Jay Yang",
       Email => "jkyang@umn.edu",
       HomePage => "https://www-users.math.umn.edu/~jkyang/"}
-      {
-      Name => "Rachel Webb",
-      Email => "webbra@umich.edu",
-      HomePage => "sites.google.com/view/rachel-webb"}
   },
   Headline => "routines for working with toric morphisms",
   PackageExports => {
@@ -488,6 +488,7 @@ ideal ToricMap := Ideal => f -> (
     ));
     ---bug in the following line: this breaks when Igens is empty
     ---append 0*R_0 to Igens
+    if Igens =!= {} the
     I:=ideal Igens;
     scan(gens R, x->(I=saturate(I,x)));
     I
