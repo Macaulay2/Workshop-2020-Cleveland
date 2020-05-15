@@ -5,7 +5,8 @@ newPackage(
     	Date => "May 13, 2020",
     	Authors => {
 	     {Name => "Sankhaneel Bisui", Email => "sbisu@tulane.edu", HomePage=>"https://sites.google.com/view/sankhaneelbisui/home"},
-	     {Name=> "Thai Nguyen", Email =>"tnguyen11@tulane.edu", HomePage=>"https://sites.google.com/view/thainguyenmath "}
+	     {Name=> "Thai Nguyen", Email =>"tnguyen11@tulane.edu", HomePage=>"https://sites.google.com/view/thainguyenmath "},
+	     {Name=>"Karl Schwede", Email=>"schwede@math.utah.edu", HomePage=>"https://www.math.utah.edu/~schwede/" }
 	     },
     	Headline => "A Package To Compute A Random Point In A Given Variety",
 		DebuggingMode => true, 
@@ -21,12 +22,7 @@ export {
 	"randomCoordinateChange", 
 	"randomPoint", 
 	"createRandomPoints",
-	"fieldElements", 
-	"pointToIdeal",
-	"idealToPoint",
-	"firstFunction", 
-	"secondFunction", 
-	"MyOption", 
+        "MyOption", 
 	"GenericProjection", 
 	"NumPointsToCheck", 
 	"Codimension",
@@ -184,7 +180,7 @@ projectionToHypersurface(Ideal) := opts -> (I1) -> (
 	);
 	assert(source (tempList#0) === ring (tempList#1));
 	--otherwise recurse
-	tempList2 := projectionToHypersurface(tempList#1, Homogeneous => opts.Homogeneous, MaxChange => opts.MaxChange, Codimension=>c1-1);
+	tempList2 := projectionToHypersurface(tempList#1, Hoxmogeneous => opts.Homogeneous, MaxChange => opts.MaxChange, Codimension=>c1-1);
 	assert(target(tempList2#0) === ring (tempList#1));
 	return ((tempList#0)*(tempList2#0), tempList2#1);
 );
@@ -320,8 +316,142 @@ document {
 	Headline => "Give a random point in a variety",
 	EM "RandomRationalPoints", "Give a random point inside a affine space that lies inside a variety ."
 }
-    
+doc ///
+    Key
+        genericProjection
+	(genericProjection, Ideal)
+    Headline
+       Finds a random generic projections of the ideal.
+    Usage
+        genericProjection(I)
+    Inputs
+        I:Ideal 
+	    in a polynomial Ring
+    Outputs
+        :RingMap
+           a Projection map.
+        :Ideal
+           defining ideal of the projection of V(I)     
+    Description
+       Text
+         Gives the projection map from $\mathbb{A}^N \mapsto\mathbb{A}^{N-1}$ and the defining ideal of the projection of $V(I)$.  
+       	 
+	   
+       Example
+         R=ZZ/5[x,y,z]
+	 I = ideal(x,y^2)
+	 genericProjection(I)
+       
+///
+doc ///
+    Key
+        genericProjection
+	(genericProjection,ZZ, Ideal)
+    Headline
+       Finds a random generic projections of the ideal.
+    Usage
+        genericProjection(n,I)
+    Inputs
+        I:Ideal 
+	    in a polynomial Ring
+        n:ZZ
+            an integer    
+    Outputs
+        :RingMap
+           a Projection map.
+        :Ideal
+           defining ideal of the projection of V(I)     
+    Description
+       Text
+         Gives the projection map from $\mathbb{A}^N \mapsto\mathbb{A}^{N-n}$ and the defining ideal of the projection of $V(I)$.  
+       	 
+	   
+       Example
+         R=ZZ/5[x,y,z,w]
+	 I = ideal(x,y^2,w^3+x^2)
+	 genericProjection(2,I)
+       
+///
 
+doc ///
+    Key
+        genericProjection
+	(genericProjection,ZZ, Ideal)
+    Headline
+       Finds a random generic projections of the ideal.
+    Usage
+        genericProjection(n,I)
+    Inputs
+        I:Ideal 
+	    in a polynomial Ring
+        n:ZZ
+            an integer    
+    Outputs
+        :RingMap
+           a Projection map.
+        :Ideal
+           defining ideal of the projection of V(I)     
+    Description
+       Text
+         Gives the projection map from $\mathbb{A}^N \mapsto\mathbb{A}^{N-n}$ and the defining ideal of the projection of $V(I)$.  
+       	 
+	   
+       Example
+         R=ZZ/5[x,y,z,w]
+	 I = ideal(x,y^2,w^3+x^2)
+	 genericProjection(2,I)
+       
+///
+doc ///
+    Key
+        randomCoordinateChange
+	(randomCoordinateChange, Ring)
+    Headline
+        Changes the co-orinate randomly.
+    Usage
+        randomCoordinateChange R
+    Inputs
+        R:Ring
+            a polynomial Ring
+    Outputs
+        :RingMap
+            the coordinate change map.
+    Description
+       Text
+         Gives a random coordinate change map.  
+       	 
+	   
+       Example
+         R=ZZ/5[x,y,z]
+         randomCoordinateChange(R)
+      
+///
+doc ///
+    Key
+       projectionToHypersurface
+	(projectionToHypersurface, Ideal)
+    Headline
+        Projection to a random hypersurface.
+    Usage
+        projectionToHypersurface I   
+    Inputs
+        I:Ideal
+            an ideal in a polynomial Ring
+    Outputs
+        :RingMap
+            a Projection map.
+        :Ideal
+            defining ideal of the projection of V(I)  
+    Description
+        Text
+           Gives a projection to a random hypersurface.  
+       	 
+	   
+       Example
+         R=ZZ/5[x,y,z]
+         I = ideal(random(3,R)-2, random(2,R))
+         projectionToHypersurface(I)
+///
 doc ///
     Key
         createRandomPoints
@@ -345,14 +475,7 @@ doc ///
          R=ZZ/5[x,y,z]
 	 I = ideal(x,y^2)
 	 createRandomPoints(I)
-       -- Text
-       	  -- The function is implemented by composing the isomorphism $K_2\cong K_1$, the natural embedding $K_1\to L_1$ and the isomorphism $L_1\cong L_2$.
-	   
-   --SeeAlso
-    
-   -- Caveat
-       -- The function depends on the implementation of map(GaloisField,GaloisField).
-    
+      
 ///
 doc ///
     Key
@@ -365,26 +488,10 @@ doc ///
     Inputs
 	I:Ideal
 	    inside a polynomial ring
-    --Outputs
-       -- :List
-	   -- ($T$ ,$f$) where $T = R  \otimes_L K$ is the base-changed ring, $f:R\to T$ is the ring map $R\otimes_L L\to R\otimes_L K$ induced from $L\to K$.
-   -- Description
-        --Text  
-       	   -- Some words to say things. You can even use LaTeX $R = k[x,y,z]$. 
---
-      --  Example
-           -- R=ZZ/5[t_1..t_3];
-           -- I = ideal(t_1,t_2+t_3^2);
-	  -- randomPoint(I)
-        --Text
-       	   -- More words, but don't forget to indent. 
-	   
-    --SeeAlso
-    
-    --Caveat
-    
-///
-
+    Outputs
+        :List
+	  a point if it is in the variety otherwise false.
+///  
 
 doc ///
     Key
