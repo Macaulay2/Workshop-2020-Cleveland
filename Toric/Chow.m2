@@ -12,7 +12,13 @@ newPackage(
 	       HomePage => ""},
 	    {Name => "Corey Harris",
        	       Email => "harris@mis.mpg.de",
-	       HomePage => "http://coreyharris.name"}
+	       HomePage => "http://coreyharris.name"},
+	   {Name => "Erika Pirnes",
+	       Email => "erika.pirnes@wisc.edu",
+	       HomePage => "https://sites.google.com/view/erikapirnes" },
+	   {Name => "Ritvik Ramkumar",
+	       Email => "ritvik@berkeley.edu",
+	       HomePage => "https://math.berkeley.edu/~ritvik/" }
 	   },
      Headline => "Chow computations for toric varieties",
      DebuggingMode => true,
@@ -29,8 +35,7 @@ export {
      "iintersectionRing",
      "ToricCycle",
      "toricCycle",
-     "isTransverse",
-     "tDivisor"
+     "isTransverse"
      }
 
 protect ChowGroupBas 
@@ -367,15 +372,16 @@ ToricCycle - ToricCycle := ToricCycle => (C,D) -> (
 
 - ToricCycle := ToricCycle => (C) -> (-1)*C
 
--- IMHO this should be called toricDivisor
-tDivisor = method()
-tDivisor(Vector,NormalToricVariety) := (u,X) -> (
+
+--toricDivisor = method()
+toricDivisor(Vector,NormalToricVariety) := opts -> (u,X) -> (
     -- u is a vector in M
     -- returns the divisor of zeros and poles of chi^u
-    cs := for r in rays X list (
-        u * vector(r)    
-    ); 
-    sum apply(cs,0..(#(rays X) - 1), (c,i) -> c*X_i)
+    --cs := for r in rays X list (
+    --    u * vector(r)    
+    --); 
+    --sum apply(cs,0..(#(rays X) - 1), (c,i) -> c*X_i)    
+    sum (#(rays X), i -> (u * vector((rays X)_i))*X_i)
 )
 
 Vector * Vector := (a,b) -> (
@@ -1027,6 +1033,28 @@ doc ///
 	    rays Y
 ///
 
+doc ///
+    Key
+        (toricDivisor, Vector, NormalToricVariety)
+    Headline
+        creates the principal divisor corresponding to the torus-invariant function
+    Usage
+        toricDivisor(u,X)
+    Inputs
+        u:Vector
+	X:NormalToricVariety
+    Outputs
+        Z:ToricDivisor
+    Description
+        Text
+	    Given a vector u in M, the function returns the divisor
+	    of the torus-invariant function chi^u.
+	Example
+	    X = affineSpace 2
+	    u = vector({29,73})
+	    Z = toricDivisor(u,X)	
+///
+
 
 ---------------------------------------------------------------------------
 -- TEST
@@ -1205,8 +1233,12 @@ viewHelp Chow
 X = toricProjectiveSpace 4
 D = X_1
 u = vector({1,2,3,4})
-Z = tDivisor(u,X)
+Z = toricDivisor(u,X)
 D' = D + Z
+
+X = affineSpace 2
+u = vector({29,73})
+Z = toricDivisor(u,X)
 
 rayList={{1,0},{0,1},{-1,-1},{0,-1}}
 coneList={{0,1},{1,2},{2,3},{3,0}}
@@ -1243,7 +1275,6 @@ for g in gammas do (
 
 uninstallPackage "Chow"
 restart
-loadPackage "Chow"
 installPackage("Chow",RemakeAllDocumentation=>false,RunExamples=>false,RerunExamples=>false)
 installPackage "Chow"
 check "Chow"
