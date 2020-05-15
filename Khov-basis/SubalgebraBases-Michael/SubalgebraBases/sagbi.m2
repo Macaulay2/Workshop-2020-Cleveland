@@ -178,7 +178,6 @@ grabLowestDegree = (R, maxDegree) -> (
 
         -- Row reduce the matrix of the pending elements of lowest degree
         -- WHAT IS THIS DOING???
-        -- THIS IS IN COMMON, MOVE IT HERE.
     reducedGenerators = rowReduce(matrix{R.cache.Pending#currentLowest}, currentLowest);
     R.cache.Pending#currentLowest = {};
     insertPending(R, reducedGenerators, maxDegree);
@@ -249,10 +248,8 @@ subalgebraBasis Subring := opts -> R -> (
     sagbiGB := null;
     syzygyPairs := null;
     newElems := null;
-                                           -- maxdeg
-    R.cache.Pending = new MutableList from toList(Limit+1:{}); -- Pending
 
-    -- missing inGmap, newguys, isDone ...
+    R.cache.Pending = new MutableList from toList(Limit+1:{}); -- Pending
 
     -- Create an empty matrix of generators.
     R.cache.SagbiGens = matrix(R.AmbientRing,{{}});
