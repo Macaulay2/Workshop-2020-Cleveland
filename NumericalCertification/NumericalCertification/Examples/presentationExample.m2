@@ -1,5 +1,5 @@
 restart
-needsPackage("NumericalCertification", FileName => "NumericalCertification.m2",Reload=>true)
+needsPackage("NumericalCertification", FileName => "../../NumericalCertification.m2",Reload=>true)
 -- cbms2 system : 7 roots (6 regular roots, 1 multiple root)
 R = CC[x,y,z]
 F = polySystem {(x-y)^3 - z^2, (z-x)^3 - y^2, (y-z)^3 - x^2} 
@@ -12,8 +12,8 @@ alphaTheoryCertification(F,listOfSols)
 
 
 -- certify using alphaCertified
-loadPackage("NumericalCertification", FileName=> "NumericalCertification.m2", 
-     Reload => true, Configuration => {"ALPHACERTIFIEDexec"=>"~/Desktop/math/code/alphaCertifiedLinux64"})
+loadPackage("NumericalCertification", FileName=> "../../NumericalCertification.m2", 
+     Reload => true, Configuration => {"ALPHACERTIFIEDexec"=>"~/alphaCertifiedLinux64"})
 alphaCertified(F, listOfSols)
 toACertifiedPoly F -- input file
 

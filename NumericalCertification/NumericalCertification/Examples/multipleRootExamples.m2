@@ -1,6 +1,6 @@
 --This is Example 3.5 from Kisun's paper
 restart
-loadPackage("NumericalCertification",FileName=>"../../NumericalCertification.m2",Reload=>true)
+loadPackage("NumericalCertification",FileName=>"NumericalCertification.m2",Reload=>true)
 
 R = CC[x,y,z];
 F = polySystem {x^3-y*z,y^3-x*z,z^3-x*y};
@@ -104,12 +104,7 @@ certifyCluster(F,P) -- also now true!
 R = QQ[x1,x2,x3,x4,x5]
 F = polySystem ideal((x1+1)^2-2*(x1+1)+1+x1+x2+x3+x4+x5, (x2+1)^2-2*(x2+1)+1+x1+x2+x3+x4+x5, (x3+1)^2-2*(x3+1)+1+x1+x2+x3+x4+x5, (x4+1)^2-2*(x4+1)+1+x1+x2+x3+x4+x5, (x5+1)^2-2*(x5+1)+1+x1+x2+x3+x4+x5)
 P = last solveSystem F
- P = point {{0/1,0/1,0/1,0/1,0/1}}
-
-M = random(QQ^5, QQ^5)
-randomTransform = flatten entries(M * transpose vars R)
-F1 = polySystem sub(transpose F.PolyMap, 
-    apply(length randomTransform, i -> (gens R)#i => randomTransform#i))
+P = point {{0/1,0/1,0/1,0/1,0/1}}
 
 
 
