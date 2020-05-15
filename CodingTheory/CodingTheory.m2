@@ -224,7 +224,7 @@ rawLinearCode(List) := LinearCode => (inputVec) -> (
     
     
     -- check if "baseField" is a field, throw warning otherwise:
-    if not isField(inputVec_1) then print "Warning: Working over non-field.";
+    if not isField(inputVec_1) then print "Warning: Working over non-field.";    
    
     if inputVec_2 != {} then {
 	-- validate inputs and coerce into base field:
@@ -353,9 +353,9 @@ linearCode(Matrix) := LinearCode => opts -> M -> (
     
 
     if opts.ParityCheck then {
-	outputVec := {M.source, M.ring, {}, entries M, kernel M};
+	outputVec := {M.target, M.ring, {}, entries M, kernel M};
 	} else {
-	outputVec =  {M.target, M.ring, entries M, {}, image transpose M};
+	outputVec =  {M.source, M.ring, entries M, {}, image transpose M};
 	};
     
     rawLinearCode(outputVec)
