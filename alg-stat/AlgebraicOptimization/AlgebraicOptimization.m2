@@ -325,13 +325,14 @@ TEST///
 --witnessCriticalVariety and Optimization degree
 CriticalIdeal = new Type of MutableHashTable
 newCriticalIdeal = method(Options => {});
-newCriticalIdeal (List,List,LagrangeIdeal) := CriticalIdeal => opts  -> (v,g,LVW) ->(
+newCriticalIdeal (List,List,LagrangeIdeal) := CriticalIdeal => opts  -> (v,g,aLI) ->(
 --Output: substitution of (WI,I,LVW) 
     if degreeLength  LVW#LagrangeRing#PrimalRing==2 then(
 	u := gens coefficientRing (LVW);
 	if #v=!=#u then error "data does not agree with number of parameters. ";
     	LR := LVW#LagrangeRing;
-	y := drop(drop(gens ring LVW,#gens LR#PrimalRing),-# gens LR#LagrangeRing);
+	y = aLI.ConormalRing.Coordinates#1;
+	if #y=!=#g then error "gradient does not agree with number of dual variables. ";
 	subDualVars := apply(y,g,(i,j)->i=>sub(j,ring LVW));
 	subVars:=subDualVars;
 	scan(gens ring LVW,X->if not member(X,y) then subVars=append(subVars,X=>X) );
