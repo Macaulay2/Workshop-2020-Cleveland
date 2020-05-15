@@ -4,13 +4,13 @@ newPackage(
     	Version => "1.0",
     	Date => "May 13, 2020",
     	Authors => {
-             {Name => "Sankhaneel Bisui", Email => "sbisu@tulane.edu", HomePage=>"https://sites.google.com/view/sankhaneelbisui/home"},
-             {Name=> "Thai Nguyen", Email =>"tnguyen11@tulane.edu", HomePage=>"https://sites.google.com/view/thainguyenmath "}
-             },
-    	Headline => "an example Macaulay2 package",
-        DebuggingMode => true,
-        Reload=>true,
-        AuxiliaryFiles => false -- set to true if package comes with auxiliary files
+	     {Name => "Sankhaneel Bisui", Email => "sbisu@tulane.edu", HomePage=>"https://sites.google.com/view/sankhaneelbisui/home"},
+	     {Name=> "Thai Nguyen", Email =>"tnguyen11@tulane.edu", HomePage=>"https://sites.google.com/view/thainguyenmath "}
+	     },
+    	Headline => "A Package To Compute A Random Point In A Given Variety",
+		DebuggingMode => true, 
+		Reload=>true,
+		AuxiliaryFiles => false -- set to true if package comes with auxiliary files
     	)
 
 -- Any symbols or functions that the user is to have access to
@@ -300,16 +300,16 @@ randomPoint(ZZ,Ideal):=opts->(n1,I1)->(
         if (opts.Strategy == BruteForce) then (
     	j:=0;
     	local point;
-        while( j<n1) do (
-        point=randomPoint(I1);
-        if not (point===false ) then return point;
-        j=j+1;
-        );
-        return false;
-        )
-        else if (opts.Strategy == GenericProjection) then (
-        return randomPointViaGenericProjection(n1, I1, opts)
-        );
+		while( j<n1) do (
+			point=randomPoint(I1);
+			if not (point===false ) then return point; 
+			j=j+1;
+		);
+		return "Failed to find";
+	)
+	else if (opts.Strategy == GenericProjection) then (
+		return randomPointViaGenericProjection(n1, I1, opts)
+	);
 );
 
 
@@ -329,20 +329,20 @@ doc ///
         createRandomPoints
         (createRandomPoints, Ideal)
     Headline
-        Finds a Random Point
+        Finds a Random Point in the affine space.
     Usage
         createRandomPoints(I)
     Inputs
-        I:Ideal
-         ideal inside a polynomial Ring
+        I:Ideal 
+	    inside a polynomial Ring
     Outputs
         :List
-         --   Point in affine space.
+            a point in affine space.
     Description
        Text
-         Give a random point in the ambient space of the V(I).
-
-
+         Gives a random point in the ambient space of $V(I)$.  
+       	 
+	   
        Example
          R=ZZ/5[x,y,z]
          I = ideal(x,y^2)
@@ -365,8 +365,8 @@ doc ///
     Usage
         randomPoint(I)
     Inputs
-        I:Ideal
-           Ideal inside a polynomial ring
+	I:Ideal
+	    inside a polynomial ring
     --Outputs
        -- :List
            -- ($T$ ,$f$) where $T = R  \otimes_L K$ is the base-changed ring, $f:R\to T$ is the ring map $R\otimes_L L\to R\otimes_L K$ induced from $L\to K$.
@@ -397,14 +397,14 @@ doc ///
         randomPoint(n,I)
     Inputs
         n: ZZ
-            An integer
+            an integer denoting the number of desired trials.
         I:Ideal
-            Ideal inside a polynomial ring
+            inside a polynomial ring
     Outputs
         :List
     Description
-        Text
-       	   Gives a point in a variety V(I), after n trials.
+        Text  
+       	   Gives a point in a variety $V(I)$, by $n$ trials. 
         Example
             R=ZZ/5[t_1..t_3];
             I = ideal(t_1,t_2+t_3);
