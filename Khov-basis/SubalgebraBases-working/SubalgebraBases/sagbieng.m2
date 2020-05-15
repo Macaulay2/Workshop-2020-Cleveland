@@ -12,21 +12,6 @@ sagbiEngine = (Gens, maxnloops, printlevel) -> (
      Pending = new MutableList from toList(maxdeg+1:{});
      RtoRS := null;
      RStoR := null;
-     insertPending := (m) -> (
-	  -- append the entries of the one row matrix 'm' to Pending.
-	  i := 0;
-	  while i < numgens source m do (
-	      f := m_(0,i);
-	      e := (degree f)_0;
-	      Pending#e = append(Pending#e, f);
-	      i = i+1;
-	      ));
-     lowestDegree := () -> (
-	  -- returns maxdeg+1 if Pending list is empty, otherwise
-	  -- returns the smallest non-empty strictly positive degree.
-	  i := 0;
-	  while i <= maxdeg and Pending#i === {} do i=i+1;
-	  i);
      appendToBasis := (m) -> (
 	  R := ring m;
 	  M := monoid R;
@@ -47,12 +32,12 @@ sagbiEngine = (Gens, maxnloops, printlevel) -> (
 	  Gmap = map(RS,RS,(vars RS)_{0..nR-1} | RtoRS(G));
 	  RStoR = map(R,RS,(vars R) | matrix {toList(nG:0_R)});
 	  );
-     grabLowestDegree := () -> (
+grabLowestDegree := () -> (
 	  -- assumes: lowest degree pending list is already autosubducted.
 	  -- this row reduces this list, placing all of the
 	  -- entries back into Pending, but then appends the lowest
 	  -- degree part into the basis.
-	  e := lowestDegree();
+	  e := lowestDegree(maxdeg, Pending);
 	  if e <= maxdeg then (
 	       trr := timing rowReduce(matrix{Pending#e}, e);
 	       timerr := trr#0;
@@ -60,19 +45,19 @@ sagbiEngine = (Gens, maxnloops, printlevel) -> (
 	         << "    rowred  done in " << timerr << " seconds" << endl;
 	       m := trr#1;
 	       Pending#e = {};
-	       insertPending m;
-	       e = lowestDegree();
+	       insertPending (m, Pending);
+	       e = lowestDegree(maxdeg, Pending);
 	       numnewsagbi = #Pending#e;
 	       timeapp := (timing appendToBasis matrix{Pending#e})#0;
 	       if printlevel > 0 then 
 	         << "    append  done in " << timeapp << " seconds" << endl;
 	       Pending#e = {};
 	       );
-	  e);
+	  e);   
      G = matrix(R, {{}});
      Gensmaxdeg := (max degrees source Gens)_0;
      Gens = compress submatrixBelowDegree(Gens, maxdeg+1);
-     insertPending Gens;
+     insertPending (Gens, Pending);
      Pending#0 = {};
      d = grabLowestDegree();  -- initializes G 
      d = d+1;
@@ -110,7 +95,7 @@ sagbiEngine = (Gens, maxnloops, printlevel) -> (
 	  then (
 	       if printlevel > 0 then 
      	         << "    GENERATORS ADDED!" << endl;
-	       insertPending newguys;
+	       insertPending (newguys, Pending);
 	       d = grabLowestDegree();
 	       if printlevel > 0 then 	       
 	         << "    " << numnewsagbi << " NEW GENERATORS!" << endl;
