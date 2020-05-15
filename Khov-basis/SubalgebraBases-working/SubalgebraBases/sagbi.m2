@@ -16,8 +16,6 @@ gens Subring := o -> A -> A#Generators
 numgens Subring := A -> numcols gens A
 ambient Subring := A -> A#AmbientRing
 
-debug Core
-
 ---------------------------------
 -- Inhomogeneous SAGBI bases ----
 ---------------------------------
@@ -242,6 +240,8 @@ subalgebraBasis = method(Options => {
 
 subalgebraBasis Subring := o -> R -> (
 
+<< "Beginning of subalgebraBasis" << endl;
+
 -- Declaration of variables
     -- baseRing is the ring of the input matrix
     -- sagbiGens is a list/matrix of all the generators
@@ -297,23 +297,43 @@ subalgebraBasis Subring := o -> R -> (
     R.cache.Pending#0 = {};
 
     -- Get the lowest degree of the pending list.  Add 1 and initialize to number of loops
-    currDegree = grabLowestDegree(R, o.Limit) + 1;
+    nNewGenerators = grabLowestDegree(R, o.Limit);
+
+    if nNewGenerators != 0 then
+        currDegree = first degree((R.cache.SagbiGens)_(0,numcols R.cache.SagbiGens - 1)) + 1 else currDegree = o.Limit + 1;
+
     nLoops = currDegree;
 
     -- While the number of loops is within the limit and the isDone flag is false, continue to process
     while nLoops <= o.Limit and not isDone do (
         nLoops = nLoops + 1;
+        
+        << currDegree << endl;
+        << peek R.cache.SagbiGens << endl;
     
         -- Construct a Groebner basis to eliminiate the base elements generators from the SyzygyIdeal.
         sagbiGB = gb(R.cache.SyzygyIdeal, DegreeLimit=>currDegree);
 	<< currDegree << endl;
+    << "generators of GB " << gens sagbiGB << endl;
         syzygyPairs = R.cache.Substitution(submatrixByDegrees(selectInSubring(1, gens sagbiGB), currDegree));
     	<< syzygyPairs << endl;
         if R.cache.Pending#currDegree != {} then (
             syzygyPairs = syzygyPairs | R.cache.InclusionBase(matrix{R.cache.Pending#currDegree});
             R.cache.Pending#currDegree = {};
         );
-    	subducted := R.cache.ProjectionBase(map(R.cache.TensorRing,rawSubduction(rawMonoidNumberOfBlocks raw monoid R.AmbientRing, raw syzygyPairs, raw R.cache.InclusionBase, raw sagbiGB)));
+        
+        << "Before rawsubduction" << endl;
+        << "R is " << describe R.AmbientRing << endl;
+        << "spairs is " << syzygyPairs << endl;
+        << "Gmap is " << R.cache.Substitution << endl;
+        << "gbJ is " << sagbiGB << endl;
+        
+        out1 = rawSubduction(rawMonoidNumberOfBlocks raw monoid R.AmbientRing, raw syzygyPairs, raw R.cache.Substitution, raw sagbiGB);
+        out2 = map(R.cache.TensorRing,out1);
+        out3 = R.cache.ProjectionBase(out2);
+        
+        
+    --	subducted := R.cache.ProjectionBase(map(R.cache.TensorRing,));
 	<< subducted << endl;
         newElems = compress subducted;
     	<< newElems << endl;
