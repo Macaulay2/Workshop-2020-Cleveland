@@ -33,7 +33,8 @@ export {
   --More Types
   "LagrangeVarietyWitness","LagrangeRing",
   --More Keys
-  "LagrangeVariable","PrimalIdeal","JacobianConstraint","AmbientRing","LagrangeCoordinates","PrimalWitnessSystem"
+  "LagrangeVariable","PrimalIdeal","JacobianConstraint","AmbientRing","LagrangeCoordinates","PrimalWitnessSystem",
+  "isolatedCriticalPointSet"
 }
 
 ConormalRing = new Type of HashTable;
@@ -411,8 +412,16 @@ regenerateBertiniIsolatedRegularCriticalPointSet = (u,g,LVW)->(
     changeEvaluationTolerance(logTol,ICPS);
     ICPS)
 
---TODO: isolatedCriticalPointSet
 
+isolatedCriticalPointSet = method(Options => {Strategy=>0});
+--isolatedCriticalPointSet = method(Options => {Strategy=>0}|options makeLagrangeRing);
+isolatedCriticalPointSet (List,List,LagrangeVarietyWitness) := (IsolatedCriticalPointSet) => opts  -> (u,g,LVW) ->(
+    strategyIndex:=new HashTable from {
+	0=>regenerateBertiniIsolatedRegularCriticalPointSet
+	};
+    f:= strategyIndex#(ops.Strategy);
+    f(u,g,LVW)
+    )
 
 
 changeEvaluationTolerance=(logTol,ICPS)->(
@@ -437,8 +446,11 @@ assert(2==#ICPS.Points)
 peek oo
 changeEvaluationTolerance(-100,ICPS)
 assert({}==ICPS.Points)
+isolatedCriticalPointSet(u,g,LVW)
+
 ///
 
+-*
 isolatedCriticalPointSet = method(Options => options makeLagrangeRing);
 witnessCriticalIdeal (List,List,LagrangeVarietyWitness) := (Ideal,Ideal,Ideal) => opts  -> (v,g,LVW) ->(
 --Output: substitution of (WI,I,LVW) 
@@ -457,7 +469,7 @@ witnessCriticalIdeal (List,List,LagrangeVarietyWitness) := (Ideal,Ideal,Ideal) =
 	)
     else error"degreeLength is not 2."
     )
-
+*-
 
 
 TEST///
