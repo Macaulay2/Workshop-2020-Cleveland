@@ -348,7 +348,7 @@ doc ///
 doc ///
     Key
         genericProjection
-	(genericProjection,ZZ, Ideal)
+        (genericProjection,ZZ,Ideal)
     Headline
        Finds a random generic projections of the ideal.
     Usage
