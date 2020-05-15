@@ -102,11 +102,8 @@ binomialToTableau(RingElement) := List => opts -> f -> (
 -- Converts a pair of tableau to a binomial in the given ring R
 tableauToBinomial = method(Options => {});
 tableauToBinomial(List, Ring) := RingElement => opts -> (tabs, R) -> (
-    
-    p := first baseName (gens R)_0;
-    
-    f := product(tabs_0 / (i -> p_i_R)) - product(tabs_1 / (i -> p_i_R));
-    
+    p := first baseName (gens R)_0;    
+    f := product(tabs_0 / (i -> p_i_R)) - product(tabs_1 / (i -> p_i_R));    
     f
     ) 
 
@@ -122,32 +119,20 @@ sortTableau(RingElement, List) := List => opts -> (f, S) -> (
     )
 
 
-
 liftBinomialTableau = method(Options => {});
-liftBinomialTableau(List, List) := List => opts -> (tabs, k) -> (
-    
+liftBinomialTableau(List, List) := List => opts -> (tabs, k) -> (   
     newTabs := {};
     newTab := {};
-    
-    if isDelta1 then (
-	
-	for i from 0 to 1 do(
-	
+        if isDelta1 then (
+	for i from 0 to 1 do(	
 	newTab = {};
-	
-    	for d from 0 to #k-1 do (
-	    
-	    newTab = append(newTab, tabs_i_d|k_d); 
-	
+	for d from 0 to #k-1 do (	    
+	    newTab = append(newTab, tabs_i_d|k_d); 	
 	    );
-	
-	newTabs = append(newTabs, newTab);
-	
+	newTabs = append(newTabs, newTab);	
 	); 
-	
-	
-	)
-    
+		
+	)    
     newTabs
     ) 
 
@@ -159,12 +144,9 @@ liftHierPoly(RingElement, List, List, Ring) := RingElement => opts -> (f, r, S, 
     
     tabs := sortTableau(f, S);
     kIndices := (set(splice{#r:1}..r))^**(#(tabs_0)) // toList;
-    p := first baseName (support f)_0;
-    
-    tabs = kIndices / (k -> liftBinomialTableau(tabs, toList deepSplice k));
-    
+    p := first baseName (support f)_0;    
+    tabs = kIndices / (k -> liftBinomialTableau(tabs, toList deepSplice k));    
     polys := tabs / (i -> tableauToBinomial(i, R));
-    
     polys
     )
 
