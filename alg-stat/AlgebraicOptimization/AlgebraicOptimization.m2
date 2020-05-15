@@ -60,11 +60,14 @@ conormalVariety (Ideal, ConormalRing) := Ideal => opts -> (I,C) -> (
   if not ring I === C.Factors_0 then error "expected ideal in primal ring";
   
   c := codim I;
-  jacI := sub(diff(matrix{C.Factors_0}, transpose gens I), C.Ring);
-  jacBar := sub(matrix{C.Factors_1}, C.Ring) || jacI;
-  J' := sub(I,C.Ring) + minors(c+1, jacBar);
+  jacI := sub(diff(vars C.Factors_0, transpose gens I), C#Ring);
+  jacBar := sub(vars C.Factors_1, C#Ring) || jacI;
+  J' := sub(I,C#Ring) + minors(c+1, jacBar);
   J := saturate(J', minors(c, jacI));
   J
+)
+conormalVariety(Ideal) := Ideal => opts -> I -> ( 
+  conormalVariety(I, conormalRing(ring I), opts)
 )
 TEST ///
 
@@ -79,8 +82,8 @@ projectiveDual Ideal := Ideal => opts -> I -> (
   R := ring I;
   S := conormalRing(R, opts);
 
-  primalCoordinates := S.Factors_0 / (i->sub(i,S.Ring));
-  dualCoordinates := S.Factors_1 / (i->sub(i,S.Ring));
+  primalCoordinates := S.Coordinates_0 / (i->sub(i,S#Ring));
+  dualCoordinates := S.Coordinates_1 / (i->sub(i,S#Ring));
 
   J := conormalVariety(I, S);
 
