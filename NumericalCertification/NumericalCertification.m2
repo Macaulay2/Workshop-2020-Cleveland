@@ -23,7 +23,7 @@ export {"pointNorm",
     "polySysNorm", 
     "newtonOper",
     "computeConstants", 
-    "certifySolution", 
+    "certifySolutions", 
     "certifyDistinctSoln", 
     "certifyRealSoln",
     "certifyCount",
@@ -241,14 +241,17 @@ computeConstants(PolySystem, Point) := (f, x) -> (
     )
 
 
-certifySolution = method() -- returns null if not successful, (alpha,beta,gamma) if alpha-certified 
-certifySolution(PolySystem, Matrix) := (f, x) -> (
+certifySolutions = method() -- returns null if not successful, (alpha,beta,gamma) if alpha-certified 
+certifySolutions(PolySystem, Matrix) := (f, x) -> (
     computeConstants(f, point x)
     )
-certifySolution(PolySystem, Point) := (f, x) -> (
+certifySolutions(PolySystem, Point) := (f, x) -> (
     alpha := first computeConstants(f,x);
     -- check: alpha < (13-3*sqrt(17))/4
     if 16*alpha < 169 and (322-16*alpha)^2 > 78*78*17 then true else false
+    )
+certifySolutions(PolySystem, List) := (f, L) -> (
+    apply(L, i -> certifySolutions(f, i))
     )
 
 certifyDistinctSoln = method()
@@ -268,7 +271,12 @@ certifyDistinctSoln(PolySystem, Point, Point) := (f, x1, x2) -> (
 	); 
     Consts1 := computeConstants(f,x1);
     Consts2 := computeConstants(f,x2);
-    normOfDist := sum apply((point{(coordinates x1)-(coordinates x2)})#Coordinates, c->sub(c^2,R));
+    if precision R =!= infinity then (
+    	normOfDist := (norm(2,point{(coordinates x1)-(coordinates x2)}))^2;
+	)
+    else (
+    	normOfDist = sum apply((point{(coordinates x1)-(coordinates x2)})#Coordinates, c->sub(c^2,R));
+	);
     if Consts1 #0 >= ((13-3*sqrt(17))/4)^2 or Consts2 #0 >= ((13-3*sqrt(17))/4)^2 then (
 	false
 	)
@@ -332,7 +340,7 @@ certifyCount(PolySystem, List) := (f, X) -> (
     else (
  	R = R;
 	); 
-    Y := select(X, i->certifySolution(f,i)=!=false); 
+    Y := select(X, i->certifySolutions(f,i)=!=false); 
     C := apply(X, i-> first computeConstants(f,i)); -- Can we have this without using function twice?
     S := new MutableList from Y;
     for i from 0 to length(Y) - 1 do S#i = true;
@@ -348,6 +356,119 @@ certifyCount(PolySystem, List) := (f, X) -> (
     if R =!= CC then for i from 0 to length(D) - 1 do if certifyRealSoln(f,D#i) == true then Real = append(Real,D#i);
     new HashTable from {"certifiedSolutions" => Y, "alphaValues" => C, "certifiedDistinct" =>D, "certifiedReal" => Real}
     )
+
+
+
+
+
+
+
+
+
+
+-- a function converting a polynomial into alphaCertified input format.
+-- input : polynomial
+-- output : the first line is the number of terms of an input.
+--    	    the second to last lines represent terms of an input polynomial in a way that
+--    	    the first (variable-many) numbers are  degrees of each variable in the monomial and 
+--          the last two numbers are real and imaginary parts of its coefficient
+degCoeff = method()
+degCoeff(RingElement) := f -> (
+    variables := gens ring f;
+    R := coefficientRing ring f;
+    if precision R == infinity then (
+	print "error! Use a polynomial ring with coefficients CC or RR"; break
+	);
+    (E, C) := coefficients f;
+    E = flatten entries E;
+    C = flatten entries C;
+    strList := apply(length E, i -> 
+        replace("[{,},,]", "", toString(apply(variables, j -> 
+	    degree(j, E#i)) | {lift(realPart sub(C#i,CC), QQ), lift(imaginaryPart sub(C#i,CC), QQ)}))
+	);
+    prepend(length E, strList)
+    )
+    
+    
+    
+
+
+-- a function converting a polynomial system into alphaCertified input format.
+-- input : polynomial system
+-- output : a directory to a temporary file which can be used as an input for alphaCertified.
+--          the first line consists of the number of variables and the number of polynomials.
+--    	    each block represents information about each polynomial in the system.
+toACertifiedPoly = method()
+toACertifiedPoly(PolySystem) := P -> (
+    fn := temporaryFileName();
+    (numOfVars, numOfPolys) := (P.NumberOfVariables, P.NumberOfPolys);
+    fn << toString numOfVars | " " | toString numOfPolys << endl;
+    fn << "" << endl;
+    polyList := flatten entries P.PolyMap;
+    strList := apply(polyList, i -> 
+	degCoeff i);
+    apply(flatten strList, i -> fn << i << endl);
+    fn << close;
+    fn
+    )
+
+
+
+-- a function converting a point into a block of digits for alphaCertified input.
+-- input : Matrix representing a coordinate of a point or Point
+-- output : a list of coordinates of a given point.
+pointBlock = method()
+pointBlock(Point) := P -> (
+    pointBlock matrix P
+    )
+pointBlock(Matrix) := M -> (
+    strList := apply(flatten entries M, i -> 
+        replace("[{,},,]", "", toString({lift((realPart i)_QQ,QQ), lift((imaginaryPart i)_QQ,QQ)}))
+	);
+    strList = append(strList, "")    
+    )
+    
+    
+
+toACertifiedPoint = method()
+toACertifiedPoint(List) := L -> (
+    fn := temporaryFileName();
+    n := length L;
+    fn << toString n << endl;
+    fn << "" << endl;
+    apply(L, i -> 
+	apply(pointBlock i, j -> 
+	    fn << j << endl)
+	);
+    fn << close;
+    fn
+    )
+    
+alphaCertified = method(Options => {
+	ALGORITHM => 2,
+	ARITHMETICTYPE => 0,
+	PRECISION => 96,
+	REFINEDIGITS => 0,
+	NUMRANDOMSYSTEMS => 2,
+	RANDOMDIGITS => 10,
+	RANDOMSEED => random 10000,
+	NEWTONONLY => 0,
+	NUMITERATIONS => 2,
+	REALITYCHECK => 1,
+	REALITYTEST => 0
+	}
+	)
+alphaCertified(PolySystem, List) := o -> (P, L) -> (
+    fin1 := toACertifiedPoly P;
+    fin2 := toACertifiedPoint L;
+    fin3 := temporaryFileName();
+    apply(# o, i -> fin3 << toString(keys o)#i | ": "|toString(values o)#i|";" << endl);
+    fin3 << close;
+    run("cd " | ALPHACERTIFIEDexe |"; ./alphaCertified " | fin1 |" "| fin2 |" " | fin3);
+    )
+    
+    
+    
 
 
 
@@ -428,22 +549,6 @@ Aoperator(PolySystem,Point,Matrix) := (F,x0,V)->(
     --this is bad, find a better way of writing this.
     A := J + 1/2*sum(kappa,i->fold(apply(n,j->transpose(V_{i})*HessianList#j*V_{i}*transpose(V_{i})),(A,B)->A||B));
     return(A)
-    )
-
--- Aoperator code that Kisun used    
-Aoper2 = method()
-Aoper2(PolySystem, Point, Matrix) := (I, P, V) -> (
-    baseRing := ring I;
-    J := jacobian I;
-    n := numcols J;
-    Jeval := evaluate(J, P);
-    r := numericalRank sub(Jeval,CC);
-    k := n - r;
-    orthVecs := toList apply(k, i -> sub(matrix V_i, baseRing));
-    secondTerm := apply(orthVecs, j -> transpose jacobian transpose(J*j));
-    secondTerm = sum apply(length orthVecs, i -> 
-	secondTerm#i * orthVecs#i * (1/2)* transpose orthVecs#i);
-    Jeval + evaluate(secondTerm, P)
     )
 
 
@@ -1004,119 +1109,6 @@ krawczykMethod(PolySystem, IntervalOptionList) := o -> (polySys, option) -> (
 		false
 		)
 	    )
-
-
-
-
-
-
-
--- a function converting a polynomial into alphaCertified input format.
--- input : polynomial
--- output : the first line is the number of terms of an input.
---    	    the second to last lines represent terms of an input polynomial in a way that
---    	    the first (variable-many) numbers are  degrees of each variable in the monomial and 
---          the last two numbers are real and imaginary parts of its coefficient
-degCoeff = method()
-degCoeff(RingElement) := f -> (
-    variables := gens ring f;
-    R := coefficientRing ring f;
-    if precision R == infinity then (
-	print "error! Use a polynomial ring with coefficients CC or RR"; break
-	);
-    (E, C) := coefficients f;
-    E = flatten entries E;
-    C = flatten entries C;
-    strList := apply(length E, i -> 
-        replace("[{,},,]", "", toString(apply(variables, j -> 
-	    degree(j, E#i)) | {lift(realPart sub(C#i,CC), QQ), lift(imaginaryPart sub(C#i,CC), QQ)}))
-	);
-    prepend(length E, strList)
-    )
-    
-    
-    
-
-
--- a function converting a polynomial system into alphaCertified input format.
--- input : polynomial system
--- output : a directory to a temporary file which can be used as an input for alphaCertified.
---          the first line consists of the number of variables and the number of polynomials.
---    	    each block represents information about each polynomial in the system.
-toACertifiedPoly = method()
-toACertifiedPoly(PolySystem) := P -> (
-    fn := temporaryFileName();
-    (numOfVars, numOfPolys) := (P.NumberOfVariables, P.NumberOfPolys);
-    fn << toString numOfVars | " " | toString numOfPolys << endl;
-    fn << "" << endl;
-    polyList := flatten entries P.PolyMap;
-    strList := apply(polyList, i -> 
-	degCoeff i);
-    apply(flatten strList, i -> fn << i << endl);
-    fn << close;
-    fn
-    )
-
-
-
--- a function converting a point into a block of digits for alphaCertified input.
--- input : Matrix representing a coordinate of a point or Point
--- output : a list of coordinates of a given point.
-pointBlock = method()
-pointBlock(Point) := P -> (
-    pointBlock matrix P
-    )
-pointBlock(Matrix) := M -> (
-    strList := apply(flatten entries M, i -> 
-        replace("[{,},,]", "", toString({lift((realPart i)_QQ,QQ), lift((imaginaryPart i)_QQ,QQ)}))
-	);
-    strList = append(strList, "")    
-    )
-    
-    
-
-toACertifiedPoint = method()
-toACertifiedPoint(List) := L -> (
-    fn := temporaryFileName();
-    n := length L;
-    fn << toString n << endl;
-    fn << "" << endl;
-    apply(L, i -> 
-	apply(pointBlock i, j -> 
-	    fn << j << endl)
-	);
-    fn << close;
-    fn
-    )
-    
-alphaCertified = method(Options => {
-	ALGORITHM => 2,
-	ARITHMETICTYPE => 0,
-	PRECISION => 96,
-	REFINEDIGITS => 0,
-	NUMRANDOMSYSTEMS => 2,
-	RANDOMDIGITS => 10,
-	RANDOMSEED => random 10000,
-	NEWTONONLY => 0,
-	NUMITERATIONS => 2,
-	REALITYCHECK => 1,
-	REALITYTEST => 0
-	}
-	)
-alphaCertified(PolySystem, List) := o -> (P, L) -> (
-    fin1 := toACertifiedPoly P;
-    fin2 := toACertifiedPoint L;
-    fin3 := temporaryFileName();
-    apply(# o, i -> fin3 << toString(keys o)#i | ": "|toString(values o)#i|";" << endl);
-    fin3 << close;
-    run("cd " | ALPHACERTIFIEDexe |"; ./alphaCertified " | fin1 |" "| fin2 |" " | fin3);
-    )
-    
-    
-    
-
-
-
 
 TEST ///
 R = RR[x1,x2,y1,y2]

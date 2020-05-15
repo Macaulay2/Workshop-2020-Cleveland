@@ -5,13 +5,25 @@ loadPackage("NumericalCertification",FileName=>"../../NumericalCertification.m2"
 R = QQ[x,y,z];
 F = polySystem {x^3-y*z,y^3-x*z,z^3-x*y};
 p = point matrix{{0/1,0/1,0/1}};
+V = computeOrthoBasis(F,p)
+A = Aoperator(F,p,V)
+
 
 M = random(QQ^3, QQ^3)
+randomTransform = flatten entries(M * transpose vars R)
+F1 = polySystem sub( F.PolyMap
+   , {x=>randomTransform#0, y=>randomTransform#1, z=>randomTransform#2})
+V = computeOrthoBasis(F1,p)
+A = Aoperator(F1,p,V)
+
 M = rationalUnitaryMatrix 3
 randomTransform = flatten entries(M * transpose vars R)
-F' = polySystem sub(transpose matrix{{x^3-y*z,y^3-x*z,z^3-x*y}}
+F2 = polySystem sub(transpose matrix{{x^3-y*z,y^3-x*z,z^3-x*y}}
    , {x=>randomTransform#0, y=>randomTransform#1, z=>randomTransform#2})
-V = computeOrthoBasis(F',p)
+V = computeOrthoBasis(F2,p)
+A = Aoperator(F2,p,V)
+
+
 A = Aoper2(F',p,V)
 
 
@@ -27,6 +39,14 @@ S = QQ[i]/(i^2+1);
 R = S[x,y];
 F = polySystem {x-y+x^2,x-y+y^2};
 p = point matrix{{i/10^12,(1+i)/10^12}};
+
+M = random(QQ^2, QQ^2)
+randomTransform = flatten entries(M * transpose vars R)
+F1 = polySystem sub( F.PolyMap
+   , {x=>randomTransform#0, y=>randomTransform#1})
+V = computeOrthoBasis(F1,p)
+A = Aoperator(F1,p,V)
+
 
 V = computeOrthoBasis(F,p)
 A = Aoperator(F,p,V)
@@ -91,7 +111,14 @@ certifyRootMultiplicityBound(F,P) -- false
 R = QQ[x1,x2,x3,x4,x5]
 F = polySystem ideal((x1+1)^2-2*(x1+1)+1+x1+x2+x3+x4+x5, (x2+1)^2-2*(x2+1)+1+x1+x2+x3+x4+x5, (x3+1)^2-2*(x3+1)+1+x1+x2+x3+x4+x5, (x4+1)^2-2*(x4+1)+1+x1+x2+x3+x4+x5, (x5+1)^2-2*(x5+1)+1+x1+x2+x3+x4+x5)
 P = last solveSystem F
--- P = point {{0/1,0/1,0/1,0/1,0/1}}
+ P = point {{0/1,0/1,0/1,0/1,0/1}}
+
+M = random(QQ^5, QQ^5)
+randomTransform = flatten entries(M * transpose vars R)
+F1 = polySystem sub(transpose F.PolyMap, 
+    apply(length randomTransform, i -> (gens R)#i => randomTransform#i))
+
+
 
 V = computeOrthoBasis(F,P)
 A = Aoper2(F,P,V)
