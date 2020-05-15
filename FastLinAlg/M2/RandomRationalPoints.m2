@@ -21,7 +21,6 @@ export {
 	"projectionToHypersurface",
 	"randomCoordinateChange", 
 	"randomPoint", 
-	"createRandomPoints",
 	"MyOption", 
 	"GenericProjection", 
 	"NumPointsToCheck", 
@@ -332,8 +331,6 @@ doc ///
             I = ideal(x,y^2,w^3+x^2)
             genericProjection(2,I)
 ///
-
-
 doc ///
     Key
         randomCoordinateChange
@@ -358,6 +355,7 @@ doc ///
          randomCoordinateChange(R)
       
 ///
+
 doc ///
     Key
        projectionToHypersurface
@@ -386,47 +384,33 @@ doc ///
 ///
 doc ///
     Key
-        createRandomPoints
-        (createRandomPoints, Ideal)
-    Headline
-        Finds a Random Point in the affine space.
-    Usage
-        createRandomPoints(I)
-    Inputs
-        I:Ideal 
-	    inside a polynomial Ring
-    Outputs
-        :List
-            a point in affine space.
-    Description
-       Text
-         Gives a random point in the ambient space of $V(I)$.  
-       	 
-	   
-       Example
-         R=ZZ/5[x,y,z]
-	 I = ideal(x,y^2)
-	 createRandomPoints(I)
-      
-///
-doc ///
-    Key
         randomPoint
         (randomPoint, Ideal)
-        (randomPoint, Ring)
-        [randomPoint, Strategy]
-        BruteForce
     Headline
         a function to check if  a random point is  in a variety
     Usage
         randomPoint(I)
-        randomPoint(R)
     Inputs
         I:Ideal
             inside a polynomial ring
     Outputs
         :List
             a point if it is in the variety otherwise false.
+/// 
+doc ///
+    Key
+        randomPoint
+	(randomPoint, Ring)
+    Headline
+        Gives a random point in the affine space.
+    Usage
+        randomPoint(R)
+    Inputs
+        R:Ring
+	    a polynomial ring
+    Outputs
+        :List
+	    a point in the affine space.
 ///  
 
 doc ///
