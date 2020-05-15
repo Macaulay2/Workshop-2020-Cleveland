@@ -707,6 +707,25 @@ shorten = method(TypicalValue => LinearCode)
 --     positions i1, ..., ir, and deleting these components. Thus, the resulting 
 --     code will have length n - r. 
 shorten ( LinearCode, List ) := LinearCode => ( C, L ) -> (
+    local newL; local codeGens; local F;
+    
+    F = C.BaseField;
+    codeGens = C.Generators;
+    
+    newL = delete(0, apply( codeGens, c -> (
+	if sum apply( L, l -> if c#l == 0_F then 0_ZZ else 1_ZZ ) == 0_ZZ
+	then c
+	else 0
+	)));
+
+    if newL == {} then return C else (
+	newL = entries submatrix' ( matrix newL, L );
+	return linearCode ( C.BaseField , newL );
+	)
+    )
+
+-*
+shorten ( LinearCode, List ) := LinearCode => ( C, L ) -> (
     local newL; local codeGens;
     
     codeGens = C.Generators;
@@ -721,7 +740,7 @@ shorten ( LinearCode, List ) := LinearCode => ( C, L ) -> (
 	return linearCode ( C.BaseField , newL );
 	)
     )
-
+*-
 
 -- input: An [n,k] linear code C and an iteger i such that 1 <= i <= n.
 -- output: A new code from C by selecting only those codewords of C having a zero as their 
@@ -969,7 +988,6 @@ TEST///
 -- shorten test, list
 F = GF(2)
 codeLen = 10
-codeDim = 4
 L = {{0, 1, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 1, 0, 1, 1, 0, 1, 0, 0}, {1, 1, 0, 0, 0, 1, 0, 0, 1, 0}, {1, 0, 0, 1, 0, 0, 0, 1, 1, 1}}
 H = L|L
 
