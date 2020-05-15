@@ -51,7 +51,6 @@ export {
     "NUMITERATIONS",
     "REALITYCHECK",
     "REALITYTEST",
-    "computeOrthoBasis",
     "Aoperator",--these are added
     "certifyCluster"--these are added
     }

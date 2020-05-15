@@ -19,6 +19,10 @@ undocumented{(inverseMat, IntervalMatrix), (net, Interval),
 -- These are already documented as methods.
 undocumented{mInterval, wInterval, intervalNorm} 
 
+-- options for alphaCertified.
+undocumented{ALGORITHM, ARITHMETICTYPE, PRECISION, REFINEDIGITS, NUMRANDOMSYSTEMS,
+    RANDOMDIGITS, RANDOMSEED, NEWTONONLY, NUMITERATIONS, REALITYCHECK, REALITYTEST, toACertifiedPoly}
+
 
 
 -- These interval arithmetic methods are documented in the documents of its classes.
@@ -47,9 +51,9 @@ doc ///
 			In the case of Krawczyk method, this package follows the theory introduced in @HREF("https://epubs.siam.org/doi/book/10.1137/1.9780898717716","\"Introduction to Interval Analysis\" (2009)")@. 
 			These two methods also support not only floating-point arithmetic over the real and complex numbers, but also the exact computation with inputs of rational numbers.
 			
-			Moreover, the package has a function certifying regular roots via a software 'alphaCertified' @HREF("https://www.math.tamu.edu/~sottile/research/stories/alphaCertified/")@.
+			Moreover, the package has a function certifying regular roots via a software @HREF("https://www.math.tamu.edu/~sottile/research/stories/alphaCertified/", "\"alphaCertified\"")@.
 			
-			For multiple roots, the concept of a local separation bound for a simple multiple root established in @HREF("https://arxiv.org/abs/1904.07937")@ is implemented. 
+			For multiple roots, the concept of a local separation bound for a simple multiple root established in @HREF("https://arxiv.org/abs/1904.07937","\"On isolation of singular zeros of multivariate analytic systems\" (2020)")@ is implemented. 
 			The package checks if a given numerical approximation is a simple multiple root with its lower bound of the multiplicity and a region containing the root.
 			
 			
@@ -118,7 +122,7 @@ doc ///
 		    	{\bf Multiple Root Ceritification Method:}
 
 			    
-			    $\bullet$ @TO "certifyRootMultiplicityBound"@
+			    $\bullet$ @TO "certifyCluster"@
 
 		
 ///
@@ -132,7 +136,9 @@ doc ///
     	Key
     	    computeConstants
 	    (computeConstants, PolySystem, Point)
+	    (computeConstants, PolySystem, Matrix)
 	    "(computeConstants, PolySystem, Point)"
+	    "(computeConstants, PolySystem, Matrix)"
 	Headline
 	    compute the square of the auxilary quantities related to alpha theory
 	Usage
@@ -193,7 +199,9 @@ doc ///
     	Key
     	    certifyDistinctSolutions
 	    (certifyDistinctSolutions, PolySystem, Point, Point)
+	    (certifyDistinctSolutions, PolySystem, Matrix, Matrix)
 	    "(certifyDistinctSolutions, PolySystem, Point, Point)"
+	    "(certifyDistinctSolutions, PolySystem, Matrix, Matrix)"
 	Headline
 	    determine whether given points are distinct approximate solutions to the system
 	Usage
@@ -233,7 +241,9 @@ doc ///
     	Key
     	    certifyRealSolution
 	    (certifyRealSolution, PolySystem, Point)
+	    (certifyRealSolution, PolySystem, Matrix)
 	    "(certifyRealSolution, PolySystem, Point)"
+	    "(certifyRealSolution, PolySystem, Matrix)"
 	Headline
 	    determine whether a given point is an real approximate solution to the system
 	Usage
@@ -267,10 +277,10 @@ doc ///
 	Headline
     	    executes alpha-certification on a given system and list of points
 	Usage
-	    (D, R, CS, C) = alphaTheoryCertification(PS, P)
+	    (D, R, CS, C) = alphaTheoryCertification(PS, L)
 	Inputs
             PS:PolySystem
-	    P:Point
+	    L:List
 	Outputs
 	    D:List
 	    	a list of certified distinct solutions
@@ -282,7 +292,7 @@ doc ///
 	    	a list of constants for certified solutions
 	Description
 	    Text
-	    	When the system solved by solver has lots of points, this function does all procedures of @TO "certifyRegularSolution"@, @TO "certifyDistinctSolutions"@ and @TO "certifyRealSolution"@ at once.
+	        This function does all procedures of @TO "certifyRegularSolution"@, @TO "certifyDistinctSolutions"@ and @TO "certifyRealSolution"@ at once.
 	    Example
 	        R = RR[x1,x2,y1,y2];
 		f = polySystem {3*y1 + 2*y2 -1, 3*x1 + 2*x2 -3.5,x1^2 + y1^2 -1, x2^2 + y2^2 - 1};
@@ -290,6 +300,34 @@ doc ///
 		p5 = point{{.31, .30, .72, -.60}}; -- poorly approximated solution
 		P = {p1, p2, p3, p4, p5}
     	        alphaTheoryCertification(f,P)
+///		
+
+
+
+
+doc ///
+    	Key
+    	    certifySolutions
+	    (certifySolutions, PolySystem, List)
+	    "(certifySolutions, PolySystem, List)"
+	Headline
+    	    executes certification on a given system and list of points
+	Usage
+	    certifySolutions(PS, P)
+	Inputs
+            PS:PolySystem
+	    L:List
+	Outputs
+	    H:HashTable
+	    	a HastTable contains a list of multiple roots and a list of information for regular roots.
+	Description
+	    Text
+	        This function does all procedures of @TO "alphaTheoryCertification"@ and @TO "certifyCluster"@ at once.
+	    Example
+    	    	R = CC[x,y,z];
+		f = polySystem {(x-y)^3 - z^2, (z-x)^3 - y^2, (y-z)^3 - x^2}; -- 7 solutions (6 regular roots and 1 multiple root)
+		listOfSols = solveSystem f; -- 14 solutions
+    	        certifySolutions(f,listOfSols)
 ///		
 
 
@@ -593,4 +631,38 @@ doc ///
 ///
 
 
+
+doc ///
+    	Key
+	    alphaCertified
+	    (alphaCertified, PolySystem, List)
+	Headline
+	    certify a list of numerical solutions via alphaCertified
+	Description
+	    Text
+	    	For a given polynomial system and a list of numerical roots, this function certifies roots using a software @HREF("https://www.math.tamu.edu/~sottile/research/stories/alphaCertified/", "\"alphaCertified\"")@.
+		
+		In order to use alphaCertified, users need to let the package knows a directory for alphaCertified when it is loaded.
+	    Example
+	    	needsPackage("NumericalCertification", Configuration => {"some/path/to/alphaCertified"})
+	    Text
+		Function only takes elements over @TO "RR"@ or @TO "CC"@ as an input. 
+    	    Example		
+		R = RR[x1,x2,y1,y2];
+		f = polySystem {3*y1 + 2*y2 -1, 3*x1 + 2*x2 -3.5, x1^2 + y1^2 -1, x2^2 + y2^2 -1};
+		p1 = point{{.95, .32, -.30, .95}};
+		p2 = point{{.65,.77,.76,-.64}};
+		P = {p1, p2};
+		alphaCertified(f, P);
+	    Text
+	        The output can be found in the user's directory of alphaCertified.
+		
+		Users can also apply options for alphaCertified. For possible options for alphaCertified, see @HREF("https://www.math.tamu.edu/~sottile/research/stories/alphaCertified/Download/V13/alphaCertified.pdf", "\"alphaCertified manual\"")@.
+	    Example
+	    	alphaCertified(f, P, PRECISION => 4096);
+		
+		
+
+		
+///
 
