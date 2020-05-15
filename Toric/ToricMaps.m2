@@ -933,7 +933,8 @@ doc ///
 	    toric map, it suffices to check that the dimension of the image
 	    is the dimension of the target.
 	Text
-	    This example illustrates that from affine 3-space to projective 3-space.
+	    This example illustrates that the natural inclusion from affine
+	    3-space to projective 3-space is a dominant map.
 	Example
 	    PP3 = toricProjectiveSpace 3
 	    AA3 = affineSpace 3
