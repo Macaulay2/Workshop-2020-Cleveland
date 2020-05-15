@@ -28,6 +28,7 @@ export {
     "torusAction",
     "weights",
     "abelianInvariants",
+    "linearlyReductiveAction",
     "hilbertIdeal",
     "generatorsFromHilbertIdeal",
     "linearInvariants",
@@ -43,6 +44,8 @@ protect Generators
 protect RepDimension
 protect TorusRank
 protect WeightMatrix
+protect GroupIdeal
+protect ActionMatrix
 
 needsPackage("Polyhedra", Reload => true)
 needsPackage("Elimination", Reload => true)
@@ -51,6 +54,7 @@ needsPackage("Elimination", Reload => true)
 GroupAction = new Type of MutableHashTable
 FiniteGroupAction = new Type of GroupAction
 TorusAction = new Type of GroupAction
+LinearlyReductiveAction = new Type of GroupAction
 RingOfInvariants = new Type of Ring    	       -- For some reason, InvariantRing already seems to be a protected symbol.
 
 
@@ -110,7 +114,27 @@ weights = method()
 
 weights TorusAction := Matrix => T -> T.WeightMatrix 
 
+-------------------------------------------
+--- LinearlyReductiveAction methods -------
+-------------------------------------------
 
+linearlyReductiveAction = method()
+
+linearlyReductiveAction (Ideal,Matrix) := LinearlyReductiveAction => (A,M) -> (
+    new LinearlyReductiveAction from {GroupIdeal => A, ActionMatrix => M, RepDimension => numColumns M}
+    )
+
+net LinearlyReductiveAction := V -> net (ring V.GroupIdeal)|"/"|net V.GroupIdeal|" via "|net V.ActionMatrix
+
+dim LinearlyReductiveAction := ZZ => V -> V.RepDimension
+
+actionMatrix = method()
+
+actionMatrix LinearlyReductiveAction := Matrix => V -> V.ActionMatrix
+
+groupIdeal = method()
+
+groupIdeal LinearlyReductiveAction := Ideal => V -> V.GroupIdeal
 
 -------------------------------------------
 --- RingOfInvariants methods --------------
@@ -130,6 +154,7 @@ invariantRing (GroupAction, PolynomialRing) := RingOfInvariants => (G, R) -> (
     )
 
 PolynomialRing^TorusAction := RingOfInvariants => (R, G) -> invariantRing(G, R)
+PolynomialRing^LinearlyReductiveAction := RingOfInvariants => (R, V) -> invariantRing(V, R)
 
 action = method()
 
@@ -235,7 +260,9 @@ abelianInvariants (Matrix, PolynomialRing, List) := List => (W, R, L) -> (
 )
 
 hilbertIdeal = method()
-hilbertIdeal (Ideal, Matrix, PolynomialRing) := Ideal => (A, M, R) -> (
+hilbertIdeal (LinearlyReductiveAction, PolynomialRing) := Ideal => (V, R) -> (
+    A := groupIdeal V;
+    M := actionMatrix V;
     if (numColumns M =!= numRows M) or (numRows M =!= #(gens R)) then print "Matrix size does not match polynomial ring";
     -- first, some information about the inputs:
     n := #(gens R);
@@ -244,7 +271,7 @@ hilbertIdeal (Ideal, Matrix, PolynomialRing) := Ideal => (A, M, R) -> (
     
     -- now make the enlarged polynomial ring we'll work in, and convert inputs to that ring
     x := local x, y := local y, z := local z;
-    S := K[x_1..x_n, y_1..y_n, z_1..z_l]; -- this results in an error.. trying to fix
+    S := K[x_1..x_n, y_1..y_n, z_1..z_l];
     M' := sub(M, apply(l, i -> (ring M)_i => z_(i+1)));
     A' := sub(A, apply(l, i -> (ring M)_i => z_(i+1)));
     
@@ -258,8 +285,10 @@ hilbertIdeal (Ideal, Matrix, PolynomialRing) := Ideal => (A, M, R) -> (
     return trim(sub(II, join(apply(n, i -> x_(i+1) => R_i),apply(n, i -> y_(i+1) => 0), apply(l, i -> z_(i+1) => 0))))
 )
 
-generatorsFromHilbertIdeal = method(TypicalValue => List)
-generatorsFromHilbertIdeal (Ideal, Matrix, Ideal) := List => (A, M, I) -> (
+generatorsFromHilbertIdeal = method()
+generatorsFromHilbertIdeal (LinearlyReductiveAction, Ideal) := List => (V, I) -> (
+    A := groupIdeal V;
+    M := actionMatrix V;
     R := ring(I);
     if (numColumns M =!= numRows M) or (numRows M =!= #(gens R)) then print "Matrix size does not match polynomial ring";
     x := local x, z := local z;
@@ -285,7 +314,7 @@ generatorsFromHilbertIdeal (Ideal, Matrix, Ideal) := List => (A, M, I) -> (
 	alreadyInv := true;
 	j := 0;
 	while alreadyInv and Id#?j do(
-	    if not isInvariant(A,M,Id#j) then alreadyInv = false;
+	    if not isInvariant(V,Id#j) then alreadyInv = false;
 	    j = j+1
 	);
     	if not alreadyInv then (
@@ -317,13 +346,14 @@ manualTrim (List) := List => L -> (
     return drop(L',1)
 )
 
-linearInvariants = method(TypicalValue => List)
-linearInvariants (Ideal, Matrix, PolynomialRing) := List => (A,M,R) -> (
-    return manualTrim generatorsFromHilbertIdeal(A,M,hilbertIdeal(A,M,R))
+invariants (LinearlyReductiveAction, PolynomialRing) := List => (V,R) -> (
+    return manualTrim generatorsFromHilbertIdeal(V,hilbertIdeal(V,R))
 )
 
 isInvariant = method(TypicalValue => Boolean)
-isInvariant (Ideal, Matrix, Thing) := Boolean => (A, M, f) -> (
+isInvariant (LinearlyReductiveAction, Thing) := Boolean => (V, f) -> (
+    A := groupIdeal V;
+    M := actionMatrix V;
     R := ring(f);
     if (numColumns M =!= numRows M) or (numRows M =!= #(gens R)) then print "Matrix size does not match polynomial ring";
     x := local x, z := local z;
@@ -338,8 +368,8 @@ isInvariant (Ideal, Matrix, Thing) := Boolean => (A, M, f) -> (
     Gf' := sub(f, apply(n, i -> (ring(f))_i => sum(n, j -> M'_(j,i) * x_(j+1))));
     return ( (Gf' - f') % A' == 0 )
 )
-isInvariant (Matrix, Thing) := Boolean => (W,f) -> (
-    return W * transpose(matrix(exponents(f))) == 0
+isInvariant (TorusAction, Thing) := Boolean => (T,f) -> (
+    return (weights T) * transpose(matrix(exponents(f))) == 0
 )
 isInvariant (Matrix, List, Thing) := Boolean => (W,L,f) -> (
     V := W * transpose(matrix(exponents(f)));
@@ -454,6 +484,7 @@ document {
 	    "abelianInvariants(W,R,{3,3})"
 		}
 	}
+-*
 document {
 	Key => {hilbertIdeal, (hilbertIdeal,Ideal,Matrix,PolynomialRing)},
 	Headline => "Computes generators (possibly non-invariant) for the invariant ideal",
@@ -479,6 +510,7 @@ document {
 	   ". Heidelberg: Springer. pp 159-164"}
         }
 }
+*-
 
 document {
 	Key => {action, (action,RingOfInvariants)},
@@ -660,6 +692,6 @@ S = QQ[z]
 A = ideal(z^2 - 1)
 M = matrix{{(1+z)/2, (1-z)/2},{(1-z)/2, (1+z)/2}}
 R = QQ[a,b]
-I = hilbertIdeal(A,M,R)
-generatorsFromHilbertIdeal(A,M,I)
-linearInvariants(A,M,R)
+G = linearlyReductiveAction(A,M)
+X = R^G
+invariants X
