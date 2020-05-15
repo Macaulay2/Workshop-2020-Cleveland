@@ -15,8 +15,9 @@ newPackage(
   },
   Headline => "A package for algebraic optimization",
   DebuggingMode => true,
-  PackageImports => {"Elimination"}
+  PackageImports => {"Elimination","NumericalAlgebraicGeometry","Bertini"}
 )
+
 
 export {
   -- Methods
@@ -348,8 +349,6 @@ assert(4==#importSolutionsFile(storeBM2Files))
 ///
 
 --code for witness points.
-needsPackage"NumericalAlgebraicGeometry"
-needsPackage"Bertini"
 IsolatedCriticalPointSet = new Type of WitnessSet;---Change this to a ring. 
 
 isEvaluationZero = (dir,fn,p,logTol)->(
@@ -363,10 +362,8 @@ isEvaluationZero = (dir,fn,p,logTol)->(
 		     dir|"/"|fn
 		     );		     
 	    isRoot)
-
-    --TODO: Fix print display.
-regenerateBertiniIsolatedRegularCriticalPointSet = (u,g,LVW)->(
-    --We can have several strategies.     
+	
+bertiniCriticalPointSet = (u,g,LVW,bic)->(
     logTol :=-6;
     (WI,I,JC) := witnessCriticalIdeal(u,g,LVW);
     dir := temporaryFileName();
@@ -378,8 +375,7 @@ regenerateBertiniIsolatedRegularCriticalPointSet = (u,g,LVW)->(
     bc := B'Constants => apply(gens coefficientRing LVW,u,(i,j)->i=>j);
     makeB'InputFile(dir,avg,bc,
 	NameB'InputFile=>"input_ss",
-	BertiniInputConfiguration=>{"TrackType" => 0,
-	    "UseRegeneration" => 1},
+	BertiniInputConfiguration=>bic,
 	B'Polynomials =>WI_*|JC_*);
     runBertini(dir,NameB'InputFile=>"input_ss");
     sols := importMainDataFile(dir);
@@ -410,16 +406,29 @@ regenerateBertiniIsolatedRegularCriticalPointSet = (u,g,LVW)->(
 	MembershipTestResults=>isRootIndex
 	};
     changeEvaluationTolerance(logTol,ICPS);
+    changeMultiplicityTolerance(1,ICPS);
+    changeConditionNumberTolerance(1e10,ICPS);    
     ICPS)
+
+
+
+    --TODO: Fix print display.
+regenerateBertiniIsolatedRegularCriticalPointSet = (u,g,LVW)->(
+    bic := {"TrackType"=>0,"UseRegeneration"=>1};
+    bertiniCriticalPointSet(u,g,LVW,bic))
+
+bezoutBertiniIsolatedRegularCriticalPointSet = (u,g,LVW)->(
+    bic := {"TrackType"=>0,"UseRegeneration"=>0};
+    bertiniCriticalPointSet(u,g,LVW,bic))
 
 
 
 isolatedRegularCriticalPointSet = method(Options => {Strategy=>0});--Carry options over?
 isolatedRegularCriticalPointSet (List,List,LagrangeVarietyWitness) := (IsolatedCriticalPointSet) => opts  -> (u,g,LVW) ->(
     strategyIndex:=new HashTable from {
-	0=>regenerateBertiniIsolatedRegularCriticalPointSet
+	0=>regenerateBertiniIsolatedRegularCriticalPointSet,
+	1=>bezoutBertiniIsolatedRegularCriticalPointSet
 	};
-    print 1;
     f:= strategyIndex#(opts.Strategy);
     f(u,g,LVW)
     )
@@ -436,7 +445,30 @@ changeEvaluationTolerance=(logTol,ICPS)->(
     ICPS.LogTolerance=logTol;
     ICPS.Points=wpIndex;)
 
+changeMultiplicityTolerance=(multiplicityTol,ICPS)->(
+    sols:=ICPS.WitnessSuperSet;
+    wpIndex := delete(null,
+	apply(#sols,i->(
+	    	p := sols_i;
+		m := p.Multiplicity;
+		if m<=multiplicityTol then return i
+	    	)));
+    ICPS.MultiplicityTolerance=multiplicityTol;
+    ICPS.Points=wpIndex;)
+
+changeConditionNumberTolerance=(conditionNumberTol,ICPS)->(
+    sols:=ICPS.WitnessSuperSet;
+    wpIndex := delete(null,
+	apply(#sols,i->(
+	    	p := sols_i;
+		c := p.ConditionNumber;
+		if c<=conditionNumberTol then return i
+	    	)));
+    ICPS.ConditionNumberTolerance=conditionNumberTol;
+    ICPS.Points=wpIndex;)
+
 TEST///
+needsPackage"Bertini"
 R=QQ[a,b][x,y]
 I=ideal(x^2+y^2-1)
 WI=I
@@ -445,9 +477,13 @@ LVW = witnessLagrangeVariety(WI,I)
 ICPS = regenerateBertiniIsolatedRegularCriticalPointSet(u,g,LVW)
 --assert(2==#ICPS.Points)--Key issue here. 
 peek oo
-changeEvaluationTolerance(-100,ICPS)
+first importMainDataFile(ICPS.SaveFileDirectory,NameMainDataFile=>"main_data_ss")
+
+
+changeEvaluationTolerance(-100,ICPS)	
 --assert({}==ICPS#Points)--Issue with keys here TODO. 
 isolatedRegularCriticalPointSet(u,g,LVW)
+isolatedRegularCriticalPointSet(u,g,LVW,Strategy=>1)
 peek oo
 ///
 
