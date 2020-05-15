@@ -42,5 +42,5 @@ doc ///
 	    
 	    See also: http://homepages.math.uic.edu/~jan/Demo/rabmo.html.
 	Example
-	    F = rabmo(QQ)
+	   rabmo(QQ)
     ///
