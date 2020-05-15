@@ -306,15 +306,17 @@ subalgebraBasis Subring := o -> R -> (
     
         -- Construct a Groebner basis to eliminiate the base elements generators from the SyzygyIdeal.
         sagbiGB = gb(R.cache.SyzygyIdeal, DegreeLimit=>currDegree);
+	<< currDegree << endl;
         syzygyPairs = R.cache.Substitution(submatrixByDegrees(selectInSubring(1, gens sagbiGB), currDegree));
-
+    	<< syzygyPairs << endl;
         if R.cache.Pending#currDegree != {} then (
             syzygyPairs = syzygyPairs | R.cache.InclusionBase(matrix{R.cache.Pending#currDegree});
             R.cache.Pending#currDegree = {};
         );
-
-        newElems = compress R.cache.ProjectionBase(map(R.cache.TensorRing,rawSubduction(rawMonoidNumberOfBlocks raw monoid R.AmbientRing, raw syzygyPairs, raw R.cache.InclusionBase, raw sagbiGB)));
-
+    	subducted := R.cache.ProjectionBase(map(R.cache.TensorRing,rawSubduction(rawMonoidNumberOfBlocks raw monoid R.AmbientRing, raw syzygyPairs, raw R.cache.InclusionBase, raw sagbiGB)));
+	<< subducted << endl;
+        newElems = compress subducted;
+    	<< newElems << endl;
         if numcols newElems > 0 then (
             << numcols newElems << " generators added" << endl;
             insertPending(R, newElems, o.Limit);
