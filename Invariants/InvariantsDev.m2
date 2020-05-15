@@ -469,9 +469,9 @@ abelianInvariants FiniteGroupAction := List => T -> (
     L := size T;
     r := numRows W;
     n := numColumns W;
-    temp := matrix{apply(flatten entries W^{0},i->i%L#0)};
-    scan(r-1,i->temp = temp || matrix{apply(flatten entries W^{i+1},j->j%L#(i+1))});
-    W = temp;
+    temp1 := matrix{apply(flatten entries W^{0},i->i%L#0)};
+    scan(r-1,i->temp1 = temp1 || matrix{apply(flatten entries W^{i+1},j->j%L#(i+1))});
+    W = temp1;
     t := 1; -- t is the size of abelian group
     --sanity check 
     if #L =!= r then error "Size of the group does not match the weight";
