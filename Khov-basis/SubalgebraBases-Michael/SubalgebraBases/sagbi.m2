@@ -138,31 +138,38 @@ rowReduce = (elems, d) -> (
     elemsH = homogenize(RtoRH elems, RH_n););
     RHtoR gens gb(elemsH, DegreeLimit=>d)
 )
+-- END COPY OF ROW REDUCE
 
+-- SAGBI-COMMON HELPER FUNCTIONS.
 -- inscrutable -- Looks to be completely broken.
+-- temporary patch fix given. preferrably won't need this function
 setMonomialOrderFlag = (R) -> (
     tempflag := 0;
     temp := (monoid R).Options.MonomialOrder;
     if (class temp) === Nothing then (tempflag = 0)
-    else if temp === GRevLex then (tempflag = 0)
-    else if temp === Lex then (tempflag = 1)
-    else if temp === GLex then (tempflag = 2)
-    else if (class temp) === Eliminate then (tempflag = 3)
-    else if (class temp) === ProductOrder then (tempflag = 4)
-    else if temp === RevLex then (tempflag = 5);
+    else if temp#1#0 === Lex then (tempflag = 1)
+    else if (temp#1#0 === Weights and temp#2#0 === Lex) then (tempflag = 2)       --GLex
+  --  else if (class temp) === Eliminate then (tempflag = 3)                       
+  --  else if (class temp) === ProductOrder then (tempflag = 4)
+    else if (#(temp#1#1) < # gens R) and temp#1#0 === Weights then (tempflag = 3) --Eliminate
+    else if temp#2#0 != Position and temp#1#0 != Weights then (tempflag = 4)      --Product
+    else if temp#1#0 === GRevLex then (tempflag = 0)                              --GRevLex                                  --Lex
+    else if temp#1#0 === RevLex then (tempflag = 5);	    	    	    	  --RevLex
     tempflag)
 
+
+--Accepts a matrix m and returns a matrix of columns of m whose entries all have total degree < d
 submatrixBelowDegree = (m,d) -> (
-    want := positions(0..numgens source m - 1,
+    want := positions(0..numcols m - 1,
     i -> (degrees source m)_i < {d});
     m_want)
 
+--Accepts a matrix m and returns a matrix of columns of m where the highest degree entry has total degree = d
 submatrixByDegrees (Matrix,ZZ) := (m,d) -> (
-    want := positions(0..numgens source m - 1,
+    want := positions(0..numcols m - 1,
     i -> (degrees source m)_i === {d});
     m_want)
 
--- END COPY OF ROW REDUCE
 
 -- Reduces the lowest degree list in the pending list.  Adds the results to Pending.  The new lowest degree list in pending is added to the subalgebra basis.  Returns the number of elements added.
     -- !!!Assumes that the pending list has been subducted!!!
