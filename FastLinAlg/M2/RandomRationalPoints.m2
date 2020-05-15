@@ -377,35 +377,6 @@ doc ///
 
 doc ///
     Key
-        genericProjection
-	(genericProjection,ZZ, Ideal)
-    Headline
-       Finds a random generic projections of the ideal.
-    Usage
-        genericProjection(n,I)
-    Inputs
-        I:Ideal 
-	    in a polynomial Ring
-        n:ZZ
-            an integer    
-    Outputs
-        :RingMap
-           a Projection map.
-        :Ideal
-           defining ideal of the projection of V(I)     
-    Description
-       Text
-         Gives the projection map from $\mathbb{A}^N \mapsto\mathbb{A}^{N-n}$ and the defining ideal of the projection of $V(I)$.  
-       	 
-	   
-       Example
-         R=ZZ/5[x,y,z,w]
-	 I = ideal(x,y^2,w^3+x^2)
-	 genericProjection(2,I)
-       
-///
-doc ///
-    Key
         randomCoordinateChange
 	(randomCoordinateChange, Ring)
     Headline
