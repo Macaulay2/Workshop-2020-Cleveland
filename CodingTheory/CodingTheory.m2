@@ -53,7 +53,12 @@ export {
     "generic",
     "bitflipDecode",
     "MaxIterations",
-    "shorten"
+    "shorten",
+    "vNumber",
+    "footPrint",
+    "hYpFunction",
+    "gMdFunction",
+    "vasFunction"
     }
 exportMutable {}
 
