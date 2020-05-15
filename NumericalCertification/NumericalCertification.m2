@@ -4,6 +4,8 @@ newPackage(
     	Date => "October, 2018",
     	Authors => {
 	     {Name => "Kisun Lee", Email => "klee669@gatech.edu"}
+	     {Name => "Thomas Yahl", Email => "thomasjyahl@math.tamu.edu"},
+     	     {Name => "Special thanks: Michael Burr, Anton Leykin"}
 	     },
     	HomePage => "http://people.math.gatech.edu/~klee669",
     	Headline => "numerical certification",
@@ -23,10 +25,10 @@ export {"pointNorm",
     "polySysNorm", 
     "newtonOper",
     "computeConstants", 
-    "certifySolutions", 
-    "certifyDistinctSoln", 
-    "certifyRealSoln",
-    "certifyCount",
+    "certifyRegularSolution", 
+    "certifyDistinctSolutions", 
+    "certifyRealSolution",
+    "alphaTheoryCertification",
     "Interval", 
     "interval", 
     "mInterval", 
@@ -241,24 +243,24 @@ computeConstants(PolySystem, Point) := (f, x) -> (
     )
 
 
-certifySolutions = method() -- returns null if not successful, (alpha,beta,gamma) if alpha-certified 
-certifySolutions(PolySystem, Matrix) := (f, x) -> (
+certifyRegularSolution = method() -- returns null if not successful, (alpha,beta,gamma) if alpha-certified 
+certifyRegularSolution(PolySystem, Matrix) := (f, x) -> (
     computeConstants(f, point x)
     )
-certifySolutions(PolySystem, Point) := (f, x) -> (
+certifyRegularSolution(PolySystem, Point) := (f, x) -> (
     alpha := first computeConstants(f,x);
     -- check: alpha < (13-3*sqrt(17))/4
     if 16*alpha < 169 and (322-16*alpha)^2 > 78*78*17 then true else false
     )
-certifySolutions(PolySystem, List) := (f, L) -> (
-    apply(L, i -> certifySolutions(f, i))
+certifyRegularSolution(PolySystem, List) := (f, L) -> (
+    apply(L, i -> certifyRegularSolution(f, i))
     )
 
-certifyDistinctSoln = method()
-certifyDistinctSoln(PolySystem, Matrix, Matrix) := (f, x1, x2) -> (
-    certifyDistinctSoln(f, point x1, point x2)
+certifyDistinctSolutions = method()
+certifyDistinctSolutions(PolySystem, Matrix, Matrix) := (f, x1, x2) -> (
+    certifyDistinctSolutions(f, point x1, point x2)
     )
-certifyDistinctSoln(PolySystem, Point, Point) := (f, x1, x2) -> (
+certifyDistinctSolutions(PolySystem, Point, Point) := (f, x1, x2) -> (
     R := coefficientRing ring f;
     if precision R =!= infinity then (
 	R = R;
@@ -292,11 +294,11 @@ certifyDistinctSoln(PolySystem, Point, Point) := (f, x1, x2) -> (
     )
 
 
-certifyRealSoln = method()
-certifyRealSoln(PolySystem, Matrix) := (f, x) -> (
-    computeConstants(f, point x)
+certifyRealSolution = method()
+certifyRealSolution(PolySystem, Matrix) := (f, x) -> (
+    certifyRealSolution(f, point x)
     )
-certifyRealSoln(PolySystem, Point) := (f, x) -> (
+certifyRealSolution(PolySystem, Point) := (f, x) -> (
     (alpha, beta, gamma) := computeConstants(f,x);
     R := coefficientRing ring f;
     if precision R =!= infinity then (
@@ -328,8 +330,8 @@ certifyRealSoln(PolySystem, Point) := (f, x) -> (
     )
     )
 
-certifyCount = method()
-certifyCount(PolySystem, List) := (f, X) -> (
+alphaTheoryCertification = method()
+alphaTheoryCertification(PolySystem, List) := (f, X) -> (
     R := coefficientRing ring f;
     if precision R =!= infinity then (
 	R = R;
@@ -340,7 +342,7 @@ certifyCount(PolySystem, List) := (f, X) -> (
     else (
  	R = R;
 	); 
-    Y := select(X, i->certifySolutions(f,i)=!=false); 
+    Y := select(X, i->certifyRegularSolution(f,i)=!=false); 
     C := apply(X, i-> first computeConstants(f,i)); -- Can we have this without using function twice?
     S := new MutableList from Y;
     for i from 0 to length(Y) - 1 do S#i = true;
@@ -348,12 +350,12 @@ certifyCount(PolySystem, List) := (f, X) -> (
 	S#i == true and S#j == true
 	)
     then (
-	S#j = certifyDistinctSoln(f,Y#i, Y#j);
+	S#j = certifyDistinctSolutions(f,Y#i, Y#j);
 	);
     D := {};
     for i from 0 to length(Y) - 1 do if S#i == true then D = append(D, Y#i);
     Real := {};
-    if R =!= CC then for i from 0 to length(D) - 1 do if certifyRealSoln(f,D#i) == true then Real = append(Real,D#i);
+    if R =!= CC then for i from 0 to length(D) - 1 do if certifyRealSolution(f,D#i) == true then Real = append(Real,D#i);
     new HashTable from {"certifiedSolutions" => Y, "alphaValues" => C, "certifiedDistinct" =>D, "certifiedReal" => Real}
     )
 
