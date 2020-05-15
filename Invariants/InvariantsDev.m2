@@ -474,7 +474,7 @@ abelianInvariants FiniteGroupAction := List => T -> (
     W = temp1;
     t := 1; -- t is the size of abelian group
     --sanity check 
-    if #L =!= r then error "Size of the group does not match the weight";
+    if #L =!= r then error "abelianInvariants: Expected size of the group to match the weight matrix.";
     scan(L,i->t = t*i);
     local C; -- C is a list of all possible weights
     for i from 0 to #L-1 do(
@@ -504,7 +504,7 @@ abelianInvariants FiniteGroupAction := List => T -> (
         if all(S#v', m' -> u%m' =!= 0_R) then (
 	    S#v' = S#v'|{u};
             if first degree u < t then(
-		U = U | {u};
+		U = U | {u}; ---only testing monomials of degree < #G
             );
         );
         k = k - 1;
