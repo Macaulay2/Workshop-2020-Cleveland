@@ -153,9 +153,7 @@ TEST ///
    "G = graph({1,2,3,4}, {{1,2},{2,3},{3,4},{4,3}});",
    "B=incidenceMatrix G;",
    "S=ZZ/2[t_(0)..t_(#vertexSet G-1)];",
-   "Y=evCodeGraph(coefficientRing S,B,flatten entries basis(1,S));",
-   "assert(((Y_(0,0)==1)==(Y_(0,0)==Y_(0,1)))==((Y_(1,2)==1)==(Y_(1,2)==Y_(1,1)))==((Y_(2,2)==1)==(Y_(2,2)==Y_(2,3))));",
-   "assert(((Y_(0,2)==0)==(Y_(0,2)==Y_(0,3)))==((Y_(1,0)==0)==(Y_(1,0)==Y_(1,3)))==((Y_(2,0)==0)==(Y_(2,0)==Y_(2,1))))"
+   "Y=evCodeGraph(coefficientRing S,B,flatten entries basis(1,S))"
 	}
     }
     
@@ -222,9 +220,7 @@ document {
    "G = graph({1,2,3,4}, {{1,2},{2,3},{3,4},{4,3}});",
    "B=incidenceMatrix G;",
    "codeGraph(B,1,2);",
-   "Y=generators codeGraph(B,1,2);",
-   "assert(((Y_(0,0)==1)==(Y_(0,0)==Y_(0,1)))==((Y_(1,2)==1)==(Y_(1,2)==Y_(1,1)))==((Y_(2,2)==1)==(Y_(2,2)==Y_(2,3))));",
-   "assert(((Y_(0,2)==0)==(Y_(0,2)==Y_(0,3)))==((Y_(1,0)==0)==(Y_(1,0)==Y_(1,3)))==((Y_(2,0)==0)==(Y_(2,0)==Y_(2,1))))"
+   "Y=generators codeGraph(B,1,2)"
 	}
     }
 
@@ -290,8 +286,7 @@ document {
    "--Petersen graph;", 
    "G=graph({1,2,3,4,5,6,7,8,9,10}, {{1,2},{1,3},{1,4},{1,5},{1,6},{2,3},{2,4},{2,5},{2,7},{3,4},{3,5},{3,6},{3,8},{4,5},{4,9},{5,10},{6,7},{6,10},{7,8},{8,9},{9,10}});",
    "M=incidenceMatrix G;",
-   "codeGraphInc(M,3);",
-   "assert(codeGraphInc(M,3)==codeGraph(M,1,3))"
+   "codeGraphInc(M,3)"
 	}
     }
 
