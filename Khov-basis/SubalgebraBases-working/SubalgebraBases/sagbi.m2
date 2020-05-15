@@ -345,6 +345,10 @@ subalgebraBasis Matrix := o -> gensMatrix -> (
     subalgebraBasis(R,o)
 )
 
+basis Subring := o -> (R) -> (
+    R.cache.SagbiGens
+)
+
 end--
 restart
 needs "sagbi.m2"
@@ -352,4 +356,4 @@ R=QQ[x,y]
 A = subring matrix{{x+y,x*y,x*y^2}}
 gens A -- gets the use-specified generators 
 S = subalgebraBasis(A, Limit=>10)
-peek S.cache.SagbiGens
+basis S
