@@ -294,9 +294,10 @@ linearCode(Module) := LinearCode => opts -> V -> (
     --  validate user's input creating a list
     -- {GaloisField,lengthCode,ListGenerators}
     L:=entries generatorMatrix;
-    n:= # L_0
-   
-    newL := wellDefinedInput {generatorMatrix.ring, n, L}
+    n:= # L_0;
+       
+    newL := wellDefinedInput {generatorMatrix.ring, n, L};
+    
     
     if opts.ParityCheck then {
      --{AmbienModule,BaseField,lengthCode,Generators,ParityCheckRows,Code}
@@ -320,10 +321,10 @@ linearCode(Matrix) := LinearCode => opts -> M -> (
     --  validate user's input creating a list
     -- {GaloisField,lengthCode,ListGenerators}
     L:=entries M;
-    n:= # L_0
-    
-    newL := wellDefinedInput {M.ring, n, L}
-    
+    n:= # L_0;
+       
+    newL := wellDefinedInput {M.ring, n, L};
+        
 
     if opts.ParityCheck then {
 	--{AmbienModule,BaseField,lengthCode,Generators,ParityCheckRows,Code}
@@ -332,4 +333,18 @@ linearCode(Matrix) := LinearCode => opts -> M -> (
 	outputVec =  {M.source, M.ring, n, L, {}, {}};
 	};      
     )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
