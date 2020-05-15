@@ -321,59 +321,37 @@ document {
 doc ///
     Key
         genericProjection
-	(genericProjection, Ideal)
+        (genericProjection, Ideal)
+        (genericProjection,ZZ,Ideal)
     Headline
        Finds a random generic projections of the ideal.
     Usage
         genericProjection(I)
     Inputs
         I:Ideal 
-	    in a polynomial Ring
-    Outputs
-        :RingMap
-           a Projection map.
-        :Ideal
-           defining ideal of the projection of V(I)     
-    Description
-       Text
-         Gives the projection map from $\mathbb{A}^N \mapsto\mathbb{A}^{N-1}$ and the defining ideal of the projection of $V(I)$.  
-       	 
-	   
-       Example
-         R=ZZ/5[x,y,z]
-	 I = ideal(x,y^2)
-	 genericProjection(I)
-       
-///
-doc ///
-    Key
-        genericProjection
-        (genericProjection,ZZ,Ideal)
-    Headline
-       Finds a random generic projections of the ideal.
-    Usage
-        genericProjection(n,I)
-    Inputs
-        I:Ideal 
-	    in a polynomial Ring
+            in a polynomial Ring
         n:ZZ
-            an integer    
+            an integer specifying how many dimensions down to project
     Outputs
         :RingMap
-           a Projection map.
+            a Projection map.
         :Ideal
-           defining ideal of the projection of V(I)     
+            defining ideal of the projection of V(I)     
     Description
        Text
-         Gives the projection map from $\mathbb{A}^N \mapsto\mathbb{A}^{N-n}$ and the defining ideal of the projection of $V(I)$.  
-       	 
-	   
+            If no integer $n$ is provided, this gives the projection map from $\mathbb{A}^N \mapsto\mathbb{A}^{N-1}$ and the defining ideal of the projection of $V(I)$.
        Example
-         R=ZZ/5[x,y,z,w]
-	 I = ideal(x,y^2,w^3+x^2)
-	 genericProjection(2,I)
-       
+            R=ZZ/5[x,y,z]
+            I = ideal(x,y^2)
+            genericProjection(I)
+        Text
+            More generally, this gives the projection map from $\mathbb{A}^N \mapsto\mathbb{A}^{N-n}$ and the defining ideal of the projection of $V(I)$
+        Example
+            R=ZZ/5[x,y,z,w]
+            I = ideal(x,y^2,w^3+x^2)
+            genericProjection(2,I)
 ///
+
 
 doc ///
     Key
