@@ -404,7 +404,6 @@ doc ///
 /// 
 doc ///
     Key
-        randomPoint
 	(randomPoint, Ring)
     Headline
         Gives a random point in the affine space.
