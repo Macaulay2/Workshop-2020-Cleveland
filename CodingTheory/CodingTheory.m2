@@ -958,7 +958,7 @@ for i from 1 to 20 do(
     H := random(R^10, R^10);
     G := tannerGraph H;
     -- Edges correspond 1:1 with ones in H.
-    assert(Graphs$edges G == sum flatten entries (lift(H,ZZ)));  
+    assert(length (Graphs$edges G) == sum flatten entries (lift(H,ZZ)));  
 );
 ///
 
@@ -1145,7 +1145,7 @@ document {
     }
 document {
     Key => {bitflipDecode, (bitflipDecode,Matrix, Vector)},
-    Headline => "Uses the Gallager bit flip algorithm to decode a codeword given a parity check matrix.",
+    Headline => "This does not work and it will likely be removed.",
     Usage => "bitflipDecode(H,v)",
     Inputs => {
 	"H" => Matrix => {"The parity check matrix."},
@@ -1161,6 +1161,22 @@ document {
 	"H := matrix(R, {{1,1,0,0,0,0,0},{0,1,1,0,0,0,0},{0,1,1,1,1,0,0},{0,0,0,1,1,0,0},{0,0,0,0,1,1,0},{0,0,0,0,1,0,1}});",
 	"v := vector transpose matrix(R, {{1,0,0,1,0,1,1}});",
 	"bitflipDecode(H,v)"
+	}
+    }
+document {
+    Key => {tannerGraph, (tannerGraph,Matrix)},
+    Headline => "Outputs the Tanner graph associated with the given parity check matrix.",
+    Usage => "bitflipDecode(H,v)",
+    Inputs => {
+	"H" => Matrix => {"The parity check matrix."}
+      	},
+    Outputs => {
+	Graphs$Graph => {}
+	},
+    "Calculates the bipartite Tanner graph of the parity check matrix H.",
+    EXAMPLE {
+	"H := matrix(GF(2), {{1,1,0,0,0,0,0},{0,1,1,0,0,0,0},{0,1,1,1,1,0,0},{0,0,0,1,1,0,0},{0,0,0,0,1,1,0},{0,0,0,0,1,0,1}});",
+	"tannerGraph(H)"
 	}
     }
 
