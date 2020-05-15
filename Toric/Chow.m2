@@ -432,17 +432,33 @@ normalToricVariety(List,NormalToricVariety) := opts -> (r,X) -> (
     );
     -- r goes to 0, so remove the indices from r
     newOrbits = unique for o in newOrbits list (toList(set(o) - r));
+    -- if the the variety is a point
     
-    M' := transpose matrix rays X;
-    M := transpose (M' % (M'_r)); -- quotient out <r>
-
+    -- quotient out <r> and remove 0s
+    M'  := transpose matrix rays X;
+    M'' := transpose (M' % (M'_r));
+    z' := map(ZZ^1,ZZ^(numcols M''),0);
+    listZero := select(numrows M'', v-> not M''^{v} == z');
+    M := M''^listZero;
+    
     z := map(ZZ^(numRows M),ZZ^1,0);  -- zero matrix of correct size
     cols := for i from 0 to numColumns M - 1 list ((M)_{i});
     M = fold(for i in cols list (if i == z then continue else i),(i,j) -> i|j);
     Y := normalToricVariety(entries M,newOrbits);
     Y.cache.parent = X;
     return Y
-)
+   
+--- Old code
+--    M' := transpose matrix rays X;
+--    M := transpose (M' % (M'_r)); -- quotient out <r>
+
+--    z := map(ZZ^(numRows M),ZZ^1,0);  -- zero matrix of correct size
+--    cols := for i from 0 to numColumns M - 1 list ((M)_{i});
+--    M = fold(for i in cols list (if i == z then continue else i),(i,j) -> i|j);
+--    Y := normalToricVariety(entries M,newOrbits);
+--    Y.cache.parent = X;
+--    return Y       
+) 
     
 toricCycle(ToricDivisor) := D -> (
     X := variety D;
