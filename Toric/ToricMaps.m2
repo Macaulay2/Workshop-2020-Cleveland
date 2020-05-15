@@ -30,6 +30,10 @@ newPackage(
       Email => "jchen@math.berkeley.edu", 
       HomePage => "https://math.berkeley.edu/~jchen"},
       {
+      Name => "Matthew Faust",
+      Email => "mfaust@math.tamu.edu",
+      HomePage => "https://www.math.tamu.edu/~mfaust/"},
+      {
       Name => "Michael Loper",
       Email => "loper012@umn.edu",
       HomePage => "https://www.math.umn.edu/~loper012"},  
