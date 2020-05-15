@@ -940,7 +940,35 @@ doc ///
     SeeAlso
       (symbol *, ToricDivisor, List)
 ///
-
+doc ///
+    Key
+      (symbol * , ToricDivisor, ToricCycle)
+    Headline
+      multiplication of a ToricDivisor and ToricCycle 
+    Usage
+      D*C
+    Inputs
+      D:ToricDivisor
+      C:ToricCycle
+    Outputs
+      ToricCycle
+    Description
+      Text
+        Compute the product of a ToricDivisor with a ToricCycle.
+      Example
+	X = toricProjectiveSpace 4
+	D = X_0 + 2*X_1+3*X_2+4*X_3
+	C = X_{2,3}
+	D*C   
+      Text
+      	Self intersection of the exceptional divisor.
+      Example
+	X = toricProjectiveSpace 2
+	Y = toricBlowup({0,1},X)
+	D = Y_3
+	C = Y_{3}
+	D*C       	
+///
 doc ///
     Key
       (symbol +, ToricCycle, ToricCycle)
@@ -975,7 +1003,6 @@ doc ///
 	cyc - altcyc
 	-cyc
 ///
-
 doc ///
     Key
         (normalToricVariety, ToricCycle)
