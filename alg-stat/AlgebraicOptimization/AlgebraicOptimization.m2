@@ -125,6 +125,11 @@ EDDegree Ideal := ZZ => I -> (
   obj := randomizeObjective(EDObjective(S), S);
   degree criticalIdeal(I, obj, S)
 )
+TEST ///
+R = QQ[a,b,c,d]
+I = ideal(a*b-c*d)
+assert(EDDegree I == 2)
+///
 
 multiDegreeEDDegree = method();
 multiDegreeEDDegree Ideal := ZZ => I -> (
