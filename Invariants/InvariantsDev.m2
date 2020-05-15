@@ -59,7 +59,8 @@ GroupAction = new Type of HashTable
 FiniteGroupAction = new Type of GroupAction
 TorusAction = new Type of GroupAction
 LinearlyReductiveAction = new Type of GroupAction
-RingOfInvariants = new Type of HashTable    	       -- For some reason, InvariantRing already seems to be a protected symbol.
+RingOfInvariants = new Type of HashTable    	  -- For some reason, InvariantRing already seems to be a protected symbol. 
+--Maybe because of the InvariantRing package?
 
 
 -------------------------------------------
@@ -318,6 +319,7 @@ linearlyReductiveAction (Ideal, Matrix) := LinearlyReductiveAction => (A, M) -> 
 
 
 -------------------------------------------
+-- FG: When I run LinearlyReductiveAction I get an error, the debugger says the bug is here somewhere
 
 net LinearlyReductiveAction := V -> net (ring V.GroupIdeal)|"/"|net V.GroupIdeal|" via "|net V.ActionMatrix
 
@@ -494,6 +496,10 @@ invariants (LinearlyReductiveAction, PolynomialRing) := List => (V,R) -> (
 
 
 -------------------------------------------
+-- FG: I am wondering if computing the ring of invariants for TorusAction is
+-- an overkill to decide if an element is invariant. If may be quicker to just
+-- act with the weight matrix and see if you get back out the original element
+
 
 isInvariant = method(TypicalValue => Boolean)
 
@@ -928,6 +934,7 @@ document {
 
 *-
 
+-- to do: Add TEST for every method in the package, ideally two tests for each
 
 TEST ///
 R1 = QQ[x_1..x_4]
@@ -944,6 +951,9 @@ assert(set invariants T2 === invariants2)
 ///
        
 end
+
+-- to do: write this part to work with Invariants as InvariantsOld
+--     	   and InvariantsDev becomes Invariants
 
 -- Here place M2 code that you find useful while developing this
 -- package.  None of it will be executed when the file is loaded,
@@ -967,3 +977,12 @@ R = QQ[a,b]
 G = linearlyReductiveAction(A,M)
 X = R^G
 invariants X
+viewHelp Invariants
+
+restart
+uninstallPackage "InvariantsDev"
+installPackage "InvariantsDev"
+--installPackage("Invariants", RemakeAllDocumentation=>true)
+check InvariantsDev
+
+invariantRing X
