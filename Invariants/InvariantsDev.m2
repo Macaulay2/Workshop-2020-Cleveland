@@ -61,8 +61,9 @@ FiniteGroupAction = new Type of GroupAction
 FiniteAbelianAction = new Type of FiniteGroupAction
 TorusAction = new Type of GroupAction
 LinearlyReductiveAction = new Type of GroupAction
-RingOfInvariants = new Type of HashTable    	  -- For some reason, InvariantRing already seems to be a protected symbol. 
---Maybe because of the InvariantRing package?
+RingOfInvariants = new Type of HashTable    	  
+-- For some reason, InvariantRing already seems to be a protected symbol. 
+-- Maybe because of the InvariantRing package?
 
 
 -------------------------------------------
@@ -200,16 +201,44 @@ finiteAction (List, PolynomialRing) := FiniteGroupAction => (G, R) -> (
 	}
     )
 
+finiteAction (Matrix, PolynomialRing, List) := FiniteGroupAction => (W, R, L) -> (
+    if not isField coefficientRing R then (error "abelianGroupAction: Expected the second argument to be a polynomial ring over a field.");
+    if ring W =!= ZZ then (error "abelianGroupAction: Expected the first argument to be a matrix of integer weights.");
+    if numColumns W =!= dim R then (error "abelianGroupAction: Expected the number of columns of the matrix to equal the dimension of the polynomial ring.");
+    if numRows W =!= #L then (error "abelianGroupAction: Expected the number of rows of the matrix to equal the size of the list."); 
+    new FiniteGroupAction from {
+	cache => new CacheTable {(symbol isAbelian) => true},
+	(symbol ActionMatrix) => W,
+	(symbol ring) => R, 
+	(symbol rank) => numRows W,
+	(symbol size) => L
+	}
+    )
+
 -------------------------------------------
 
-net FiniteGroupAction := G -> (net G.ring)|" <- "|(net G.generators)
+net FiniteGroupAction := G -> (
+    if isAbelian G then  (net T.ring)|" <- "|(net T.ActionMatrix)
+    else (net G.ring)|" <- "|(net G.generators)
 -- If the list of generators is long, consider rewriting  to print only the first few generators together with "...".
 -- Or find a better way to print if the size of the matrices is large.
+
+rank FiniteGroupAction := ZZ => T -> (
+    if isAbelian T then T.rank
+    else (error "rank: Expected group to be abelian.")
+    )
+
+size FiniteGroupAction := List => T -> (
+    if isAbelian T then T.size
+    else (error "size: Expected group to be abelian.")
+    )
 
 generators FiniteGroupAction := opts -> G -> G.generators
 -- gens must pass 'opts' before the argument, or it will not run!!
 
-numgens FiniteGroupAction := ZZ => G -> #(gens G)
+numgens FiniteGroupAction := ZZ => G -> (
+    if isAbelian G then #(G.size) 
+    else #(gens G)
 
 
 -------------------------------------------
@@ -296,7 +325,10 @@ weights = method()
 
 weights TorusAction := Matrix => T -> T.ActionMatrix 
 
-weights FiniteAbelianAction := Matrix => T -> T.ActionMatrix
+weights FiniteGroupAction := Matrix => T -> (
+    if isAbelian T then T.ActionMatrix
+    else (error "weights: Expected group to be abelian.")
+    )
 
 
 -------------------------------------------
@@ -330,42 +362,8 @@ groupIdeal = method()
 
 groupIdeal LinearlyReductiveAction := Ideal => V -> V.groupIdeal
 
--------------------------------------------
--------------------------------------------
---- finiteAbelianAction methods -------------------
--------------------------------------------
-
-finiteAbelianAction = method()
-
-finiteAbelianAction (Matrix, PolynomialRing, List) := FiniteAbelianAction => (W, R, L) -> (
-    if not isField coefficientRing R then (error "abelianGroupAction: Expected the second argument to be a polynomial ring over a field.");
-    if ring W =!= ZZ then (error "abelianGroupAction: Expected the first argument to be a matrix of integer weights.");
-    if numColumns W =!= dim R then (error "abelianGroupAction: Expected the number of columns of the matrix to equal the dimension of the polynomial ring.");
-    if numRows W =!= #L then (error "abelianGroupAction: Expected the number of rows of the matrix to equal the size of the list."); 
-    new FiniteAbelianAction from {
-	cache => new CacheTable,
-	(symbol ActionMatrix) => W,
-	(symbol ring) => R, 
-	(symbol rank) => numRows W,
-	(symbol size) => L
-	}
-    )
-
-
--------------------------------------------
-
-net FiniteAbelianAction := T -> (net T.ring)|" <- "|(net T.ActionMatrix)
--- If the weight matrix is huge, consider rewriting to print something else.
-
-rank FiniteAbelianAction := ZZ => T -> T.rank
-
-size FiniteAbelianAction := List => T -> T.size
 
 ---------------------------------------------
-
-
-
-
 
 hilbertIdeal = method()
 hilbertIdeal (LinearlyReductiveAction) := Ideal => V -> (
@@ -461,7 +459,65 @@ generatorsFromHilbertIdeal (LinearlyReductiveAction, Ideal) := List => (V, I) ->
 --    	     abelianInvariants as a Strategy for invariants(FiniteGroupAction).
 --    	  4. After doing (3) update isInvariant (Matrix, List, Thing) accordingly
 
+
+abelianInvariants = method()
+
+abelianInvariants FiniteGroupAction := List => T -> (
+    W := weights T;
+    R := ring T;
+    L := size T;
+    r := numRows W;
+    n := numColumns W;
+    t := 1; -- t is the size of abelian group
+    --sanity check 
+    if #L =!= r then error "Size of the group does not match the weight";
+    scan(L,i->t = t*i);
+    local C; -- C is a list of all possible weights
+    for i from 0 to #L-1 do(
+	if i == 0 then(
+	    C = apply(L_i,j-> matrix {{j}});
+	) else (
+	temp := flatten apply(L_i,j->apply(C,M->M || matrix {{j}}));
+	C = temp;
+        );
+    );
+    S := new MutableHashTable from apply(C, w -> w => {});
+    scan(n, i -> S#(W_i) = {R_i});
+    U := flatten entries vars R;
+    local v, local m, local u, local v';
+    while  #U > 0 do(
+    m = min U; 
+    v = vector(apply(n,i->degree(R_i,m))); --degree vector of m
+    v = W*v; --weight vector of m
+    j := 0;
+    scan(n,i->if m % R_i == 0 then (j = i+1;break));
+    k := j;
+    while k > 0 do(
+        u = m*R_(k-1);
+        temp := flatten entries (v + W_(k-1));
+	temp = apply(#temp,i -> temp_i % L_i);
+	v' = matrix(vector temp);
+        if all(S#v', m' -> u%m' =!= 0_R) then (
+	    S#v' = S#v'|{u};
+            if first degree u < t then(
+		U = U | {u};
+            );
+        );
+        k = k - 1;
+    );
+    U = delete(m, U);
+    );
+    return S#(matrix(0_(ZZ^r)))
+)
+
+-------------------------------------------
+
 invariants = method()
+
+invariants FiniteGroupAction := List => G -> (
+    if isAbelian G then abelianInvariants G
+    else (error "invariants: Invariants of a non-abelian finite group action not yet implemented.")
+    )
 
 invariants TorusAction := List => T -> (
     R := ring T;
@@ -530,24 +586,21 @@ invariants (LinearlyReductiveAction) := List => V -> (
 
 -------------------------------------------
 
-invariants FiniteAbelianAction := List => T -> (
-    return abelianInvariants(T)
-)
+isInvariant = method(TypicalValue => Boolean, Options => {Strategy => Abelian})
 
-
-
--------------------------------------------
--- FG: I am wondering if computing the ring of invariants for TorusAction is
--- an overkill to decide if an element is invariant. If may be quicker to just
--- act with the weight matrix and see if you get back out the original element
-
-
-isInvariant = method(TypicalValue => Boolean)
-
-isInvariant (RingElement, FiniteGroupAction) := Boolean => (f, G) -> (
+isInvariant (RingElement, FiniteGroupAction) := Boolean => opts -> (f, G) -> (
+    if opts.Strategy == Abelian then (
+	W := weights G;
+	V := W * transpose(matrix(exponents(f)));
+	n := dim G;
+	L := size G;
+	all(n, i -> (V#i)%(L#i) == 0)
+	)
+    else (
     -- reynoldsOperator already checks to see if f is in the ring on which G acts.
     reynoldsOperator(f, G) == f
-    ) 
+    )
+) 
 
 isInvariant (RingElement, TorusAction) := Boolean => (f, T) -> (
     if ring f =!= ring T then (error "isInvariant: Expected an element from the ring on which the group acts.");
@@ -573,19 +626,12 @@ isInvariant (RingElement, LinearlyReductiveAction) := Boolean => (f, V) -> (
 )
 
 
-isInvariant (Matrix, List, Thing) := Boolean => (W,L,f) -> (
-    V := W * transpose(matrix(exponents(f)));
-    n := numColumns W;
-    return apply(n, i -> (V#i)%(L#i)) == 0
-)
-
-
 -------------------------------------------
 --- RingOfInvariants methods --------------
 -------------------------------------------
 
-
 -- TO DO: 1. Add hilbertSeries or molienSeries as functions on RingOfInvariants.
+
 
 invariantRing = method()
 
@@ -635,60 +681,6 @@ ambient RingOfInvariants := PolynomialRing => S -> S.ambient
 generators RingOfInvariants := List => opts -> S -> S.cache.generators
 -- gens must pass 'opts' before the argument, or it will not run!!
 
-
-
-
--------------------------------------------
--------------------------------------------
-
-abelianInvariants = method()
-abelianInvariants FiniteAbelianAction := List => T -> (
-    W := weights T;
-    R := ring T;
-    L := size T;
-    r := numRows W;
-    n := numColumns W;
-    t := 1; -- t is the size of abelian group
-    --sanity check 
-    if #L =!= r then error "Size of the group does not match the weight";
-    scan(L,i->t = t*i);
-    local C; -- C is a list of all possible weights
-    for i from 0 to #L-1 do(
-	if i == 0 then(
-	    C = apply(L_i,j-> matrix {{j}});
-	) else (
-	temp := flatten apply(L_i,j->apply(C,M->M || matrix {{j}}));
-	C = temp;
-        );
-    );
-    S := new MutableHashTable from apply(C, w -> w => {});
-    scan(n, i -> S#(W_i) = {R_i});
-    U := flatten entries vars R;
-    local v, local m, local u, local v';
-    while  #U > 0 do(
-    m = min U; 
-    v = vector(apply(n,i->degree(R_i,m))); --degree vector of m
-    v = W*v; --weight vector of m
-    j := 0;
-    scan(n,i->if m % R_i == 0 then (j = i+1;break));
-    k := j;
-    while k > 0 do(
-        u = m*R_(k-1);
-        temp := flatten entries (v + W_(k-1));
-	temp = apply(#temp,i -> temp_i % L_i);
-	v' = matrix(vector temp);
-        if all(S#v', m' -> u%m' =!= 0_R) then (
-	    S#v' = S#v'|{u};
-            if first degree u < t then(
-		U = U | {u};
-            );
-        );
-        k = k - 1;
-    );
-    U = delete(m, U);
-    );
-    return S#(matrix(0_(ZZ^r)))
-)
 
 
 -------------------------------------------
