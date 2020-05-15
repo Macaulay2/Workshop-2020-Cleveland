@@ -54,3 +54,24 @@ res I
 restart
 needsPackage "Chow"
 
+X = toricProjectiveSpace 4;
+rays X
+max X
+--Create a cycle on P^4
+Z1 = toricCycle({({0,1},3), ({0,2},5) },X)
+Z2 = 3*X_{0,1}+5*X_{0,2}
+Z1==Z2
+
+--Intersect with a divisor
+
+D= X_0;
+D*Z1
+
+
+
+--See that the exceptional divisor on Bl_p(P^2) has self-intersection -1
+Y=toricBlowup({0,1},toricProjectiveSpace 2);
+rays Y
+Y_0*Y_0
+Y_3*Y_{3}
+
