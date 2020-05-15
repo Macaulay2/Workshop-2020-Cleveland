@@ -1,6 +1,6 @@
 -- -*- coding: utf-8 -*-
 newPackage(
-        "Invariants",
+        "InvariantsDev",
         Version => "0.1", 
         Date => "May 13, 2020",
         Authors => {
@@ -633,6 +633,7 @@ abelianInvariants (Matrix, PolynomialRing, List) := List => (W, R, L) -> (
 
 
 beginDocumentation()
+-*
 document { 
 	Key => Invariants,
 	Headline => "Computing Invariants for Tori and Abelian Groups",
@@ -654,7 +655,7 @@ document {
 		}
         }
 	}
- -*
+
 document {
 	Key => {torusInvariants, (torusInvariants,Matrix,PolynomialRing)},
 	Headline => "Computes the primary invariants for a diagonal torus action given by column weight vectors",
@@ -693,7 +694,7 @@ document {
 	   ". Heidelberg: Springer. pp 174-177"}
         }	
 }
-*-
+
 document {
 	Key => {abelianInvariants, (abelianInvariants,Matrix,PolynomialRing,List)},
 	Headline => "Computes the primary invariants for an abelian group action given by column weight vectors",
@@ -739,7 +740,7 @@ document {
 	    "abelianInvariants(W,R,{3,3})"
 		}
 	}
--*
+
 document {
 	Key => {hilbertIdeal, (hilbertIdeal,Ideal,Matrix,PolynomialRing)},
 	Headline => "Computes generators (possibly non-invariant) for the invariant ideal",
