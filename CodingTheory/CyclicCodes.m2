@@ -17,5 +17,4 @@ cyclicCode(RingElement, ZZ) := LinearCode => (G,n) -> (
     -- Generate the generating matrix using the funtion cyclicMatrix 
          L=toList apply(toList(0..n-1), i -> apply(toList(0..n-1),j -> l_((j-i)%n)));
     return linearCode(coefficientRing (ring G),L)
-    
-       )
+          )
