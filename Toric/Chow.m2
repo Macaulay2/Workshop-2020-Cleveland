@@ -940,9 +940,10 @@ doc ///
     SeeAlso
       (symbol *, ToricDivisor, List)
 ///
+
 doc ///
     Key
-      (symbol * , ToricDivisor, ToricCycle)
+      (symbol *, ToricDivisor, ToricCycle)
     Headline
       multiplication of a ToricDivisor and ToricCycle 
     Usage
@@ -950,8 +951,6 @@ doc ///
     Inputs
       D:ToricDivisor
       C:ToricCycle
-    Outputs
-      ToricCycle
     Description
       Text
         Compute the product of a ToricDivisor with a ToricCycle.
@@ -968,7 +967,8 @@ doc ///
 	D = Y_3
 	C = Y_{3}
 	D*C       	
-///
+/// 
+
 doc ///
     Key
       (symbol +, ToricCycle, ToricCycle)
@@ -1016,8 +1016,8 @@ doc ///
         X:NormalToricVariety
     Description
         Text
-	    Given an irreducible ToricCycle Z, supported on only
-	    one cone, this function returns
+            Given an irreducible ToricCycle Z, supported on only
+            one cone, this function returns
 	    the toric variety of the corresponding orbit closure.
 	Example
 	    X = toricProjectiveSpace 4
