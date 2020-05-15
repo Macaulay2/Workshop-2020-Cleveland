@@ -249,6 +249,9 @@ certifySolutions(PolySystem, Point) := (f, x) -> (
     -- check: alpha < (13-3*sqrt(17))/4
     if 16*alpha < 169 and (322-16*alpha)^2 > 78*78*17 then true else false
     )
+certifySolutions(PolySystem, List) := (f, L) -> (
+    apply(L, i -> certifySolutions(f, i))
+    )
 
 certifyDistinctSoln = method()
 certifyDistinctSoln(PolySystem, Matrix, Matrix) := (f, x1, x2) -> (
@@ -267,7 +270,12 @@ certifyDistinctSoln(PolySystem, Point, Point) := (f, x1, x2) -> (
 	); 
     Consts1 := computeConstants(f,x1);
     Consts2 := computeConstants(f,x2);
-    normOfDist := sum apply((point{(coordinates x1)-(coordinates x2)})#Coordinates, c->sub(c^2,R));
+    if precision R =!= infinity then (
+    	normOfDist := (norm(2,point{(coordinates x1)-(coordinates x2)}))^2;
+	)
+    else (
+    	normOfDist = sum apply((point{(coordinates x1)-(coordinates x2)})#Coordinates, c->sub(c^2,R));
+	);
     if Consts1 #0 >= ((13-3*sqrt(17))/4)^2 or Consts2 #0 >= ((13-3*sqrt(17))/4)^2 then (
 	false
 	)
