@@ -754,10 +754,17 @@ alphabet = method(TypicalValue => List)
 alphabet(LinearCode) := List => C -> (
     -- "a" is the multiplicative generator of the
     -- field that code C is over
-    a := C.BaseField.generators_0;
     
-    -- take 0, and compute non-zero elements of C.BaseField:
-    alphaB := {sub(0,C.BaseField)} | apply(toList(1..(C.BaseField.order-1)), i-> a^i);
+    -- check if "base ring" is ZZ/q:
+    if C.BaseField.baseRings === {ZZ} then {
+	a := sub(1,C.BaseField);
+	-- generate elements additively:
+	alphaB := apply(toList(1..(C.BaseField.order)), i-> i*a)
+	} else {
+	a = C.BaseField.generators_0;
+ 	-- take 0, and compute non-zero elements of C.BaseField:
+	alphaB = {sub(0,C.BaseField)} | apply(toList(1..(C.BaseField.order-1)), i-> a^i);
+	};
     
     -- return this alphabet:
     alphaB    
@@ -857,6 +864,10 @@ shorten ( LinearCode, ZZ ) := LinearCode => ( C, i ) -> (
 
 random (GaloisField, ZZ, ZZ) := LinearCode => opts -> (F, n, k) -> (
     linearCode(F, n, apply(toList(1..k), j-> apply(toList(1..n),i-> random(F, opts))))
+    )
+
+random (QuotientRing, ZZ, ZZ) := LinearCode => opts -> (R, n, k) -> (
+    linearCode(matrix apply(toList(1..k), j-> apply(toList(1..n),i-> random(R, opts))))
     )
 
     
