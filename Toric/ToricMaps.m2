@@ -19,7 +19,7 @@ newPackage(
   "ToricMaps",
   AuxiliaryFiles => false,
   Version => "0.3",
-  Date => "14 May 2020",
+  Date => "15 May 2020",
   Authors => {
       {
       Name => "Chris Eur", 
@@ -149,6 +149,10 @@ ToricMap * ToricMap := ToricMap => (g, f) -> (
     	symbol matrix => (matrix g) * (matrix f),
     	symbol cache => new CacheTable
 	}
+    )
+
+ToricMap == ToricMap := Boolean => (f, g) -> (
+    source f === source g and target f === target g and matrix f == matrix g
     )
 
 -- local method; produces the outer normal vectors for each max cone
@@ -464,7 +468,7 @@ doc ///
     Key
         ToricMaps
     Headline
-        routines for working with torus-equivariant maps between normal toric varieties
+        routines for working with torus-equivariant maps between toric varieties
     Description
         Text
             Let $X$ and $Y$ be normal toric varieties whose underlying lattices
@@ -648,6 +652,47 @@ doc ///
         (target, ToricMap)    		
 	(isWellDefined, ToricMap)
         (map, NormalToricVariety, NormalToricVariety, Matrix)    		    
+///	         
+
+doc ///
+    Key
+	(symbol ==, ToricMap, ToricMap)
+    Headline 
+    	whether to toric maps are equal
+    Usage
+    	f == g
+    Inputs
+    	f : ToricMap
+    	g : ToricMap	
+    Outputs
+    	: Boolean
+    	    that is @TO true@ if the toric maps have the same source, same
+    	    target, and same underlying map of lattices
+    Description	    
+        Text
+	    Two toric maps are equal if their three defining attributes
+	    (namely source, target, and underlying matrix) are the same.
+       	Text
+	    We illustrate how to access this basic feature of a toric map with
+	    the projection from the second Hirzebruch surface to the
+	    projective line.
+    	Example  
+            Y = toricProjectiveSpace 2;
+	    X = toricBlowup({1, 2}, Y);	    
+            f = map(Y, X, matrix {{1, 0}, {0,1}})
+	    assert isWellDefined f
+	    g = map(X,X,1)
+	    assert isWellDefined g	    
+	    assert (f != g)	    	    
+	    assert (matrix f == matrix g)
+	    assert (source f === source g)
+	    assert (target f =!= target g)	    
+	    assert (g == id_X)
+    SeeAlso
+	(isWellDefined, ToricMap)
+        (map, NormalToricVariety, NormalToricVariety, Matrix)    
+        (map, NormalToricVariety, NormalToricVariety, ZZ)    			    
+        (id, NormalToricVariety)    			    	
 ///	         
 
 
@@ -1583,7 +1628,6 @@ PP1 = toricProjectiveSpace 1
 f = map(PP1, FF2, matrix{{1,0}})
 assert isWellDefined f
 assert isProper f
-assert isProper(f,1)
 ///
 
 TEST ///
@@ -1594,11 +1638,9 @@ Y = normalToricVariety(rays FF2, drop(max FF2, -1))
 f = map(PP1, Y, matrix{{1,0}})
 assert isWellDefined f
 assert not isProper f
-assert not isProper(f,2)
 g = map(Y, PP1, matrix{{0},{1}})
 assert isWellDefined g
 assert isProper g
-assert isProper(g,3)
 ///
 
 TEST ///
@@ -1608,7 +1650,6 @@ A1 = affineSpace 1
 h = map(A1, P1A1, matrix{{1,0}})
 assert isWellDefined h
 assert isProper h
-assert isProper(h,4)
 ///
 
 TEST ///
@@ -1618,7 +1659,6 @@ Y = (toricProjectiveSpace 1) ** (affineSpace 1)
 f = map(Y,X,matrix{{1,0,0},{0,1,0}})
 assert isWellDefined f
 assert not isProper f
-assert not isProper(f,5)
 ///
 
 TEST ///
@@ -1629,7 +1669,6 @@ A = matrix{{1,0,0},{0,1,0}}
 f = map(Y,X,A)
 assert isWellDefined f
 assert not isProper f
-assert not isProper(f,6)
 ///
 
 TEST ///
@@ -1640,7 +1679,6 @@ A = id_(ZZ^2)
 f = map(Y,X,A)
 assert isWellDefined f
 assert not isProper f
-assert not isProper(f,7)
 ///
 
 TEST ///
@@ -1651,7 +1689,6 @@ A = id_(ZZ^2)
 f = map(Y,X,A)
 assert isWellDefined f
 assert isProper f
-assert isProper(f,8)
 ///
 
 TEST ///
@@ -1662,7 +1699,6 @@ A = matrix{{1,0,0},{0,1,0}}
 f = map(Y,X,A)
 assert isWellDefined f
 assert not isProper f
-assert not isProper(f,9)
 ///
 
 TEST ///
@@ -1673,7 +1709,6 @@ A = matrix{{1,0,0},{0,1,0}}
 f = map(Y,X,A)
 assert isWellDefined f
 assert not isProper f
-assert not isProper(f,10)
 ///
 
 TEST ///
@@ -1684,7 +1719,6 @@ A = matrix{{1,0,0},{0,1,0}}
 f = map(Y',X'',A)
 assert isWellDefined f
 assert isProper f
-assert isProper(f,11)
 ///
 
 TEST ///
@@ -1695,7 +1729,6 @@ A = matrix{{1,1,0},{1,1,0}}
 f = map(Y,X,A)
 assert isWellDefined f
 assert not isProper f
-assert not isProper(f,12)
 ///
 
 TEST ///
@@ -1706,7 +1739,6 @@ A = matrix{{1,1,0},{1,1,0}}
 f = map(Y,X,A)
 assert isWellDefined f
 assert not isProper f
-assert not isProper(f,13)
 ///
 
 TEST ///
@@ -1717,7 +1749,6 @@ A = matrix{{1,1,0},{1,1,0}}
 f = map(Y,X,A)
 assert isWellDefined f
 assert isProper f
-assert isProper(f,14)
 ///
 
 TEST ///
