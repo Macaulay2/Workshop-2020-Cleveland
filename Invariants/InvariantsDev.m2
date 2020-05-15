@@ -48,9 +48,10 @@ export {
 
 --Protect Option/hashtable symbols
 protect Action
+protect Abelian	       -- Strategy option for isInvariant
+protect Nonabelian     -- Default strategy option for isInvariant
 protect RepDimension
 protect GroupIdeal
-protect ActionMatrix
 
 needsPackage("Polyhedra", Reload => true)
 needsPackage("Elimination", Reload => true)
@@ -163,6 +164,20 @@ addHook(FiniteGroupAction, symbol relations, G -> break (
     unique relators 
     ))
 
+addHook(FiniteGroupAction, symbol size, G -> break (
+    if not isAbelian G then (error "size: Expected group to be abelian.");
+    relators := relations G;
+    m := numgens G;
+    relators = transpose matrix apply(relators, L -> (
+	    counts := apply(L, l -> applyValues(partition(i -> i, l), val -> #val) );
+	    counts = apply(counts, l -> apply(m, i -> if l#?i then l#i else 0) );
+	    first counts - last counts
+	    )
+	);
+    relators = relations minimalPresentation coker relators;
+    apply(m, i -> relators_i_i)
+    ))
+
 
 
 -------------------------------------------
@@ -181,6 +196,10 @@ dim GroupAction := ZZ => G -> dim ring G
 -- TO DO: 1. Port and improve the remaining methods from the package "InvariantRing"
 --    	     to act on the type FiniteGroupAction (rewritten as hooks as appropriate).
 --    	  2. Create examples/documentation/tests for FiniteGroupAction methods.
+--    	  3. Write functions to extract list of cyclic factor/weights for FiniteGroupAction
+--    	     presented as a list of matrices.  Add hook functions to   
+--    	  4. Modify generateGroup, group, schreierGraph, words to work when a finite abelian
+--    	     group is initialized using a list of cyclic factors and a weight matrix.
 
 
 finiteAction = method()
@@ -197,7 +216,8 @@ finiteAction (List, PolynomialRing) := FiniteGroupAction => (G, R) -> (
     new FiniteGroupAction from {
 	cache => new CacheTable,
 	(symbol ring) => R, 
-	(symbol generators) => gensG
+	(symbol generators) => gensG,
+	(symbol numgens) => #(gensG),
 	}
     )
 
@@ -207,38 +227,38 @@ finiteAction (Matrix, PolynomialRing, List) := FiniteGroupAction => (W, R, L) ->
     if numColumns W =!= dim R then (error "abelianGroupAction: Expected the number of columns of the matrix to equal the dimension of the polynomial ring.");
     if numRows W =!= #L then (error "abelianGroupAction: Expected the number of rows of the matrix to equal the size of the list."); 
     new FiniteGroupAction from {
-	cache => new CacheTable {(symbol isAbelian) => true},
-	(symbol ActionMatrix) => W,
-	(symbol ring) => R, 
-	(symbol rank) => numRows W,
-	(symbol size) => L
+	cache => new CacheTable from {
+	    (symbol isAbelian) => true,
+	    (symbol actionMatrix) => W,
+	    (symbol rank) => numRows W,
+	    (symbol size) => L,
+	    (symbol relations) => diagonalMatrix L,
+	    (symbol group) => coker diagonalMatrix L,
+	    },
+	(symbol ring) => R,
+	(symbol generators) => gens ZZ^(numRows W),
+	(symbol numgens) => numRows W, 
 	}
     )
 
 -------------------------------------------
 
-net FiniteGroupAction := G -> (
-    if isAbelian G then  (net T.ring)|" <- "|(net T.ActionMatrix)
-    else (net G.ring)|" <- "|(net G.generators)
+net FiniteGroupAction := G -> (net G.ring)|" <- "|(net G.generators)
 -- If the list of generators is long, consider rewriting  to print only the first few generators together with "...".
 -- Or find a better way to print if the size of the matrices is large.
 
-rank FiniteGroupAction := ZZ => T -> (
-    if isAbelian T then T.rank
+rank FiniteGroupAction := ZZ => G -> (
+    if isAbelian G then G.cache.rank
     else (error "rank: Expected group to be abelian.")
     )
 
-size FiniteGroupAction := List => T -> (
-    if isAbelian T then T.size
-    else (error "size: Expected group to be abelian.")
-    )
+size FiniteGroupAction := { } >> opts -> (cacheValue (symbol size)) (G -> runHooks(FiniteGroupAction, symbol size, G) )
 
 generators FiniteGroupAction := opts -> G -> G.generators
 -- gens must pass 'opts' before the argument, or it will not run!!
 
-numgens FiniteGroupAction := ZZ => G -> (
-    if isAbelian G then #(G.size) 
-    else #(gens G)
+numgens FiniteGroupAction := ZZ => G -> G.numgens
+    
 
 
 -------------------------------------------
@@ -307,7 +327,7 @@ torusAction (Matrix, PolynomialRing) := TorusAction => (W, R) -> (
     if numColumns W =!= dim R then (error "torusAction: Expected the number of columns of the matrix to equal the dimension of the polynomial ring."); 
     new TorusAction from {
 	cache => new CacheTable,
-	(symbol ActionMatrix) => W,
+	(symbol actionMatrix) => W,
 	(symbol ring) => R, 
 	(symbol rank) => numRows W
 	}
@@ -316,17 +336,17 @@ torusAction (Matrix, PolynomialRing) := TorusAction => (W, R) -> (
 
 -------------------------------------------
 
-net TorusAction := T -> (net T.ring)|" <- "|(net T.ActionMatrix)
+net TorusAction := T -> (net T.ring)|" <- "|(net T.actionMatrix)
 -- If the weight matrix is huge, consider rewriting to print something else.
 
 rank TorusAction := ZZ => T -> T.rank
 
 weights = method()
 
-weights TorusAction := Matrix => T -> T.ActionMatrix 
+weights TorusAction := Matrix => T -> T.actionMatrix 
 
-weights FiniteGroupAction := Matrix => T -> (
-    if isAbelian T then T.ActionMatrix
+weights FiniteGroupAction := Matrix => G -> (
+    if isAbelian G then G.cache.actionMatrix
     else (error "weights: Expected group to be abelian.")
     )
 
@@ -451,13 +471,12 @@ generatorsFromHilbertIdeal (LinearlyReductiveAction, Ideal) := List => (V, I) ->
 --- Computing invariants ------------------
 -------------------------------------------
 
--- TO DO: 1. Add comments to the code to explain how invariants(TorusAction) works.
---    	  2. Create a function for invariants(FiniteGroupAction) after porting remaining
+-- TO DO: 1. Finish creating invariants(FiniteGroupAction) after porting remaining
 --    	     methods from the package "InvariantRing".
---    	  3. Create a FiniteAbelianAction type, or (better?) after rewriting code to extract
---    	     the weights from a finite group action that happens to be abelian, include 
---    	     abelianInvariants as a Strategy for invariants(FiniteGroupAction).
---    	  4. After doing (3) update isInvariant (Matrix, List, Thing) accordingly
+--    	  2. After writing code to extract the weights from a finite group action 
+--    	     that happens to be abelian, add a Strategy option to invariants(FiniteGroupAction)
+--    	     to let user decided whether to use abelianInvariants.
+
 
 
 abelianInvariants = method()
@@ -527,12 +546,21 @@ invariants TorusAction := List => T -> (
     local C;
     if r == 1 then C = convexHull W else C = convexHull( 2*r*W|(-2*r*W) );
     C = (latticePoints C)/vector;
+    
+    -- Creates a hashtable of lists indexed by the lattice points of the convex hull
+    -- of the (scaled) weight vectors, initialized with the list of each weight vector
+    -- being the corresponding variable in the ring.
     S := new MutableHashTable from apply(C, w -> w => {});
     scan(n, i -> S#(W_i) = {R_i});
     U := new MutableHashTable from S;
+    
     local v, local m, local v', local u;
     nonemptyU := select(keys U, w -> #(U#w) > 0);
     --iteration := 0; --step by step printing
+    
+    -- While some list of monomials in U is nonempty, picks a monomial in U, multiplies
+    -- it by every variable, and updates the lists of monomials in S and U if the product
+    -- is minimal with respect to divisibility in the list of monomials in S with the same weight.
     while  #nonemptyU > 0 do(
 	v = first nonemptyU;
 	m = first (U#v);
@@ -559,8 +587,11 @@ invariants TorusAction := List => T -> (
 	U#v = delete(m, U#v);
 	nonemptyU = select(keys U, w -> #(U#w) > 0)
 	);
+    
+    -- The generating invariant monomials are the monomials in S of weight 0.
     return S#(0_(ZZ^r))
     )
+
 
 -------------------------------------------
 
@@ -586,7 +617,7 @@ invariants (LinearlyReductiveAction) := List => V -> (
 
 -------------------------------------------
 
-isInvariant = method(TypicalValue => Boolean, Options => {Strategy => Abelian})
+isInvariant = method(TypicalValue => Boolean, Options => {Strategy => Nonabelian})
 
 isInvariant (RingElement, FiniteGroupAction) := Boolean => opts -> (f, G) -> (
     if opts.Strategy == Abelian then (
