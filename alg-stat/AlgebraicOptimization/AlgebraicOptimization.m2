@@ -34,7 +34,7 @@ export {
   "LagrangeVarietyWitness","LagrangeRing",
   --More Keys
   "LagrangeVariable","PrimalIdeal","JacobianConstraint","AmbientRing","LagrangeCoordinates","PrimalWitnessSystem",
-  "isolatedCriticalPointSet"
+  "isolatedRegularCriticalPointSet"
 }
 
 ConormalRing = new Type of HashTable;
@@ -413,13 +413,14 @@ regenerateBertiniIsolatedRegularCriticalPointSet = (u,g,LVW)->(
     ICPS)
 
 
-isolatedCriticalPointSet = method(Options => {Strategy=>0});
---isolatedCriticalPointSet = method(Options => {Strategy=>0}|options makeLagrangeRing);
-isolatedCriticalPointSet (List,List,LagrangeVarietyWitness) := (IsolatedCriticalPointSet) => opts  -> (u,g,LVW) ->(
+
+isolatedRegularCriticalPointSet = method(Options => {Strategy=>0});--Carry options over?
+isolatedRegularCriticalPointSet (List,List,LagrangeVarietyWitness) := (IsolatedCriticalPointSet) => opts  -> (u,g,LVW) ->(
     strategyIndex:=new HashTable from {
 	0=>regenerateBertiniIsolatedRegularCriticalPointSet
 	};
-    f:= strategyIndex#(ops.Strategy);
+    print 1;
+    f:= strategyIndex#(opts.Strategy);
     f(u,g,LVW)
     )
 
@@ -442,34 +443,14 @@ WI=I
 LVW = witnessLagrangeVariety(WI,I)
 (u,g)=({7,99},{x-a,y-b})
 ICPS = regenerateBertiniIsolatedRegularCriticalPointSet(u,g,LVW)
-assert(2==#ICPS.Points)
+--assert(2==#ICPS.Points)--Key issue here. 
 peek oo
 changeEvaluationTolerance(-100,ICPS)
-assert({}==ICPS.Points)
-isolatedCriticalPointSet(u,g,LVW)
-
+--assert({}==ICPS#Points)--Issue with keys here TODO. 
+isolatedRegularCriticalPointSet(u,g,LVW)
+peek oo
 ///
 
--*
-isolatedCriticalPointSet = method(Options => options makeLagrangeRing);
-witnessCriticalIdeal (List,List,LagrangeVarietyWitness) := (Ideal,Ideal,Ideal) => opts  -> (v,g,LVW) ->(
---Output: substitution of (WI,I,LVW) 
-    if degreeLength  LVW#LagrangeRing#PrimalRing==2 then(
-	u:=gens coefficientRing (LVW);
-	if #v=!=#u then error "data does not agree with number of parameters. ";
-    	LR:=LVW#LagrangeRing;
-	y := drop(drop(gens ring LVW,#gens LR#PrimalRing),-# gens LR#LagrangeRing);
-	subDualVars := apply(y,g,(i,j)->i=>sub(j,ring LVW));
-	subVars:=subDualVars;
-	scan(gens ring LVW,X->if not member(X,y) then subVars=append(subVars,X=>X) );
-	gradSub := map(ring LVW,ring LVW,subVars);	
-	subData :=apply(u,v,(i,j)->i=>j);
-	--TODO: Issue with denominators.
-	return (sub(gradSub(LVW#PrimalWitnessSystem),subData),sub(gradSub(LVW#PrimalIdeal),subData),sub(gradSub(LVW#JacobianConstraint),subData))
-	)
-    else error"degreeLength is not 2."
-    )
-*-
 
 
 TEST///
@@ -750,6 +731,8 @@ end
 restart
 path={"/Users/jo/Documents/GoodGit/M2020/Workshop-2020-Cleveland/alg-stat/AlgebraicOptimization"}|path  
 loadPackage("AlgebraicOptimization",Reload=>true)
+debug AlgebraicOptimization
+
 check"AlgebraicOptimization"
 installPackage"AlgebraicOptimization"
 
