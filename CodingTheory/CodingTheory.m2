@@ -1064,15 +1064,14 @@ assert( dim C == k )
 
 TEST ///
 -- Hamming code over GF(2) and dimension of the dual 3
--- THIS IS NOT A TEST, it needs ASSERTS.
 C1= HammingCode(2,3)
-C1.ParityCheckMatrix
+assert( length C1 == 7)
 ///
 
 TEST ///
 -- Hamming code over GF(2) and dimension of the dual 4
 C2= HammingCode(2,4)
-C2.ParityCheckMatrix
+assert( length C2 == 15)
 ///
 
 
@@ -1248,9 +1247,6 @@ doc ///
        
 ///
 
-
-  
--*
 document {
    Key => {vNumber, (vNumber,Ideal)},
    Headline => "Gives the v-number of a graded ideal.",
@@ -1259,8 +1255,7 @@ document {
 	"I" => Ideal => {"Graded ideal."},
 	},
    Outputs => {
-	i:ZZ
-	    an integer. 
+	"i" => ZZ => {"v-number of the ideal."}
 	},
 	EXAMPLE {
 	"K=ZZ/3;",
@@ -1270,7 +1265,7 @@ document {
 	}
  }
  
- 
+
  document {
    Key => {footPrint, (footPrint,ZZ,ZZ,Ideal)},
    Headline => "Gives the footPrint value of an ideal with parameters (d,r)",
@@ -1281,17 +1276,17 @@ document {
 	"r" => ZZ => {"Length of the sequences in the Gröbner éscalier of I of degree d."}
 	},
    Outputs => {
-	i:ZZ
-	    an integer. 
+	"i" => ZZ => {"footPrint value of an ideal with parameters (d,r)."}
 	},
 	EXAMPLE {
-	2K=QQ;", 
+	"K=QQ;", 
         "R=K[t1,t2,t3];",
         "I=ideal(t1^3,t2*t3);",
         "footPrint(2,3,I)"
 	}
- }   
+ }
     
+
     
 document {
    Key => {hYpFunction, (hYpFunction,ZZ,ZZ,Ideal)},
@@ -1303,8 +1298,7 @@ document {
 	"r" => ZZ => {"Length of the sequences in homogenous component of degree d."}
 	},
    Outputs => {
-	i:ZZ
-	    an integer. 
+       "i" => ZZ => {"The hYp value of an ideal with parameters (d,r)."}
 	},
 	EXAMPLE {
 	"K=ZZ/3;", 
@@ -1314,19 +1308,18 @@ document {
 	}
  }  
  
- 
+
  document {
    Key => {gMdFunction, (gMdFunction,ZZ,ZZ,Ideal)},
    Headline => "Gives the Generalized minimum distance value of an ideal with parameters (d,r)",
    Usage => "gMdFunction(d,r,I)",
    Inputs => {
 	"I" => Ideal => {"Graded ideal."},
-	“d” => ZZ => {"Degree of certain homogenous component of ring I."},
-	“r” => ZZ => {"Length of the sequences in homogenous component of degree d."}
+	"d" => ZZ => {"Degree of certain homogenous component of ring I."},
+	"r" => ZZ => {"Length of the sequences in homogenous component of degree d."}
 	},
    Outputs => {
-	i:ZZ
-	    an integer. 
+       "i" => ZZ => {"Gives the Generalized minimum distance value of an ideal with parameters (d,r)."}
 	},
 	EXAMPLE {
 	"K=ZZ/3;", 
@@ -1336,7 +1329,7 @@ document {
 	}
  }   
  
- 
+
  
  
  
@@ -1350,8 +1343,7 @@ document {
 	"r" => ZZ => {"Length of the sequences in homogenous component of degree d."}
 	},
    Outputs => {
-	i:ZZ
-	    an integer. 
+       "i" => ZZ => {"The Vasconcelos function of an ideal with parameters (d,r)"}
 	},
 	EXAMPLE {
 	"K=QQ;", 
@@ -1360,7 +1352,7 @@ document {
         "vasFunction(1,1,I)"
 	}
  }
-*-
+
  
        
 end
