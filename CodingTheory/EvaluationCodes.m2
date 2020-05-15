@@ -3,6 +3,7 @@ needsPackage "Polyhedra"
 needsPackage "CodingTheory"
 needsPackage  "Graphs"
 needsPackage  "NAGtypes"
+needsPackage "RationalPoints"
 
 EvaluationCode = new Type of HashTable
 
