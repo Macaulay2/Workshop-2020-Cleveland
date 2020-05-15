@@ -1,7 +1,11 @@
 -------------------------------------------------------------------------------
 -- Examples for the ToricMaps package (to be merged in NormalToricVarieties) --
 -------------------------------------------------------------------------------
+installPackage "ToricMaps"
+installPackage "Chow"
+
 restart
+viewHelp "ToricMaps"
 needsPackage "ToricMaps"
 -- Define P^2 and P^2xP^2
 PP2 = toricProjectiveSpace 2;
@@ -12,9 +16,6 @@ n = dim PP2
 f = map(PP2, X, id_(ZZ^2) | (0 * id_(ZZ^2)))
 assert isWellDefined f
 
--- Ideal of the image of f
-assert(ideal f == 0)
-
 -- Checking some properties
 assert isProper f
 assert isSurjective f
@@ -23,15 +24,18 @@ assert isSurjective f
 D = toricDivisor({1,-2,3}, PP2)
 pullback(f, D)
 
--- Computing the induced map on the Cox rings
-S = ring PP2; R = ring X; -- just so the map is pretty
-inducedMap f
-
 -- Pullback commutes with OO
 assert(pullback(f, OO D) === OO pullback(f, D))
 
 -- Pullback of a coherent sheaf
 pullback(f, cotangentSheaf PP2)
+
+-- Ideal of the image of f
+assert(ideal f == 0)
+
+-- Computing the induced map on the Cox rings
+S = ring PP2; R = ring X; -- just so the map is pretty
+inducedMap f
 
 -- The diagonal map P2 -> P2xP2
 g = map(X, PP2, id_(ZZ^n) || id_(ZZ^n))
@@ -52,6 +56,7 @@ res I
 -- Examples for the Chow package (to be merged in NormalToricVarieties) --
 --------------------------------------------------------------------------
 restart
+viewHelp "Chow"
 needsPackage "Chow"
 
 X = toricProjectiveSpace 4;
