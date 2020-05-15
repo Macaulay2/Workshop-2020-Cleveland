@@ -1,5 +1,6 @@
-needsPackage "SRdeformations"
+--needsPackage "SRdeformations"
 needsPackage "Polyhedra"
+needsPackage "CodingTheory"
 
 EvaluationCode = new Type of HashTable
 
@@ -59,15 +60,16 @@ evaluationCode(Ring,List,Matrix) := EvaluationCode => opts -> (F,P,M) -> (
     )
 
    
-ToricCode = method(Options => {})
+toricCode = method(Options => {})
 
-ToricCode(ZZ,Matrix) := EvaluationCode => opts -> (q,M) -> (
+toricCode(Ring,Matrix) := EvaluationCode => opts -> (F,M) -> (
     -- Constructor for a toric code.
-    -- inputs: size of a field, an integer matrix 
+    -- inputs: a Galois field, an integer matrix 
     -- outputs: the evaluation code defined by evaluating all monomials corresponding to integer 
     ---         points in the convex hull (lattice polytope) of the columns of M at the points of the algebraic torus (F*)^n
     
-    F:=GF(q, Variable=>z);  --- finite field of q elements
+    z:=F_0;  --- define the primitive element of the field
+    q:=F.order; --- define the size of the field
     s:=set apply(q-1,i->z^i); -- set of non-zero elements in the field
     m:=numgens target M; --- the length of the exponent vectors, i.e. number of variables for monomials, i.e.the dim of the ambient space containing the polytope
     ss:=s; 
@@ -84,27 +86,26 @@ ToricCode(ZZ,Matrix) := EvaluationCode => opts -> (q,M) -> (
     I := ideal apply(m,j->R_j^(q-1)-1); --  the vanishing ideal of (F*)^m
     
     new EvaluationCode from{
-	symbol AmbientSpace => F^(#P),
-
+	symbol Points => P, --- the points of (F*)^m
+	symbol VanishingIdeal => I, --the vanishing ideal of (F*)^m
 	symbol ExponentsMatrix => transpose LL, -- the matrix of exponents, exponent vectors are columns
-	symbol LinearCode => linearCode(transpose G), -- the code 
-	symbol Points => P,  --- the points of (F*)^m
-	symbol Dimension => rank image G, -- dimension of the code
-	symbol Length => (q-1)^m,  -- length of the code
-	symbol VanishingIdeal => I --the vanishing ideal of (F*)^m
-
+	symbol GeneratingMatrix => transpose G,
+	symbol LinearCode => linearCode(transpose G) -- the liner code
 	}
 )   
     
 ----------------- Example of ToricCode method ----
 
 M=matrix{{1,2,10},{4,5,6}} -- martrix of exponent vectors definind the polytope P, exponents vectors are columns
-T=ToricCode(4,M) --- a toric code over F_4 with polytope P
+T=toricCode(GF 4,M) --- a toric code over F_4 with polytope P
 T.Code
 T.ExponentsMatrix
 
 M=matrix{{1,2,10,1},{4,5,6,1},{2,1,0,1}}
-T=ToricCode(4,M)
+T=toricCode(GF 4,M)
+
+M=matrix{{1,0,0,1},{0,1,0,1},{0,0,1,1}}
+T=toricCode(GF 4,M)
 
 ------------------    
     
