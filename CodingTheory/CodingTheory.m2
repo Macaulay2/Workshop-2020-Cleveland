@@ -21,10 +21,6 @@ newPackage(
 -- must be placed in one of the following two lists
 
 export {
-    -- toy functions as examples
-    "firstFunction",
-    "secondFunction",
-    "MyOption",
     -- Types and Constructors
     "generatorToParityCheck",
     "parityCheckToGenerator",
@@ -41,6 +37,19 @@ export {
     -- Families of Codes
     "cyclicMatrix",
     "quasiCyclicCode",
+    "HammingCode",
+    -- LRC codes
+    "TargetParameters",
+    "targetParameters",
+    "LRCencoding",
+    "getEncodingPolynomial",
+    "getCoefficientPolynomial",
+    --"goodPolynomial",
+    "getGroupAnnihilatorPolynomial",
+    "Alphabet",
+    "Length",
+    "Dimension",
+    "Locality",
     -- Methods
     "field",
     "vectorSpace",
@@ -60,30 +69,8 @@ export {
     "gMdFunction",
     "vasFunction"
     }
-exportMutable {}
 
-firstFunction = method(TypicalValue => String)
-firstFunction ZZ := String => n -> (
-	if n == 1
-	then "Hello, World!"
-	else "D'oh!"	
-	)
-   
--- A function with an optional argument
-secondFunction = method(
-     TypicalValue => ZZ,
-     Options => {MyOption => 0}
-     )
-secondFunction(ZZ,ZZ) := o -> (m,n) -> (
-     if not instance(o.MyOption,ZZ)
-     then error "The optional MyOption argument must be an integer";
-     m + n + o.MyOption
-     )
-secondFunction(ZZ,List) := o -> (m,n) -> (
-     if not instance(o.MyOption,ZZ)
-     then error "The optional MyOption argument must be an integer";
-     m + #n + o.MyOption
-     )
+exportMutable {}
 
 ------------------------------------------
 ------------------------------------------
@@ -95,30 +82,105 @@ secondFunction(ZZ,List) := o -> (m,n) -> (
 -- Helper functions for constructors:
 ------------------------------------------
 
--- WARNING: These will do some funky things
--- if your parity check or generator matrices
--- are not of full rank...
+findPivots = method(TypicalValue => List)
+findPivots(Matrix) := List => M -> (
+    -- if the reduced basis for the code does NOT
+    -- have an identity matrix on the right, 
+    -- find positions of each column:
+    
+    colsOfM := entries transpose M;
+    
+    -- extract (ordered) positions of standard basis vectors:
+    return apply(entries id_(M.target), col -> position(colsOfM, colM -> colM == col))
+    
+    )
+
+permuteMatrixColumns = method(TypicalValue => Matrix)
+permuteMatrixColumns(Matrix,List) := (M,P) -> (
+    -- given a list P representing a permutation,
+    -- permute the columns via P:
+
+    return transpose matrix((entries transpose M)_P)
+    
+    
+    
+    )
+
+permuteMatrixRows = method(TypicalValue => Matrix)
+permuteMatrixRows(Matrix,List)  := (M,P) -> (
+    -- given a list P representing a permutation,
+    -- permute the columns via P:
+    return matrix((entries M)_P)
+    )
+
+
+permuteToStandardForm = method()
+permuteToStandardForm(Matrix) := M -> (
+    -- input: matrix M
+    -- output: matrix P*M (permuted to move pivots to right identity block) and permutation P used
+    
+    pivotPositions := findPivots(M);
+    
+    P := select(toList(0..rank M.source -1), i-> not member(i,pivotPositions)) | pivotPositions;
+    
+    return {permuteMatrixColumns(M,P),P}
+    
+    )
+
+
+
+
 generatorToParityCheck = method(TypicalValue => Matrix)
 generatorToParityCheck(Matrix) := Matrix => M -> (
+    -- this function assumes M is of full rank:
+    if rank M != min(rank M.source, rank M.target) then error "Matrix M is not of full rank.";
+    
     -- produce canonical form of the generating matrix:
     G := transpose groebnerBasis transpose M;
+    
+    -- save permutation of G to standard form and permutation used:
+    GandP := permuteToStandardForm(M);    
+    
+    -- update G to use this correct version, save P to variable:
+    Gred  := GandP_0;
+    P := GandP_1;
+    
     
     -- this code assumes that generator matrix
     -- can be put into standard form without any
     -- swapping of columns:
     
     -- take (n-k) columns of standard generating matrix above:
-    redG := G_{0..(rank G.source - rank G -1)};
+    redG := Gred_{0..(rank Gred.source - rank Gred -1)};
     
     -- vertically concatenate an identity matrix of rank (n-k),
     -- then transpose :
-    return transpose (id_(redG.source) || -redG)
+    return permuteMatrixColumns(transpose (id_(redG.source) || -redG),inversePermutation(P))
     
     )
+
+
+
+--The example @henry-chimal noted of a rank deficient code (a generator matrix with repeats) is corrected by this. The user inputted generator or parity check matrix will not be altered UNLESS the matrix is rank deficient, in which case a reduced presentation will be computed and returned.
 
 parityCheckToGenerator = method(TypicalValue => Matrix)
 parityCheckToGenerator(Matrix) := Matrix => M -> (
     return(transpose generators kernel M)
+    )
+
+-- If generator or parity check is not full rank, 
+-- choose a subset of rows that are generators:
+reduceMatrix = method(TypicalValue => Matrix)
+reduceMatrix(Matrix) := Matrix => M -> (
+    return transpose groebnerBasis transpose M
+    )
+
+reduceRankDeficientMatrix = method(TypicalValue => Matrix)
+reduceRankDeficientMatrix(Matrix) := Matrix => M -> (
+    -- check if matrix is of full rank, otherwise return reduced:
+    if (rank M == min(rank M.source,rank M.target)) then {
+	return M
+	} else return reduceMatrix(M)
     )
 
 
@@ -169,7 +231,7 @@ rawLinearCode(List) := LinearCode => (inputVec) -> (
 	    };
 	print("in parity check case");
     } else {
-	newParMat = generatorToParityCheck(newGenMat);
+	newParMat = generatorToParityCheck(reduceMatrix(newGenMat));
 	newParRow = entries newParMat ;
     };
 
@@ -180,7 +242,7 @@ rawLinearCode(List) := LinearCode => (inputVec) -> (
     };
     
     -- coerce code matrix into base field:
-    codeSpace := sub(inputVec_4,inputVec_1);
+    codeSpace := if (reduceMatrix(generators inputVec_4) == generators inputVec_4) then sub(inputVec_4,inputVec_1) else image groebnerBasis sub(inputVec_4,inputVec_1);
     
     
     return new LinearCode from {
@@ -290,42 +352,11 @@ linearCode(Matrix) := LinearCode => opts -> M -> (
     )
 
 net LinearCode := c -> (
-     "Code with Generator Matrix: " | net transpose generators c.Code
+     "Code with Generator Matrix: " | net c.GeneratorMatrix
      )
 toString LinearCode := c -> toString c.Generators
 
 
-shorten = method(TypicalValue => LinearCode)
--- input: An [n,k] linear code C and a set S of distinct integers { i1, ..., ir} such that 1 <= ik <= n.
--- output: A new code from C by selecting only those codewords of C having a zeros in each of the coordinate 
---     positions i1, ..., ir, and deleting these components. Thus, the resulting 
---     code will have length n - r. 
-shorten ( LinearCode, List ) := LinearCode => ( C, L ) -> (
-    local newL; local codeGens;
-    
-    codeGens = C.Generators;
-    newL = delete(0, apply( codeGens, c -> (
-	if sum apply( L, l -> c#l ) == 0
-	then c
-	else 0
-	)));
-    
-    if newL == {} then return C else (
-	newL = entries submatrix' ( matrix newL, L );
-	return linearCode ( C.BaseField , newL );
-	)
-    )
-
-
--- input: An [n,k] linear code C and an iteger i such that 1 <= i <= n.
--- output: A new code from C by selecting only those codewords of C having a zero as their 
---     i-th component and deleting the i-th component from these codewords. Thus, the resulting 
---     code will have length n - 1. 
-shorten ( LinearCode, ZZ ) := LinearCode => ( C, i ) -> (
-    
-    return shorten(C, {i})
-    
-    )
 
 ------------------------------------------
 ------------------------------------------
@@ -409,7 +440,177 @@ quasiCyclicCode(List) := LinearCode => V -> (
     try quasiCyclicCode(baseField,V) else error "Entries not over a field."
     
     )
+
+HammingCode = method(TypicalValue => LinearCode)
+
+HammingCode(ZZ,ZZ) := LinearCode => (q,r) -> (
+        
+    -- produce Hamming code
+    -- q is the size of the field
+    -- r is the dimension of the dual
+    K:=GF(q);
+    -- setK is the set that contains all the elements of the field
+    setK:=set(  {0}| apply(toList(1..q-1),i -> K_1^i));
+    -- C is the transpose of the parity check matrix of the code. Its rows are the the points of the
+    -- projective space P(r-1,q)
+    j:=1;
+    C:= matrix(apply(toList(1..q^(r-j)), i -> apply(toList(1..1),j -> 1))) | matrix apply(toList(toList setK^**(r-j)/deepSplice),i->toList i);
+    for j from 2 to r do C=C|| matrix(apply(toList(1..q^(r-j)), i -> apply(toList(1..(j-1)),j -> 0))) | matrix(apply(toList(1..q^(r-j)), i -> apply(toList(1..1),j -> 1))) | matrix apply(toList(toList setK^**(r-j)/deepSplice),i->toList i);
+	
+    -- The Hamming code is defined by its parity check matrix
+    linearCode(transpose C, ParityCheck => true)
+    )
+
+-*
+Example:
+HammingCode(2,3)
+ParityCheckMatrix => | 1 1 1 1 0 0 0 |
+                     | 0 1 0 1 1 1 0 |
+                     | 0 1 1 0 0 1 1 |
+*-
+
+
+
+------------------    Matt
+----------------------------------------------------------
+-- Use this section to add basic types and constructors
+--  for             LRC CODES
+----------------------------------------------------------
+
+TargetParameters = new Type of HashTable
+
+targetParameters = method(Options => {})
+targetParameters (ZZ,ZZ,ZZ,ZZ) := TargetParameters => opts -> (q,n,k,r) -> (
+    -- contructor for the target parameters of an LRC code over a finite field
+    -- input:   alphabet size q, target code length n, dimension k, and locality r
+    -- output:  a hashtable containing the target parameters of the LRC code to be constructed
+     -- note: check that n less than or equal to q and if the symbols of A lie in F
+    if not n<=q then print "Warning: construction requires that target length <= field size.";
+    
+    
+    --verify that target dimension is divisible by locality
+    if not k%r==0 then error "target dimension is not divisible by target locality";
+    
+    new TargetParameters from {
+	symbol Alphabet => toList(0..q-1),
+	symbol Length => n,
+	symbol Dimension => k,
+	symbol Locality => r,
+	symbol cache => {}
+	}
+    )
+
+
+------------------------ -------------
+--     Helper functions for constructing 
+--             LRC CODES
+-------------------------------
+
  
+LRCencoding = method(TypicalValue => Module)
+LRCencoding(TargetParameters,List,RingElement) := Module => (p,A,g) -> (
+    -- generates an LRC code
+    -- input:   the target parameters p, a partition of n symbols from the alphabet, and a good 
+    --                     polynomial for the partition
+    -- output:  an LRC with the desired target parameters as a module
+    
+    -- we need a set of generators for the Ambient Space containing our information vectors that will,
+    --   be encoded, and then we generate their encoding polynomials
+    x:=symbol x;
+    R:=GF(#p.Alphabet);
+    Anew:=apply(A,i->apply(i,j->sub(j,R)));
+    generatorS:=apply((entries gens (R)^(p.Dimension),i->apply(i,j->sub(j,R))));
+    encodingPolynomials:=apply(generatorS,i->(getEncodingPolynomial(p,i,g)));
+    informationSymbols:=flatten Anew;
+    
+    
+    -- we evaluate each encoding polynomial at each of the symbols in A
+    listOfGens:=apply(encodingPolynomials,i->apply(informationSymbols,j->sub(i[j],R)));
+    
+    --should check that the evaluation of each generator in listOfGens over the entries of each codeword 
+    -- returns the same number of distinct images as there are subsets in the partition A.
+    setSizes:=apply(listOfGens,i-># set apply(i, j-> sub(sub(g[j],R),ZZ)));
+    if not all (setSizes, Sizes-> Sizes<=#Anew) then error "Something went wrong";
+    
+    linearCode((GF(#p.Alphabet)),(p.Length),apply(listOfGens,i->apply(i,j->lift(j,ZZ))))
+    
+    )
+
+
+---------------------------------------------
+--   ENCODING POLYNOMIALS FOR LRC CODES    --
+---------------------------------------------
+
+getEncodingPolynomial = method(TypicalValue => RingElement)
+getEncodingPolynomial (TargetParameters,List,RingElement) := RingElement => (p,infVec,g) -> (
+      -- generates the encoding polynomial for an LRC code
+      -- input:    the TargetParameters hash table p, a list infVec in F^k, a good polynomial g
+      --               in the ring F[x]
+      -- output:   the encoding polynomial for an information vector in F^k 
+      x:= symbol x;
+      R:=GF(#p.Alphabet)[x];
+      i:=toList(0..(p.Locality-1));
+      coeffs:=apply(i,l->getCoefficientPolynomial(p,infVec,g,l));
+      polynoms:=apply(i,l->x^l);
+      sum apply(i,k->((coeffs_k) * (polynoms_k)) ) -- still getting an error about incompatibility here
+     )
+
+getCoefficientPolynomial = method(TypicalValue => RingElement)
+getCoefficientPolynomial(TargetParameters,List,RingElement,ZZ) := RingElement => (p,infVec,g,i) -> (
+     -- generates the coefficient polynomial for an LRC code
+      -- input:    the TargetParameters hash table p, a list infVec in F^k, a good polynomial g
+      --               in the ring F[x], an increment i
+      -- output:   the coefficient polynomial for an information vector in F^k  
+      j:=toList(0..(p.Dimension//p.Locality-1));
+      coeffs:=flatten apply(j,l->(infVec_{i*2+l}));
+      polynoms:=apply(j,l->g^l);
+      sum apply(j,k->((coeffs_k) * (polynoms_k)) ) -- still getting an error about incompatibility here
+     )
+ 
+ 
+
+
+----------------------------------------------------------
+--           Good Polynomials for Partitions of symbols
+--                (group theoretical constructions
+----------------------------------------------------------
+
+
+--goodPolynomial = method(Options=>{})
+--goodPolynomial(ZZ,List) := RingElement -> (q,A) -> (
+    -- generates a good polynomial for a partition of symbols in finite field F=F_q
+    -- by utilizing the multiplicative group structure of F\0
+    -- input:    field size q a prime, partition A of symbols in F\0
+    -- output:   a polynomial function f such that the image of each point in a given 
+    --          subset in A is the same.
+    
+    
+    -- Needs work
+--)
+
+getGroupAnnihilatorPolynomial = method(TypicalValue => RingElement)
+getGroupAnnihilatorPolynomial(List,ZZ) := RingElement => (G,q) -> (
+    x:=symbol x;
+    i:=toList(0..(#G-1));
+    product(apply(i,inc->((sub(x,GF(q)[x])-G_inc))))
+    )
+
+
+--------------------------------------------- Test example
+--   restart
+--  
+--   p = targetParameters(13,9,4,2)
+--   A = { {1,3,9}, {2,6,5}, {4,12,10} }
+--   use GF(#p.Alphabet)[x]
+--   g = x^3
+--   LRCencoding(p,A,g)
+
+-------------------------   END   MATT
+--------------------------------------------
+
+
+
+
 
 ------------------------------------------
 ------------------------------------------
@@ -421,6 +622,7 @@ quasiCyclicCode(List) := LinearCode => V -> (
 -- act on codes. Should use this section for
 -- writing methods to convert between 
 -- different Types of codes
+
 
  
 --input: A linear code C
@@ -501,6 +703,73 @@ generic = method(TypicalValue => LinearCode)
 generic(LinearCode) := LinearCode => C -> (
     linearCode(C.AmbientModule)
     )
+
+
+
+shorten = method(TypicalValue => LinearCode)
+-- input: An [n,k] linear code C and a set S of distinct integers { i1, ..., ir} such that 1 <= ik <= n.
+-- output: A new code from C by selecting only those codewords of C having a zeros in each of the coordinate 
+--     positions i1, ..., ir, and deleting these components. Thus, the resulting 
+--     code will have length n - r. 
+shorten ( LinearCode, List ) := LinearCode => ( C, L ) -> (
+    local newL; local codeGens; local F;
+    
+    F = C.BaseField;
+    codeGens = C.Generators;
+    
+    newL = delete(0, apply( codeGens, c -> (
+	if sum apply( L, l -> if c#l == 0_F then 0_ZZ else 1_ZZ ) == 0_ZZ
+	then c
+	else 0
+	)));
+
+    if newL == {} then return C else (
+	newL = entries submatrix' ( matrix newL, L );
+	return linearCode ( C.BaseField , newL );
+	)
+    )
+
+-*
+shorten ( LinearCode, List ) := LinearCode => ( C, L ) -> (
+    local newL; local codeGens;
+    
+    codeGens = C.Generators;
+    newL = delete(0, apply( codeGens, c -> (
+	if sum apply( L, l -> c#l ) == 0
+	then c
+	else 0
+	)));
+    
+    if newL == {} then return C else (
+	newL = entries submatrix' ( matrix newL, L );
+	return linearCode ( C.BaseField , newL );
+	)
+    )
+*-
+
+-- input: An [n,k] linear code C and an iteger i such that 1 <= i <= n.
+-- output: A new code from C by selecting only those codewords of C having a zero as their 
+--     i-th component and deleting the i-th component from these codewords. Thus, the resulting 
+--     code will have length n - 1. 
+shorten ( LinearCode, ZZ ) := LinearCode => ( C, i ) -> (
+    
+    return shorten(C, {i})
+    
+    )
+
+
+
+-- input: A module as the base field/ring, an integer n as the code length, and an integer
+--    k as the code dimension.
+-- output: a random codeword with AmbientModule M^n of dimension k
+
+--random (Module, ZZ, ZZ) := LinearCode => (M, n, k) -> (
+--    linearCode( M, apply(toList(1..n),j-> apply(toList(1..k),i-> random(M))) )
+--    )
+
+random (GaloisField, ZZ, ZZ) := LinearCode => opts -> (F, n, k) -> (
+    linearCode( F, apply(toList(1..n),j-> apply(toList(1..k),i-> random(F, opts)) ) )
+    )
     
     
     
@@ -508,7 +777,8 @@ generic(LinearCode) := LinearCode => C -> (
 --------------------------------------------------------------
  --================= v-number function ========================
  
- vNumber = method(TypicalValue => ZZ);
+
+  vNumber = method(TypicalValue => ZZ);
   vNumber (Ideal) := (I) ->
     (
       L:=ass I;  
@@ -516,6 +786,9 @@ generic(LinearCode) := LinearCode => C -> (
       N:=apply(G,i->toList(set i-set{0}));
       min flatten N 
     )
+
+ 
+      
  
  
    
@@ -529,9 +802,6 @@ generic(LinearCode) := LinearCode => C -> (
  degree coker gens gb I - mD
  )
  
- 
-    
-  
  
 -----------------------------------------------------------
  --****************** GMD Functions ********************
@@ -548,16 +818,15 @@ generic(LinearCode) := LinearCode => C -> (
 )
  )
   
- 
- 
  ------------------------GMD Function--------------------------------
  
  gMdFunction = method(TypicalValue => ZZ);
  gMdFunction (ZZ,ZZ,Ideal) := (d,r,I) ->(
  degree(coker gens gb I)-hYpFunction(d,r,I)
  )
-  
+
  
+  
  --------------------------------------------------------------
  --===================== Vasconcelos Function ================
  
@@ -571,8 +840,6 @@ generic(LinearCode) := LinearCode => C -> (
       else degree(coker gens gb I)
       )
 )
- 
- 
 
  
  
@@ -689,7 +956,6 @@ TEST///
 -- shorten test, list
 F = GF(2)
 codeLen = 10
-codeDim = 4
 L = {{0, 1, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 1, 0, 1, 1, 0, 1, 0, 0}, {1, 1, 0, 0, 0, 1, 0, 0, 1, 0}, {1, 0, 0, 1, 0, 0, 0, 1, 1, 1}}
 H = L|L
 
@@ -752,6 +1018,35 @@ TEST ///
 ///
 
 
+-- random test
+F = GF(2, 4)
+n = 3
+k = 5
+C = random ( F , n, k )
+
+assert( length C == k )
+assert( dim C == 3 )
+
+F = GF 2
+n = 3
+k = 5
+C = random ( F , n, k )
+
+assert( length C == k )
+assert( dim C == 3 )
+///
+
+TEST ///
+-- Hamming code over GF(2) and dimension of the dual 3
+C1= HammingCode(2,3)
+C1.ParityCheckMatrix
+///
+
+TEST ///
+-- Hamming code over GF(2) and dimension of the dual 4
+C2= HammingCode(2,4)
+C2.ParityCheckMatrix
+///
 
 
 
@@ -809,6 +1104,28 @@ document {
 	"bitflipDecode(H,v)"
 	}
     }
+
+document {
+    Key => {HammingCode, (HammingCode,ZZ,ZZ)},
+    Headline => "Generates the Hamming code over GF(q) and dimension of the dual r.",
+    Usage => "HammingCode(q,r)",
+    Inputs => {
+	"q" => ZZ => {"Size of the field."},
+	"r" => Vector => {"Dimension of the dual of the Hamming code."}	
+	},
+    Outputs => {
+	"C" => LinearCode => {"Hamming code."}
+	},
+    "q and r and integers",
+    "Returns the Hamming code over GF(q) and dimensino of the dual r.",
+    EXAMPLE {
+	"C1= HammingCode(2,3);",
+	"C1.ParityCheckMatrix",
+	"C2= HammingCode(2,3);",
+	"C2.ParityCheckMatrix"
+	}
+    }
+
 document {
     Key => MaxIterations,
     Headline => "Specifies the maximum amount of iterations before giving up. Default is 100.",
@@ -852,17 +1169,39 @@ doc ///
 	   shorten(C, {3,6,8,9})
 	   shorten(C, 3)
 	   
+///
+	   
 --   SeeAlso
        --codim
        --assPrimesHeight
 --   Caveat
 --       myDegree is was Problem 2 in the tutorial yesterday.
-///
-
 
 doc ///
    Key
-       symbol ==
+       (random, GaloisField, ZZ, ZZ)
+   Headline
+       a random linear code 
+   Usage
+       random(GaloisField, ZZ, ZZ)
+   Inputs
+        F:GaloisField
+	n:ZZ
+	    an integer $n$ as the code length. 
+	k:ZZ
+	    an integer $k$ as the code dimension.
+	    
+   Outputs
+       :LinearCode
+           a random linear code of length $n$ and dimension $k$. 
+   Description
+       Example
+       	   F = GF(2, 4)
+	   C = random ( F , 3, 5 )
+///
+
+doc ///
+   Key
        (symbol ==,LinearCode,LinearCode)
    Headline
        determines if two linear codes are equal
@@ -881,79 +1220,16 @@ doc ///
        	   Given linear codes C1 and C2, this code determines if they
 	   define the same subspace over the same field or ring.
        Example
+           F = GF(3,4)
+           codeLen = 7; codeDim = 3;
+           L = apply(toList(1..codeDim),j-> apply(toList(1..codeLen),i-> random(F)))
+           C1 = linearCode(F,L)
+	   C2 = linearCode(matrix L)
+	   C1 == C2
        
 ///
 
-document {
-	Key => {firstFunction, (firstFunction,ZZ)},
-	Headline => "a silly first function",
-	Usage => "firstFunction n",
-	Inputs => {
-		"n" => ZZ => {}
-		},
-	Outputs => {
-		String => {}
-		},
-	"This function is provided by the package ", TO CodingTheory, ".",
-	EXAMPLE {
-		"firstFunction 1",
-		"firstFunction 0"
-		}
-	}
-document {
-	Key => secondFunction,
-	Headline => "a silly second function",
-	"This function is provided by the package ", TO CodingTheory, "."
-	}
-document {
-	Key => (secondFunction,ZZ,ZZ),
-	Headline => "a silly second function",
-	Usage => "secondFunction(m,n)",
-	Inputs => {
-	     "m" => {},
-	     "n" => {}
-	     },
-	Outputs => {
-	     {"The sum of ", TT "m", ", and ", TT "n", 
-	     ", and "}
-	},
-	EXAMPLE {
-		"secondFunction(1,3)",
-		"secondFunction(23213123,445326264, MyOption=>213)"
-		}
-	}
-document {
-     Key => MyOption,
-     Headline => "optional argument specifying a level",
-     TT "MyOption", " -- an optional argument used to specify a level",
-     PARA{},
-     "This symbol is provided by the package ", TO CodingTheory, "."
-     }
- 
- 
-document {
-     Key => [secondFunction,MyOption],
-     Headline => "add level to result",
-     Usage => "secondFunction(...,MyOption=>n)",
-     Inputs => {
-	  "n" => ZZ => "the level to use"
-	  },
-     Consequences => {
-	  {"The value ", TT "n", " is added to the result"}
-	  },
-     "Any more description can go ", BOLD "here", ".",
-     EXAMPLE {
-	  "secondFunction(4,6,MyOption=>3)"
-	  },
-     SeeAlso => {
-	  "firstFunction"
-	  }
-     }
-TEST ///
-  assert(firstFunction 1 === "Hello, World!")
-  assert(secondFunction(1,3) === 4)
-  assert(secondFunction(1,3,MyOption=>5) === 9)
-///
+
   
   
 document {
@@ -1067,14 +1343,6 @@ document {
  }   
  
  
- 
- 
- 
- 
- 
- 
- 
-
        
 end
 
@@ -1110,6 +1378,15 @@ C.GeneratorMatrix * (transpose C.ParityCheckMatrix)
 F = GF(2)
 L = {{1,0,1,0,0,0,1,1,0,0},{0,1,0,0,0,0,0,1,1,0},{0,0,1,0,1,0,0,0,1,1},{1,0,0,1,0,1,0,0,0,1},{0,1,0,0,1,1,1,0,0,0}}
 C = linearCode(F,L,ParityCheck => true)
+peek C
+
+
+-----------------------------------------------------
+-- Codes with Rank Deficient Matrices:
+-----------------------------------------------------
+R=GF 4
+M=R^4
+C = linearCode(R,{{1,0,1,0},{1,0,1,0}})
 peek C
 
 

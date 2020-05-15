@@ -698,6 +698,69 @@ kernel ToricReflexiveSheafMap := ToricReflexiveSheaf => opts -> (
       basisSet);
     toricReflexiveSheaf(W,X)))
 
+--Image and cokernel helper functions
+
+--Given a filtered vector space represented by hash table mapping vectors to weights
+--compute the image, also represented as a hash table mapping vectors to weights
+--f should be a function that takesa a single vector (polynomial) and outputs an image vector (polynomial)
+filteredVSImage := (filt,f) -> (
+    if #filt==0 then return filt;
+    weightedImages := rsort apply(pairs filt, (v,w) -> (w,f(v)));
+    R := ring ((weightedImages)#0#1);
+    accum := ideal(0_R);
+    --get rid of redundent vectors by progressively building the vectorspace (represented here as an ideal)
+    --as well as reverse the roles of the two elements of the pair
+    reducedWeightedImages := for w in weightedImages list(
+        newAccum := accum + w#1;
+        if newAccum==accum then continue;
+        accum = newAccum;
+        (w#1,w#0)
+        );
+    hashTable reducedWeightedImages
+    )
+
+
+polynomialToVect := (f,VS) -> (
+    (coefficients(f,Monomials => basis reverse VS))#1
+    )
+
+
+image(ToricReflexiveSheafMap) := f -> (
+    X := variety f;
+    mat := matrix f;
+    sourceVB := source f;
+    targetVB := target f;
+    sourceVS := ambient sourceVB;
+    targetVS := ambient targetVB;
+    K := coefficientRing (sourceVS#0);
+    vsImageFunc := f -> ((flatten entries ((basis reverse targetVS)*mat*sub(polynomialToVect(f,sourceVS),K)))#0);
+    -- a list of lists representing the image
+    filteredVSImages := apply(#(rays X),i ->filteredVSImage(sourceVB#i,vsImageFunc));
+    toricReflexiveSheaf(filteredVSImages/pairs,X)
+    )
+
+cokernel(ToricReflexiveSheafMap) := f -> (
+    X := variety f;
+    targetVB := target f;
+    (R,d) := ambient targetVB;
+    I := ideal( basis(d,R) * gens coker matrix f );
+    C := cokernel matrix f;
+    r := rank C;
+    K := coefficientRing R;
+    e := symbol e;
+    R' := K(monoid[e_1..e_r]);
+    d' := {1};
+    --zero sheaf I think?
+    if r==0 then return toricReflexiveSheaf(R',d',X);
+    mg := mingens C;
+    mat := map(target mg,target mg,1)//mg;
+    --mat := map(C,target matrix f,1)//(mingens C);
+    vsImageFunc := f -> ((flatten entries ((basis(d',R'))*mat*sub(polynomialToVect(f,(R,d)),K)))#0);
+    filteredCokernels := apply(#(rays X),i ->filteredVSImage(targetVB#i,vsImageFunc));
+    toricReflexiveSheaf(filteredCokernels/pairs,X)
+    )
+
+
 mukaiLazarsfeldBundle = method();
 mukaiLazarsfeldBundle ToricDivisor := ToricReflexiveSheaf => D -> (
   coeffs := entries vector D;
