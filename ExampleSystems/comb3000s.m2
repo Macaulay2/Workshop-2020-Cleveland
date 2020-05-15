@@ -39,7 +39,7 @@ doc ///
 	   This system was solved in May 2020, using @TO solveSystem@ in Macaulay2 v1.15
 	     with an Intel(R) Core(TM) i5-4258U CPU at 2.40GHz.
 	   
-	    There were 16 solutions found in 0.7079140.443543 seconds (with a Bezout bound of 96).
+	    There were 16 solutions found in 0.707914 seconds (with a Bezout bound of 96).
 	    
 	    Reference: 
 	    A.P. Morgan.
