@@ -35,7 +35,7 @@ doc ///
 	    There were 2 solutions found in 39.0405 seconds (with a Bezout bound of 1344).
 	    
 	    Reference: 
-	    Obtained by electronic mail by Carlo Traverso.From Carlo Traverso.  
+	    Obtained by electronic mail by Carlo Traverso.
 	    See the POSSO test suite.
 
             T.Y. Li, Tianjun Wang, Xiaoshen Wang: 
@@ -48,5 +48,5 @@ doc ///
 	    
 	    See also: http://homepages.math.uic.edu/~jan/Demo/cassou.html
 	Example
-	    F = cassou(RR_53)
+	    cassou(RR_53)
     ///

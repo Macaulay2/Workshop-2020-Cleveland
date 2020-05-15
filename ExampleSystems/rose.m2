@@ -35,5 +35,5 @@ doc ///
 	    
 	    See also: http://homepages.math.uic.edu/~jan/Demo/rose.html.
 	Example
-	    F = rose(QQ)
+	    rose(QQ)
     ///

@@ -22,7 +22,7 @@ doc ///
         d:ZZ
 	  positive value representing the degree of the polynomials
 	K:Ring
-	  usually a field, e.g., QQ or CC_53
+	  usually a field, e.g., QQ or CC_{53}
     Outputs
         F:List
 	  a system of $n$ polynomials random polynomials of degree $d$ in $n$ variables.

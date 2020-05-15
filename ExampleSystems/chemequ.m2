@@ -31,7 +31,7 @@ doc ///
     Description
     	Text
 	   This system was solved in May 2020, using @TO solveSystem@ in Macaulay2 v1.15
-	     with an Intel(R) Core(TM) i5-4258U CPU at 2.40GHz
+	     with an Intel(R) Core(TM) i5-4258U CPU at 2.40GHz.
 	   
 	    There were 6 solutions found in 1.24877 seconds (with a Bezout bound of 108).
 	    
@@ -42,5 +42,5 @@ doc ///
 	    
 	    See also: http://homepages.math.uic.edu/~jan/Demo/chemequ.html
 	Example
-	    F = chemequ(CC_53)
+	    chemequ(CC_53)
     ///

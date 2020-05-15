@@ -29,7 +29,7 @@ doc ///
     Description
     	Text
 	    This system was solved in May 2020, using @TO solveSystem@ in Macaulay2 v1.15
-	     with an Intel(R) Core(TM) i5-5250U CPU @ 1.60GHz.
+	     with an Intel(R) Core(TM) i5-5250U CPU at 1.60GHz.
 	   
 	    There were 146 solutions found in 6.540 seconds (with a Bezout bound of 720). 
 	    
@@ -37,5 +37,5 @@ doc ///
 	    
 	    See also: http://homepages.math.uic.edu/~jan/Demo/reimer5.html.
 	Example
-	    F = reimer5(QQ)
+	    reimer5(QQ)
     ///

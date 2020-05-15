@@ -30,7 +30,7 @@ doc ///
     Description
     	Text
 	    This system was solved in May 2020, using @TO solveSystem@ in Macaulay2 v1.15
-	     with an Intel(R) Core(TM) i5-5250U CPU @ 1.60GHz.
+	     with an Intel(R) Core(TM) i5-5250U CPU at 1.60GHz.
 	   
 	    There were 4 solutions found in 0.178 seconds (with a Bezout bound of 16).
 	    
@@ -39,5 +39,5 @@ doc ///
 	    
 	    See also: http://homepages.math.uic.edu/~jan/Demo/lumped.html.
 	Example
-	    F = lumped(CC_53)
+	    lumped(CC_53)
     /// 

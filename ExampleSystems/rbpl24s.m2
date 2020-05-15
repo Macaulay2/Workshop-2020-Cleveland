@@ -34,7 +34,7 @@ doc ///
     Description
     	Text
 	    This system was solved in May 2020, using @TO solveSystem@ in Macaulay2 v1.15
-	     with an Intel(R) Core(TM) i5-5250U CPU @ 1.60GHz.
+	     with an Intel(R) Core(TM) i5-5250U CPU at 1.60GHz.
 	   
 	    There were 40 solutions found in 3.740 seconds (with a Bezout bound of 576). 
 	    
@@ -42,5 +42,5 @@ doc ///
 	    
 	    See also: http://homepages.math.uic.edu/~jan/Demo/rbpl24s.html.
 	Example
-	    F = rbpl24s(RR_53)
+	    rbpl24s(RR_53)
     ///
