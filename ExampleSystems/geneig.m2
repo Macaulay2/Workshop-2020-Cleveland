@@ -37,14 +37,13 @@ doc ///
     Description
     	Text
 	    This system was solved in May 2020, using @TO solveSystem@ in Macaulay2 v1.15
-	     with an Intel(R) Core(TM) i5-5250U CPU @ 1.60GHz.
+	     with an Intel(R) Core(TM) i5-5250U CPU at 1.60GHz.
 	   
 	    There were 10 solutions found in 1.447 seconds (with a Bezout bound of 243). 
 	    
-	    Reference: "Homotopy method for general lambda-matrix problems" by M. Chu, T.Y. Li and
-	     T. Sauer (pages 528-536).
+	    Reference: "Homotopy method for general lambda-matrix problems" by M. Chu, T.Y. Li and T. Sauer (pages 528-536).
 	     
 	    See also: http://homepages.math.uic.edu/~jan/Demo/geneig.html.
 	Example
-	     F = geneig(QQ)
+            geneig(QQ)
     ///

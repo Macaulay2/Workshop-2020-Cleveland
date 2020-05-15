@@ -2,7 +2,7 @@ export {"camera1s"}
 
 camera1s = method();
 camera1s(Ring) := kk -> (
-    (d,r) := (symbol d, symbol q);
+    (d,q) := (symbol d, symbol q);
     R := kk[d_1..d_3,q_1..q_3];
     { - d_1*q_1 - d_2*q_2 - d_3*q_3 + 1,
       - 3.6*d_1*q_1 + 4.1*d_1*q_2 + 2.0*d_1*q_3 + 0.1*d_1 + 4.1*d_2*q_1 + 1.8*d_2*q_2 + 3.7*d_2*q_3 - 0.2*d_2 + 2.0*d_3*q_1 + 3.7*d_3*q_2 - 4.0*d_3*q_3 + 0.3*d_3 + 0.1*q_1 - 0.2*q_2 + 0.3*q_3 + 5.8,
@@ -32,7 +32,7 @@ doc ///
     Description
     	Text
 	    This system was solved in May 2020, using @TO solveSystem@ in Macaulay2 v1.15
-	     with an Intel(R) Core(TM) i5-4258U CPU at 2.40GHz
+	     with an Intel(R) Core(TM) i5-4258U CPU at 2.40GHz.
 	   
 	    There were 20 solutions found in 0.2575 seconds (with a Bezout bound of 64).
 	    
@@ -50,5 +50,5 @@ doc ///
 	    
 	    See also: http://homepages.math.uic.edu/~jan/Demo/camera1s.html
 	Example
-	    F = camera1s(RR_101)
+	    camera1s(RR_101)
     ///

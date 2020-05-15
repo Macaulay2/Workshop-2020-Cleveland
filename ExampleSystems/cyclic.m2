@@ -37,7 +37,7 @@ doc ///
 	   
 	    There were 70 solutions found in 2.737 seconds with 5 variables.
 	Example
-	    F = cyclic(5,QQ)
+	    cyclic(5,QQ)
     ///
 
 -- test disabled, because it will fail on slightly slower machines

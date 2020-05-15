@@ -32,10 +32,10 @@ doc ///
 	   This system was solved in May 2020, using @TO solveSystem@ in Macaulay2 v1.15
 	     with an Intel(R) Core(TM) i5-4258U CPU at 2.40GHz
 	   
-	    There was 1 solution found in 27.1926 seconds (with a Bezout bound of 1344).
+	    There were 2 solutions found in 39.0405 seconds (with a Bezout bound of 1344).
 	    
 	    Reference: 
-	    Obtained by electronic mail by Carlo Traverso.From Carlo Traverso.  
+	    Obtained by electronic mail by Carlo Traverso.
 	    See the POSSO test suite.
 
             T.Y. Li, Tianjun Wang, Xiaoshen Wang: 
@@ -48,5 +48,5 @@ doc ///
 	    
 	    See also: http://homepages.math.uic.edu/~jan/Demo/cassou.html
 	Example
-	    F = cassou(QQ)
+	    cassou(RR_53)
     ///

@@ -35,7 +35,7 @@ doc ///
     Description
     	Text
 	    This system was solved in May 2020, using @TO solveSystem@ in Macaulay2 v1.15
-	     with an Intel(R) Core(TM) i5-5250U CPU @ 1.60GHz.
+	     with an Intel(R) Core(TM) i5-5250U CPU at 1.60GHz.
 	   
 	    There were 48 solutions found in 1.708 seconds (with a Bezout bound of 256).
 	     
@@ -44,5 +44,5 @@ doc ///
 	     
 	    See also: http://homepages.math.uic.edu/~jan/Demo/ipp.html.
 	Example
-	    F = ipp(RR_53)
+	    ipp(RR_53)
     ///

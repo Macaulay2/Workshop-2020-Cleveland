@@ -44,7 +44,7 @@ doc ///
 	    of a distribution function of a field created by a mixture of 
 	    a ferro-antiferro-magnetic bond at some some points.
 	Example
-	    F = katsura(10,QQ)
+	    katsura(10,QQ)
     ///
 
 -* TEST ///

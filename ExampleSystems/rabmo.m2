@@ -41,6 +41,6 @@ doc ///
 	    Reference: "Methods and applications of interval analysis" by Ramon E. Moore (p. 64).
 	    
 	    See also: http://homepages.math.uic.edu/~jan/Demo/rabmo.html.
-	Example
-	   rabmo(QQ)
-    ///
+    	Example
+	    rabmo(QQ)
+ ///
