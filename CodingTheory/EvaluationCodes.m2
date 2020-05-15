@@ -49,9 +49,7 @@ net EvaluationCode := c -> (
    
 toricCode = method(Options => {})
 
-
-toricCode(ZZ,Matrix) := EvaluationCode => opts -> (q,M) -> (
-
+toricCode(Ring,Matrix) := EvaluationCode => opts -> (F,M) -> (
     -- Constructor for a toric code.
     -- inputs: a Galois field, an integer matrix 
     -- outputs: the evaluation code defined by evaluating all monomials corresponding to integer 
@@ -77,7 +75,7 @@ toricCode(ZZ,Matrix) := EvaluationCode => opts -> (q,M) -> (
     new EvaluationCode from{
 	symbol Points => P, --- the points of (F*)^m
 	symbol VanishingIdeal => I, --the vanishing ideal of (F*)^m
-	symbol ExponentsMatrix => transpose LL, -- the matrix of exponents, exponent vectors are columns
+	symbol ExponentsMatrix => LL, -- the matrix of exponents, exponent vectors are rows
 	symbol GeneratingMatrix => transpose G,
 	symbol LinearCode => linearCode(transpose G) -- the liner code
 	}
@@ -96,7 +94,7 @@ T=toricCode(GF 4,M)
 M=matrix{{1,0,0,1},{0,1,0,1},{0,0,1,1}}
 T=toricCode(GF 4,M)
 
-------------------    
+------------------       
 
 
 
