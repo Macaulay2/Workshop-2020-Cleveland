@@ -53,6 +53,23 @@ conormalRing Ring := ConormalRing => opts -> R -> (
   }
 )
 
+linearObjective = method();
+linearObjective ConormalRing := RingElement => C -> (
+  apply(C.Coordinates_0, C.Coordinates_1, (i,j) -> sub(i,C.AmbientRing) * sub(j, C.AmbientRing)) // sum
+)
+EDObjective = method();
+EDObjective ConormalRing := RingElement => C -> (
+  apply(C.Coordinates_0, C.Coordinates_1, (i,j) -> (sub(i,C.AmbientRing) - sub(j, C.AmbientRing))^2) // sum
+)
+randomizeObjective = method();
+randomizeObjective (RingElement, ConormalRing) := RingElement => (obj, S) -> (
+  if not ring obj === S.AmbientRing then error "expected objective function in ambient ring";
+  AR := S.AmbientRing;
+  rules := S.Coordinates_1 / (i -> sub(i, AR) => random(coefficientRing AR));
+  (map(AR, AR, rules)) obj
+)
+
+
 
 conormalIdeal = method(Options => options conormalRing);
 -- Computes the conormal variety
