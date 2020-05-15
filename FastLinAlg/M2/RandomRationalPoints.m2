@@ -30,7 +30,7 @@ export {
 	"BruteForce",
 	"ProjectionAttempts"}
 exportMutable {}
-installPackage"NAGtypes"
+
 pointToIdeal = method(Options =>{Homogeneous => false});
 
 pointToIdeal(Ring, List) := opts -> (R1, L1) -> (
@@ -279,12 +279,15 @@ randomPointViaGenericProjection(ZZ, Ideal) := opts -> (n1, I1) -> (
 
 randomPoint(Ideal) := List => opts->(I1)->(
         genList:= first entries gens I1;
-        apoint:= matrix{createRandomPoints(I1)};
-        S:=polySystem genList; -- Need the package NAGtypes
-        evalI1:=evaluate(S,apoint);
-        oMat:=transpose matrix{apply(#genList, i->0});
-       if(evalI1===oMat) then return apoint 
-       else return false;
+	K:=coefficientRing ring I1;point:=createRandomPoints(I1);
+	eval:= map(K,ring I1,point);
+	j:=0;
+	while(j< #genList) do (
+        tempEval:=eval(genList_j);
+        if not (tempEval==0) then return false;
+		j=j+1
+	);
+        if (tempEval ==0) then return point else return "Failed to  find";
 )
  
 randomPoint(ZZ,Ideal):=opts->(n1,I1)->(
