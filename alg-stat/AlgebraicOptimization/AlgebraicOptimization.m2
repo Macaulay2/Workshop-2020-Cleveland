@@ -111,6 +111,20 @@ assert(multiDegreeEDDegree(J) == 13)
 ///
 
 
+criticalIdeal = method(Options => options conormalRing);
+criticalIdeal (Ideal, RingElement, ConormalRing) := Ideal => opts -> (I, obj, C) -> (
+  obj = sub(obj, C.AmbientRing);
+  if not ring I === C.Factors_0 then "expected ideal in primal ring";
+  
+  c := codim I;
+  jacI := sub(diff(matrix{C.Coordinates_0}, transpose gens I), C.AmbientRing);
+  jacBar := diff( sub(matrix{C.Coordinates_0}, C.AmbientRing), obj ) || jacI;
+  J' := sub(I,C.AmbientRing) + minors(c+1, jacBar);
+  J := saturate(J', minors(c, jacI));
+  J
+)
+
+
 
 --Code for Lagrange multipliers
 
