@@ -32,6 +32,9 @@ export {
 	"ProjectionAttempts"}
 exportMutable {}
 
+needsPackage "MinimalPrimes"
+installMinprimes();
+
 pointToIdeal = method(Options =>{Homogeneous => false});
 
 pointToIdeal(Ring, List) := opts -> (R1, L1) -> (
