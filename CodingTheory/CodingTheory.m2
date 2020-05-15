@@ -353,7 +353,7 @@ linearCode(Matrix) := LinearCode => opts -> M -> (
     
 
     if opts.ParityCheck then {
-	outputVec := {M.target, M.ring, {}, entries M, kernel M};
+	outputVec := {M.source, M.ring, {}, entries M, kernel M};
 	} else {
 	outputVec =  {M.source, M.ring, entries M, {}, image transpose M};
 	};
