@@ -41,8 +41,7 @@ export {
     "schreierGraph",
     "torusAction",
     "weights",
-    "words",
-    "finiteAbelianAction"
+    "words"
     }
 --exportMutable {}
 
@@ -207,7 +206,7 @@ finiteAction (Matrix, PolynomialRing, List) := FiniteGroupAction => (W, R, L) ->
     if numColumns W =!= dim R then (error "abelianGroupAction: Expected the number of columns of the matrix to equal the dimension of the polynomial ring.");
     if numRows W =!= #L then (error "abelianGroupAction: Expected the number of rows of the matrix to equal the size of the list."); 
     new FiniteGroupAction from {
-	cache => new CacheTable {(symbol isAbelian) => true},
+	cache => new CacheTable from {(symbol isAbelian) => true},
 	(symbol ActionMatrix) => W,
 	(symbol ring) => R, 
 	(symbol rank) => numRows W,
@@ -218,8 +217,9 @@ finiteAction (Matrix, PolynomialRing, List) := FiniteGroupAction => (W, R, L) ->
 -------------------------------------------
 
 net FiniteGroupAction := G -> (
-    if isAbelian G then  (net T.ring)|" <- "|(net T.ActionMatrix)
+    if isAbelian G then  (net G.ring)|" <- "|(net G.ActionMatrix)
     else (net G.ring)|" <- "|(net G.generators)
+)
 -- If the list of generators is long, consider rewriting  to print only the first few generators together with "...".
 -- Or find a better way to print if the size of the matrices is large.
 
@@ -239,6 +239,7 @@ generators FiniteGroupAction := opts -> G -> G.generators
 numgens FiniteGroupAction := ZZ => G -> (
     if isAbelian G then #(G.size) 
     else #(gens G)
+)
 
 
 -------------------------------------------
@@ -468,6 +469,9 @@ abelianInvariants FiniteGroupAction := List => T -> (
     L := size T;
     r := numRows W;
     n := numColumns W;
+    temp := matrix{apply(flatten entries W^{0},i->i%L#0)};
+    scan(r-1,i->temp = temp || matrix{apply(flatten entries W^{i+1},j->j%L#(i+1))});
+    W = temp;
     t := 1; -- t is the size of abelian group
     --sanity check 
     if #L =!= r then error "Size of the group does not match the weight";
@@ -752,11 +756,11 @@ document {
 }
 
 document {
-	Key => {abelianInvariants, (abelianInvariants,FiniteAbelianAction)},
+	Key => {abelianInvariants, (abelianInvariants,FiniteGroupAction)},
 	Headline => "Computes the generators of ring of invariants for an abelian group action given by column weight vectors",
 	Usage => "abelianInvariants(T)",
 	Inputs => {
-	        "T" => FiniteAbelianAction => {"which encodes the action of a finite abelian group on a polynomial ring"}
+	        "T" => FiniteGroupAction => {"which encodes the action of a finite abelian group on a polynomial ring"}
 		},
 	Outputs => {
 		List => {"A minimal set of generating invariants for the abelian group action"}
@@ -766,7 +770,7 @@ document {
 	    "This function is provided by the package ", TO Invariants, ". It is based on the same algorithm as ", TO invariants,
 	    " with some adjustments and optimizations for the finite group case; see the reference below for details. Writing the finite abelian group as",
 	    TEX /// $\mathbb{Z}/d_1 \oplus \cdots \oplus \mathbb{Z}/d_r$, ///,
-	    "the input ", TT "T", " is a MutableHashTable which consists of " TT "L", " the list ", TT "{d_1,d_2,...,d_r}", ",", TT "R"," a polynomial ring and ",TT "W", " a weight matrix. We assume that the group acts diagonally on the polynomial ring",
+	    "the input ", TT "T", " is a finiteGroupAction which consists of " TT "L", " the list ", TT "{d_1,d_2,...,d_r}", ",", TT "R"," a polynomial ring and ",TT "W", " a weight matrix. We assume that the group acts diagonally on the polynomial ring",
 	    TEX /// $R = k[x_1,\ldots,x_n]$, ///,
 	    "which is to say that if we denote the evident generators of the group by",
 	    TEX /// $g_1,\ldots,g_r$ ///,
@@ -792,7 +796,7 @@ document {
 	    "R = QQ[x_1..x_3]",
 	    "W = matrix{{1,0,1},{0,1,1}}",
 	    "L = {3,3}",
-	    "T = finiteAbelianAction(W,R,L)",
+	    "T = finiteAction(W,R,L)",
 	    "abelianInvariants(T)"
 		}
 	}
@@ -1027,5 +1031,6 @@ needsPackage "InvariantsDev"
 R1 = QQ[a_1..a_3]
 W = matrix{{1,0,1},{0,1,1}}
 L = {3,3}
-T = finiteAbelianAction(W,R1,L)
+T = finiteAction(W,R1,L)
+R1^T
 invariantRing T
