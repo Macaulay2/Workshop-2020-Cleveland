@@ -51,19 +51,9 @@ export {
     "NUMITERATIONS",
     "REALITYCHECK",
     "REALITYTEST",
-<<<<<<< HEAD
     "computeOrthoBasis",
     "Aoperator",--these are added
-    "certifyRootMultiplicityBound"--these are added
-=======
-    "Hessian",
-    "computeOrthoBasis",
-    "computeD",
-    "Aoperator",
-    "Hoperator",
-    "gammaKBound",
-    "certifyCluster"
->>>>>>> b089ad600bac767d30ba4f33eabe64895accc345
+    "certifyCluster"--these are added
     }
 exportMutable {}
 
