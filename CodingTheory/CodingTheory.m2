@@ -231,7 +231,6 @@ rawLinearCode(List) := LinearCode => (inputVec) -> (
 	    } else {
 	    error "Elements do not live in base field/ring.";
 	    };
-	print("in parity check case");
     } else {
 	newParMat = generatorToParityCheck(reduceMatrix(newGenMat));
 	newParRow = entries newParMat ;
@@ -831,7 +830,7 @@ random (GaloisField, ZZ, ZZ) := LinearCode => opts -> (F, n, k) -> (
  --****************** GMD Functions ********************
  
  --------------------------------------------------------
- -=====================hyp function======================
+ --=====================hyp function======================
  hYpFunction = method(TypicalValue => ZZ);
  hYpFunction (ZZ,ZZ,Ideal) := (d,r,I) ->(
  max apply(apply(subsets(apply(apply(apply(toList (set(0..char ring I-1))^**(hilbertFunction(d,coker gens gb I))-(set{0})^**(hilbertFunction(d,coker gens gb I)),toList),x -> basis(d,coker gens gb I)*vector deepSplice x),z->ideal(flatten entries z)),r)
@@ -995,7 +994,7 @@ assert( shorten( C2, K ) == linearCode(F, shortL) )
 assert( shorten( C3, K ) == linearCode(F, shortL) )
 ///
 
-
+-*
 TEST ///
  -- vNumner of the ideal I=ideal(t1*t2^2-t1^2*t2,t1*t3^3-t1^3t3,t2*t3^3-t2^3*t3)
    K=ZZ/3 
@@ -1040,7 +1039,9 @@ TEST ///
    I=ideal(t1^3,t2*t3)
    vasFunction(1,1,I)
 ///
+*-
 
+TEST /// 
 
 -- random test
 F = GF(2, 4)
@@ -1060,8 +1061,10 @@ assert( length C == n)
 assert( dim C == k )
 ///
 
+
 TEST ///
 -- Hamming code over GF(2) and dimension of the dual 3
+-- THIS IS NOT A TEST, it needs ASSERTS.
 C1= HammingCode(2,3)
 C1.ParityCheckMatrix
 ///
@@ -1071,7 +1074,6 @@ TEST ///
 C2= HammingCode(2,4)
 C2.ParityCheckMatrix
 ///
-
 
 
 ------------------------------------------
@@ -1154,9 +1156,9 @@ document {
     Key => MaxIterations,
     Headline => "Specifies the maximum amount of iterations before giving up. Default is 100.",
     TT "MaxIterations", " -- Specifies the max iterations.",
-    PARA{},
-    "This symbol is provided by the package ", TO CodingTheory, "."
+    PARA{"This symbol is provided by the package ", TO CodingTheory, "."}
     }
+
 
 doc ///
    Key
@@ -1192,14 +1194,7 @@ doc ///
 	   C = linearCode(F,codeLen,L)
 	   shorten(C, {3,6,8,9})
 	   shorten(C, 3)
-	   
 ///
-	   
---   SeeAlso
-       --codim
-       --assPrimesHeight
---   Caveat
---       myDegree is was Problem 2 in the tutorial yesterday.
 
 doc ///
    Key
@@ -1255,7 +1250,7 @@ doc ///
 
 
   
-  
+-*
 document {
    Key => {vNumber, (vNumber,Ideal)},
    Headline => "Gives the v-number of a graded ideal.",
@@ -1268,7 +1263,7 @@ document {
 	    an integer. 
 	},
 	EXAMPLE {
-	"K=ZZ/3;", 
+	"K=ZZ/3;",
         "R=K[t3,t2,t1,MonomialOrder=>Lex];",
         "I=ideal(t1*t2^2-t1^2*t2,t1*t3^3-t1^3*t3,t2*t3^3-t2^3*t3);",
         "vNumber(I)"
@@ -1364,8 +1359,8 @@ document {
         "I=ideal(t1^3,t2*t3);",
         "vasFunction(1,1,I)"
 	}
- }   
- 
+ }
+*-
  
        
 end
