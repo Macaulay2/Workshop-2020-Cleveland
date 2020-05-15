@@ -37,7 +37,9 @@ export {
   --More Keys
   "LagrangeVariable","PrimalIdeal","JacobianConstraint","AmbientRing","LagrangeCoordinates","PrimalWitnessSystem",
   "Data", "Gradient", "isRootIndex", "MembershipTestResults", "WitnessSuperSet", "LogTolerance", "SaveFileDirectory",
-  "Coordinates", "Factors"
+  "Coordinates", "Factors",
+  --TODO jose forgot to add this?
+  "MultiplicityTolerance", "ConditionNumberTolerance"
 }
 
 ConormalRing = new Type of MutableHashTable;
@@ -53,6 +55,9 @@ conormalRing Ring := ConormalRing => opts -> R -> (
     Factors => {R, dualR},
     Coordinates => {gens R, gens dualR}
   }
+)
+conormalRing Ideal := ConormalRing => opts -> I -> (
+  conormalRing(ring I, opts)
 )
 
 linearObjective = method();
@@ -114,6 +119,12 @@ S = ring dualI
 assert( dualI == ideal(S_0^2 - S_1^2 - S_2^2)) 
 ///
 
+EDDegree = method();
+EDDegree Ideal := ZZ => I -> (
+  S := conormalRing(I);
+  obj := randomizeObjective(EDObjective(S), S);
+  degree criticalIdeal(I, obj, S)
+)
 
 multiDegreeEDDegree = method();
 multiDegreeEDDegree Ideal := ZZ => I -> (
