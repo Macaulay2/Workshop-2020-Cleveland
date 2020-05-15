@@ -1137,7 +1137,6 @@ TEST ///
 *-
 
 TEST /// 
-
 -- random test
 F = GF(2, 4)
 n = 5
@@ -1187,10 +1186,24 @@ document {
 	for computing invariants of codes using commutative 
 	algebra techniques.."
 	},
-        
+    
 	PARA { "This package currently provides constructors for
 	linear codes, evaluation codes, and a few methods for each."
+	},    
+    
+	SUBSECTION "Contributors", "The following people have generously
+	contributed code or worked on our code at various Macaulay2 workshops.",
+	
+	UL {
+	    "Branden Stone"
+	},
+    
+	SUBSECTION "Modified Methods",
+	
+	UL {
+	    TO "random(GaloisField, ZZ, ZZ)" -- not sure how to cite this properly.
 	}
+    	
 	}
     
 document {
