@@ -7,8 +7,6 @@ needsPackage "ToricMaps"
 PP2 = toricProjectiveSpace 2;
 X = PP2 ** PP2;
 n = dim PP2
-S = ring PP2
-R = ring X
 
 -- Defining the projection into the first factor
 f = map(PP2, X, id_(ZZ^2) | (0 * id_(ZZ^2)))
@@ -18,16 +16,19 @@ assert isWellDefined f
 assert(ideal f == 0)
 
 -- Checking some properties
-assert(isProper f)
-assert(isSurjective f)
+assert isProper f
+assert isSurjective f
 
 -- Pullback of a divisor on P^2
 D = toricDivisor({1,-2,3}, PP2)
 pullback(f, D)
 
+-- Computing the induced map on the Cox rings
+S = ring PP2; R = ring X; -- just so the map is pretty
+inducedMap f
+
 -- Pullback commutes with OO
 assert(pullback(f, OO D) === OO pullback(f, D))
-
 
 -- Pullback of a coherent sheaf
 pullback(f, cotangentSheaf PP2)
@@ -37,14 +38,14 @@ g = map(X, PP2, id_(ZZ^n) || id_(ZZ^n))
 assert isWellDefined g
 
 -- Maps compose to identity on P^2
-assert (f * g === id_PP2)
+assert(f * g === id_PP2)
 
 -- Ideal of the diagonal
 I = ideal g
 assert isHomogeneous I
 assert(codim I == dim PP2)
 
--- resolution of the diagonal
+-- Resolution of the diagonal
 res I
 
 --------------------------------------------------------------------------
