@@ -562,7 +562,22 @@ PolynomialRing^GroupAction := RingOfInvariants => (R, G) -> (
 
 -------------------------------------------
 
-net RingOfInvariants := S -> (net coefficientRing ambient S)|"["|(net S.cache.generators)|"]"
+net RingOfInvariants := S -> (
+    horizontalJoin(
+	{
+	    (net coefficientRing ambient S),"["
+	    }|
+	apply(S.cache.generators, v -> (
+		if v == last S.cache.generators and v == first S.cache.generators then net v 
+		else if v == last S.cache.generators then " "|(net v)
+		else (net v)|", " 
+		)
+	    )|
+	{
+	    "]"
+	    }
+	)
+    )
 
 action = method()
 
