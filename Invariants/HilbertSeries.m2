@@ -13,11 +13,15 @@ partialToricHilbertSeries (Matrix, ZZ) := Thing => (W, d) -> (
     L
 )
 
+-- this method prints the equivariant hilbert series
+-- for a diagonal torus action on a polynomial ring
+-- INPUT: weight matrix for action of torus on variables
+-- COMMENT: this is the action on V^* because variables are
+-- coordinates of V
 equivariantHilbertSeries = method()
 equivariantHilbertSeries (Matrix) := Expression => W -> (
     r := numRows W;
     n := numColumns W;
-    W=-W;
     z := getSymbol "z";
     T := getSymbol "T";
     R := ZZ[z_1..z_r,T, Inverses => true, MonomialOrder=>RevLex];
