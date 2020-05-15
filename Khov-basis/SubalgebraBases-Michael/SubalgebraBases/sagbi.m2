@@ -140,6 +140,8 @@ rowReduce = (elems, d) -> (
 )
 -- END COPY OF ROW REDUCE
 
+-- BEGINNING OF MONOMIAL ORDER FUNCTION
+
 -- SAGBI-COMMON HELPER FUNCTIONS.
 -- inscrutable -- Looks to be completely broken.
 -- temporary patch fix given. preferrably won't need this function
@@ -157,19 +159,29 @@ setMonomialOrderFlag = (R) -> (
     else if temp#1#0 === RevLex then (tempflag = 5);	    	    	    	  --RevLex
     tempflag)
 
+-- END COPY OF MONOMIAL ORDER FUNCTION
 
---Accepts a matrix m and returns a matrix of columns of m whose entries all have total degree < d
-submatrixBelowDegree = (m,d) -> (
-    want := positions(0..numcols m - 1,
-    i -> (degrees source m)_i < {d});
-    m_want)
 
---Accepts a matrix m and returns a matrix of columns of m where the highest degree entry has total degree = d
-submatrixByDegrees (Matrix,ZZ) := (m,d) -> (
-    want := positions(0..numcols m - 1,
-    i -> (degrees source m)_i === {d});
-    m_want)
+--Accepts a matrix inputMatrix and returns a matrix of columns of inputMatrix whose entries all have total degree less than maxDegree
+submatrixBelowDegree = (inputMatrix,maxDegree) -> (
 
+    -- Selected cols are the columns where the degree condition is satisfied.
+    selectedCols := positions(0..numcols inputMatrix - 1,
+        i -> (degrees source inputMatrix)_i < {maxDegree});
+
+    -- Construct the submatrix using only the columns selected above.
+    inputMatrix_selectedCols)
+
+--Accepts a matrix inputMatrix and returns a matrix of columns of inputMatrix where the highest degree entry has total degree equal to currDegree
+    -- Why does this function require the input to be a matrix and an integer while the previous function does not.
+submatrixByDegrees (Matrix,ZZ) := (inputMatrix,currDegree) -> (
+
+    -- Selected cols are the columns where the degree condition is satisfied.
+    selectedCols := positions(0..numcols inputMatrix - 1,
+        i -> (degrees source inputMatrix)_i === {maxDegree});
+
+    -- Construct the submatrix using only the columns selected above.
+    inputMatrix_selectedCols)
 
 -- Reduces the lowest degree list in the pending list.  Adds the results to Pending.  The new lowest degree list in pending is added to the subalgebra basis.  Returns the number of elements added.
     -- !!!Assumes that the pending list has been subducted!!!
