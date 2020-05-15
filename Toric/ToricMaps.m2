@@ -1104,35 +1104,35 @@ doc ///
 	    by the pullback of $M$ to the Cox ring of $X$. See "Cox Rings and
 	    Algebraic Maps" by Mandziuk, Thm 3.2.
 	Text
-	    We compute the pullback of the structure sheaf of $P^1$
-	    twisted by a divisor.
+	    We compute the pullback of the structure sheaf of $P^2$ twisted by a
+	    divisor to the Hirzebruch surface.
 	Example
-            PP1 = toricProjectiveSpace 1;
-            X = PP1 ** PP1
-            f = map(PP1, X, matrix{{1,0}})
-	    F = OO toricDivisor({1,1}, PP1)
-	    pullback(f, F)
+	    X = hirzebruchSurface 1
+	    PP2 = toricProjectiveSpace 2
+	    f = map(PP2, X, matrix{{1,0},{0,-1}})
+	    assert isWellDefined f
+	    OD = OO toricDivisor({1,2,3}, PP2)
+	    pullback(f, OD)
 	Text
 	    We can also pull back modules on the Cox ring.
 	Example
-	    S = ring PP1
+	    S = ring PP2
 	    R = ring X
-	    M = module F
+	    M = module OD
 	    pullback(f, M)
     Caveat
     	This function assumes that the target of f is smooth. This can be
 	checked with the command @TO (isSmooth, NormalToricVariety)@.
     SeeAlso
-        "Total coordinate rings and coherent sheaves"
-	(isSimplicial, NormalToricVariety)
 	(symbol SPACE, OO, ToricDivisor)
         (pullback, ToricMap, ToricDivisor)
+        "Total coordinate rings and coherent sheaves"
 ///
 
 doc ///
     Key
-        (pullback, ToricMap, ToricDivisor)
 	pullback
+        (pullback, ToricMap, ToricDivisor)
     Headline
         compute the pullback of a Cartier divisor under a toric map
     Usage
@@ -1217,7 +1217,6 @@ doc ///
 	    f = map(PP2, PP1, matrix{{2},{1}})
 	    R = ring PP2;
 	    ideal f
-	    
 ///
 
 doc ///
@@ -1235,7 +1234,7 @@ doc ///
 	Verify =>
 	    unused
     Outputs
-        : RingMap 
+        : RingMap
 	    between the total homogeneous coordinate rings (aka Cox rings)
     Description
         Text
@@ -1243,14 +1242,21 @@ doc ///
 	    as in "Cox Rings and Algebraic Maps" by Mandziuk, Thm 2.10; see
 	    @HREF("https://arxiv.org/abs/1703.04794",
 	    "arXiv:math/1703.04794")@. This function returns that map.
-	Example 
-    	    AA2 = affineSpace 2;	
+	Text
+	    In the first example we compute the map on the coordinate rings
+	    induced by the map from $\mathbb A^2\to\mathbb P^2$. The map sends
+	    one generator of $S$ to 1 and the other two to the generators of $R$.
+	Example
+	    AA2 = affineSpace 2;
 	    PP2 = toricProjectiveSpace 2;
 	    f = map(PP2, AA2, 1)
 	    R = ring AA2;
 	    S = ring PP2;
 	    f' = inducedMap f
-	    f' vars S    
+	    f' vars S
+	Text
+	    In the second example we consider the map from a Hirzebruch surface
+	    to $\mathbb P^1$.
 	Example
 	    H = hirzebruchSurface 3;
 	    PP1 = toricProjectiveSpace 1;
@@ -1260,14 +1266,19 @@ doc ///
 	    S = ring PP1;
 	    g' = inducedMap g
 	    g' vars S
+	Text
+	    Note that the induced map on Cox rings preserves the grading on the
+	    generators. This is done by computing the induced map on the class
+	    group of the source and target of the toric map and setting the
+	    appropriate DegreeMap on the induced map on Cox rings.
     Caveat
     	This method implicitly assumes that the target is smooth. One may
 	verify this with the command @TO (isSmooth, NormalToricVariety)@.
     SeeAlso
-    	(pullback, ToricMap, ToricDivisor)
-	(map, NormalToricVariety, NormalToricVariety, Matrix)
 	(ring, NormalToricVariety)
-	
+        (classGroup, ToricMap)
+	(pullback, ToricMap, ToricDivisor)
+        "Total coordinate rings and coherent sheaves"
 ///
 
 doc ///
@@ -1795,31 +1806,30 @@ pullback(f,DY)
 assert (pullback(f,DY) == toricDivisor({3,7}, X))
 --F = cotangentSheaf Y
 --pullback(f, cotangentSheaf Y)
-assert (pullback(f,OO DY) === OO toricDivisor({3,7},X))   -- BUG
-assert (module pullback(f,OO DY) === module OO toricDivisor({3,7},X)) -- BUG
+assert (pullback(f,OO DY) === OO toricDivisor({3,7},X))
+assert (module pullback(f,OO DY) === module OO toricDivisor({3,7},X))
 ///
 
 TEST ///
--- Test for inducedMap
+-- Test for pullback
 X = hirzebruchSurface 1
 R = ring X
 PP2 = toricProjectiveSpace 2
 S = ring PP2
 f = map(PP2, X, matrix{{1,0},{0,-1}})
 assert(isWellDefined f)
-matrix inducedMap f
 assert(matrix inducedMap f == matrix{{R_1*R_2, R_0*R_1, R_3}})
 D = toricDivisor({1,2,3}, PP2)
 assert(pullback(f, OO D) === OO pullback(f, D))
 ///
 
 TEST ///
--- Test for inducedMap
+-- Test for pullback
 AA2 = affineSpace 2
 R = ring AA2
 PP2 = toricProjectiveSpace 2
 S = ring PP2
-f = map(PP2, AA2, matrix{{1,0},{0,1}})
+f = map(PP2, AA2, 1)
 assert(isWellDefined f)
 assert(matrix inducedMap f == matrix{{1,R_0,R_1}})
 D = toricDivisor({1,2,3}, PP2)
@@ -1963,7 +1973,7 @@ restart
 installPackage "ToricMaps"
 check ToricMaps
 
-help ToricMaps
+viewHelp ToricMaps
 
 ------------------------------------------------------------------------------
 needsPackage "ToricMaps";
