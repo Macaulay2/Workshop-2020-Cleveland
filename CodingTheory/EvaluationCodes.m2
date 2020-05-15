@@ -3,6 +3,7 @@ needsPackage "Polyhedra"
 needsPackage "CodingTheory"
 needsPackage  "Graphs"
 needsPackage  "NAGtypes"
+needsPackage "RationalPoints"
 
 EvaluationCode = new Type of HashTable
 
@@ -38,7 +39,7 @@ evaluationCode(Ring,List,Matrix) := EvaluationCode => opts -> (F,P,M) -> (
 
     R := F[t_0..t_(m-1)];
 
-    S := apply(entries M, i -> vectorToMonomial(vector i,R)) 
+    S := apply(entries M, i -> vectorToMonomial(vector i,R));
     
     evaluationCode(F,P,S)
     )
@@ -76,8 +77,7 @@ toricCode(Ring,Matrix) := EvaluationCode => opts -> (F,M) -> (
 	symbol Points => P, --- the points of (F*)^m
 	symbol VanishingIdeal => I, --the vanishing ideal of (F*)^m
 	symbol ExponentsMatrix => LL, -- the matrix of exponents, exponent vectors are rows
-	symbol GeneratingMatrix => transpose G,
-	symbol LinearCode => linearCode(transpose G) -- the liner code
+	symbol LinearCode => linearCode(G) -- the liner code
 	}
 )   
     
@@ -85,7 +85,7 @@ toricCode(Ring,Matrix) := EvaluationCode => opts -> (F,M) -> (
 
 M=matrix{{1,2,10},{4,5,6}} -- martrix of exponent vectors definind the polytope P, exponents vectors are columns
 T=toricCode(GF 4,M) --- a toric code over F_4 with polytope P
-T.Code
+T.LinearCode
 T.ExponentsMatrix
 
 M=matrix{{1,2,10,1},{4,5,6,1},{2,1,0,1}}
@@ -118,7 +118,7 @@ evCodeGraph (Ring,Matrix,List) := evCodeGraph  => opts -> (F,M,S) -> (
 
     S = toList apply(apply(S,i->promote(i,R/I)),j->lift(j,R))-set{0*S#0}; -- Drop the elements in S that was already in I.
 
-    G := matrix apply(P,i->flatten entries sub(matrix(R,{S}),matrix(F,{i}))) -- Evaluate the elements in S over the elements on P.
+    G := matrix apply(P,i->flatten entries sub(matrix(R,{S}),matrix(F,{i}))); -- Evaluate the elements in S over the elements on P.
     
     
     new EvaluationCode from{
@@ -157,7 +157,7 @@ SetPolySys:=apply(0..length SetPoly-1, x->polySystem{SetPoly#x});
 XX:=apply(X,x->point{x});
 C:=apply(apply(SetPolySys,y->apply(0..length XX -1,x->(flatten entries evaluate(y,XX#x))#0)),toList);
 G:=transpose matrix{C};
-image G
+image G;
 
 new EvaluationCode from{
 	symbol AmbientSpace => K^(#X),
@@ -202,7 +202,8 @@ SetPolSys:=apply(0..length SetPol-1, x->polySystem{SetPol#x});
 XX:=apply(X,x->point{x});
 C:=apply(apply(SetPolSys,y->apply(0..length XX -1,x->(flatten entries evaluate(y,XX#x))#0)),toList);
 G:=transpose matrix{C};
-image G
+image G;
+
 
 
   new EvaluationCode from{
@@ -219,7 +220,7 @@ image G
 --Petersen graph
 G=graph({1,2,3,4,5,6,7,8,9,10}, {{1,2},{1,3},{1,4},{1,5},{1,6},{2,3},{2,4},{2,5},{2,7},{3,4},{3,5},{3,6},{3,8},{4,5},{4,9},{5,10},{6,7},{6,10},{7,8},{8,9},{9,10}})
 M=incidenceMatrix G
-codeGraphIncM(M,3)
+codeGraphInc(M,3)
 ---------------------------------------------
 
 
