@@ -240,20 +240,6 @@ assert( sort\\toString\keys LVW == sort\\toString\{JacobianConstraint, LagrangeR
 --Check degree
 assert(4 == degree (LVW))
 
-LVW =witnessLagrangeVariety (I,I, makeLagrangeRing I)
---Check keys 
-assert( sort\\toString\keys LVW == sort\\toString\{JacobianConstraint, LagrangeRing, PrimalIdeal, PrimalWitnessSystem})
---Check values TODO
---Check degree
-assert(4 == degree (LVW))
-
-LVW =witnessLagrangeVariety I
---Check keys 
-assert( sort\\toString\keys LVW == sort\\toString\{JacobianConstraint, LagrangeRing, PrimalIdeal, PrimalWitnessSystem})
---Check values TODO
---Check degree
-assert(4 == degree (LVW))
-
 ///
 
 coefficientRing(LagrangeVarietyWitness) := LVW ->coefficientRing LVW#LagrangeRing#AmbientRing
@@ -360,9 +346,120 @@ makeB'InputFile(storeBM2Files,
     B'Polynomials=>(WCI_0+WCI_2)_*   
     )
 runBertini(storeBM2Files)
-#importSolutionsFile(storeBM2Files)
+assert(4==#importSolutionsFile(storeBM2Files))
 ///
 
+--code for witness points.
+needsPackage"NumericalAlgebraicGeometry"
+needsPackage"Bertini"
+IsolatedCriticalPointSet = new Type of WitnessSet;---Change this to a ring. 
+
+isEvaluationZero = (dir,fn,p,logTol)->(
+	    isRoot:= true;	    
+	    scanLines(line->(
+		     num := separateRegexp("[e ]", line);
+		     if #num==4 
+		     then (if min(value(num#1),value(num#3))>logTol then isRoot=false)
+		     else if #num>1 then error("parsing file incorrectly"|line)
+		     ),
+		     dir|"/"|fn
+		     );		     
+	    isRoot)
+
+    --TODO: Fix print display.
+regenerateBertiniIsolatedRegularCriticalPointSet = (u,g,LVW)->(
+    --We can have several strategies.     
+    logTol :=-6;
+    (WI,I,JC) := witnessCriticalIdeal(u,g,LVW);
+    dir := temporaryFileName();
+    if not fileExists dir then mkdir dir;
+    avg := AffVariableGroup=>{
+	    LVW#LagrangeRing#PrimalRing//gens,
+	    LVW#LagrangeRing#LagrangeRing//gens  
+	    };
+    bc := B'Constants => apply(gens coefficientRing LVW,u,(i,j)->i=>j);
+    makeB'InputFile(dir,avg,bc,
+	NameB'InputFile=>"input_ss",
+	BertiniInputConfiguration=>{"TrackType" => 0,
+	    "UseRegeneration" => 1},
+	B'Polynomials =>WI_*|JC_*);
+    runBertini(dir,NameB'InputFile=>"input_ss");
+    sols := importMainDataFile(dir);
+    moveB'File(dir,"main_data","main_data_ss");
+    makeB'InputFile(dir,
+	NameB'InputFile=>"input_mt_primal",avg,bc,
+	BertiniInputConfiguration=>{"TrackType" => -4},
+	B'Polynomials =>I_*);
+    scan(#sols,i->(
+	    p := sols_i;
+	    writeStartFile(dir,{coordinates p},NameStartFile=>"start");
+	    runBertini(dir,NameB'InputFile =>"input_mt_primal");
+	    fn := "evaluation_"|i|"_mt_primal";
+	    moveB'File(dir,"function",fn)));
+    ICPS:=new IsolatedCriticalPointSet from {
+    	LogTolerance =>logTol,
+    	SaveFileDirectory=>dir,
+	PrimalIdeal=>I,
+	PrimalWitnessSystem=>WI,
+	JacobianConstraint=>JC,
+	Equations=>WI+JC,
+    	Data=>u,
+	Gradient=>g,
+	Slice =>matrix{{}},
+    	WitnessSuperSet=>sols,
+	Points =>null,
+	IsIrreducible =>null,
+	MembershipTestResults=>isRootIndex
+	};
+    changeEvaluationTolerance(logTol,ICPS);
+    ICPS)
+
+--TODO: isolatedCriticalPointSet
+
+
+
+changeEvaluationTolerance=(logTol,ICPS)->(
+    sols:=ICPS.WitnessSuperSet;
+    wpIndex := delete(null,
+	apply(#sols,i->(
+		fn := "evaluation_"|i|"_mt_primal";
+	    	p := sols_i;
+	    	if isEvaluationZero(ICPS.SaveFileDirectory,fn,p,logTol) then return i
+	    	)));
+    ICPS.LogTolerance=logTol;
+    ICPS.Points=wpIndex;)
+
+TEST///
+R=QQ[a,b][x,y]
+I=ideal(x^2+y^2-1)
+WI=I
+LVW = witnessLagrangeVariety(WI,I)
+(u,g)=({7,99},{x-a,y-b})
+ICPS = regenerateBertiniIsolatedRegularCriticalPointSet(u,g,LVW)
+assert(2==#ICPS.Points)
+peek oo
+changeEvaluationTolerance(-100,ICPS)
+assert({}==ICPS.Points)
+///
+
+isolatedCriticalPointSet = method(Options => options makeLagrangeRing);
+witnessCriticalIdeal (List,List,LagrangeVarietyWitness) := (Ideal,Ideal,Ideal) => opts  -> (v,g,LVW) ->(
+--Output: substitution of (WI,I,LVW) 
+    if degreeLength  LVW#LagrangeRing#PrimalRing==2 then(
+	u:=gens coefficientRing (LVW);
+	if #v=!=#u then error "data does not agree with number of parameters. ";
+    	LR:=LVW#LagrangeRing;
+	y := drop(drop(gens ring LVW,#gens LR#PrimalRing),-# gens LR#LagrangeRing);
+	subDualVars := apply(y,g,(i,j)->i=>sub(j,ring LVW));
+	subVars:=subDualVars;
+	scan(gens ring LVW,X->if not member(X,y) then subVars=append(subVars,X=>X) );
+	gradSub := map(ring LVW,ring LVW,subVars);	
+	subData :=apply(u,v,(i,j)->i=>j);
+	--TODO: Issue with denominators.
+	return (sub(gradSub(LVW#PrimalWitnessSystem),subData),sub(gradSub(LVW#PrimalIdeal),subData),sub(gradSub(LVW#JacobianConstraint),subData))
+	)
+    else error"degreeLength is not 2."
+    )
 
 
 
@@ -374,6 +471,36 @@ LVW = witnessLagrangeVariety(WI,I)
 ring LVW
 assert (2 ==degree witnessCriticalIdeal({7,99},{x-a,y-b},LVW))--ED degree of circle
 
+R=QQ[a,b][x,y]
+I=ideal(x^2+3*y^2-1)
+WI=I
+LVW = witnessLagrangeVariety(WI,I)
+ring LVW
+assert (4 ==degree witnessCriticalIdeal({7,99},{x-a,y-b},LVW))--ED degree of ellipse
+///
+
+--TODO : bertiniSolve
+--TODO : monodromySolve
+
+TEST///
+R=QQ[a,b][x,y]
+I=ideal(x^2+y^2-1)
+WI=I
+LVW = witnessLagrangeVariety(WI,I)
+ring LVW
+needsPackage"Bertini"
+///
+
+
+
+-*
+optimizationDegree = method(Options => options makeLagrangeRing);
+optimizationDegree (List,List,LagrangeVarietyWitness) := ZZ => opts  -> (v,g,LVW) ->(
+    CI:=witnessCriticalIdeal(v,g,LVW);
+    CI = CI+LVW#PrimalIdeal;
+    scan(g,i->if ring g ==frac ring CI then CI:=saturate(CI,denominator g))
+    )
+*-
 R=QQ[a,b][x,y]
 I=ideal(x^2+3*y^2-1)
 WI=I
@@ -652,3 +779,5 @@ I = ideal(4*(x_1^4+x_2^4),4*x_1^3,4*x_2^3)
 dualI = projectiveDual(I)
 radical I==I
 S = ring dualI
+
+
