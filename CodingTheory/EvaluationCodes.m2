@@ -96,7 +96,7 @@ T=ToricCode(4,M)
 
 
 
-----------Reed–Muller-type code of degree d over a graph using our function of evaluationCode
+----------Reed–Muller-type code of degree d over a graph using our the algorithm of evaluationCode
 
 
 evCodeGraph  = method(Options => {});
