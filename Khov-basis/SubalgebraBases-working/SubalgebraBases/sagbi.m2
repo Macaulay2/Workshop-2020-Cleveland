@@ -77,6 +77,7 @@ appendToBasis := (R, newGens) -> (
     -- Add the new generators to the subalgebra generators
     R.cache.SagbiGens = R.cache.SagbiGens | newGens;
     R.cache.SagbiDegrees = R.cache.SagbiDegrees | flatten degrees source newGens;
+    << numcols newGens << " generators added" << endl;
     
     -- Find the number of generators of the ambient ring and the current list of subalgebra generators
     nBaseGens := numgens R.AmbientRing;
@@ -332,7 +333,6 @@ currDegree = grabLowestDegree(R, o.Limit) + 1;
         subducted = subalgComp.ProjectionBase(map(subalgComp.TensorRing,rawSubduction(rawMonoidNumberOfBlocks raw monoid R.AmbientRing, raw syzygyPairs, raw subalgComp.Substitution, raw sagbiGB)));
         newElems = compress subducted;
         if numcols newElems > 0 then (
-            << numcols newElems << " generators added" << endl;
             insertPending(R, newElems, o.Limit);
             currDegree = grabLowestDegree(R, o.Limit);
         )
@@ -367,7 +367,7 @@ basis Subring := o -> (R) -> (
 end--
 restart
 needs "sagbi.m2"
-R=QQ[x,y]
+R=QQ[x,y,MonomialOrder => Lex]
 A = subring matrix{{x+y,x*y,x*y^2}}
 gens A -- gets the use-specified generators 
 S = subalgebraBasis(A, Limit=>10)
