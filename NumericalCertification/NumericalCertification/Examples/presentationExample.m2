@@ -24,8 +24,8 @@ A = Aoperator(F,P)
 numericalRank A -- we can certify if A is full-rank
 
 listOfMultipleRoots = drop(listOfSols, {0,5}) -- list of numerical roots of the multiple root.
-certifyRootMultiplicityBound(F, first listOfMultipleRoots)
-apply(listOfMultipleRoots, i -> certifyRootMultiplicityBound(F, i))
+certifyCluster(F, first listOfMultipleRoots)
+apply(listOfMultipleRoots, i -> certifyCluster(F, i))
 
-
+--this method doesn't seem to be exported?
 certifySolutions(F, listOfSols)

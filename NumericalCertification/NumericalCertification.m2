@@ -577,7 +577,7 @@ certifySolutions = method()
 certifySolutions(PolySystem, List) := (P, L) -> (
     regSolutions := delete( ,apply(L, i -> if certifyRegularSolution(P, i) then i));
     apply(regSolutions, i -> L = delete(i, L));
-    multSolutions := delete( ,apply(L, i -> if first certifyRootMultiplicityBound(P,i) then i));
+    multSolutions := delete( ,apply(L, i -> if first certifyCluster(P,i) then i));
     new HashTable from {"certifiedRegularSolutions" => alphaTheoryCertification(P, regSolutions),
 	 "certifiedMultipleSolutions" => multSolutions}
     )
