@@ -68,6 +68,7 @@ appendToBasis := (R, newGens) -> (
     
     -- Add the new generators to the subalgebra generators
     R.cache.SagbiGens = R.cache.SagbiGens | newGens;
+    R.cache.GensDegrees = R.cache.GensDegrees | flatten degrees source newGens;
     
     -- Find the number of generators of the ambient ring and the current list of subalgebra generators
     nBaseGens := numgens R.AmbientRing;
@@ -264,9 +265,7 @@ subalgebraBasis Subring := o -> R -> (
 
     -- CHECK IF THESE EXIST to avoid recomputing???
 
-    R.cache.SagbiGens = null;   -- G
-    R.cache.GensDegrees = null;
-    R.cache.SemiRing = null;    -- S -- Does this get used???
+    R.cache.GensDegrees = {};
     R.cache.TensorRing = null;  -- RS
     R.cache.SyzygyIdeal = null; -- J
 
