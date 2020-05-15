@@ -33,7 +33,8 @@ export {
   --More Types
   "LagrangeVarietyWitness","LagrangeRing",
   --More Keys
-  "LagrangeVariable","PrimalIdeal","JacobianConstraint","AmbientRing","LagrangeCoordinates","PrimalWitnessSystem"
+  "LagrangeVariable","PrimalIdeal","JacobianConstraint","AmbientRing","LagrangeCoordinates","PrimalWitnessSystem",
+  "Data", "Gradient", "isRootIndex", "MembershipTestResults", "WitnessSuperSet", "LogTolerance", "SaveFileDirectory"
 }
 
 ConormalRing = new Type of HashTable;
