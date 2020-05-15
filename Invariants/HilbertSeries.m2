@@ -13,6 +13,19 @@ partialToricHilbertSeries (Matrix, ZZ) := Thing => (W, d) -> (
     L
 )
 
+equivariantHilbertSeries = method()
+equivariantHilbertSeries (Matrix) := Expression => W -> (
+    r := numRows W;
+    n := numColumns W;
+    W=-W;
+    z := getSymbol "z";
+    T := getSymbol "T";
+    R := ZZ[z_1..z_r,T, Inverses => true, MonomialOrder=>RevLex];
+    ms := apply(n, i -> R_(flatten entries W_{i}));
+    den := product apply(ms, m -> expression(1)-expression(m*T_R));
+    expression(1)/den
+)
+
 TEST ///
 W=matrix {{-1,0,1},{0,-1,1}};
 d=9;
