@@ -12,7 +12,10 @@ newPackage(
 	       HomePage => ""},
 	    {Name => "Corey Harris",
        	       Email => "harris@mis.mpg.de",
-	       HomePage => "http://coreyharris.name"}
+	       HomePage => "http://coreyharris.name"},
+	   {Name => "Erika Pirnes",
+	       Email => "erika.pirnes@wisc.edu",
+	       HomePage => "https://sites.google.com/view/erikapirnes" }
 	   },
      Headline => "Chow computations for toric varieties",
      DebuggingMode => true,
