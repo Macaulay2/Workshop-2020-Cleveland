@@ -224,7 +224,7 @@ rawLinearCode(List) := LinearCode => (inputVec) -> (
     
     
     -- check if "baseField" is a field, throw warning otherwise:
-    if not isField(inputVec_1) then print "Warning: Working over non-field.";
+    if not isField(inputVec_1) then print "Warning: Working over non-field.";    
    
     if inputVec_2 != {} then {
 	-- validate inputs and coerce into base field:
@@ -355,7 +355,7 @@ linearCode(Matrix) := LinearCode => opts -> M -> (
     if opts.ParityCheck then {
 	outputVec := {M.source, M.ring, {}, entries M, kernel M};
 	} else {
-	outputVec =  {M.target, M.ring, entries M, {}, image transpose M};
+	outputVec =  {M.source, M.ring, entries M, {}, image transpose M};
 	};
     
     rawLinearCode(outputVec)
@@ -511,13 +511,13 @@ HammingCode(ZZ,ZZ) := LinearCode => (q,r) -> (
     -- produce Hamming code
     -- q is the size of the field
     -- r is the dimension of the dual
-    K:=GF(q);
+    K := GF(q);
     -- setK is the set that contains all the elements of the field
-    setK:=set(  {0}| apply(toList(1..q-1),i -> K_1^i));
+    setK := set(  {0}| apply(toList(1..q-1),i -> K_1^i));
     -- C is the transpose of the parity check matrix of the code. Its rows are the the points of the
     -- projective space P(r-1,q)
-    j:=1;
-    C:= matrix(apply(toList(1..q^(r-j)), i -> apply(toList(1..1),j -> 1))) | matrix apply(toList(toList setK^**(r-j)/deepSplice),i->toList i);
+    j := 1;
+    C := matrix(apply(toList(1..q^(r-j)), i -> apply(toList(1..1),j -> 1))) | matrix apply(toList(toList setK^**(r-j)/deepSplice),i->toList i);
     for j from 2 to r do C=C|| matrix(apply(toList(1..q^(r-j)), i -> apply(toList(1..(j-1)),j -> 0))) | matrix(apply(toList(1..q^(r-j)), i -> apply(toList(1..1),j -> 1))) | matrix apply(toList(toList setK^**(r-j)/deepSplice),i->toList i);
 	
     -- The Hamming code is defined by its parity check matrix
