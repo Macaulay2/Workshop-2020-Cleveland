@@ -15,7 +15,10 @@ newPackage(
 	       HomePage => "http://coreyharris.name"},
 	   {Name => "Erika Pirnes",
 	       Email => "erika.pirnes@wisc.edu",
-	       HomePage => "https://sites.google.com/view/erikapirnes" }
+	       HomePage => "https://sites.google.com/view/erikapirnes" },
+	   {Name => "Ritvik Ramkumar",
+	       Email => "ritvik@berkeley.edu",
+	       HomePage => "https://math.berkeley.edu/~ritvik/" }
 	   },
      Headline => "Chow computations for toric varieties",
      DebuggingMode => true,
