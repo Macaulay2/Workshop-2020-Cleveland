@@ -139,7 +139,7 @@ rowReduce = (elems, d) -> (
     R := ring elems;
     n := numgens R;
     M := monoid R;
-    moFlag := setMonomialOrderFlag R; -- THIS ISN'T DOING ANYTHING RIGHT NOW
+    moFlag := 0;--setMonomialOrderFlag R; -- THIS ISN'T DOING ANYTHING RIGHT NOW
     k := coefficientRing R;
     if moFlag == 5 then (
     N := monoid [Variables=>n+1, MonomialOrder => RevLex, Degrees => prepend({1},M.Options.Degrees)];
