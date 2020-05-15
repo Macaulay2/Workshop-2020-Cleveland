@@ -590,10 +590,10 @@ invariants (LinearlyReductiveAction) := List => V -> (
 
 -------------------------------------------
 
-isInvariant = method(TypicalValue => Boolean, Options => {Strategy => Abelian})
+isInvariant = method(TypicalValue => Boolean, Options => {Strategy => "Abelian"})
 
 isInvariant (RingElement, FiniteGroupAction) := Boolean => opts -> (f, G) -> (
-    if opts.Strategy == Abelian then (
+    if opts.Strategy == "Abelian" then (
 	W := weights G;
 	V := W * transpose(matrix(exponents(f)));
 	n := dim G;
