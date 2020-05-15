@@ -36,7 +36,9 @@ export {
   "isolatedRegularCriticalPointSet",
   --More Keys
   "LagrangeVariable","PrimalIdeal","JacobianConstraint","AmbientRing","LagrangeCoordinates","PrimalWitnessSystem",
-  "Data", "Gradient", "isRootIndex", "MembershipTestResults", "WitnessSuperSet", "LogTolerance", "SaveFileDirectory",
+  "Data", "Gradient", "isRootIndex", "MembershipTestResults", "WitnessSuperSet", "SaveFileDirectory",
+  -- Tolerances
+  "MultiplicityTolerance","EvaluationTolerance", "ConditionNumberTolerance",
   "Coordinates", "Factors"
 }
 
@@ -351,12 +353,12 @@ assert(4==#importSolutionsFile(storeBM2Files))
 --code for witness points.
 IsolatedCriticalPointSet = new Type of WitnessSet;---Change this to a ring. 
 
-isEvaluationZero = (dir,fn,p,logTol)->(
+isEvaluationZero = (dir,fn,p,evalTol)->(
 	    isRoot:= true;	    
 	    scanLines(line->(
 		     num := separateRegexp("[e ]", line);
 		     if #num==4 
-		     then (if min(value(num#1),value(num#3))>logTol then isRoot=false)
+		     then (if min(value(num#1),value(num#3))>evalTol then isRoot=false)
 		     else if #num>1 then error("parsing file incorrectly"|line)
 		     ),
 		     dir|"/"|fn
@@ -364,7 +366,7 @@ isEvaluationZero = (dir,fn,p,logTol)->(
 	    isRoot)
 	
 bertiniCriticalPointSet = (u,g,LVW,bic)->(
-    logTol :=-6;
+    evalTol :=-6;
     (WI,I,JC) := witnessCriticalIdeal(u,g,LVW);
     dir := temporaryFileName();
     if not fileExists dir then mkdir dir;
@@ -391,7 +393,7 @@ bertiniCriticalPointSet = (u,g,LVW,bic)->(
 	    fn := "evaluation_"|i|"_mt_primal";
 	    moveB'File(dir,"function",fn)));
     ICPS:=new IsolatedCriticalPointSet from {
-    	LogTolerance =>logTol,
+    	EvaluationTolerance =>evalTol,
     	SaveFileDirectory=>dir,
 	PrimalIdeal=>I,
 	PrimalWitnessSystem=>WI,
@@ -405,7 +407,7 @@ bertiniCriticalPointSet = (u,g,LVW,bic)->(
 	IsIrreducible =>null,
 	MembershipTestResults=>isRootIndex
 	};
-    changeEvaluationTolerance(logTol,ICPS);
+    changeEvaluationTolerance(evalTol,ICPS);
     changeMultiplicityTolerance(1,ICPS);
     changeConditionNumberTolerance(1e10,ICPS);    
     ICPS)
@@ -434,15 +436,15 @@ isolatedRegularCriticalPointSet (List,List,LagrangeVarietyWitness) := (IsolatedC
     )
 
 
-changeEvaluationTolerance=(logTol,ICPS)->(
+changeEvaluationTolerance=(evalTol,ICPS)->(
     sols:=ICPS.WitnessSuperSet;
     wpIndex := delete(null,
 	apply(#sols,i->(
 		fn := "evaluation_"|i|"_mt_primal";
 	    	p := sols_i;
-	    	if isEvaluationZero(ICPS.SaveFileDirectory,fn,p,logTol) then return i
+	    	if isEvaluationZero(ICPS.SaveFileDirectory,fn,p,evalTol) then return i
 	    	)));
-    ICPS.LogTolerance=logTol;
+    ICPS.EvaluationTolerance=evalTol;
     ICPS.Points=wpIndex;)
 
 changeMultiplicityTolerance=(multiplicityTol,ICPS)->(
