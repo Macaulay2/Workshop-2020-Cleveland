@@ -541,7 +541,7 @@ certifyCluster(PolySystem,Point) := (F,x0)->(
     
     lhs := norm(2,evaluate(F,x0))*(gammaKBound(F,x0))^2 + d*norm(2,H)/4;
     rhs := d/(32*(gammaKBound(F,x0))^2*norm(2,inverse(A-H)));
-    return(lhs < rhs, 2^kappa)
+    return(lhs < rhs, 2^kappa,d/(4*(gammaKBound(F,x0))^2))
     )
 
 
