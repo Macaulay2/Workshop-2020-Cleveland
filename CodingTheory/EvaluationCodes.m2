@@ -76,8 +76,7 @@ toricCode(Ring,Matrix) := EvaluationCode => opts -> (F,M) -> (
 	symbol Points => P, --- the points of (F*)^m
 	symbol VanishingIdeal => I, --the vanishing ideal of (F*)^m
 	symbol ExponentsMatrix => LL, -- the matrix of exponents, exponent vectors are rows
-	symbol GeneratingMatrix => transpose G,
-	symbol LinearCode => linearCode(transpose G) -- the liner code
+	symbol LinearCode => linearCode(G) -- the liner code
 	}
 )   
     
