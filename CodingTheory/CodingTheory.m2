@@ -6,7 +6,8 @@ newPackage(
     	Authors => {
 	     {Name => "Hiram Lopez", Email => "h.lopezvaldez@csuohio.edu"},
 	     {Name => "Gwyn Whieldon", Email => "gwyn.whieldon@gmail.com"},
-	     {Name => "Taylor Ball", Email => "trball13@gmail.com"}
+	     {Name => "Taylor Ball", Email => "trball13@gmail.com"},
+	     {Name => "Nathan Nichols", Email => "nathannichols454@gmail.com"}
 	     },
     	HomePage => "https://academic.csuohio.edu/h_lopez/",
     	Headline => "a package for coding theory in M2",
@@ -14,18 +15,23 @@ newPackage(
 	Configuration => {},
         DebuggingMode => false,
 	PackageImports => { },
-        PackageExports => { }
+        PackageExports => {"Graphs"}
 	)
 
 -- Any symbols or functions that the user is to have access to
 -- must be placed in one of the following two lists
 
 export {
-    -- Types and Constructors
+    -- helper/conversion methods
     "generatorToParityCheck",
     "parityCheckToGenerator",
+    "reduceMatrix",
+    
+    -- Types and Constructors
     "LinearCode",
     "linearCode",
+    "zeroCode",
+    "universeCode",
     "AmbientModule",
     "BaseField",
     "Generators",
@@ -34,14 +40,17 @@ export {
     "ParityCheckRows",
     "ParityCheckMatrix",
     "Code",
+    
     -- Families of Codes
     "cyclicMatrix",
     "quasiCyclicCode",
     "HammingCode",
+    
     -- LRC codes
     "TargetParameters",
     "targetParameters",
     "LRCencoding",
+
     "getEncodingPolynomial",
     "getCoefficientPolynomial",
     --"goodPolynomial",
@@ -50,19 +59,26 @@ export {
     "Length",
     "Dimension",
     "Locality",
+    
     -- Methods
     "field",
     "vectorSpace",
-    --"codeDim",
-    --"codeLength",
     "ambientSpace",
     "informationRate",
     "dualCode",
     "alphabet",
-    "generic",
+    "messages",
+    "codewords",
+    "genericCode",
     "bitflipDecode",
     "MaxIterations",
-    "shorten"
+    "shorten",
+    "vNumber",
+    "footPrint",
+    "hYpFunction",
+    "gMdFunction",
+    "vasFunction",
+    "tannerGraph"
     }
 
 exportMutable {}
@@ -96,9 +112,6 @@ permuteMatrixColumns(Matrix,List) := (M,P) -> (
     -- permute the columns via P:
 
     return transpose matrix((entries transpose M)_P)
-    
-    
-    
     )
 
 permuteMatrixRows = method(TypicalValue => Matrix)
@@ -123,8 +136,6 @@ permuteToStandardForm(Matrix) := M -> (
     )
 
 
-
-
 generatorToParityCheck = method(TypicalValue => Matrix)
 generatorToParityCheck(Matrix) := Matrix => M -> (
     -- this function assumes M is of full rank:
@@ -140,11 +151,6 @@ generatorToParityCheck(Matrix) := Matrix => M -> (
     Gred  := GandP_0;
     P := GandP_1;
     
-    
-    -- this code assumes that generator matrix
-    -- can be put into standard form without any
-    -- swapping of columns:
-    
     -- take (n-k) columns of standard generating matrix above:
     redG := Gred_{0..(rank Gred.source - rank Gred -1)};
     
@@ -153,10 +159,6 @@ generatorToParityCheck(Matrix) := Matrix => M -> (
     return permuteMatrixColumns(transpose (id_(redG.source) || -redG),inversePermutation(P))
     
     )
-
-
-
---The example @henry-chimal noted of a rank deficient code (a generator matrix with repeats) is corrected by this. The user inputted generator or parity check matrix will not be altered UNLESS the matrix is rank deficient, in which case a reduced presentation will be computed and returned.
 
 parityCheckToGenerator = method(TypicalValue => Matrix)
 parityCheckToGenerator(Matrix) := Matrix => M -> (
@@ -178,6 +180,37 @@ reduceRankDeficientMatrix(Matrix) := Matrix => M -> (
 	} else return reduceMatrix(M)
     )
 
+ 
+-- internal function to validate user's input
+wellDefinedInput  = method(TypicalValue => List)
+
+wellDefinedInput(List) :=  UserInput -> (
+    -- user's input is used to create a list
+    -- UserInput={GaloisField or Ring, lengthCode, ListGenerators}
+    -- or UserInput = {GaloisField or Ring, lengthCode,ListParityCheckRows}
+    
+    -- check if "baseField" is a Galois field, throw an error otherwise:
+    if not isField UserInput_0 then  "Warning: Codes over non-fields may not unstable.";
+    
+    if UserInput_2 != {} then {
+    	-- check that the length of all generating codewords equals the rank of AmbienModule:
+    	if not all(UserInput_2,codeword -> (length codeword) == UserInput_1) then {
+	    error "Expected codewords all to be the same length and equal to the rank of the Module";
+	    } 
+	else {
+	    -- coerce generators into base field, if possible:
+	    return try apply(UserInput_2, codeword -> apply(codeword, entry -> sub(entry, UserInput_0)))
+	     else {
+	    error "Entries of codewords do not live in base field/ring.";
+	    }
+	   }
+	} else {
+	return  UserInput_2
+	};
+  )
+
+
+
 
 
 -- Use this section to add basic types and
@@ -191,22 +224,14 @@ rawLinearCode(List) := LinearCode => (inputVec) -> (
     -- use externally facing functions to create list:	
     -- { AmbientModule, BaseField, Generators, ParityCheckRows, Code}
     
-    -- use this function to validate inputs and provide warnings:
     
     -- check if "baseField" is a field, throw warning otherwise:
-    if not isField(inputVec_1) then print "Warning: Working over non-field.";
+    if not isField(inputVec_1) then print "Warning: Working over non-field.";    
    
     if inputVec_2 != {} then {
-	-- check that all generating codewords are of the same length:
-	if not all(inputVec_2, codeword -> length(codeword) == length(inputVec_2)_0) then error "Codewords not of same length.";
-	
-	-- coerce generators and generator matrix into base field, if possible:
-	try {
-	    newGens := apply(inputVec_2, codeword -> apply(codeword, entry -> sub(entry, inputVec_1)));
-	    newGenMat := matrix(newGens);
-	    } else {
-	    error "Elements do not live in base field/ring.";
-	    };
+	-- validate inputs and coerce into base field:
+	newGens := wellDefinedInput({inputVec_1,rank inputVec_0,inputVec_2});
+	newGenMat := matrix(newGens);
     } else {
 	-- if generators and generator matrix were undefined:
 	newGens = {};
@@ -214,18 +239,11 @@ rawLinearCode(List) := LinearCode => (inputVec) -> (
     };
     
     if inputVec_3 != {} then {
-	-- check that all parity check rows are of the same length:
-	if not all(inputVec_3, parityrow -> length(parityrow) == length(inputVec_3)_0) then error "Parity check row not of same length.";
+	-- validate inputs and coerce into base field:
+	newParRow := wellDefinedInput({inputVec_1, rank inputVec_0, inputVec_3});
+	newParMat := matrix(newParRow);	
 	
-	-- coerce parity check rows and parity check matrix into base field, if possible:
-	try {
-	    newParRow := apply(inputVec_3, codeword -> apply(codeword, entry -> sub(entry, inputVec_1)));
-	    newParMat := matrix(newParRow);
-	    } else {
-	    error "Elements do not live in base field/ring.";
-	    };
-	print("in parity check case");
-    } else {
+     } else {
 	newParMat = generatorToParityCheck(reduceMatrix(newGenMat));
 	newParRow = entries newParMat ;
     };
@@ -339,7 +357,7 @@ linearCode(Matrix) := LinearCode => opts -> M -> (
     if opts.ParityCheck then {
 	outputVec := {M.source, M.ring, {}, entries M, kernel M};
 	} else {
-	outputVec =  {M.target, M.ring, entries M, {}, image transpose M};
+	outputVec =  {M.source, M.ring, entries M, {}, image transpose M};
 	};
     
     rawLinearCode(outputVec)
@@ -351,6 +369,58 @@ net LinearCode := c -> (
      )
 toString LinearCode := c -> toString c.Generators
 
+------------------------------------------
+------------------------------------------
+-- Basic Code Types
+------------------------------------------
+------------------------------------------
+
+zeroCode = method()
+zeroCode(GaloisField,ZZ) := LinearCode =>(F,n)->(
+    -- Generates the zero code in F^n
+    -- check n is positive
+    
+    if n >0 then {    
+    	GenMat := matrix {apply(toList(0..n-1),i->0)};
+    	GenRow := {{}};
+    	ParMat := generators F^n;
+    	ParRows := entries ParMat;
+    	return new LinearCode from {
+            symbol AmbientModule => F^n,
+	    symbol BaseField => F,
+            symbol Generators => GenRow,
+	    symbol GeneratorMatrix => GenMat,
+	    symbol ParityCheckMatrix =>  ParMat,
+	    symbol ParityCheckRows  => ParRows,
+	    symbol cache => {}
+	    }
+    } else {
+    error "The length of the code should be positive."
+    };
+  )
+
+universeCode = method()
+universeCode(GaloisField,ZZ) := LinearCode => (F,n) -> (
+    -- construct the universe code F^n
+    -- check n is positive
+    if n>0 then {
+	GenMat := generators F^n;
+    	GenRow := entries GenMat;
+    	ParMat := matrix {apply(toList(0..n-1),i->0)};
+    	ParRows := {{}};
+    	return new LinearCode from {
+            symbol AmbientModule => F^n,
+	    symbol BaseField => F,
+            symbol Generators => GenRow,
+	    symbol GeneratorMatrix => GenMat,
+	    symbol ParityCheckMatrix =>  ParMat,
+	    symbol ParityCheckRows  => ParRows,
+	    symbol cache => {}
+	    }	
+	} else {
+	error "The length of the code should be positive."
+	};    
+    )
 
 
 ------------------------------------------
@@ -443,13 +513,13 @@ HammingCode(ZZ,ZZ) := LinearCode => (q,r) -> (
     -- produce Hamming code
     -- q is the size of the field
     -- r is the dimension of the dual
-    K:=GF(q);
+    K := GF(q);
     -- setK is the set that contains all the elements of the field
-    setK:=set(  {0}| apply(toList(1..q-1),i -> K_1^i));
+    setK := set(  {0}| apply(toList(1..q-1),i -> K_1^i));
     -- C is the transpose of the parity check matrix of the code. Its rows are the the points of the
     -- projective space P(r-1,q)
-    j:=1;
-    C:= matrix(apply(toList(1..q^(r-j)), i -> apply(toList(1..1),j -> 1))) | matrix apply(toList(toList setK^**(r-j)/deepSplice),i->toList i);
+    j := 1;
+    C := matrix(apply(toList(1..q^(r-j)), i -> apply(toList(1..1),j -> 1))) | matrix apply(toList(toList setK^**(r-j)/deepSplice),i->toList i);
     for j from 2 to r do C=C|| matrix(apply(toList(1..q^(r-j)), i -> apply(toList(1..(j-1)),j -> 0))) | matrix(apply(toList(1..q^(r-j)), i -> apply(toList(1..1),j -> 1))) | matrix apply(toList(toList setK^**(r-j)/deepSplice),i->toList i);
 	
     -- The Hamming code is defined by its parity check matrix
@@ -684,20 +754,50 @@ alphabet = method(TypicalValue => List)
 alphabet(LinearCode) := List => C -> (
     -- "a" is the multiplicative generator of the
     -- field that code C is over
-    a := C.BaseField.generators_0;
     
-    -- take 0, and compute non-zero elements of C.BaseField:
-    alphaB := {sub(0,C.BaseField)} | apply(toList(1..(C.BaseField.order-1)), i-> a^i);
+    -- check if "base ring" is ZZ/q:
+    if C.BaseField.baseRings === {ZZ} then {
+	a := sub(1,C.BaseField);
+	-- generate elements additively:
+	alphaB := apply(toList(1..(C.BaseField.order)), i-> i*a)
+	} else {
+	a = C.BaseField.generators_0;
+ 	-- take 0, and compute non-zero elements of C.BaseField:
+	alphaB = {sub(0,C.BaseField)} | apply(toList(1..(C.BaseField.order-1)), i-> a^i);
+	};
     
     -- return this alphabet:
     alphaB    
     
     )
 
-generic = method(TypicalValue => LinearCode)
-generic(LinearCode) := LinearCode => C -> (
+genericCode = method(TypicalValue => LinearCode)
+genericCode(LinearCode) := LinearCode => C -> (
     linearCode(C.AmbientModule)
     )
+
+-- method to generate all message words in code:
+messages = method(TypicalValue => List)
+messages(LinearCode) := List => C -> (
+    k := dim C ;
+    A := alphabet C;
+    messageSpace := apply(toList((set A)^**k) / deepSplice, c -> toList(c));
+    return messageSpace
+    )
+
+-- method to compute the set of 2^k codewords in an [n,k]-code:
+codewords = method(TypicalValue => List)
+codewords(LinearCode) := List => C -> (
+    -- save generator matrix as G:
+    G := C.GeneratorMatrix;
+    
+    -- convert message vectors as lists into matrices:
+    M := apply(messages C, m-> matrix({m}));
+    
+    -- map m -> mG to compute codewords:
+    return flatten apply(M, m -> entries (m*G))
+    )
+
 
 
 
@@ -706,6 +806,25 @@ shorten = method(TypicalValue => LinearCode)
 -- output: A new code from C by selecting only those codewords of C having a zeros in each of the coordinate 
 --     positions i1, ..., ir, and deleting these components. Thus, the resulting 
 --     code will have length n - r. 
+shorten ( LinearCode, List ) := LinearCode => ( C, L ) -> (
+    local newL; local codeGens; local F;
+    
+    F = C.BaseField;
+    codeGens = C.Generators;
+    
+    newL = delete(0, apply( codeGens, c -> (
+	if sum apply( L, l -> if c#l == 0_F then 0_ZZ else 1_ZZ ) == 0_ZZ
+	then c
+	else 0
+	)));
+
+    if newL == {} then return C else (
+	newL = entries submatrix' ( matrix newL, L );
+	return linearCode ( C.BaseField , newL );
+	)
+    )
+
+-*
 shorten ( LinearCode, List ) := LinearCode => ( C, L ) -> (
     local newL; local codeGens;
     
@@ -721,7 +840,7 @@ shorten ( LinearCode, List ) := LinearCode => ( C, L ) -> (
 	return linearCode ( C.BaseField , newL );
 	)
     )
-
+*-
 
 -- input: An [n,k] linear code C and an iteger i such that 1 <= i <= n.
 -- output: A new code from C by selecting only those codewords of C having a zero as their 
@@ -744,120 +863,86 @@ shorten ( LinearCode, ZZ ) := LinearCode => ( C, i ) -> (
 --    )
 
 random (GaloisField, ZZ, ZZ) := LinearCode => opts -> (F, n, k) -> (
-    linearCode( F, apply(toList(1..n),j-> apply(toList(1..k),i-> random(F, opts)) ) )
+    linearCode(F, n, apply(toList(1..k), j-> apply(toList(1..n),i-> random(F, opts))))
     )
-    
-    
+
+random (QuotientRing, ZZ, ZZ) := LinearCode => opts -> (R, n, k) -> (
+    linearCode(matrix apply(toList(1..k), j-> apply(toList(1..n),i-> random(R, opts))))
+    )
+
     
 -----------------------Generalized functions in coding theory---------------------
 --------------------------------------------------------------
  --================= v-number function ========================
  
- fungen = method();
- fungen (Ideal,ZZ) := (I,n) -> (
- L:=ass I;
- flatten flatten degrees mingens(quotient(I,L#n)/I)
- )
- 
--- pp_grobner = method();
--- pp_grobner (Ideal,ZZ) := (I,n) -> (
--- L:=ass I;
--- gens gb ideal(flatten mingens(quotient(I,L#n)/I))
- --)
- 
- ggfun = method();
- ggfun (List) := (a) -> (
- toList(set a-set{0}) 
- )
- 
- vnumber = method();
-  vnumber (Ideal) := (I) ->
+
+  vNumber = method(TypicalValue => ZZ);
+  vNumber (Ideal) := (I) ->
     (
-      L:=ass I;     
-      N:=apply(apply(0..#L-1,i->fungen(I,i)),i->ggfun(i));
+      L:=ass I;  
+      G:=apply(0..#L-1,i->flatten flatten degrees mingens(quotient(I,L#i)/I)); 
+      N:=apply(G,i->toList(set i-set{0}));
       min flatten N 
     )
-    
+
+ 
+      
+ 
+ 
    
  -----------------------------------------------------------
  --****************** Footprint Function ********************
- 
- msetfunc = method();
- msetfunc (Ideal,Ideal) := (I,x) -> (
- if not quotient(ideal(leadTerm gens gb I),x)==ideal(leadTerm gens gb I) then 
-    degree coker gens gb ideal(ideal(leadTerm gens gb I),x) 
- else 0 
- )
- 
- maxdegree = method();
- maxdegree (ZZ,ZZ,Ideal) := (d,r,I) -> (
- max apply(apply(apply(subsets(flatten entries basis(d,coker gens gb I),r),toSequence),ideal),i->msetfunc(I,i))
- )
- 
- footPrint = method();
+ footPrint = method(TypicalValue => ZZ);
  footPrint (ZZ,ZZ,Ideal) := (d,r,I) ->(
- degree coker gens gb I - maxdegree(d,r,I)
+ mD:=max apply(apply(apply(subsets(flatten entries basis(d,coker gens gb I),r),toSequence),ideal),x->if not quotient(ideal(leadTerm gens gb I),x)==ideal(leadTerm gens gb I) then 
+    degree coker gens gb ideal(ideal(leadTerm gens gb I),x) 
+ else 0 );
+ degree coker gens gb I - mD
  )
-    
-    
+ 
  
 -----------------------------------------------------------
- --****************** GMD Function ********************
- 
- elem = method();
- elem (ZZ,ZZ,Ideal) := (q,d,I) ->(
- apply(toList (set(0..q-1))^**(hilbertFunction(d,coker gens gb I))-(set{0})^**(hilbertFunction(d,coker gens gb I)),toList)
- )
- 
- elemBas = method();
- elemBas (ZZ,ZZ,Ideal) := (q,d,I) ->(
- apply(elem(q,d,I),x -> basis(d,coker gens gb I)*vector deepSplice x)
- )
- 
- setBas = method();
- setBas (ZZ,ZZ,ZZ,Ideal) := (q,d,r,I) ->(
- subsets(apply(elemBas(q,d,I),z->ideal(flatten entries z)),r)
- )
+ --****************** GMD Functions ********************
  
  --------------------------------------------------------
  --=====================hyp function======================
- 
- hypFunction = method();
- hypFunction (ZZ,ZZ,ZZ,Ideal) := (q,d,r,I) ->(
- max apply(
- apply(
- setBas(q,d,r,I),ideal),
+ hYpFunction = method(TypicalValue => ZZ);
+ hYpFunction (ZZ,ZZ,Ideal) := (d,r,I) ->(
+ max apply(apply(subsets(apply(apply(apply(toList (set(0..char ring I-1))^**(hilbertFunction(d,coker gens gb I))-(set{0})^**(hilbertFunction(d,coker gens gb I)),toList),x -> basis(d,coker gens gb I)*vector deepSplice x),z->ideal(flatten entries z)),r)
+,ideal),
  x -> if #set flatten entries mingens ideal(leadTerm gens x)==r and not quotient(I,x)==I
          then degree(I+x)
       else 0
 )
  )
+  
+ ------------------------GMD Function--------------------------------
  
- --------------------------------------------------------
- 
- gMdFunction = method();
- gMdFunction (ZZ,ZZ,ZZ,Ideal) := (q,d,r,I) ->(
- degree(coker gens gb I)-hypFunction(q,d,r,I)
+ gMdFunction = method(TypicalValue => ZZ);
+ gMdFunction (ZZ,ZZ,Ideal) := (d,r,I) ->(
+ degree(coker gens gb I)-hYpFunction(d,r,I)
  )
+
  
- 
- 
- 
+  
  --------------------------------------------------------------
  --===================== Vasconcelos Function ================
  
  
- vasFunction = method();
- vasFunction (ZZ,ZZ,ZZ,Ideal) := (q,d,r,I) ->(
-     min apply(
-         apply(setBas(q,d,r,I),ideal), x -> if (#set flatten entries mingens ideal(leadTerm gens x)==r and not quotient(I,x)==I) then {
-             degree(coker gens gb quotient(I,x))
-         } else {
-             degree(coker gens gb I)
-         };
-    )
+ vasFunction = method(TypicalValue => ZZ);
+ vasFunction (ZZ,ZZ,Ideal) := (d,r,I) ->(
+ min apply(apply(subsets(apply(apply(apply(toList (set(0..char ring I-1))^**(hilbertFunction(d,coker gens gb I))-(set{0})^**(hilbertFunction(d,coker gens gb I)),toList),x -> basis(d,coker gens gb I)*vector deepSplice x),z->ideal(flatten entries z)),r)
+,ideal),
+ x -> if #set flatten entries mingens ideal(leadTerm gens x)==r and not quotient(I,x)==I
+         then degree(coker gens gb quotient(I,x))
+      else degree(coker gens gb I)
+      )
 )
 
+ 
+ 
+ 
+ 
 
 
 ----------------------------------------------------------------------------------
@@ -912,12 +997,43 @@ bitflipDecode(Matrix, Vector) := opts -> (H, v) -> (
     );
     
 
+tannerGraph = method(TypicalValue => Graphs$Graph)
+tannerGraph(Matrix) := H -> (
+    R := ring(H);
+    cSym := getSymbol "c";
+    rSym := getSymbol "r";
+    symsA := toList (cSym_0..cSym_((numgens source H)-1)); 
+    symsB := toList (rSym_0..rSym_((numgens target H)-1));
+    
+    -- The vertex sets of the bipartite graph.
+    tannerEdges := for i from 0 to (numgens source H)-1 list(
+    	for j from 0 to (numgens target H)-1 list(
+    	if H_(j,i) != 0 then(
+	    {symsA#i, symsB#j}
+	    )else(
+	    continue;
+	    )
+	)
+    );
+    Graphs$graph(symsA|symsB, flatten tannerEdges)    
+);
 
 ------------------------------------------
 ------------------------------------------
 -- Tests
 ------------------------------------------
 ------------------------------------------
+
+TEST ///
+-- tannerGraph test
+R := GF(2);
+for i from 1 to 20 do(
+    H := random(R^10, R^10);
+    G := tannerGraph H;
+    -- Edges correspond 1:1 with ones in H.
+    assert(length (Graphs$edges G) == sum flatten entries (lift(H,ZZ)));  
+);
+///
 
 
 TEST ///
@@ -969,7 +1085,6 @@ TEST///
 -- shorten test, list
 F = GF(2)
 codeLen = 10
-codeDim = 4
 L = {{0, 1, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 1, 0, 1, 1, 0, 1, 0, 0}, {1, 1, 0, 0, 0, 1, 0, 0, 1, 0}, {1, 0, 0, 1, 0, 0, 0, 1, 1, 1}}
 H = L|L
 
@@ -985,36 +1100,83 @@ assert( shorten( C2, K ) == linearCode(F, shortL) )
 assert( shorten( C3, K ) == linearCode(F, shortL) )
 ///
 
+-*
+TEST ///
+ -- vNumner of the ideal I=ideal(t1*t2^2-t1^2*t2,t1*t3^3-t1^3t3,t2*t3^3-t2^3*t3)
+   K=ZZ/3 
+   R=K[t3,t2,t1,MonomialOrder=>Lex]
+   I=ideal(t1*t2^2-t1^2*t2,t1*t3^3-t1^3*t3,t2*t3^3-t2^3*t3)
+   v = vNumber(I)
+///
+
+
+ TEST ///
+ -- footPrint function of the ideal I=ideal(t1^3,t2*t3) with parameters d=2, r=3
+   K=QQ
+   R=K[t1,t2,t3]
+   I=ideal(t1^3,t2*t3)
+   footPrint(2,3,I)
+///
+
+
+
+ TEST ///
+ -- hYpFunction of the ideal I=ideal(t1*t6-t3*t4,t2*t6-t3*t5) with parameters d=1, r=1
+   K=ZZ/3
+   R=K[t1,t2,t3,t4,t5,t6]
+   I=ideal(t1*t6-t3*t4,t2*t6-t3*t5)
+   hYpFunction(1,1,I)
+///
+
 
 TEST ///
+ -- gMdFunction of the ideal I=ideal(t1*t6-t3*t4,t2*t6-t3*t5) with parameters d=1, r=1
+   K=ZZ/3
+   R=K[t1,t2,t3,t4,t5,t6]
+   I=ideal(t1*t6-t3*t4,t2*t6-t3*t5)
+   gMdFunction(1,1,I)
+///
+
+
+ TEST ///
+ -- vasFunction of the ideal I=ideal(t1^3,t2*t3) with parameters d=1, r=1
+   K=QQ
+   R=K[t1,t2,t3]
+   I=ideal(t1^3,t2*t3)
+   vasFunction(1,1,I)
+///
+*-
+
+TEST /// 
 -- random test
 F = GF(2, 4)
-n = 3
-k = 5
+n = 5
+k = 3
 C = random ( F , n, k )
 
-assert( length C == k )
+assert( length C == 5 )
 assert( dim C == 3 )
 
 F = GF 2
-n = 3
-k = 5
+n = 5
+k = 3
 C = random ( F , n, k )
 
-assert( length C == k )
-assert( dim C == 3 )
+assert( length C == n)
+assert( dim C == k )
 ///
+
 
 TEST ///
 -- Hamming code over GF(2) and dimension of the dual 3
 C1= HammingCode(2,3)
-C1.ParityCheckMatrix
+assert( length C1 == 7)
 ///
 
 TEST ///
 -- Hamming code over GF(2) and dimension of the dual 4
 C2= HammingCode(2,4)
-C2.ParityCheckMatrix
+assert( length C2 == 15)
 ///
 
 
@@ -1035,10 +1197,24 @@ document {
 	for computing invariants of codes using commutative 
 	algebra techniques.."
 	},
-        
+    
 	PARA { "This package currently provides constructors for
 	linear codes, evaluation codes, and a few methods for each."
+	},    
+    
+	SUBSECTION "Contributors", "The following people have generously
+	contributed code or worked on our code at various Macaulay2 workshops.",
+	
+	UL {
+	    "Branden Stone"
+	},
+    
+	SUBSECTION "Modified Methods",
+	
+	UL {
+	    TO "random(GaloisField, ZZ, ZZ)" -- not sure how to cite this properly.
 	}
+    	
 	}
     
 document {
@@ -1054,7 +1230,7 @@ document {
     }
 document {
     Key => {bitflipDecode, (bitflipDecode,Matrix, Vector)},
-    Headline => "Uses the Gallager bit flip algorithm to decode a codeword given a parity check matrix.",
+    Headline => "This does not work and it will likely be removed.",
     Usage => "bitflipDecode(H,v)",
     Inputs => {
 	"H" => Matrix => {"The parity check matrix."},
@@ -1070,6 +1246,22 @@ document {
 	"H := matrix(R, {{1,1,0,0,0,0,0},{0,1,1,0,0,0,0},{0,1,1,1,1,0,0},{0,0,0,1,1,0,0},{0,0,0,0,1,1,0},{0,0,0,0,1,0,1}});",
 	"v := vector transpose matrix(R, {{1,0,0,1,0,1,1}});",
 	"bitflipDecode(H,v)"
+	}
+    }
+document {
+    Key => {tannerGraph, (tannerGraph,Matrix)},
+    Headline => "Outputs the Tanner graph associated with the given parity check matrix.",
+    Usage => "bitflipDecode(H,v)",
+    Inputs => {
+	"H" => Matrix => {"The parity check matrix."}
+      	},
+    Outputs => {
+	Graphs$Graph => {}
+	},
+    "Calculates the bipartite Tanner graph of the parity check matrix H.",
+    EXAMPLE {
+	"H := matrix(GF(2), {{1,1,0,0,0,0,0},{0,1,1,0,0,0,0},{0,1,1,1,1,0,0},{0,0,0,1,1,0,0},{0,0,0,0,1,1,0},{0,0,0,0,1,0,1}});",
+	"tannerGraph(H)"
 	}
     }
 
@@ -1098,9 +1290,9 @@ document {
     Key => MaxIterations,
     Headline => "Specifies the maximum amount of iterations before giving up. Default is 100.",
     TT "MaxIterations", " -- Specifies the max iterations.",
-    PARA{},
-    "This symbol is provided by the package ", TO CodingTheory, "."
+    PARA{"This symbol is provided by the package ", TO CodingTheory, "."}
     }
+
 
 doc ///
    Key
@@ -1136,14 +1328,7 @@ doc ///
 	   C = linearCode(F,codeLen,L)
 	   shorten(C, {3,6,8,9})
 	   shorten(C, 3)
-	   
 ///
-	   
---   SeeAlso
-       --codim
-       --assPrimesHeight
---   Caveat
---       myDegree is was Problem 2 in the tutorial yesterday.
 
 doc ///
    Key
@@ -1197,6 +1382,113 @@ doc ///
        
 ///
 
+document {
+   Key => {vNumber, (vNumber,Ideal)},
+   Headline => "Gives the v-number of a graded ideal.",
+   Usage => "vNumber(I)",
+   Inputs => {
+	"I" => Ideal => {"Graded ideal."},
+	},
+   Outputs => {
+	"i" => ZZ => {"v-number of the ideal."}
+	},
+	EXAMPLE {
+	"K=ZZ/3;",
+        "R=K[t3,t2,t1,MonomialOrder=>Lex];",
+        "I=ideal(t1*t2^2-t1^2*t2,t1*t3^3-t1^3*t3,t2*t3^3-t2^3*t3);",
+        "vNumber(I)"
+	}
+ }
+ 
+
+ document {
+   Key => {footPrint, (footPrint,ZZ,ZZ,Ideal)},
+   Headline => "Gives the footPrint value of an ideal with parameters (d,r)",
+   Usage => "footPrint(d,r,I)",
+   Inputs => {
+	"I" => Ideal => {"Graded ideal."},
+	"d" => ZZ => {"Degree of the monomials in the Gröbner éscalier of I."},
+	"r" => ZZ => {"Length of the sequences in the Gröbner éscalier of I of degree d."}
+	},
+   Outputs => {
+	"i" => ZZ => {"footPrint value of an ideal with parameters (d,r)."}
+	},
+	EXAMPLE {
+	"K=QQ;", 
+        "R=K[t1,t2,t3];",
+        "I=ideal(t1^3,t2*t3);",
+        "footPrint(2,3,I)"
+	}
+ }
+    
+
+    
+document {
+   Key => {hYpFunction, (hYpFunction,ZZ,ZZ,Ideal)},
+   Headline => "Gives the hYp value of an ideal with parameters (d,r)",
+   Usage => "hYpFunction(d,r,I)",
+   Inputs => {
+	"I" => Ideal => {"Graded ideal."},
+	"d" => ZZ => {"Degree of certain homogenous component of ring I."},
+	"r" => ZZ => {"Length of the sequences in homogenous component of degree d."}
+	},
+   Outputs => {
+       "i" => ZZ => {"The hYp value of an ideal with parameters (d,r)."}
+	},
+	EXAMPLE {
+	"K=ZZ/3;", 
+        "R=K[t1,t2,t3,t4,t5,t6];",
+        "I=ideal(t1*t6-t3*t4,t2*t6-t3*t5);",
+        "hYpFunction(1,1,I)"
+	}
+ }  
+ 
+
+ document {
+   Key => {gMdFunction, (gMdFunction,ZZ,ZZ,Ideal)},
+   Headline => "Gives the Generalized minimum distance value of an ideal with parameters (d,r)",
+   Usage => "gMdFunction(d,r,I)",
+   Inputs => {
+	"I" => Ideal => {"Graded ideal."},
+	"d" => ZZ => {"Degree of certain homogenous component of ring I."},
+	"r" => ZZ => {"Length of the sequences in homogenous component of degree d."}
+	},
+   Outputs => {
+       "i" => ZZ => {"Gives the Generalized minimum distance value of an ideal with parameters (d,r)."}
+	},
+	EXAMPLE {
+	"K=ZZ/3;", 
+        "R=K[t1,t2,t3,t4,t5,t6];",
+        "I=ideal(t1*t6-t3*t4,t2*t6-t3*t5);",
+        "gMdFunction(1,1,I)"
+	}
+ }   
+ 
+
+ 
+ 
+ 
+ document {
+   Key => {vasFunction , (vasFunction,ZZ,ZZ,Ideal)},
+   Headline => "Gives the Vasconcelos function of an ideal with parameters (d,r)",
+   Usage => "vasFunction (d,r,I)",
+   Inputs => {
+	"I" => Ideal => {"Graded ideal."},
+	"d" => ZZ => {"Degree of certain homogenous component of ring I."},
+	"r" => ZZ => {"Length of the sequences in homogenous component of degree d."}
+	},
+   Outputs => {
+       "i" => ZZ => {"The Vasconcelos function of an ideal with parameters (d,r)"}
+	},
+	EXAMPLE {
+	"K=QQ;", 
+        "R=K[t1,t2,t3];",
+        "I=ideal(t1^3,t2*t3);",
+        "vasFunction(1,1,I)"
+	}
+ }
+
+ 
        
 end
 
