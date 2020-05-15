@@ -34,7 +34,7 @@ doc ///
     	Key
 	    	NumericalCertification
 	Headline
-	    	certify the solution for the square system using alpha theory or interval arithmetic
+	    	certify a numerical solution for a square system
 	Description
 	    	Text
 		    	This package provides two different types of root certification for the square polynomial system.
@@ -51,7 +51,7 @@ doc ///
 		Text
 		    	{\bf Ceritification Methods:}
 			
-			    $\bullet$ @TO "certifySolution"@
+			    $\bullet$ @TO "certifyRegularSolution"@
 			    
 			    $\bullet$ @TO "krawczykMethod"@
 			    
@@ -73,20 +73,20 @@ doc ///
 		Text
 		    It shows the results of the certification.
 		Example
-		    certifySolution(f,p1)
-		    certifySolution(f,p2) -- not an approximate solution
+		    certifyRegularSolution(f,p1)
+		    certifyRegularSolution(f,p2) -- not an approximate solution
 		    
 		Text
 		    Also, if we have other solutions of the system, alpha theory suggests an algorithm for distinguishing these solutions.
 		Example
 		    p1 = point{{.95,.32,-.30,.95}};
 		    p2 = point{{.65,.77,.76,-.64}};
-		    certifyDistinctSoln(f,p1,p2)
+		    certifyDistinctSolutions(f,p1,p2)
 		Text
 		    In the case of real polynomial system, we can certify that a given solution is real or not.
 		Example
 		    p = point{{.954379, .318431, -.298633, .947949}};
-		    certifyRealSoln(f,p)
+		    certifyRealSolution(f,p)
 		
 		Text
 		    {\bf    $\bullet$ Krawczyk method}
@@ -222,7 +222,7 @@ doc ///
 
 		Beta value is defined by the length of the Newton step and gamma value is the quantity which is inversely propotional to the length between exact solution and the given point.
 
-		Alpha value is defined by the multiplication of beta and gamma. When it is smaller than  $0.157671$, then the input point is an approximate solution to the system. The function @TO "certifySolution"@ does this process.
+		Alpha value is defined by the multiplication of beta and gamma. When it is smaller than  $0.157671$, then the input point is an approximate solution to the system. The function @TO "certifyRegularSolution"@ does this process.
 	    Example
 	        R = RR[x1,x2,y1,y2];
 		f = polySystem {3*y1 + 2*y2 -1, 3*x1 + 2*x2 -3.5,x1^2 + y1^2 -1, x2^2 + y2^2 - 1};
@@ -234,16 +234,20 @@ doc ///
 	       
 doc ///
     	Key
-    	    certifySolution
-	    (certifySolution, PolySystem, Point)
-	    "(certifySolution, PolySystem, Point)"
+    	    certifyRegularSolution
+	    (certifyRegularSolution, PolySystem, Point)
+	    (certifyRegularSolution, PolySystem, Matrix)
+	    (certifyRegularSolution, PolySystem, List)
+	    "(certifyRegularSolution, PolySystem, Point)"
+	    "(certifyRegularSolution, PolySystem, Matrix)"
+	    "(certifyRegularSolution, PolySystem, List)"
 	Headline
 	    certify whether a given point is an approximate solution to the system
 	Usage
-	    alpha = certifySolution(PS, P)
+	    alpha = certifyRegularSolution(PS, P)
 	Inputs
             PS:PolySystem
-	    P:List
+	    P:Point
 	Description
 	    Text
     	    	This function executes the alpha test based on the value computed by @TO "computeConstants"@.
@@ -251,23 +255,25 @@ doc ///
 	        R = RR[x1,x2,y1,y2];
 		f = polySystem {3*y1 + 2*y2 -1, 3*x1 + 2*x2 -3.5,x1^2 + y1^2 -1, x2^2 + y2^2 - 1};
 	    Text
-	    	Input should be a list of @TO "Point"@ type objects.
+	    	Input can be a @TO "Point"@ or @TO "Matrix"@ representing coordinates or a list of points or matrices.
 	    Example
-		p = point{{.95,.32,-.30,.95}};
-    	    	certifySolution(f,p)
+		p1 = point{{.95,.32,-.30,.95}};
+    	    	certifyRegularSolution(f,p1)
+		p2 = point{{.65,.77,.76,-.64}};
+    	    	certifyRegularSolution(f, {p1,p2})
 ///		
 
 
 
 doc ///
     	Key
-    	    certifyDistinctSoln
-	    (certifyDistinctSoln, PolySystem, Point, Point)
-	    "(certifySolution, PolySystem, Point, Point)"
+    	    certifyDistinctSolutions
+	    (certifyDistinctSolutions, PolySystem, Point, Point)
+	    "(certifyDistinctSolutions, PolySystem, Point, Point)"
 	Headline
 	    determine whether given points are distinct approximate solutions to the system
 	Usage
-	    certifyDistinctSoln(PS, P1, P2)
+	    certifyDistinctSolutions(PS, P1, P2)
 	Inputs
             PS:PolySystem
 	    P1:Point
@@ -280,13 +286,13 @@ doc ///
 		f = polySystem {3*y1 + 2*y2 -1, 3*x1 + 2*x2 -3.5,x1^2 + y1^2 -1, x2^2 + y2^2 - 1};
 		p1 = point{{.95,.32,-.30,.95}};
 		p2 = point{{.65,.77,.76,-.64}};
-    	    	certifyDistinctSoln(f,p1,p2)
+    	    	certifyDistinctSolutions(f,p1,p2)
 	    Text
 	    	However, if two solutions are too close, it concludes that inputs are not disticnt.
 	    Example
 		p1 = point{{.6525,.7712,.7577,-.6366}};
 		p2 = point{{.653,.771,.758,-.637}};
-    	    	certifyDistinctSoln(f,p1,p2)
+    	    	certifyDistinctSolutions(f,p1,p2)
 	    Text
 	    	Even worse, if two solutions are close enough and both have alpha value which are bigger than $0.03$, it gives indecisive comments.
 		
@@ -294,20 +300,20 @@ doc ///
 	    Example
 		p1 = point{{.95,.32,-.30,.95}};
 		p2 = point{{.95,.32,-.301,.95}};
-    	    	certifyDistinctSoln(f,p1,p2)
+    	    	certifyDistinctSolutions(f,p1,p2)
 ///		
 
 
 
 doc ///
     	Key
-    	    certifyRealSoln
-	    (certifyRealSoln, PolySystem, Point)
-	    "(certifyRealSoln, PolySystem, Point)"
+    	    certifyRealSolution
+	    (certifyRealSolution, PolySystem, Point)
+	    "(certifyRealSolution, PolySystem, Point)"
 	Headline
 	    determine whether a given point is an real approximate solution to the system
 	Usage
-	    certifyDistinctSoln(PS, P)
+	    certifyRealSolution(PS, P)
 	Inputs
             PS:PolySystem
 	    P:Point
@@ -318,26 +324,26 @@ doc ///
 	        R = RR[x1,x2,y1,y2];
 		f = polySystem {3*y1 + 2*y2 -1, 3*x1 + 2*x2 -3.5,x1^2 + y1^2 -1, x2^2 + y2^2 - 1};
 		p = point{{.954379,.318431,-.298633,.947949}};
-    	    	certifyRealSoln(f,p)
+    	    	certifyRealSolution(f,p)
 	    Text
 	    	However, an input point is poorly approximated, it gives false even if the point is real.
 		In this case, user should apply @TO "newtonOper"@ to the point to get more precise approximation.
 	    Example
 		p = point{{.65,.77,.75,-.64}};  -- poorly approximated solution
-    	    	certifyRealSoln(f,p)
+    	    	certifyRealSolution(f,p)
 ///		
 
 
 
 doc ///
     	Key
-    	    certifyCount
-	    (certifyCount, PolySystem, List)
-	    "(certifyCount, PolySystem, List)"
+    	    alphaTheoryCertification
+	    (alphaTheoryCertification, PolySystem, List)
+	    "(alphaTheoryCertification, PolySystem, List)"
 	Headline
     	    executes alpha-certification on a given system and list of points
 	Usage
-	    (D, R, CS, C) = certifyCount(PS, P)
+	    (D, R, CS, C) = alphaTheoryCertification(PS, P)
 	Inputs
             PS:PolySystem
 	    P:Point
@@ -352,14 +358,14 @@ doc ///
 	    	a list of constants for certified solutions
 	Description
 	    Text
-	    	When the system solved by solver has lots of points, this function does all procedures of @TO "certifySolution"@, @TO "certifyDistinctSoln"@ and @TO "certifyRealSoln"@ at once.
+	    	When the system solved by solver has lots of points, this function does all procedures of @TO "certifyRegularSolution"@, @TO "certifyDistinctSolutions"@ and @TO "certifyRealSolution"@ at once.
 	    Example
 	        R = RR[x1,x2,y1,y2];
 		f = polySystem {3*y1 + 2*y2 -1, 3*x1 + 2*x2 -3.5,x1^2 + y1^2 -1, x2^2 + y2^2 - 1};
 		p1 = point{{.954379,.318431,-.298633,.947949}}; p2 = point{{.95, .32, -.30, .95}}; p3 = point{{.652567, .77115, .757776, -.636663}}; p4 = point{{.65, .77, .76, -.64}}; 
 		p5 = point{{.31, .30, .72, -.60}}; -- poorly approximated solution
 		P = {p1, p2, p3, p4, p5}
-    	    	certifyCount(f,P)
+    	        alphaTheoryCertification(f,P)
 ///		
 
 

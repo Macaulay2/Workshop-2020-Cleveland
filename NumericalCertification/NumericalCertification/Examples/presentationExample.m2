@@ -7,8 +7,8 @@ listOfSols = solveSystem F
 length listOfSols -- 14 solutions.
 
 -- certify using alpha-theory
-certifySolutions(F, listOfSols)
-certifyCount(F,listOfSols)
+certifyRegularSolution(F, listOfSols)
+alphaTheoryCertification(F,listOfSols)
 
 
 -- certify using alphaCertified
@@ -24,4 +24,8 @@ A = Aoperator(F,P)
 numericalRank A -- we can certify if A is full-rank
 
 listOfMultipleRoots = drop(listOfSols, {0,5}) -- list of numerical roots of the multiple root.
-apply(listOfMultipleRoots, i -> certifyCluster(F, i))
+certifyRootMultiplicityBound(F, first listOfMultipleRoots)
+apply(listOfMultipleRoots, i -> certifyRootMultiplicityBound(F, i))
+
+
+certifySolutions(F, listOfSols)
