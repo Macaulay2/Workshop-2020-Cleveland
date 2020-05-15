@@ -35,7 +35,8 @@ export {
   "LagrangeVarietyWitness","LagrangeRing",
   "isolatedRegularCriticalPointSet",
   --More Keys
-  "LagrangeVariable","PrimalIdeal","JacobianConstraint","AmbientRing","LagrangeCoordinates","PrimalWitnessSystem",
+  "newLagrangeIdeal",
+  "LagrangeVariable","PrimalIdeal","JacobianConstraint","AmbientRing","LagrangeCoordinates","WitnessPrimalIdeal",
   "Data", "Gradient", "isRootIndex", "MembershipTestResults", "WitnessSuperSet", "SaveFileDirectory",
   -- Tolerances
   "MultiplicityTolerance","EvaluationTolerance", "ConditionNumberTolerance",
@@ -43,7 +44,8 @@ export {
 }
 
 ConormalRing = new Type of MutableHashTable;
-
+--a ConormalRing always has the following keys: 
+-- AmbientRing, Factors, Coordinates
 conormalRing = method(Options => {DualVariable => null});
 -- Creates a ConormalRing from a primal ring R
 conormalRing Ring := ConormalRing => opts -> R -> (
@@ -119,7 +121,7 @@ assert(multiDegreeEDDegree(J) == 13)
 --Code for Lagrange multipliers
 
 
-LagrangeRing = new Type of HashTable;---Change this to a ring. 
+LagrangeIdeal = new Type of MutableHashTable;---Change this to a ring. 
 LagrangeVarietyWitness = new Type of MutableHashTable;
 
 newRingFromSymbol = (n,s,kk)->(
@@ -129,27 +131,40 @@ newRingFromSymbol = (n,s,kk)->(
 --TODO: decide if we want to create or make. 
 --constructors of types are lower case and the name of the type. 
 
-makeLagrangeRing = method(Options => {DualVariable => null,LagrangeVariable => null});
+newLagrangeIdeal = method(Options => {DualVariable => null,LagrangeVariable => null});
 -- Creates a LagrangeRing from a primal ring R
-makeLagrangeRing (ZZ,Ring) := LagrangeRing => opts -> (c,R) -> (
-  if not member(degreeLength R, {1,2}) then error "expected degree length 1 or 2";
-  u := if opts.DualVariable === null then symbol u else opts.DualVariable;
-  dualR := newRingFromSymbol(#gens R,u, (coefficientRing R));
-  lambda := if opts.LagrangeVariable === null then symbol lambda else opts.LagrangeVariable;
-  lagrangeR := newRingFromSymbol(c,lambda, (coefficientRing R));
-  new LagrangeRing from {
-    AmbientRing => R ** dualR**lagrangeR,
-    LagrangeRing => lagrangeR,
-    PrimalRing => R,
-    DualRing => dualR,
-    PrimalCoordinates => gens R,
-    DualCoordinates => gens dualR,
-    LagrangeCoordinates => gens lagrangeR
-  }
-)
-makeLagrangeRing Ideal := LagrangeRing => opts -> I -> makeLagrangeRing(codim I,ring I)
+newLagrangeIdeal Ideal := LagrangeIdeal => opts -> WI -> (
+    CR := conormalRing ring WI;--Pass options?
+    lambda := if opts.LagrangeVariable === null then symbol lambda else opts.LagrangeVariable;
+    c := numgens WI;
+    lagrangeR := newRingFromSymbol(c,lambda, (coefficientRing ring WI));
+    CR.AmbientRing = CR.AmbientRing**lagrangeR;
+    CR.Coordinates = CR.Coordinates|{gens lagrangeR};
+    CR.Factors = CR.Factors|{lagrangeR};
+    jacWI := transpose jacobian WI;
+    y:=CR.Coordinates#1;--dual coordinates
+    jacBar := sub( matrix { y } , CR.AmbientRing) || sub(jacWI,CR.AmbientRing);
+    Lam :=CR.Coordinates#2;
+    J2 := ideal (sub(matrix{{1}|Lam},CR.AmbientRing)*jacBar);
+    aLI := new LagrangeIdeal from {};
+    aLI.Ideal =    (J2+sub(WI,CR.AmbientRing));
+    aLI.CornomalRing =CR;
+    aLI.WitnessPrimalIdeal = WI;
+    I := WI;
+    aLI.PrimalIdeal = I;
+    aLI.JacobianConstraint = J2;
+    aLI)
+
 
 TEST ///
+   R = QQ[x_0..x_2]
+   conormalRing(R)
+   conormalRing(R, DualVariable => l)
+   R=QQ[x]; WI=ideal(x)
+   newLagrangeIdeal(WI)
+   peek oo
+
+
 R=QQ[x,y]
 I=ideal(x^2+y^2-1)
 LR = makeLagrangeRing(1,ring I)
@@ -186,7 +201,8 @@ findRegularSequence = I -> (
 --langrangeRing Could inherit from conormalRing. 
 --This is analagous to conormal variety.
 ---Variety WI contains the variety of I. 
-witnessLagrangeVariety = method(Options => options makeLagrangeRing);
+-*
+witnessLagrangeVariety = method(Options => {});
 -- Computes a witness system for a lagrange variety 
 -- AR plays the role of conormalRing
 witnessLagrangeVariety (Ideal,Ideal, LagrangeRing) := LagrangeVarietyWitness => opts -> (WI,I,AR) -> (
@@ -200,7 +216,7 @@ witnessLagrangeVariety (Ideal,Ideal, LagrangeRing) := LagrangeVarietyWitness => 
   J2 := ideal (sub(matrix{{1}|AR.LagrangeCoordinates},AR.AmbientRing)*jacBar);
   new LagrangeVarietyWitness from {
       LagrangeRing =>AR,
-      PrimalWitnessSystem =>J0,
+      WitnessPrimalIdeal =>J0,
       PrimalIdeal=>J1,
       JacobianConstraint=>J2}
 )
@@ -215,7 +231,7 @@ witnessLagrangeVariety (Ideal) := LagrangeVarietyWitness => opts -> I -> (
   AR:=makeLagrangeRing(numgens WI,R,opts);
   witnessLagrangeVariety(WI,I,AR,opts)
   )
-
+*-
 TEST ///
 R=QQ[x,y]
 I=ideal(x^2+y^2-1)
@@ -300,7 +316,7 @@ TEST///
 
 
 --witnessCriticalVariety and Optimization degree
-witnessCriticalIdeal = method(Options => options makeLagrangeRing);
+witnessCriticalIdeal = method(Options => {});
 witnessCriticalIdeal (List,List,LagrangeVarietyWitness) := (Ideal,Ideal,Ideal) => opts  -> (v,g,LVW) ->(
 --Output: substitution of (WI,I,LVW) 
     if degreeLength  LVW#LagrangeRing#PrimalRing==2 then(
@@ -314,7 +330,7 @@ witnessCriticalIdeal (List,List,LagrangeVarietyWitness) := (Ideal,Ideal,Ideal) =
 	gradSub := map(ring LVW,ring LVW,subVars);	
 	subData :=apply(u,v,(i,j)->i=>j);
 	--TODO: Issue with denominators.
-	return (sub(gradSub(LVW#PrimalWitnessSystem),subData),sub(gradSub(LVW#PrimalIdeal),subData),sub(gradSub(LVW#JacobianConstraint),subData))
+	return (sub(gradSub(LVW#WitnessPrimalIdeal),subData),sub(gradSub(LVW#PrimalIdeal),subData),sub(gradSub(LVW#JacobianConstraint),subData))
 	)
     else error"degreeLength is not 2."
     )
@@ -396,7 +412,7 @@ bertiniCriticalPointSet = (u,g,LVW,bic)->(
     	EvaluationTolerance =>evalTol,
     	SaveFileDirectory=>dir,
 	PrimalIdeal=>I,
-	PrimalWitnessSystem=>WI,
+	WitnessPrimalIdeal=>WI,
 	JacobianConstraint=>JC,
 	Equations=>WI+JC,
     	Data=>u,
@@ -672,7 +688,7 @@ TEST ///
   -- may have as many TEST sections as needed
 ///
 
-
+-*
 doc ///
 Key
   makeLagrangeRing
@@ -759,7 +775,7 @@ Description
 --SeeAlso
 --  todo
 ///
-
+*-
   
   
 end
