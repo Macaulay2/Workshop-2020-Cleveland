@@ -123,7 +123,8 @@ assert(multiDegreeEDDegree(J) == 13)
 
 LagrangeIdeal = new Type of MutableHashTable;---Change this to a ring. 
 LagrangeVarietyWitness = new Type of MutableHashTable;
-
+--LagrangeIdeal always have these keys
+-- WitnessPrimalIdeal, JacobianConstraint, Ideal, CornomalRing
 newRingFromSymbol = (n,s,kk)->(
     kk[s_0..s_(n - 1)]
     )
@@ -150,24 +151,30 @@ newLagrangeIdeal Ideal := LagrangeIdeal => opts -> WI -> (
     aLI.Ideal =    (J2+sub(WI,CR.AmbientRing));
     aLI.CornomalRing =CR;
     aLI.WitnessPrimalIdeal = WI;
-    I := WI;
-    aLI.PrimalIdeal = I;
     aLI.JacobianConstraint = J2;
     aLI)
 
+newLagrangeIdeal (Ideal,Ideal) := LagrangeIdeal => opts -> (WI,I) -> (
+    aLI := newLagrangeIdeal(WI);
+    aLI.PrimalIdeal = I;
+    aLI
+    )
 
 TEST ///
-   R = QQ[x_0..x_2]
-   conormalRing(R)
-   conormalRing(R, DualVariable => l)
    R=QQ[x]; WI=ideal(x)
    newLagrangeIdeal(WI)
    peek oo
 
+   R=QQ[x]; WI=ideal(x);I=ideal (x,x)
+   aLI = newLagrangeIdeal(WI,I)
+   peek oo
 
 R=QQ[x,y]
 I=ideal(x^2+y^2-1)
-LR = makeLagrangeRing(1,ring I)
+aLI = newLagrangeIdeal(I)
+degree aLI.Ideal
+peek 
+aLI.Ideal
 --TODO: make a better test.
 --Check keys
 assert( sort\\toString\keys LR == sort\\toString\{AmbientRing, LagrangeRing, PrimalCoordinates, DualRing, DualCoordinates, LagrangeCoordinates, PrimalRing})
@@ -316,13 +323,14 @@ TEST///
 
 
 --witnessCriticalVariety and Optimization degree
-witnessCriticalIdeal = method(Options => {});
-witnessCriticalIdeal (List,List,LagrangeVarietyWitness) := (Ideal,Ideal,Ideal) => opts  -> (v,g,LVW) ->(
+CriticalIdeal = new Type of MutableHashTable
+newCriticalIdeal = method(Options => {});
+newCriticalIdeal (List,List,LagrangeIdeal) := CriticalIdeal => opts  -> (v,g,LVW) ->(
 --Output: substitution of (WI,I,LVW) 
     if degreeLength  LVW#LagrangeRing#PrimalRing==2 then(
-	u:=gens coefficientRing (LVW);
+	u := gens coefficientRing (LVW);
 	if #v=!=#u then error "data does not agree with number of parameters. ";
-    	LR:=LVW#LagrangeRing;
+    	LR := LVW#LagrangeRing;
 	y := drop(drop(gens ring LVW,#gens LR#PrimalRing),-# gens LR#LagrangeRing);
 	subDualVars := apply(y,g,(i,j)->i=>sub(j,ring LVW));
 	subVars:=subDualVars;
