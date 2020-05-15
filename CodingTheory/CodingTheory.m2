@@ -59,7 +59,9 @@ export {
     "informationRate",
     "dualCode",
     "alphabet",
-    "generic",
+    "messages",
+    "codewords",
+    "genericCode",
     "bitflipDecode",
     "MaxIterations",
     "shorten"
@@ -694,10 +696,33 @@ alphabet(LinearCode) := List => C -> (
     
     )
 
-generic = method(TypicalValue => LinearCode)
-generic(LinearCode) := LinearCode => C -> (
+genericCode = method(TypicalValue => LinearCode)
+genericCode(LinearCode) := LinearCode => C -> (
     linearCode(C.AmbientModule)
     )
+
+-- method to generate all message words in code:
+messages = method(TypicalValue => List)
+messages(LinearCode) := List => C -> (
+    k := dim C ;
+    A := alphabet C;
+    messageSpace := apply(toList((set A)^**k) / deepSplice, c -> toList(c));
+    return messageSpace
+    )
+
+-- method to compute the set of 2^k codewords in an [n,k]-code:
+codewords = method(TypicalValue => List)
+codewords(LinearCode) := List => C -> (
+    -- save generator matrix as G:
+    G := C.GeneratorMatrix;
+    
+    -- convert message vectors as lists into matrices:
+    M := apply(messages C, m-> matrix({m}));
+    
+    -- map m -> mG to compute codewords:
+    return flatten apply(M, m -> entries (m*G))
+    )
+
 
 
 
@@ -763,10 +788,9 @@ shorten ( LinearCode, ZZ ) := LinearCode => ( C, i ) -> (
 --    )
 
 random (GaloisField, ZZ, ZZ) := LinearCode => opts -> (F, n, k) -> (
-    linearCode( F, apply(toList(1..n),j-> apply(toList(1..k),i-> random(F, opts)) ) )
+    linearCode(F, n, apply(toList(1..k), j-> apply(toList(1..n),i-> random(F, opts))))
     )
-    
-    
+
     
 -----------------------Generalized functions in coding theory---------------------
 --------------------------------------------------------------
@@ -1007,20 +1031,20 @@ assert( shorten( C3, K ) == linearCode(F, shortL) )
 TEST ///
 -- random test
 F = GF(2, 4)
-n = 3
-k = 5
+n = 5
+k = 3
 C = random ( F , n, k )
 
-assert( length C == k )
+assert( length C == 5 )
 assert( dim C == 3 )
 
 F = GF 2
-n = 3
-k = 5
+n = 5
+k = 3
 C = random ( F , n, k )
 
-assert( length C == k )
-assert( dim C == 3 )
+assert( length C == n)
+assert( dim C == k )
 ///
 
 TEST ///
