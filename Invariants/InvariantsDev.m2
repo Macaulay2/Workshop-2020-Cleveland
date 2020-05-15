@@ -41,7 +41,8 @@ export {
     "schreierGraph",
     "torusAction",
     "weights",
-    "words"
+    "words",
+    "finiteAbelianAction"
     }
 --exportMutable {}
 
@@ -57,6 +58,7 @@ needsPackage("Elimination", Reload => true)
 
 GroupAction = new Type of HashTable
 FiniteGroupAction = new Type of GroupAction
+FiniteAbelianAction = new Type of FiniteGroupAction
 TorusAction = new Type of GroupAction
 LinearlyReductiveAction = new Type of GroupAction
 RingOfInvariants = new Type of HashTable    	  -- For some reason, InvariantRing already seems to be a protected symbol. 
@@ -294,6 +296,8 @@ weights = method()
 
 weights TorusAction := Matrix => T -> T.ActionMatrix 
 
+weights FiniteAbelianAction := Matrix => T -> T.ActionMatrix
+
 
 -------------------------------------------
 --- LinearlyReductiveAction methods -------
@@ -333,6 +337,41 @@ groupIdeal LinearlyReductiveAction := Ideal => V -> V.groupIdeal
 
 
 -------------------------------------------
+-------------------------------------------
+--- finiteAbelianAction methods -------------------
+-------------------------------------------
+
+finiteAbelianAction = method()
+
+finiteAbelianAction (Matrix, PolynomialRing, List) := FiniteAbelianAction => (W, R, L) -> (
+    if not isField coefficientRing R then (error "abelianGroupAction: Expected the second argument to be a polynomial ring over a field.");
+    if ring W =!= ZZ then (error "abelianGroupAction: Expected the first argument to be a matrix of integer weights.");
+    if numColumns W =!= dim R then (error "abelianGroupAction: Expected the number of columns of the matrix to equal the dimension of the polynomial ring.");
+    if numRows W =!= #L then (error "abelianGroupAction: Expected the number of rows of the matrix to equal the size of the list."); 
+    new FiniteAbelianAction from {
+	cache => new CacheTable,
+	(symbol ActionMatrix) => W,
+	(symbol ring) => R, 
+	(symbol rank) => numRows W,
+	(symbol size) => L
+	}
+    )
+
+
+-------------------------------------------
+
+net FiniteAbelianAction := T -> (net T.ring)|" <- "|(net T.ActionMatrix)
+-- If the weight matrix is huge, consider rewriting to print something else.
+
+rank FiniteAbelianAction := ZZ => T -> T.rank
+
+size FiniteAbelianAction := List => T -> T.size
+
+---------------------------------------------
+
+
+
+
 
 hilbertIdeal = method()
 hilbertIdeal (LinearlyReductiveAction, PolynomialRing) := Ideal => (V, R) -> (
@@ -496,6 +535,14 @@ invariants (LinearlyReductiveAction, PolynomialRing) := List => (V,R) -> (
 
 
 -------------------------------------------
+
+invariants FiniteAbelianAction := List => T -> (
+    return abelianInvariants(T)
+)
+
+
+
+-------------------------------------------
 -- FG: I am wondering if computing the ring of invariants for TorusAction is
 -- an overkill to decide if an element is invariant. If may be quicker to just
 -- act with the weight matrix and see if you get back out the original element
@@ -602,12 +649,15 @@ generators RingOfInvariants := List => opts -> S -> S.cache.generators
 -- No FiniteAbelianAction type exists yet
 
 abelianInvariants = method()
-abelianInvariants (Matrix, PolynomialRing, List) := List => (W, R, L) -> (
+abelianInvariants FiniteAbelianAction := List => T -> (
+    W := weights T;
+    R := ring T;
+    L := size T;
     r := numRows W;
     n := numColumns W;
     t := 1; -- t is the size of abelian group
     --sanity check 
-    if #L =!= r then print "Size of the group does not match the weight";
+    if #L =!= r then error "Size of the group does not match the weight";
     scan(L,i->t = t*i);
     local C; -- C is a list of all possible weights
     for i from 0 to #L-1 do(
@@ -717,13 +767,11 @@ document {
 }
 
 document {
-	Key => {abelianInvariants, (abelianInvariants,Matrix,PolynomialRing,List)},
-	Headline => "Computes the primary invariants for an abelian group action given by column weight vectors",
-	Usage => "abelianInvariants(W,R,L)",
+	Key => {abelianInvariants, (abelianInvariants,FiniteAbelianAction)},
+	Headline => "Computes the generators of ring of invariants for an abelian group action given by column weight vectors",
+	Usage => "abelianInvariants(T)",
 	Inputs => {
-	        "L" => List => {"whose entries are the cardinalities of the cyclic group factors of the abelian group"},
-	    	"R" => PolynomialRing => {"on which a group acts diagonally"},
-		"W" => Matrix => {"whose ith column is the weight vector of ", TT "R_i"}
+	        "T" => FiniteAbelianAction => {"which encodes the action of a finite abelian group on a polynomial ring"}
 		},
 	Outputs => {
 		List => {"A minimal set of generating invariants for the abelian group action"}
@@ -733,7 +781,7 @@ document {
 	    "This function is provided by the package ", TO Invariants, ". It is based on the same algorithm as ", TO invariants,
 	    " with some adjustments and optimizations for the finite group case; see the reference below for details. Writing the finite abelian group as",
 	    TEX /// $\mathbb{Z}/d_1 \oplus \cdots \oplus \mathbb{Z}/d_r$, ///,
-	    "the input ", TT "L", " is the list ", TT "{d_1,d_2,...,d_r}", ". We assume that the group acts diagonally on the input polynomial ring",
+	    "the input ", TT "T", " is a MutableHashTable which consists of " TT "L", " the list ", TT "{d_1,d_2,...,d_r}", ",", TT "R"," a polynomial ring and ",TT "W", " a weight matrix. We assume that the group acts diagonally on the polynomial ring",
 	    TEX /// $R = k[x_1,\ldots,x_n]$, ///,
 	    "which is to say that if we denote the evident generators of the group by",
 	    TEX /// $g_1,\ldots,g_r$ ///,
@@ -745,7 +793,7 @@ document {
 	    TEX /// $d_i$///,
 	    "-th root of unity. The integers",
 	    TEX /// $w_{ij}$ ///,
-	    "comprise the input matrix ", TT "W", "."
+	    "comprise the weight matrix ", TT "W", "."
 	},
         UL { 
 	    {"Gandini, F. ", EM "Ideals of Subspace Arrangements", 
@@ -758,7 +806,9 @@ document {
 	EXAMPLE {
 	    "R = QQ[x_1..x_3]",
 	    "W = matrix{{1,0,1},{0,1,1}}",
-	    "abelianInvariants(W,R,{3,3})"
+	    "L = {3,3}",
+	    "T = finiteAbelianAction(W,R,L)",
+	    "abelianInvariants(T)"
 		}
 	}
 
@@ -985,4 +1035,10 @@ installPackage "InvariantsDev"
 --installPackage("Invariants", RemakeAllDocumentation=>true)
 check InvariantsDev
 
+
+needsPackage "InvariantsDev"
+R1 = QQ[a_1..a_3]
+W = matrix{{1,0,1},{0,1,1}}
+L = {3,3}
+T = finiteAbelianAction(W,R1,L)
 invariantRing X
