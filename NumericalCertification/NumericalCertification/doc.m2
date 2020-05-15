@@ -37,19 +37,26 @@ doc ///
 	    	certify a numerical solution for a square system
 	Description
 	    	Text
-		    	This package provides two different types of root certification for the square polynomial system.
+		    	This package provides symbolic-numeric approaches to certify roots for a square polynomial system.
+			
+			For regular roots, the package has two different approaches.
 		      	The first is Smale's alpha theory and the second is Krawczyk method via interval arithmetic.
 			Both methods are based on Newton's method and they all describe the specific region containing a unique root of the system.
 			
-			In the case of alpha theory, this package follows the algorithms of alpha theory introduced in @HREF("https://arxiv.org/abs/1011.1091","\"alphaCertified: certifying solutions to polynomial systems\" (2012)")@.
+			In the case of alpha theory, this package follows the algorithms of alpha theory established in @HREF("https://arxiv.org/abs/1011.1091","\"alphaCertified: certifying solutions to polynomial systems\" (2012)")@.
+			In the case of Krawczyk method, this package follows the theory introduced in @HREF("https://epubs.siam.org/doi/book/10.1137/1.9780898717716","\"Introduction to Interval Analysis\" (2009)")@. 
+			These two methods also support not only floating-point arithmetic over the real and complex numbers, but also the exact computation with inputs of rational numbers.
 			
-			In the case of Krawczyk method, this package follows the theory suggested in @HREF("https://epubs.siam.org/doi/book/10.1137/1.9780898717716","\"Introduction to Interval Analysis\" (2009)")@. 
-			The Krawczyk method implemented in the package supports the complex-valued inputs also.
+			Moreover, the package has a function certifying regular roots via a software 'alphaCertified' @HREF("https://www.math.tamu.edu/~sottile/research/stories/alphaCertified/")@.
 			
-			This package also supports the exact computation with inputs of rational numbers.
+			For multiple roots, the concept of a local separation bound for a simple multiple root established in @HREF("https://arxiv.org/abs/1904.07937")@ is implemented. 
+			The package checks if a given numerical approximation is a simple multiple root with its lower bound of the multiplicity and a region containing the root.
+			
+			
+			
 			    
 		Text
-		    	{\bf Ceritification Methods:}
+		    	{\bf Regular Root Ceritification Methods:}
 			
 			    $\bullet$ @TO "certifyRegularSolution"@
 			    
@@ -106,100 +113,17 @@ doc ///
 		Example
 		    krawczykMethod(f,o)
 		
+
+		Text
+		    	{\bf Multiple Root Ceritification Method:}
+
+			    
+			    $\bullet$ @TO "certifyRootMultiplicityBound"@
+
 		
 ///
 
 
-
-doc ///
-    	Key
-	    pointNorm
-	    (pointNorm, Point)
-	    "(pointNorm, Point)"
-	Headline
-	    compute the square of the "projectivized" norm of the given point
-	Usage
-	    n = pointNorm(p)
-	Inputs
-	    p:Point
-	Description
-	    Text
-	    	For the given point this function computes the "projectivized" norm (square root of $1+ x_1^2 + ... + x_n^2$) of the given point.
-		This will be used in order to compute the gamma value.
-	    Example
-	    	p = point {{.2,3}};
-		pointNorm(p)
-///
-
-
-doc ///
-    	Key
-	    polyNorm
-	    (polyNorm, RingElement)
-	    "(polyNorm, RingElement)"
-	Headline
-	    compute the square of the "Bombieri-Weyl" norm of the given polynomial
-	Description
-	    Text
-	    	For the given point this function computes the "Bombieri-Weyl" norm of the given point.
-		This will be used in order to compute the gamma value.
-	    Example
-	    	R = RR[x,y];
-		f = 3*x*y^2 + 3*x + 7*y^2;
-		polyNorm(f)
-///
-		
-
-doc ///
-    	Key
-	    polySysNorm
-	    (polySysNorm, PolySystem)
-	    "(polySysNorm, PolySystem)"
-	Headline
-	    compute the square of the norm of the given polynomial system
-	Usage
-	    polySysNorm(PS)
-	Inputs
-	    PS:PolySystem
-	Description
-	    Text
-	    	For the given polynomial system we define the polynomial system norm by square root of the sum of all squares of polynomial norms.
-		This will be used in order to compute the gamma value.
-	    Example
-	        R = RR[x1,x2,y1,y2];
-		f = polySystem {3*y1 + 2*y2 -1, 3*x1 + 2*x2 -3.5,x1^2 + y1^2 -1, x2^2 + y2^2 - 1};
-		polySysNorm(f)
-///		
-	       
-	       
-doc ///
-    	Key
-    	    newtonOper
-	    (newtonOper, PolySystem, Point)
-	    "(newtonOper, PolySystem, Point)"
-	Headline
-    	    apply Newton's method on a given point.
-	Usage
-    	    newtonOper(PS, P)
-	Inputs
-            PS:PolySystem
-	    P:Point
-	Description
-	    Text
-    	    	This function applies Newton's method on a given point and given polynomial system.
-		
-		It converges to an exact solution if a given point is an approximate solution.
-	    Example
-	        R = RR[x1,x2,y1,y2];
-		f = polySystem {3*y1 + 2*y2 -1, 3*x1 + 2*x2 -3.5,x1^2 + y1^2 -1, x2^2 + y2^2 - 1};
-		p = point{{.95,.32,-.30,.95}};
-    	    	newtonOper(f,p)
-    	    Text
-	    	However, if the Jacobian of the system is singular at the point, it just returns the input.
-	    Example
-	    	p = point{{0,.32,0,.95}};
-		newtonOper(f,p)		
-///		
 
 
 	       
@@ -371,8 +295,6 @@ doc ///
 
 
 
-
-
 doc ///
     	Key
 	    Interval
@@ -517,21 +439,6 @@ doc ///
 ///
 
 
-doc ///
-    	Key
-	    intervalMatrixNorm
-	    (intervalMatrixNorm, IntervalMatrix)
-	Headline
-	    compute the infinity norm for interval matrix.
-	Description
-	    Text
-	        This function computes the infinity norm for a given interval matrix
-	    Example
-	    	l = intervalMatrix {{interval(1,2), interval(2,3)},{interval(3,4),interval(1,3)}};
-	    	intervalMatrixNorm l
-///
-
-
 
 doc ///
     	Key
@@ -590,62 +497,6 @@ doc ///
 
 
 	    
-	    
-doc ///
-    	Key
-	    (wInterval, Interval)
-	Headline
-	    compute a width of an interval.
-	Description
-	    Text
-    	    	We define the width of an interval as a difference between a upper bound and lower bound of an interval.
-	    Example
-	        I = interval(.5,.8);
-		wInterval I
-///
-	    
-	    
-doc ///
-    	Key
-	    (mInterval, Interval)
-	Headline
-	    compute a midpoint of an interval
-	Description
-	    Example
-	        I = interval(.5,.8);
-		mInterval I
-///
-	    
-	    
-doc ///
-    	Key
-	    (intervalNorm, Interval)
-	Headline
-	    compute a norm of an interval
-	Description
-	    Text
-	    	We define the norm of an interval as the maximum element in the interval.
-	    Example
-	        I = interval(.5,.8);
-		intervalNorm I
-///
-	    
-	    
-	    
-doc ///
-    	Key
-	    identityIntMat
-	    (identityIntMat, ZZ)
-	Headline
-	    compute the identity diagonal interval matrix. 
-	Description
-	    Text
-	    	A diagonal matrix with "[1,1]" as a diagonal entry is worked as a identity matrix in interval arithmetic.
-		
-		For given positive integer "n", this function constructs the identity interval matrix of size "n".
-	    Example
-    	    	identityIntMat 3
-///
 	    
 	    
 doc ///

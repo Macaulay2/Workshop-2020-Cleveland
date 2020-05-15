@@ -19,44 +19,26 @@ newPackage(
 -- Any symbols or functions that the user is to have access to
 -- must be placed in one of the following two lists
 
-export {"pointNorm", 
-    "ALPHACERTIFIEDexec",
-    "polyNorm", 
-    "polySysNorm", 
-    "newtonOper",
+export {
     "computeConstants", 
     "certifyRegularSolution", 
     "certifyDistinctSolutions", 
     "certifyRealSolution",
     "alphaTheoryCertification",
+    "certifySolutions",
     "Interval", 
     "interval", 
-    "mInterval", 
-    "intervalNorm", 
     "intervalMatrix", 
     "IntervalMatrix", 
-    "wInterval", 
-    "intervalMatrixNorm",
     "krawczykOper", 
     "InvertibleMatrix",
     "krawczykMethod",
     "krawczykMethodOptions",
-    "identityIntMat", 
     "intervalOption",
     "IntervalOption",
-    "subOnMonomial",
     "intervalOptionList", 
     "IntervalOptionList",
-    "ingredientsForKoper",
-    "inverseMat",
-    "intervalJacMat",
-    "sqabsForGaussianRational",
-    "conjugateGaussian",
-    "conjugateGaussianRationalMatrix",
-    "degCoeff",
     "toACertifiedPoly",
-    "pointBlock",
-    "toACertifiedPoint",
     "alphaCertified",
     "ALGORITHM",
     "ARITHMETICTYPE",
@@ -69,12 +51,8 @@ export {"pointNorm",
     "NUMITERATIONS",
     "REALITYCHECK",
     "REALITYTEST",
-    "Hessian",--
-    "computeOrthoBasis",--
-    "computeD",
+    "computeOrthoBasis",
     "Aoperator",--these are added
-    "Hoperator",--these are added
-    "gammaKBound",--these are added 
     "certifyRootMultiplicityBound"--these are added
     }
 exportMutable {}

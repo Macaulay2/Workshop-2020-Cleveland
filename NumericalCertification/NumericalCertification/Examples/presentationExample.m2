@@ -30,3 +30,4 @@ apply(listOfMultipleRoots, i -> certifyRootMultiplicityBound(F, i))
 
 
 certifySolutions(F, listOfSols)
+
