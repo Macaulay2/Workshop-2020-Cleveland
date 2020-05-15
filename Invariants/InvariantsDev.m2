@@ -299,45 +299,40 @@ weights TorusAction := Matrix => T -> T.ActionMatrix
 --- LinearlyReductiveAction methods -------
 -------------------------------------------
 
--- TO DO: 1. Add errors for initializing linearlyReductiveAction.
---    	  2. Rewrite linearlyReductiveAction to include the polynomial
---    	     ring the action acts on.  Stash the ring in the hashtable
---    	     under the key 'ring'.  Remove the key 'RepDimension'.
---    	     Delete 'RepDimension' from exported symbols.
-
-
 linearlyReductiveAction = method()
 
-linearlyReductiveAction (Ideal, Matrix) := LinearlyReductiveAction => (A, M) -> (
+linearlyReductiveAction (Ideal, Matrix, PolynomialRing) := LinearlyReductiveAction => (A, M, R) -> (
+    if not isField coefficientRing R then (error "linearlyReductiveAction: Expected the third argument to be a polynomial ring over a field.");
+    if (numColumns M =!= numRows M) or (numRows M =!= #(gens R)) then (error "linearlyReductiveAction: Matrix size does not match polynomial ring.");
+    if coefficientRing ring A =!= coefficientRing R then (error "linearlyReductiveAction: Group and polynomial ring not defined over same field.");
     new LinearlyReductiveAction from {
 	cache => new CacheTable,
 	(symbol groupIdeal) => A, 
 	(symbol actionMatrix) => M, 
-	RepDimension => numColumns M
+	(symbol ring) => R
 	}
     )
 
 
 -------------------------------------------
--- FG: When I run LinearlyReductiveAction I get an error, the debugger says the bug is here somewhere
 
-net LinearlyReductiveAction := V -> net (ring V.GroupIdeal)|"/"|net V.GroupIdeal|" via "|net V.ActionMatrix
+net LinearlyReductiveAction := V -> net (ring V.groupIdeal)|"/"|net V.groupIdeal|" via "|net V.actionMatrix
 
 actionMatrix = method()
 
-actionMatrix LinearlyReductiveAction := Matrix => V -> V.ActionMatrix
+actionMatrix LinearlyReductiveAction := Matrix => V -> V.actionMatrix
 
 groupIdeal = method()
 
 groupIdeal LinearlyReductiveAction := Ideal => V -> V.groupIdeal
 
-
 -------------------------------------------
 
 hilbertIdeal = method()
-hilbertIdeal (LinearlyReductiveAction, PolynomialRing) := Ideal => (V, R) -> (
+hilbertIdeal (LinearlyReductiveAction) := Ideal => V -> (
     A := groupIdeal V;
     M := actionMatrix V;
+    R := ring V;
     if (numColumns M =!= numRows M) or (numRows M =!= #(gens R)) then print "Matrix size does not match polynomial ring";
     -- first, some information about the inputs:
     n := #(gens R);
@@ -365,10 +360,10 @@ hilbertIdeal (LinearlyReductiveAction, PolynomialRing) := Ideal => (V, R) -> (
 
 generatorsFromHilbertIdeal = method()
 generatorsFromHilbertIdeal (LinearlyReductiveAction, Ideal) := List => (V, I) -> (
+    if ring I =!= ring V then error ("generatorsFromHilbertIdeal: second input must be the Hilbert ideal in ",ring V);
     A := groupIdeal V;
     M := actionMatrix V;
     R := ring(I);
-    if (numColumns M =!= numRows M) or (numRows M =!= #(gens R)) then print "Matrix size does not match polynomial ring";
     x := local x, z := local z;
     n := numColumns M;
     K := coefficientRing(ring(I));
@@ -392,7 +387,7 @@ generatorsFromHilbertIdeal (LinearlyReductiveAction, Ideal) := List => (V, I) ->
 	alreadyInv := true;
 	j := 0;
 	while alreadyInv and Id#?j do(
-	    if not isInvariant(V,Id#j) then alreadyInv = false;
+	    if not isInvariant(Id#j,V) then alreadyInv = false;
 	    j = j+1
 	);
     	if not alreadyInv then (
@@ -420,14 +415,12 @@ generatorsFromHilbertIdeal (LinearlyReductiveAction, Ideal) := List => (V, I) ->
 -------------------------------------------
 
 -- TO DO: 1. Add comments to the code to explain how invariants(TorusAction) works.
---    	  2. Update invariants(LinearlyReductiveAction, PolynomialRing) to take only
---    	     a LinearlyReductiveAction as an argument after completing TO DO's for 
---    	     LinearlyReductiveAction.
---    	  3. Create a function for invariants(FiniteGroupAction) after porting remaining
+--    	  2. Create a function for invariants(FiniteGroupAction) after porting remaining
 --    	     methods from the package "InvariantRing".
---    	  4. Create a FiniteAbelianAction type, or (better?) after rewriting code to extract
+--    	  3. Create a FiniteAbelianAction type, or (better?) after rewriting code to extract
 --    	     the weights from a finite group action that happens to be abelian, include 
 --    	     abelianInvariants as a Strategy for invariants(FiniteGroupAction).
+--    	  4. After doing (3) update isInvariant (Matrix, List, Thing) accordingly
 
 invariants = method()
 
@@ -479,6 +472,7 @@ invariants TorusAction := List => T -> (
 manualTrim = method(TypicalValue => List)
 
 manualTrim (List) := List => L -> (
+    if not L#?0 then return L;
     L' := {0_(ring L#0)};
     
     scan(#L, i -> (
@@ -490,8 +484,8 @@ manualTrim (List) := List => L -> (
 
 -------------------------------------------
 
-invariants (LinearlyReductiveAction, PolynomialRing) := List => (V,R) -> (
-    return manualTrim generatorsFromHilbertIdeal(V,hilbertIdeal(V,R))
+invariants (LinearlyReductiveAction) := List => V -> (
+    return manualTrim generatorsFromHilbertIdeal(V,hilbertIdeal(V))
 )
 
 
@@ -513,7 +507,7 @@ isInvariant (RingElement, TorusAction) := Boolean => (f, T) -> (
     return (weights T) * transpose(matrix(exponents(f))) == 0
     )
 
-isInvariant (Thing, LinearlyReductiveAction) := Boolean => (f, V) -> (
+isInvariant (RingElement, LinearlyReductiveAction) := Boolean => (f, V) -> (
     A := groupIdeal V;
     M := actionMatrix V;
     R := ring(f);
@@ -969,20 +963,23 @@ check Invariants
 -- compile-command: "make -C $M2BUILDDIR/Macaulay2/packages PACKAGES=Invariants pre-install"
 -- End:
 
-needsPackage "Invariants"
-S = QQ[z]
-A = ideal(z^2 - 1)
-M = matrix{{(1+z)/2, (1-z)/2},{(1-z)/2, (1+z)/2}}
-R = QQ[a,b]
-G = linearlyReductiveAction(A,M)
-X = R^G
-invariants X
-viewHelp Invariants
-
 restart
 uninstallPackage "InvariantsDev"
 installPackage "InvariantsDev"
 --installPackage("Invariants", RemakeAllDocumentation=>true)
 check InvariantsDev
+
+S = QQ[a,b,c,d]
+idealSL2 = ideal(a*d - b*c - 1)
+SL2std = matrix{{a,b},{c,d}}
+R1 = QQ[x_1..x_2]
+V1 = linearlyReductiveAction(idealSL2,SL2std,R1)
+invariants V1
+
+needsPackage "SchurFunctors"
+n = 2 -- 4 takes a second or so, 5 takes a long time (I didn't wait around for it to finish)
+Rn = QQ[x_0..x_n]
+Vn = linearlyReductiveAction(idealSL2, schur({n}, SL2std), Rn)
+invariants Vn
 
 invariantRing X
