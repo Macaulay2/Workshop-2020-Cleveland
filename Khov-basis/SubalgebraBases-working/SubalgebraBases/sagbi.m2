@@ -16,6 +16,8 @@ gens Subring := o -> A -> A#Generators
 numgens Subring := A -> numcols gens A
 ambient Subring := A -> A#AmbientRing
 
+debug Core
+
 ---------------------------------
 -- Inhomogeneous SAGBI bases ----
 ---------------------------------
@@ -308,15 +310,15 @@ subalgebraBasis Subring := o -> R -> (
     while nLoops <= o.Limit and not isDone do (
         nLoops = nLoops + 1;
         
-        << currDegree << endl;
-        << peek R.cache.SagbiGens << endl;
+        << "Current Degree is " << currDegree << endl;
+        << "Sagbi gens is " << peek R.cache.SagbiGens << endl;
     
         -- Construct a Groebner basis to eliminiate the base elements generators from the SyzygyIdeal.
         sagbiGB = gb(R.cache.SyzygyIdeal, DegreeLimit=>currDegree);
-	<< currDegree << endl;
+	<< "Current Degree is " << currDegree << endl;
     << "generators of GB " << gens sagbiGB << endl;
         syzygyPairs = R.cache.Substitution(submatrixByDegrees(selectInSubring(1, gens sagbiGB), currDegree));
-    	<< syzygyPairs << endl;
+    	<< "Syzygy pairs is " << syzygyPairs << endl;
         if R.cache.Pending#currDegree != {} then (
             syzygyPairs = syzygyPairs | R.cache.InclusionBase(matrix{R.cache.Pending#currDegree});
             R.cache.Pending#currDegree = {};
@@ -328,15 +330,10 @@ subalgebraBasis Subring := o -> R -> (
         << "Gmap is " << R.cache.Substitution << endl;
         << "gbJ is " << sagbiGB << endl;
         
-        out1 = rawSubduction(rawMonoidNumberOfBlocks raw monoid R.AmbientRing, raw syzygyPairs, raw R.cache.Substitution, raw sagbiGB);
-        out2 = map(R.cache.TensorRing,out1);
-        out3 = R.cache.ProjectionBase(out2);
-        
-        
-    --	subducted := R.cache.ProjectionBase(map(R.cache.TensorRing,));
-	<< subducted << endl;
+        subducted = R.cache.ProjectionBase(map(R.cache.TensorRing,rawSubduction(rawMonoidNumberOfBlocks raw monoid R.AmbientRing, raw syzygyPairs, raw R.cache.Substitution, raw sagbiGB)));
+	<< "subducted is " << subducted << endl;
         newElems = compress subducted;
-    	<< newElems << endl;
+    	<< "number generators" << newElems << endl;
         if numcols newElems > 0 then (
             << numcols newElems << " generators added" << endl;
             insertPending(R, newElems, o.Limit);
@@ -355,8 +352,9 @@ subalgebraBasis Subring := o -> R -> (
                 << "SAGBI basis is FINITE!" << endl;
             	)
             );
-	<< isDone << endl;
-	<< nLoops << endl;
+            currDegree = currDegree + 1;
+	<< "is Done is " << isDone << endl;
+	<< "Loops is " << nLoops << endl;
     	);
     R
 )
