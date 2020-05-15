@@ -953,7 +953,7 @@ doc ///
       C:ToricCycle
     Description
       Text
-        Compute the product of a ToricDivisor with a ToricCycle.
+        Computes the product of a ToricDivisor with a ToricCycle.
       Example
 	X = toricProjectiveSpace 4
 	D = X_0 + 2*X_1+3*X_2+4*X_3
