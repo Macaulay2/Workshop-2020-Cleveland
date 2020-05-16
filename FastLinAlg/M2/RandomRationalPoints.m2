@@ -211,7 +211,7 @@ randomPointViaLinearIntersection := opts -> (n1, I1) -> (
     while(i < opts.IntersectionAttempts) do ( 
         ideal apply((dim R1) - c1, i -> random(1, R1) + random(0, R1));
         J0 := linearSpace + I1;
-        ptList = decompose(J0);
+        ptList = random decompose(J0);
         j = 0;
         while (j < #ptList) do (
             if (degree(ptList#j) == 1) then (
@@ -220,8 +220,10 @@ randomPointViaLinearIntersection := opts -> (n1, I1) -> (
             );
             j = j+1;
         );
+        if (debugLevel > 0) then print "randomPointViaLinearIntersection:  failed, looping and trying a new linear space.";
         i = i+1;
     );
+    return false;
 );
 
 randomPointViaGenericProjection = method(Options => {Strategy=>null, Homogeneous => true, MaxChange => 0, Codimension => null, IntersectionAttempts => 20, ProjectionAttempts => 20});
@@ -242,7 +244,7 @@ randomPointViaGenericProjection(ZZ, Ideal) := opts -> (n1, I1) -> (
             if (not pt === false) then (
                 J0 = I1 + sub(ideal apply(dim source phi, i -> (first entries matrix phi)#i - pt#i), target phi); --lift the point to the original locus
                 if dim(J0) == 0 then( --hopefully the preimage is made of points
-                    ptList = decompose(J0);
+                    ptList = random decompose(J0);
                     j = 0;
                     while (j < #ptList) do (
                         if (degree (ptList#j) == 1) then (
@@ -254,9 +256,10 @@ randomPointViaGenericProjection(ZZ, Ideal) := opts -> (n1, I1) -> (
                 )
             );
         );
-        if (debugLevel >0) then print "That didn't work, trying again...";
+        if (debugLevel >0) then print "randomPointViaGenericProjection: That didn't work, trying again...";
         i = i+1;
     );
+    return false;
 );
 
 
