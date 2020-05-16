@@ -330,6 +330,51 @@ doc ///
     	        certifySolutions(f,listOfSols)
 ///		
 
+doc ///
+    	Key
+	    Aoperator
+	Headline
+	    Constructs the operator @TT "A"@ to a system @TT "F"@ and a numerical solution @TT "p"@.
+	Usage
+	    Aoperator(F,p)
+	Inputs
+	    F:PolySystem
+	    p:Point
+	Description
+	    Text
+	    	This function constructs the operator @TT "A"@ from @TO "https://arxiv.org/pdf/1904.07937.pdf"@.
+	    
+	        With probability 1, the numerical solution @TT "p"@ corresponds to a simple multiple root if this operator @TT "A"@ is invertible.
+	    Example
+	    	R = CC[x,y];
+		F = polySystem {x+y^2,y+x^2};
+		p = point {{1e-5,-1e-6}};
+		Aoperator(F,p)
+
+///
+
+doc ///
+    	Key 
+	    certifyCluster
+	Headline
+	    Certifies a cluster of roots in a ball about a numerical solution.
+	Usage
+	    certifyCluster(F,p)
+	Inputs
+	    F:PolySystem
+	    p:Point
+	Description
+	    Text
+	    	This function certifies if a ball about the point @TT "p"@ contains a cluster of roots to @TT "F"@.
+		
+		The output is a sequence of 3 values, @TT "(B,n,r)"@. @TT "B"@ is a boolean value determining whether certification was successful, n is a lower bound on the number of roots (counting multiplicity) in the cluster, and @TT "r"@ is the radius of the ball around @TT "p"@ containing the cluster.
+	    Example
+	    	R = CC[x,y];
+		F = polySystem {x+y^2,y+x^2};
+		p = point {{1e-5,-1e-6}};
+		certifyCluster(F,p)
+///		
+
 
 
 
