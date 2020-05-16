@@ -7,7 +7,8 @@ newPackage(
 	     {Name => "Hiram Lopez", Email => "h.lopezvaldez@csuohio.edu"},
 	     {Name => "Gwyn Whieldon", Email => "gwyn.whieldon@gmail.com"},
 	     {Name => "Taylor Ball", Email => "trball13@gmail.com"},
-	     {Name => "Nathan Nichols", Email => "nathannichols454@gmail.com"}
+	     {Name => "Nathan Nichols", Email => "nathannichols454@gmail.com"},
+	     {Name => "German Vera", Email => "gveram1100@alumno.ipn.mx"}
 	     },
     	HomePage => "https://academic.csuohio.edu/h_lopez/",
     	Headline => "a package for coding theory in M2",
