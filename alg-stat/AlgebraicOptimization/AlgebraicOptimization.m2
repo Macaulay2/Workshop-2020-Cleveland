@@ -46,7 +46,7 @@ export {
   --More Keys
   "lagrangeIdeal",
   "LagrangeVariable","PrimalIdeal","JacobianConstraint","AmbientRing","LagrangeCoordinates","WitnessPrimalIdeal",
-  "Data", "Gradient", "isRootIndex", "MembershipTestResults", "WitnessSuperSet", "SaveFileDirectory",
+  "Data", "Gradient", "WitnessSuperSet", "SaveFileDirectory",
   -- Tolerances
   "MultiplicityTolerance","EvaluationTolerance", "ConditionNumberTolerance",
   "Coordinates", "Factors"
@@ -185,6 +185,7 @@ lagrangeIdeal (Ideal,Ideal) := LagrangeIdeal => opts -> (WI,I) -> (
     aLI
     )
 
+
 TEST ///
    R=QQ[x]; WI=ideal(x)
    lagrangeIdeal(WI)
@@ -208,41 +209,16 @@ assert (sort\\toString\values LR==sort\\toString\{QQ[x, y, u_0, u_1, lambda_0], 
 ///
 
 
-
-
-TEST ///
-R=QQ[x,y]
-I=ideal(x^2+y^2-1)
-LVW = witnessLagrangeVariety(I,I)
---TODO better test
---Check keys 
-assert( sort\\toString\keys LVW == sort\\toString\{JacobianConstraint, LagrangeRing, PrimalIdeal, PrimalWitnessSystem})
---Check values TODO
---Check degree
-assert(4 == degree (LVW))
-
-LVW =witnessLagrangeVariety (I,I, makeLagrangeRing I)
---Check keys 
-assert( sort\\toString\keys LVW == sort\\toString\{JacobianConstraint, LagrangeRing, PrimalIdeal, PrimalWitnessSystem})
---Check values TODO
---Check degree
-assert(4 == degree (LVW))
-
-LVW =witnessLagrangeVariety I
---Check keys 
-assert( sort\\toString\keys LVW == sort\\toString\{JacobianConstraint, LagrangeRing, PrimalIdeal, PrimalWitnessSystem})
---Check values TODO
---Check degree
-assert(4 == degree (LVW))
-
-///
+--------------------
+--LagrangeIdeal Methods
+--------------------
 
 coefficientRing(LagrangeIdeal) := aLI ->coefficientRing aLI#LagrangeRing#AmbientRing
 ring (LagrangeIdeal) := aLI -> ring aLI#JacobianConstraint 
 
--- Degree of LagrangeIdeal
---TODO: How to document this?
+
 degree (List,LagrangeIdeal) := (v,aLI) -> (    
+--TODO: How to document this?
     if degreeLength  aLI.LagrangeRing#PrimalRing==2 then(
 	u:=gens coefficientRing aLI;
 	if #v=!=#u then error "data does not agree with number of parameters. ";
@@ -396,9 +372,91 @@ runBertini(storeBM2Files)
 assert(4==#importSolutionsFile(storeBM2Files))
 ///
 
---code for witness points.
-IsolatedCriticalPointSet = new Type of WitnessSet;---Change this to a ring. 
 
+----------------------------------------
+--Using witness sets code
+----------------------------------------
+
+--Each method in this section will rely on strategies 
+-- These vary by implementation and algorithms used. 
+possibleStategies{
+	0=>regenerateBertiniIsolatedRegularCriticalPointSet,
+	1=>bezoutBertiniIsolatedRegularCriticalPointSet
+	}
+
+
+------------------------------
+--IsolatedCriticalPointSet code
+------------------------------
+
+--code to compute witness points with various strategies.
+IsolatedCriticalPointSet = new Type of WitnessSet;
+--Always has the following keys.
+-- CriticalIdeal
+-- MultiplicityTolerance
+-- EvaluationTolerance
+-- ConditionNumberTolerance
+-- WitnessSuperSet
+-- SaveFileDirectory
+-- Data => u
+-- Gradient => g,
+-- Slice => matrix{{}}
+-- IsIrreducible => null,
+-- Points --An index of points
+-- Strategy
+
+
+isolatedRegularCriticalPointSet = method(Options => {Strategy=>0});--Carry options over?
+isolatedRegularCriticalPointSet (List,List,LagrangeIdeal) := IsolatedCriticalPointSet => opts  -> (u,g,aLI) ->(
+    strategyIndex := new HashTable from possibleStategies;
+    f := strategyIndex#(opts.Strategy);
+    f(u,g,aLI)
+    )
+
+
+------------------------------
+--UpdateWitnessSet code
+------------------------------
+
+--TODO: This needs to be redone like isolatedRegularCriticalPointSet and branch off into Bertini sections. 
+
+updateEvaluationTolerance=(evalTol,ICPS)->(
+    sols:=ICPS.WitnessSuperSet;
+    wpIndex := delete(null,
+	apply(#sols,i->(
+		fn := "evaluation_"|i|"_mt_primal";
+	    	p := sols_i;
+	    	if isEvaluationZero(ICPS.SaveFileDirectory,fn,p,evalTol) then return i
+	    	)));
+    ICPS.EvaluationTolerance = evalTol;
+    ICPS.Points=wpIndex;)
+
+updateMultiplicityTolerance=(multiplicityTol,ICPS)->(
+    sols:=ICPS.WitnessSuperSet;
+    wpIndex := delete(null,
+	apply(#sols,i->(
+	    	p := sols_i;
+		m := p.Multiplicity;
+		if m<=multiplicityTol then return i
+	    	)));
+    ICPS.MultiplicityTolerance=multiplicityTol;
+    ICPS.Points=wpIndex;)
+
+updateConditionNumberTolerance=(conditionNumberTol,ICPS)->(
+    sols:=ICPS.WitnessSuperSet;
+    wpIndex := delete(null,
+	apply(#sols,i->(
+	    	p := sols_i;
+		c := p.ConditionNumber;
+		if c<=conditionNumberTol then return i
+	    	)));
+    ICPS.ConditionNumberTolerance=conditionNumberTol;
+    ICPS.Points=wpIndex;)
+
+
+--------------------
+--bertiniCriticalPointSet code
+--------------------
 
 	
 bertiniCriticalPointSet = (u,g,LVW,bic)->(
@@ -437,7 +495,6 @@ bertiniCriticalPointSet = (u,g,LVW,bic)->(
     	WitnessSuperSet => sols,
 	Points => null,
 	IsIrreducible => null,
-	MembershipTestResults => isRootIndex,
     	CriticalIdeal => null--Err
 	};
     updateEvaluationTolerance(evalTol,ICPS);
@@ -446,12 +503,35 @@ bertiniCriticalPointSet = (u,g,LVW,bic)->(
     ICPS
     )
 
+------------------------------
+--Index the stategies  code
+------------------------------
+--Five functions are needed to have a strategy.
+----sol
+----updateEvaluationTolerance
+----updateMultiplicityTolerance
+----updateConditionNumberTolerance
 
 
+--Solve: From aLI and possible other arguments, outputs an IsolatedCriticalPointSet
+--Update: 
+ Solve, Update, Export
+
+--------------------
+--Stategy=>0
+--------------------
+
+----------
+--
+----------
     --TODO: Fix print display.
 regenerateBertiniIsolatedRegularCriticalPointSet = (u,g,LVW)->(
     bic := {"TrackType"=>0,"UseRegeneration"=>1};
     bertiniCriticalPointSet(u,g,LVW,bic))
+
+----------
+--Stategy=>1 bezoutBertiniIsolatedRegularCriticalPointSet 
+----------
 
 bezoutBertiniIsolatedRegularCriticalPointSet = (u,g,LVW)->(
     bic := {"TrackType"=>0,"UseRegeneration"=>0};
@@ -459,51 +539,8 @@ bezoutBertiniIsolatedRegularCriticalPointSet = (u,g,LVW)->(
 
 
 
-isolatedRegularCriticalPointSet = method(Options => {Strategy=>0});--Carry options over?
-isolatedRegularCriticalPointSet (List,List,LagrangeIdeal) := IsolatedCriticalPointSet => opts  -> (u,g,aLI) ->(
-    strategyIndex:=new HashTable from {
-	0=>regenerateBertiniIsolatedRegularCriticalPointSet,
-	1=>bezoutBertiniIsolatedRegularCriticalPointSet
-	};
-    f:= strategyIndex#(opts.Strategy);
-    f(u,g,aLI)
-    )
 
 
---Updatewitness sets
-
-updateEvaluationTolerance=(evalTol,ICPS)->(
-    sols:=ICPS.WitnessSuperSet;
-    wpIndex := delete(null,
-	apply(#sols,i->(
-		fn := "evaluation_"|i|"_mt_primal";
-	    	p := sols_i;
-	    	if isEvaluationZero(ICPS.SaveFileDirectory,fn,p,evalTol) then return i
-	    	)));
-    ICPS.EvaluationTolerance=evalTol;
-    ICPS.Points=wpIndex;)
-
-updateMultiplicityTolerance=(multiplicityTol,ICPS)->(
-    sols:=ICPS.WitnessSuperSet;
-    wpIndex := delete(null,
-	apply(#sols,i->(
-	    	p := sols_i;
-		m := p.Multiplicity;
-		if m<=multiplicityTol then return i
-	    	)));
-    ICPS.MultiplicityTolerance=multiplicityTol;
-    ICPS.Points=wpIndex;)
-
-updateConditionNumberTolerance=(conditionNumberTol,ICPS)->(
-    sols:=ICPS.WitnessSuperSet;
-    wpIndex := delete(null,
-	apply(#sols,i->(
-	    	p := sols_i;
-		c := p.ConditionNumber;
-		if c<=conditionNumberTol then return i
-	    	)));
-    ICPS.ConditionNumberTolerance=conditionNumberTol;
-    ICPS.Points=wpIndex;)
 
 TEST///
 needsPackage"Bertini"
@@ -904,3 +941,33 @@ witnessLagrangeVariety (Ideal) := LagrangeVarietyWitness => opts -> I -> (
   witnessLagrangeVariety(WI,I,AR,opts)
   )
 *-
+
+
+
+
+TEST ///
+R=QQ[x,y]
+I=ideal(x^2+y^2-1)
+LVW = witnessLagrangeVariety(I,I)
+--TODO better test
+--Check keys 
+assert( sort\\toString\keys LVW == sort\\toString\{JacobianConstraint, LagrangeRing, PrimalIdeal, PrimalWitnessSystem})
+--Check values TODO
+--Check degree
+assert(4 == degree (LVW))
+
+LVW =witnessLagrangeVariety (I,I, makeLagrangeRing I)
+--Check keys 
+assert( sort\\toString\keys LVW == sort\\toString\{JacobianConstraint, LagrangeRing, PrimalIdeal, PrimalWitnessSystem})
+--Check values TODO
+--Check degree
+assert(4 == degree (LVW))
+
+LVW =witnessLagrangeVariety I
+--Check keys 
+assert( sort\\toString\keys LVW == sort\\toString\{JacobianConstraint, LagrangeRing, PrimalIdeal, PrimalWitnessSystem})
+--Check values TODO
+--Check degree
+assert(4 == degree (LVW))
+
+///
