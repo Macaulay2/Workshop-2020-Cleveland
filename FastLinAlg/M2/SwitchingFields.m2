@@ -249,11 +249,13 @@ assert(coefficientRing T === K)
 ///
 
 TEST ///
-R = GF(8)[x,y,z]/(x*y-z^2); 
-S = GF(64)[u,v]/(v^2);
-f = switchFieldMap(S, R, {u, 0, v})
+K = GF(8);
+L = GF(64);
+R = K[x,y,z]/(x*y-z^2); 
+S = L[u,v]/(v^2);
+f = switchFieldMap(S, R, {u, 0, v});
 t = (coefficientRing R)_0;
-assert(f(t)^3+f(t)+1 === 0)
+assert(f(t)^3+f(t)+1 == 0)
 ///
    
 end
