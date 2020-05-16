@@ -30,6 +30,30 @@ equivariantHilbertSeries (Matrix) := Expression => W -> (
     expression(1)/den
 )
 
+
+
+
+deriv = method()
+deriv (Matrix, ZZ) := Thing => (W, d) -> (
+    r := numRows W;
+    z := getSymbol "z";
+    T := getSymbol "T";
+    R := ZZ[z_1..z_r,T, Inverses => true, MonomialOrder=>RevLex];
+    if d==0 then return 1_R;    
+    n := numColumns W;
+    ms := apply(n, i -> R_(flatten entries W_{i}));
+    D := product apply(ms, m -> 1_R-(m*T_R));
+    (M,C) := coefficients(D,Variables=>{T_R});
+    deg := numRows(C) - 1;
+    if d-deg>0 then C = C || map(R^(d-deg),R^1,0);
+    recursion(W,d,R,deg,C)
+    )
+
+recursion = (W, d, R, deg, C) -> (
+    s := -sum(d,k->binomial(d,k)*(d-k)!*C_(d-k,0)*recursion(W,k,R,deg,C))//d!;
+    return s;
+    )
+
 TEST ///
 W=matrix {{-1,0,1},{0,-1,1}};
 d=9;
