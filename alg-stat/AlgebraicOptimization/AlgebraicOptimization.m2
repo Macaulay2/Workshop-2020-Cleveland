@@ -261,6 +261,8 @@ degree (Nothing,LagrangeIdeal) := (a,LVW) -> (
 	)
 degree (LagrangeIdeal) := LVW -> degree(LVW#PrimalIdeal+LVW#JacobianConstraint)
 
+sub(RingElement, LagrangeIdeal) := (f,aLI) -> sub(f,aLI.ConormalRing)
+sub(Ideal, LagrangeIdeal) := (I,aLI) -> sub(I,aLI.ConormalRing)
 
 
 
@@ -293,7 +295,28 @@ TEST///
 
 ///
 
-subPrimalToConormal =()->null
+newPairs=(A,B)->apply(A,B,(i,j)-> i=>j)
+getNumerator = L ->apply(L,i-> if )
+
+
+Gradient = new Type of MutableHashTable
+gradient = method(Options => {});
+--We need this because frac CC[x]**CC[y] does not work.
+gradient (List,List) := Gradient => opts  -> (n,d) ->(
+    new Gradient from {
+	Numerators => n,
+	Denominators => d
+	})
+gradient (List) := Gradient => opts  -> (n) ->gradient(n,apply(n,i->1_(ring i)))
+
+sub(Gradient,LagrangeIdeal) =  (g,aLI) -> (
+    n := apply(g.Numerators,i->sub(i,aLI));
+    d := apply(g.Denominators,i->sub(i,aLI));
+    gradient(n,d)    
+    )    
+    
+
+
 --witnessCriticalVariety and Optimization degree
 CriticalIdeal = new Type of MutableHashTable
 criticalIdeal = method(Options => {});
@@ -303,9 +326,10 @@ criticalIdeal (List,List,LagrangeIdeal) := CriticalIdeal => opts  -> (v,g,aLI) -
 	if #v =!= #u then error "data does not agree with number of parameters. ";
     	LR := aLI#LagrangeRing;
 	y := aLI.ConormalRing.Coordinates#1;
-	if #y =!= #g then error "gradient does not agree with number of dual variables. ";
+	if #y =!= #g.Numerators then error "gradient numerators does not agree with number of dual variables. ";
+	if #y =!= #g.Denominators then error "gradient denominators does not agree with number of dual variables. ";
     	factorVars := aLI.ConormalRing.Factors/gens//(i->new MutableList from i);
-    	gradSub := apply(y,g,(i,j)->subPrimalToConormal(i,aLI)=>subPrimalToConormal(j,aLI));	
+    	gradSub := apply(y,g,(i,j) -> subPrimalToConormal(i,aLI) => subPrimalToConormal(j,aLI));	
 	dataSub :=apply(u,v,(i,j)->i=>j);
 	--TODO: Issue with denominators.
 	CI := new CriticalIdeal from {
