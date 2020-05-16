@@ -1048,7 +1048,7 @@ krawczykMethod(f,o)
 
 
 beginDocumentation()
-load ("./NumericalCertification/doc.m2")
+load ("./NumericalCertification/Documents/DocNumericalCertification.m2")
 end
 
 
