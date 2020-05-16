@@ -28,7 +28,6 @@ export {
     "action",
     "actionMatrix",
     "finiteAction",
-    "generatorsFromHilbertIdeal",
     "group",
     "hilbertIdeal",
     "invariants",
@@ -177,7 +176,31 @@ addHook(FiniteGroupAction, symbol size, G -> break (
     apply(m, i -> relators_i_i)
     ))
 
-
+addHook(LinearlyReductiveAction, symbol hilbertIdeal, V -> break (
+    A := groupIdeal V;
+    M := actionMatrix V;
+    R := ring V;
+    if (numColumns M =!= numRows M) or (numRows M =!= #(gens R)) then print "Matrix size does not match polynomial ring";
+    -- first, some information about the inputs:
+    n := #(gens R);
+    K := coefficientRing(R);
+    l := #(gens ring M);
+    
+    -- now make the enlarged polynomial ring we'll work in, and convert inputs to that ring
+    x := local x, y := local y, z := local z;
+    S := K[x_1..x_n, y_1..y_n, z_1..z_l];
+    M' := sub(M, apply(l, i -> (ring M)_i => z_(i+1)));
+    A' := sub(A, apply(l, i -> (ring M)_i => z_(i+1)));
+    
+    -- the actual algorithm follows
+    J' := apply(n, i -> y_(i+1) - sum(n, j -> M'_(j,i) * x_(j+1)));
+    J := A' + ideal(J');
+    I := eliminate(apply(l, i -> z_(i+1)),J);
+    II := sub(I, apply(n, i -> y_(i+1) => 0));
+    
+    -- return the result back in the user's input ring R
+    trim(sub(II, join(apply(n, i -> x_(i+1) => R_i),apply(n, i -> y_(i+1) => 0), apply(l, i -> z_(i+1) => 0))))
+))
 
 -------------------------------------------
 --- GroupAction methods -------------------
@@ -370,7 +393,7 @@ linearlyReductiveAction (Ideal, Matrix, PolynomialRing) := LinearlyReductiveActi
 
 -------------------------------------------
 
-net LinearlyReductiveAction := V -> net (ring V.groupIdeal)|"/"|net V.groupIdeal|" via "|net V.actionMatrix
+net LinearlyReductiveAction := V -> net V.ring|"<--"|net (ring V.groupIdeal)|"/"|net V.groupIdeal|" via "|net V.actionMatrix
 
 actionMatrix = method()
 
@@ -384,86 +407,8 @@ groupIdeal LinearlyReductiveAction := Ideal => V -> V.groupIdeal
 ---------------------------------------------
 
 hilbertIdeal = method()
-hilbertIdeal (LinearlyReductiveAction) := Ideal => V -> (
-    A := groupIdeal V;
-    M := actionMatrix V;
-    R := ring V;
-    if (numColumns M =!= numRows M) or (numRows M =!= #(gens R)) then print "Matrix size does not match polynomial ring";
-    -- first, some information about the inputs:
-    n := #(gens R);
-    K := coefficientRing(R);
-    l := #(gens ring M);
-    
-    -- now make the enlarged polynomial ring we'll work in, and convert inputs to that ring
-    x := local x, y := local y, z := local z;
-    S := K[x_1..x_n, y_1..y_n, z_1..z_l];
-    M' := sub(M, apply(l, i -> (ring M)_i => z_(i+1)));
-    A' := sub(A, apply(l, i -> (ring M)_i => z_(i+1)));
-    
-    -- the actual algorithm follows
-    J' := apply(n, i -> y_(i+1) - sum(n, j -> M'_(j,i) * x_(j+1)));
-    J := A' + ideal(J');
-    I := eliminate(apply(l, i -> z_(i+1)),J);
-    II := sub(I, apply(n, i -> y_(i+1) => 0));
-    
-    -- return the result back in the user's input ring R
-    return trim(sub(II, join(apply(n, i -> x_(i+1) => R_i),apply(n, i -> y_(i+1) => 0), apply(l, i -> z_(i+1) => 0))))
-)
 
-
--------------------------------------------
-
-generatorsFromHilbertIdeal = method()
-generatorsFromHilbertIdeal (LinearlyReductiveAction, Ideal) := List => (V, I) -> (
-    if ring I =!= ring V then error ("generatorsFromHilbertIdeal: second input must be the Hilbert ideal in ",ring V);
-    A := groupIdeal V;
-    M := actionMatrix V;
-    R := ring(I);
-    x := local x, z := local z;
-    n := numColumns M;
-    K := coefficientRing(ring(I));
-    l := #(gens ring M);
-    X := K[x_1..x_n];
-    
-    I' := flatten entries gens sub(I, apply(n, i -> (ring I)_i => x_(i+1)));
-    
-    S := K[x_1..x_n, z_1..z_l];
-    M' := sub(M, apply(l, i -> (ring M)_i => z_(i+1)));
-    A' := sub(A, apply(l, i -> (ring M)_i => z_(i+1)));
-    
-    degreeList := sort toList set apply(I', i -> first degree i);
-    generatorList := {};
-    
-    local d;
-    while (#degreeList > 0) do(
-	d = degreeList#0;
-    	Id := select(I', i -> first degree i == d);
-	
-	alreadyInv := true;
-	j := 0;
-	while alreadyInv and Id#?j do(
-	    if not isInvariant(Id#j,V) then alreadyInv = false;
-	    j = j+1
-	);
-    	if not alreadyInv then (
-	    L := sub(basis(d,X), S);
-    	    r := numColumns L;
-    	    NFDL := apply(r, i -> (sub(L_(0,i), apply(n, j -> x_(j+1) => sum(n, k -> M'_(k,j) * x_(k+1)))) - L_(0,i)) % A');
-    	    monomialsNFDL := flatten entries monomials(matrix{NFDL});
-    	    m := #monomialsNFDL;
-    	    B := matrix(apply(m, i -> apply(r, j -> coefficient(monomialsNFDL#i, NFDL#j))));
-    	    KB := gens kernel B;
-	    generatorList = join(generatorList, flatten entries sub(L * KB, join(apply(n, i -> x_(i+1) => R_i), apply(l, i -> z_(i+1) => 0))))
-	) else (
-	    use X;
-	    generatorList = join(generatorList, apply(Id, f -> sub(f, apply(n, i -> x_(i+1) => R_i))));
-	    use S
-	);
-    	degreeList = drop(degreeList,1)
-    );
-    return generatorList
-)
-
+hilbertIdeal LinearlyReductiveAction := { } >> opts -> (cacheValue (symbol hilbertIdeal)) (V -> runHooks(LinearlyReductiveAction, symbol hilbertIdeal, V))
 
 -------------------------------------------
 --- Computing invariants ------------------
@@ -596,6 +541,7 @@ invariants TorusAction := List => T -> (
 
 -------------------------------------------
 
+--Prune and trim seem to alter existing generators. This just removes redundant ones:
 manualTrim = method(TypicalValue => List)
 
 manualTrim (List) := List => L -> (
@@ -611,10 +557,65 @@ manualTrim (List) := List => L -> (
 
 -------------------------------------------
 
-invariants (LinearlyReductiveAction) := List => V -> (
-    return manualTrim generatorsFromHilbertIdeal(V,hilbertIdeal(V))
+--Computes an *additive* basis for the degree d part of the invariant ring.
+invariants (LinearlyReductiveAction, ZZ) := List => (V,d) -> (
+    M := actionMatrix V;
+    R := ring V;
+    A := groupIdeal V;
+    n := dim V;
+    K := coefficientRing ring groupIdeal V;
+    x := local x, z := local z;
+    X := K[x_1..x_n];
+    
+    l := #(gens ring M);
+    S := K[x_1..x_n, z_1..z_l];
+    M' := sub(M, apply(l, i -> (ring M)_i => z_(i+1)));
+    A' := sub(A, apply(l, i -> (ring M)_i => z_(i+1)));
+    
+    L := sub(basis(d,X), S);
+    r := numColumns L;
+    NFDL := apply(r, i -> (sub(L_(0,i), apply(n, j -> x_(j+1) => sum(n, k -> M'_(k,j) * x_(k+1)))) - L_(0,i)) % A');
+    monomialsNFDL := flatten entries monomials(matrix{NFDL});
+    m := #monomialsNFDL;
+    B := matrix(apply(m, i -> apply(r, j -> coefficient(monomialsNFDL#i, NFDL#j))));
+    KB := gens kernel B;
+    return flatten entries sub(L * KB, join(apply(n, i -> x_(i+1) => R_i), apply(l, i -> z_(i+1) => 0)))
 )
 
+--Uses the preceding function together with hilbertIdeal to compute a set of generating invariants.
+invariants (LinearlyReductiveAction) := List => V -> (
+    I := hilbertIdeal V;
+    R := ring V;
+    n := dim V;
+    K := coefficientRing ring groupIdeal V;
+    x := local x;
+    X := K[x_1..x_n];
+    
+    I' := flatten entries gens sub(I, apply(n, i -> (ring I)_i => x_(i+1)));
+    
+    degreeList := sort toList set apply(I', i -> first degree i);
+    generatorList := {};
+    
+    local d;
+    while (#degreeList > 0) do(
+	d = degreeList#0;
+    	Id := select(I', i -> first degree i == d);
+	
+	alreadyInv := true;
+	j := 0;
+	while alreadyInv and Id#?j do(
+	    if not isInvariant(Id#j,V) then alreadyInv = false;
+	    j = j+1
+	);
+    	if not alreadyInv then (
+	    generatorList = join(generatorList, invariants(V,d))
+	) else (
+	    generatorList = join(generatorList, apply(Id, f -> sub(f, apply(n, i -> x_(i+1) => R_i))));
+	);
+    	degreeList = drop(degreeList,1)
+    );
+    return manualTrim generatorList
+)
 
 -------------------------------------------
 
@@ -1047,14 +1048,16 @@ S = QQ[a,b,c,d]
 idealSL2 = ideal(a*d - b*c - 1)
 SL2std = matrix{{a,b},{c,d}}
 R1 = QQ[x_1..x_2]
-V1 = linearlyReductiveAction(idealSL2,SL2std,R1)
-invariants V1
+time V1 = linearlyReductiveAction(idealSL2,SL2std,R1)
+time hilbertIdeal V1
 
 needsPackage "SchurFunctors"
-n = 2 -- 4 takes a second or so, 5 takes a long time (I didn't wait around for it to finish)
+n = 3 -- 4 takes a second or so, 5 takes a long time (I didn't wait around for it to finish)
 Rn = QQ[x_0..x_n]
 Vn = linearlyReductiveAction(idealSL2, schur({n}, SL2std), Rn)
-invariants Vn
+time hilbertIdeal Vn
+invariants(Vn,6)
+isInvariant(x_0,Vn)
 
 needsPackage "InvariantsDev"
 R1 = QQ[a_1..a_3]
