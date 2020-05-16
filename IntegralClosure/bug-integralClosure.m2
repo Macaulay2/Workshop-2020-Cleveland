@@ -38,6 +38,7 @@ integralClosure(Ideal,ZZ) := Ideal => o -> (I,D) -> integralClosure(I, I_0, D, o
 integralClosure(Ideal,RingElement) := Ideal => o -> (I,a) -> integralClosure(I, a, 1, o)
 integralClosure(Ideal) := Ideal => o -> I -> integralClosure(I, I_0, 1, o)
 
+extendIdeal = method()
 extendIdeal(Matrix) := Ideal => phi -> ( --This method is WRONG on integralClosure ideal"a2,b2".
     --input: f: (module I) --> M, an inclusion from an ideal 
     --to a module that is isomorphic to the inclusion of I into an ideal J containing I.
@@ -196,4 +197,31 @@ Ig = content(g',S_1)
 Ifg = content(f'*g',S_1)
 assert((gens(If*Ig) % Ifg)!=0)
 assert(gens(If*Ig) % integralClosure Ifg == 0)
+
+-------------------------
+--Brian Harbourne's examples
+---------------------------
+restart
+needs "bug-integralClosure.m2"
+R=QQ[a,b,c,d,e,f]
+I=ideal(a*b*d,a*c*e,b*c*f,d*e*f);
+K1=integralClosure(I,1);
+K2=integralClosure(I,2);
+K3=integralClosure(I,3);
+K4=integralClosure(I,4);
+K5=integralClosure(I,5);
+---------------------------
+restart
+needs "bug-integralClosure.m2"
+R=ZZ/32003[a,b,c,d,e,f,g];
+I=ideal(a*b*d,b*c*e,c*d*f,a*e*f,a*c*g,d*e*g,b*f*g);
+time IC=integralClosure(I,2);
+----------------------
+restart
+needs "bug-integralClosure.m2"
+R=QQ[x,y,z];
+I=ideal(x*(y^3-z^3),y*(x^3-z^3),z*(x^3-y^3));
+IC2=integralClosure(I,2);
+IC3=integralClosure(I,3);
+
 
