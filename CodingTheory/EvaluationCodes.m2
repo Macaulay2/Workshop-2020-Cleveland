@@ -120,23 +120,51 @@ evCodeGraph (Ring,Matrix,List) := evCodeGraph  => opts -> (F,M,S) -> (
 
     G := matrix apply(P,i->flatten entries sub(matrix(R,{S}),matrix(F,{i}))); -- Evaluate the elements in S over the elements on P.
     
-    
-    new EvaluationCode from{
-	symbol AmbientSpace => F^(#P),
-	symbol Points => P,
-	symbol VanishingIdeal => I,
-	symbol PolynomialSet => S,
-	symbol Code => image G
-	}
     )
 
-----------------------This an example of Reed-Muller-type code of degree 1--------------------
-G = graph({1,2,3,4}, {{1,2},{2,3},{3,4},{4,3}})
-B=incidenceMatrix G
-S=ZZ/2[t0,t1,t2,t3]
-evCodeGraph(ZZ/2,B,flatten entries basis(1,S))
-------------------------------------------------------------------
 
+
+TEST ///
+ -- Reed-Muller-type code over a graph 
+   G = graph({1,2,3,4}, {{1,2},{2,3},{3,4},{4,3}})
+   B=incidenceMatrix G
+   S=ZZ/2[t_(0)..t_(#vertexSet G-1)]
+   Y=evCodeGraph(coefficientRing S,B,flatten entries basis(1,S))
+   assert(((Y_(0,0)==1)==(Y_(0,0)==Y_(0,1)))==((Y_(1,2)==1)==(Y_(1,2)==Y_(1,1)))==((Y_(2,2)==1)==(Y_(2,2)==Y_(2,3))))
+   assert(((Y_(0,2)==0)==(Y_(0,2)==Y_(0,3)))==((Y_(1,0)==0)==(Y_(1,0)==Y_(1,3)))==((Y_(2,0)==0)==(Y_(2,0)==Y_(2,1))))
+///
+    
+    
+    
+    document {
+    Key => {evCodeGraph, (evCodeGraph,Ring,Matrix,List)},
+    Headline => "Generates the Reed-Muller code over a graph.",
+    Usage => "evCodeGraph(F,M,S)",
+    Inputs => {
+	"F" => Ring => {"A base Field."},
+	"M" => Matrix => {"Incidence matrix of the graph G."},
+	"S" => List => {"A set of polynomials."}
+	},
+    Outputs => {
+	"G" => Matrix => {"Reed-Muller-type code over the graph G."}
+	},
+    "Returns the Reed-Muller-type code over the graph G.",
+    EXAMPLE {
+   "G = graph({1,2,3,4}, {{1,2},{2,3},{3,4},{4,3}});",
+   "B=incidenceMatrix G;",
+   "S=ZZ/2[t_(0)..t_(#vertexSet G-1)];",
+   "Y=evCodeGraph(coefficientRing S,B,flatten entries basis(1,S))"
+	}
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     
        
@@ -157,25 +185,44 @@ SetPolySys:=apply(0..length SetPoly-1, x->polySystem{SetPoly#x});
 XX:=apply(X,x->point{x});
 C:=apply(apply(SetPolySys,y->apply(0..length XX -1,x->(flatten entries evaluate(y,XX#x))#0)),toList);
 G:=transpose matrix{C};
-image G;
-
-new EvaluationCode from{
-	symbol AmbientSpace => K^(#X),
-	symbol IncidenceMatrix => M,
-	symbol Code => image G
-	}
-
-
-
+image G
 )
 
 
 
-----------------------This an example of Reed-Muller-type code of degree 4--------------------
-G = graph({1,2,3,4}, {{1,2},{2,3},{3,4},{4,3}})
-B=incidenceMatrix G
-codeGraph(B,4,2)
-------------------------------------------------------------------
+
+TEST ///
+ -- Reed-Muller-type code over a graph 
+   G = graph({1,2,3,4}, {{1,2},{2,3},{3,4},{4,3}})
+   B=incidenceMatrix G
+   codeGraph(B,1,2)
+   Y=generators codeGraph(B,1,2)
+   assert(((Y_(0,0)==1)==(Y_(0,0)==Y_(0,1)))==((Y_(1,2)==1)==(Y_(1,2)==Y_(1,1)))==((Y_(2,2)==1)==(Y_(2,2)==Y_(2,3))))
+   assert(((Y_(0,2)==0)==(Y_(0,2)==Y_(0,3)))==((Y_(1,0)==0)==(Y_(1,0)==Y_(1,3)))==((Y_(2,0)==0)==(Y_(2,0)==Y_(2,1))))
+///
+
+
+
+document {
+    Key => {codeGraph, (codeGraph,Matrix,ZZ,ZZ)},
+    Headline => "Generates the Reed-Muller code over a graph.",
+    Usage => "codeGraph(M,d,p)",
+    Inputs => {
+	"M" => Matrix => {"Incidence matrix of the graph G."},
+	"d" => ZZ => {"Degree of the code."},
+	"p" => ZZ => {"Characteristic of the field."}
+	},
+    Outputs => {
+	"F" => Module => {"Free module."}
+	},
+    "Returns the Reed-Muller-type code over the graph G.",
+    EXAMPLE {
+   "G = graph({1,2,3,4}, {{1,2},{2,3},{3,4},{4,3}});",
+   "B=incidenceMatrix G;",
+   "codeGraph(B,1,2);",
+   "Y=generators codeGraph(B,1,2)"
+	}
+    }
 
 
 ----------The incidence matrix code of a Graph G-------
@@ -202,26 +249,57 @@ SetPolSys:=apply(0..length SetPol-1, x->polySystem{SetPol#x});
 XX:=apply(X,x->point{x});
 C:=apply(apply(SetPolSys,y->apply(0..length XX -1,x->(flatten entries evaluate(y,XX#x))#0)),toList);
 G:=transpose matrix{C};
-image G;
-
-
-
-  new EvaluationCode from{
-	symbol AmbientSpace => K^(#X),
-	symbol IncidenceMatrix => M,
-	symbol Code => image G
-	}
-
-
+image G
 )
 
-------------------
---This an example of a incidence matrix code---------
---Petersen graph
+
+
+
+
+
+
+
+TEST ///
+ --This an example of a incidence matrix code---------
+--Petersen graph 
 G=graph({1,2,3,4,5,6,7,8,9,10}, {{1,2},{1,3},{1,4},{1,5},{1,6},{2,3},{2,4},{2,5},{2,7},{3,4},{3,5},{3,6},{3,8},{4,5},{4,9},{5,10},{6,7},{6,10},{7,8},{8,9},{9,10}})
 M=incidenceMatrix G
 codeGraphInc(M,3)
+   assert(codeGraphInc(M,3)==codeGraph(M,1,3))
+   
+///
+
+
+document {
+    Key => {codeGraphInc, (codeGraphInc,ZZ,ZZ)},
+    Headline => "Generates The incidence matrix code of a graph G.",
+    Usage => "codeGraphInc(M,p)",
+    Inputs => {
+	"M" => Matrix => {"Incidence matrix of the graph G."},
+	"p" => ZZ => {"Characteristic of the field."}	
+	},
+    Outputs => {
+	"C" => Module => {"The incidence matrix code."}
+	},
+    "Returns The incidence matrix code of a graph G.",
+    EXAMPLE {
+   "--Petersen graph;", 
+   "G=graph({1,2,3,4,5,6,7,8,9,10}, {{1,2},{1,3},{1,4},{1,5},{1,6},{2,3},{2,4},{2,5},{2,7},{3,4},{3,5},{3,6},{3,8},{4,5},{4,9},{5,10},{6,7},{6,10},{7,8},{8,9},{9,10}});",
+   "M=incidenceMatrix G;",
+   "codeGraphInc(M,3)"
+	}
+    }
+
+
+
+
+
+
+
+
+
 ---------------------------------------------
+
 
 
 
