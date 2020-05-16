@@ -24,6 +24,9 @@ newPackage(
 -- Idea: Have the symbolic methods ready and call this package AlgebraicOptimizationDegree. 
 -- If things go well, then we can do a JSAG submission called AlgebraicOptimization, which is an extended version that computes critical points 
 
+--------------------
+--Exports
+--------------------
 
 export {
   -- Methods
@@ -48,6 +51,12 @@ export {
   "MultiplicityTolerance","EvaluationTolerance", "ConditionNumberTolerance",
   "Coordinates", "Factors"
 }
+
+
+
+--------------------
+--ConormalRing
+--------------------
 
 ConormalRing = new Type of MutableHashTable;
 --a ConormalRing always has the following keys: 
@@ -82,6 +91,9 @@ TEST ///
 
 ///
 
+--------------------
+--projectiveDual
+--------------------
 
 projectiveDual = method(Options => options conormalRing);
 -- (Alg. 5.1 in SIAM book)
@@ -107,6 +119,10 @@ S = ring dualI
 assert( dualI == ideal(S_0^2 - S_1^2 - S_2^2)) 
 ///
 
+--------------------
+--multiDegreeEDDegree
+--------------------
+
 
 multiDegreeEDDegree = method();
 multiDegreeEDDegree Ideal := ZZ => I -> (
@@ -124,7 +140,9 @@ assert(multiDegreeEDDegree(J) == 13)
 
 
 
+------------------------------
 -- Code for Lagrange multipliers
+------------------------------
 
 LagrangeIdeal = new Type of MutableHashTable; 
 --LagrangeIdeal always have these keys (Is for the parametric version)
@@ -135,10 +153,9 @@ LagrangeIdeal = new Type of MutableHashTable;
 --Optional keys
 --  PrimalIdeal   (Parameterization)
 
-newRingFromSymbol = (n,s,kk)->(
-    kk[s_0..s_(n - 1)]
-    )
-
+--------------------
+--LagrangeIdeal code
+--------------------
 
 lagrangeIdeal = method(Options => {DualVariable => null,LagrangeVariable => null});
 -- Creates a LagrangeRing from a primal ring R
@@ -192,25 +209,6 @@ assert (sort\\toString\values LR==sort\\toString\{QQ[x, y, u_0, u_1, lambda_0], 
 
 
 
-isCofficientRingInexact = R -> (
- -- This checks if kk is a ComplexField or RealField 
-    kk := ultimate(coefficientRing,R);
---    instance(kk,InexactField)--This is probably better, but not sure. 
-    member(kk,{ComplexField,RealField}) 
-    )
-
-
---We could also take a random linear combination. 
-findRegularSequence = I -> (
-    c:=codim I;
-    WI := sub(ideal(),ring I);
-    b:=0;
-    scan(numgens I, i -> (
-	J :=  WI + ideal I_i;
-	if codim J == b + 1 then (WI=J; b=b+1)
-	)
-    );
-    WI)
 
 TEST ///
 R=QQ[x,y]
@@ -295,13 +293,15 @@ TEST///
 
 ///
 
-newPairs=(A,B)->apply(A,B,(i,j)-> i=>j)
-getNumerator = L ->apply(L,i-> if )
 
+
+--------------------
+--Gradient code
+--------------------
 
 Gradient = new Type of MutableHashTable
-gradient = method(Options => {});
 --We need this because frac CC[x]**CC[y] does not work.
+gradient = method(Options => {});
 gradient (List,List) := Gradient => opts  -> (n,d) ->(
     new Gradient from {
 	Numerators => n,
@@ -314,9 +314,11 @@ sub(Gradient,LagrangeIdeal) =  (g,aLI) -> (
     d := apply(g.Denominators,i->sub(i,aLI));
     gradient(n,d)    
     )    
+
+--------------------
+--CriticalIdeal code
+--------------------
     
-
-
 --witnessCriticalVariety and Optimization degree
 CriticalIdeal = new Type of MutableHashTable
 criticalIdeal = method(Options => {});
@@ -397,17 +399,7 @@ assert(4==#importSolutionsFile(storeBM2Files))
 --code for witness points.
 IsolatedCriticalPointSet = new Type of WitnessSet;---Change this to a ring. 
 
-isEvaluationZero = (dir,fn,p,evalTol)->(
-	    isRoot:= true;	    
-	    scanLines(line->(
-		     num := separateRegexp("[e ]", line);
-		     if #num==4 
-		     then (if min(value(num#1),value(num#3))>evalTol then isRoot=false)
-		     else if #num>1 then error("parsing file incorrectly"|line)
-		     ),
-		     dir|"/"|fn
-		     );		     
-	    isRoot)
+
 	
 bertiniCriticalPointSet = (u,g,LVW,bic)->(
     evalTol :=-6;
@@ -562,6 +554,57 @@ LVW = witnessLagrangeVariety(WI,I)
 ring LVW
 needsPackage"Bertini"
 ///
+
+
+--------------------
+--Helper functions
+--------------------
+
+--Used to read Bertini function files which contain information about evaluations of a point. 
+isEvaluationZero = (dir,fn,p,evalTol)->(
+	    isRoot:= true;	    
+	    scanLines(line->(
+		     num := separateRegexp("[e ]", line);
+		     if #num==4 
+		     then (if min(value(num#1),value(num#3))>evalTol then isRoot=false)
+		     else if #num>1 then error("parsing file incorrectly"|line)
+		     ),
+		     dir|"/"|fn
+		     );		     
+	    isRoot)
+
+
+--Used to easily create options.
+newPairs=(A,B)->apply(A,B,(i,j)-> i=>j)
+
+
+--Used to determine if a symbolic method can be used
+isCofficientRingInexact = R -> (
+ -- This checks if kk is a ComplexField or RealField 
+    kk := ultimate(coefficientRing,R);
+--    instance(kk,InexactField)--This is probably better, but not sure. 
+    member(kk,{ComplexField,RealField}) 
+    )
+
+
+--Used to find WI symbollically without using randomization. 
+--Instead: We could also take a random linear combination. 
+findRegularSequence = I -> (
+    c:=codim I;
+    WI := sub(ideal(),ring I);
+    b:=0;
+    scan(numgens I, i -> (
+	J :=  WI + ideal I_i;
+	if codim J == b + 1 then (WI=J; b=b+1)
+	)
+    );
+    WI)
+
+
+
+newRingFromSymbol = (n,s,kk)->(
+    kk[s_0..s_(n - 1)]
+    )
 
 
 
