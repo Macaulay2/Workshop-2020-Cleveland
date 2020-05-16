@@ -19,6 +19,7 @@ newPackage(
 )
 
 
+
 export {
   -- Methods
   "projectiveDual",
@@ -35,7 +36,7 @@ export {
   "LagrangeVarietyWitness","LagrangeRing",
   "isolatedRegularCriticalPointSet",
   --More Keys
-  "newLagrangeIdeal",
+  "lagrangeIdeal",
   "LagrangeVariable","PrimalIdeal","JacobianConstraint","AmbientRing","LagrangeCoordinates","WitnessPrimalIdeal",
   "Data", "Gradient", "isRootIndex", "MembershipTestResults", "WitnessSuperSet", "SaveFileDirectory",
   -- Tolerances
@@ -118,23 +119,25 @@ assert(multiDegreeEDDegree(J) == 13)
 
 
 
---Code for Lagrange multipliers
+-- Code for Lagrange multipliers
 
+LagrangeIdeal = new Type of MutableHashTable; 
+--LagrangeIdeal always have these keys (Is for the parametric version)
+--  JacobianConstraint 
+--  Ideal 
+--  CornomalRing
+--  WitnessPrimalIdeal  (Ideal so that the parameterization is generically finite to one and we have a sqare system.)
+--Optional keys
+--  PrimalIdeal   (Parameterization)
 
-LagrangeIdeal = new Type of MutableHashTable;---Change this to a ring. 
-LagrangeVarietyWitness = new Type of MutableHashTable;
---LagrangeIdeal always have these keys
--- WitnessPrimalIdeal, JacobianConstraint, Ideal, CornomalRing
 newRingFromSymbol = (n,s,kk)->(
     kk[s_0..s_(n - 1)]
     )
 
---TODO: decide if we want to create or make. 
---constructors of types are lower case and the name of the type. 
 
-newLagrangeIdeal = method(Options => {DualVariable => null,LagrangeVariable => null});
+lagrangeIdeal = method(Options => {DualVariable => null,LagrangeVariable => null});
 -- Creates a LagrangeRing from a primal ring R
-newLagrangeIdeal Ideal := LagrangeIdeal => opts -> WI -> (
+lagrangeIdeal Ideal := LagrangeIdeal => opts -> WI -> (
     CR := conormalRing ring WI;--Pass options?
     lambda := if opts.LagrangeVariable === null then symbol lambda else opts.LagrangeVariable;
     c := numgens WI;
@@ -149,29 +152,29 @@ newLagrangeIdeal Ideal := LagrangeIdeal => opts -> WI -> (
     J2 := ideal (sub(matrix{{1}|Lam},CR.AmbientRing)*jacBar);
     aLI := new LagrangeIdeal from {};
     aLI.Ideal =    (J2+sub(WI,CR.AmbientRing));
-    aLI.CornomalRing =CR;
+    aLI.ConormalRing =CR;
     aLI.WitnessPrimalIdeal = WI;
     aLI.JacobianConstraint = J2;
     aLI)
 
-newLagrangeIdeal (Ideal,Ideal) := LagrangeIdeal => opts -> (WI,I) -> (
-    aLI := newLagrangeIdeal(WI);
+lagrangeIdeal (Ideal,Ideal) := LagrangeIdeal => opts -> (WI,I) -> (
+    aLI := lagrangeIdeal(WI);
     aLI.PrimalIdeal = I;
     aLI
     )
 
 TEST ///
    R=QQ[x]; WI=ideal(x)
-   newLagrangeIdeal(WI)
+   lagrangeIdeal(WI)
    peek oo
 
    R=QQ[x]; WI=ideal(x);I=ideal (x,x)
-   aLI = newLagrangeIdeal(WI,I)
+   aLI = agrangeIdeal(WI,I)
    peek oo
 
 R=QQ[x,y]
 I=ideal(x^2+y^2-1)
-aLI = newLagrangeIdeal(I)
+aLI = lagrangeIdeal(I)
 degree aLI.Ideal
 peek 
 aLI.Ideal
@@ -204,41 +207,6 @@ findRegularSequence = I -> (
     );
     WI)
 
---rename to lagrangeVarietyWitness.
---langrangeRing Could inherit from conormalRing. 
---This is analagous to conormal variety.
----Variety WI contains the variety of I. 
--*
-witnessLagrangeVariety = method(Options => {});
--- Computes a witness system for a lagrange variety 
--- AR plays the role of conormalRing
-witnessLagrangeVariety (Ideal,Ideal, LagrangeRing) := LagrangeVarietyWitness => opts -> (WI,I,AR) -> (
-  if not ring I === AR.PrimalRing then error "expected ideal in primal ring";  
-  c := #AR.LagrangeCoordinates;
-  if numgens WI =!= c then error "expected numgens WI to equal the number of lagrange coordinates";  
-  jacWI := sub(diff(matrix{AR.PrimalCoordinates}, transpose gens WI), AR.AmbientRing);
-  jacBar := sub(matrix{AR.DualCoordinates}, AR.AmbientRing) || sub(jacWI,AR.AmbientRing);
-  J0 := sub(WI,AR.AmbientRing);
-  J1 := sub(I,AR.AmbientRing);
-  J2 := ideal (sub(matrix{{1}|AR.LagrangeCoordinates},AR.AmbientRing)*jacBar);
-  new LagrangeVarietyWitness from {
-      LagrangeRing =>AR,
-      WitnessPrimalIdeal =>J0,
-      PrimalIdeal=>J1,
-      JacobianConstraint=>J2}
-)
-witnessLagrangeVariety (Ideal,Ideal) := LagrangeVarietyWitness => opts -> (WI,I) -> (
-    AR:=makeLagrangeRing(numgens WI,ring I,opts);
-    witnessLagrangeVariety(WI,I,AR,opts)
-    )
-witnessLagrangeVariety (Ideal) := LagrangeVarietyWitness => opts -> I -> (
-  R:= ring I; 
-  if isCofficientRingInexact(R) then error"Not implemented for RR or CC coefficient ring. Try makeLagrangeRing(ZZ,Ring).";
-  WI := findRegularSequence I;--This may not be generically reduced.
-  AR:=makeLagrangeRing(numgens WI,R,opts);
-  witnessLagrangeVariety(WI,I,AR,opts)
-  )
-*-
 TEST ///
 R=QQ[x,y]
 I=ideal(x^2+y^2-1)
@@ -266,28 +234,27 @@ assert(4 == degree (LVW))
 
 ///
 
-coefficientRing(LagrangeVarietyWitness) := LVW ->coefficientRing LVW#LagrangeRing#AmbientRing
-ring (LagrangeVarietyWitness) := LVW -> ring LVW#JacobianConstraint 
+coefficientRing(LagrangeIdeal) := aLI ->coefficientRing aLI#LagrangeRing#AmbientRing
+ring (LagrangeIdeal) := aLI -> ring aLI#JacobianConstraint 
 
--- Degree of LagrangeVarietyWitness
+-- Degree of LagrangeIdeal
 --TODO: How to document this?
-
-degree (List,LagrangeVarietyWitness) := (v,LVW) -> (    
-    if degreeLength  LVW.LagrangeRing#PrimalRing==2 then(
-	u:=gens coefficientRing LVW;
+degree (List,LagrangeIdeal) := (v,aLI) -> (    
+    if degreeLength  aLI.LagrangeRing#PrimalRing==2 then(
+	u:=gens coefficientRing aLI;
 	if #v=!=#u then error "data does not agree with number of parameters. ";
     	subData :=apply(u,v,(i,j)->i=>j);
-	return degree sub(LVW#PrimalIdeal+LVW#JacobianConstraint,subData)
+	return degree sub(aLI#PrimalIdeal+aLI#JacobianConstraint,subData)
 	)
     else error"degreeLength is not 2."
     )
-degree (Nothing,LagrangeVarietyWitness) := (a,LVW) -> (
+degree (Nothing,LagrangeIdeal) := (a,LVW) -> (
 	u:=gens coefficientRing ring (LVW#PrimalIdeal);
 	kk:=ultimate(coefficientRing,LVW);
     	v :=apply(u,i->random kk);
 	degree(v,LVW)
 	)
-degree (LagrangeVarietyWitness) := LVW -> degree(LVW#PrimalIdeal+LVW#JacobianConstraint)
+degree (LagrangeIdeal) := LVW -> degree(LVW#PrimalIdeal+LVW#JacobianConstraint)
 
 
 
@@ -321,34 +288,57 @@ TEST///
 
 ///
 
-
+subPrimalToConormal =()->null
 --witnessCriticalVariety and Optimization degree
 CriticalIdeal = new Type of MutableHashTable
-newCriticalIdeal = method(Options => {});
-newCriticalIdeal (List,List,LagrangeIdeal) := CriticalIdeal => opts  -> (v,g,aLI) ->(
---Output: substitution of (WI,I,LVW) 
-    if degreeLength  LVW#LagrangeRing#PrimalRing==2 then(
-	u := gens coefficientRing (LVW);
-	if #v=!=#u then error "data does not agree with number of parameters. ";
-    	LR := LVW#LagrangeRing;
-	y = aLI.ConormalRing.Coordinates#1;
-	if #y=!=#g then error "gradient does not agree with number of dual variables. ";
-	subDualVars := apply(y,g,(i,j)->i=>sub(j,ring LVW));
-	subVars:=subDualVars;
-	scan(gens ring LVW,X->if not member(X,y) then subVars=append(subVars,X=>X) );
-	gradSub := map(ring LVW,ring LVW,subVars);	
-	subData :=apply(u,v,(i,j)->i=>j);
+criticalIdeal = method(Options => {});
+criticalIdeal (List,List,LagrangeIdeal) := CriticalIdeal => opts  -> (v,g,aLI) ->(
+    if degreeLength  aLI#LagrangeRing#PrimalRing==2 then(
+	u := gens coefficientRing (aLI);
+	if #v =!= #u then error "data does not agree with number of parameters. ";
+    	LR := aLI#LagrangeRing;
+	y := aLI.ConormalRing.Coordinates#1;
+	if #y =!= #g then error "gradient does not agree with number of dual variables. ";
+    	factorVars := aLI.ConormalRing.Factors/gens//(i->new MutableList from i);
+    	gradSub := apply(y,g,(i,j)->subPrimalToConormal(i,aLI)=>subPrimalToConormal(j,aLI));	
+	dataSub :=apply(u,v,(i,j)->i=>j);
 	--TODO: Issue with denominators.
-	return (sub(gradSub(LVW#WitnessPrimalIdeal),subData),sub(gradSub(LVW#PrimalIdeal),subData),sub(gradSub(LVW#JacobianConstraint),subData))
+	CI := new CriticalIdeal from {
+	    Ideal=>sub(gradSub(aLI.Ideal),dataSub),
+	    Data => v,
+	    Gradient => g,
+	    LagrangeRing => aLI	    
+	    };
+	return CI
 	)
     else error"degreeLength is not 2."
     )
 
 
-witnessCriticalIdeal (List,RingElement,LagrangeVarietyWitness) := (Ideal,Ideal,Ideal) =>opts -> (v,psi,LVW) -> (
+criticalIdeal (List,RingElement,LagrangeIdeal) := CriticalIdeal =>opts -> (v,psi,aLI) -> (
     g := apply(gens ring psi,x->diff(x,psi));
-    witnessCriticalIdeal(v,g,LVW);
+    witnessCriticalIdeal(v,g,aLI);
     )
+
+criticalIdeal (List,List,Ideal) := CriticalIdeal =>opts -> (v,g,WI) -> (
+    aLI := lagrangeIdeal WI;
+    witnessCriticalIdeal(v,g,aLI);
+    )
+criticalIdeal (List,RingElement,Ideal) := CriticalIdeal =>opts -> (v,psi,WI) -> (
+    g := apply(gens ring psi,x->diff(x,psi));
+    witnessCriticalIdeal(v,g,WI);
+    )
+
+criticalIdeal (List,List,Ideal,Ideal) := CriticalIdeal =>opts -> (v,g,WI,I) -> (
+    aLI := lagrangeIdeal(WI,I);
+    witnessCriticalIdeal(v,g,aLI);
+    )
+criticalIdeal (List,RingElement,Ideal,Ideal) := CriticalIdeal =>opts -> (v,psi,WI,I) -> (
+    g := apply(gens ring psi,x->diff(x,psi));
+    witnessCriticalIdeal(v,g,WI,I);
+    )
+
+
 --TODO : Establish naming conventions.
 TEST///
 R=QQ[a,b][x,y]
@@ -392,12 +382,12 @@ isEvaluationZero = (dir,fn,p,evalTol)->(
 	
 bertiniCriticalPointSet = (u,g,LVW,bic)->(
     evalTol :=-6;
-    (WI,I,JC) := witnessCriticalIdeal(u,g,LVW);
+    (WI,I,JC) := witnessCriticalIdeal(u,g,LVW);--Err
     dir := temporaryFileName();
     if not fileExists dir then mkdir dir;
     avg := AffVariableGroup=>{
-	    LVW#LagrangeRing#PrimalRing//gens,
-	    LVW#LagrangeRing#LagrangeRing//gens  
+	    LVW#LagrangeRing#PrimalRing//gens,--Err
+	    LVW#LagrangeRing#LagrangeRing//gens  --Err
 	    };
     bc := B'Constants => apply(gens coefficientRing LVW,u,(i,j)->i=>j);
     makeB'InputFile(dir,avg,bc,
@@ -418,24 +408,22 @@ bertiniCriticalPointSet = (u,g,LVW,bic)->(
 	    fn := "evaluation_"|i|"_mt_primal";
 	    moveB'File(dir,"function",fn)));
     ICPS:=new IsolatedCriticalPointSet from {
-    	EvaluationTolerance =>evalTol,
-    	SaveFileDirectory=>dir,
-	PrimalIdeal=>I,
-	WitnessPrimalIdeal=>WI,
-	JacobianConstraint=>JC,
-	Equations=>WI+JC,
-    	Data=>u,
-	Gradient=>g,
-	Slice =>matrix{{}},
-    	WitnessSuperSet=>sols,
-	Points =>null,
-	IsIrreducible =>null,
-	MembershipTestResults=>isRootIndex
+    	EvaluationTolerance => evalTol,
+    	SaveFileDirectory => dir,
+    	Data => u,
+	Gradient => g,
+	Slice => matrix{{}},
+    	WitnessSuperSet => sols,
+	Points => null,
+	IsIrreducible => null,
+	MembershipTestResults => isRootIndex,
+    	CriticalIdeal => null--Err
 	};
-    changeEvaluationTolerance(evalTol,ICPS);
-    changeMultiplicityTolerance(1,ICPS);
-    changeConditionNumberTolerance(1e10,ICPS);    
-    ICPS)
+    updateEvaluationTolerance(evalTol,ICPS);
+    updateMultiplicityTolerance(1,ICPS);
+    updateConditionNumberTolerance(1e10,ICPS);    
+    ICPS
+    )
 
 
 
@@ -451,17 +439,19 @@ bezoutBertiniIsolatedRegularCriticalPointSet = (u,g,LVW)->(
 
 
 isolatedRegularCriticalPointSet = method(Options => {Strategy=>0});--Carry options over?
-isolatedRegularCriticalPointSet (List,List,LagrangeVarietyWitness) := (IsolatedCriticalPointSet) => opts  -> (u,g,LVW) ->(
+isolatedRegularCriticalPointSet (List,List,LagrangeIdeal) := IsolatedCriticalPointSet => opts  -> (u,g,aLI) ->(
     strategyIndex:=new HashTable from {
 	0=>regenerateBertiniIsolatedRegularCriticalPointSet,
 	1=>bezoutBertiniIsolatedRegularCriticalPointSet
 	};
     f:= strategyIndex#(opts.Strategy);
-    f(u,g,LVW)
+    f(u,g,aLI)
     )
 
 
-changeEvaluationTolerance=(evalTol,ICPS)->(
+--Updatewitness sets
+
+updateEvaluationTolerance=(evalTol,ICPS)->(
     sols:=ICPS.WitnessSuperSet;
     wpIndex := delete(null,
 	apply(#sols,i->(
@@ -472,7 +462,7 @@ changeEvaluationTolerance=(evalTol,ICPS)->(
     ICPS.EvaluationTolerance=evalTol;
     ICPS.Points=wpIndex;)
 
-changeMultiplicityTolerance=(multiplicityTol,ICPS)->(
+updateMultiplicityTolerance=(multiplicityTol,ICPS)->(
     sols:=ICPS.WitnessSuperSet;
     wpIndex := delete(null,
 	apply(#sols,i->(
@@ -483,7 +473,7 @@ changeMultiplicityTolerance=(multiplicityTol,ICPS)->(
     ICPS.MultiplicityTolerance=multiplicityTol;
     ICPS.Points=wpIndex;)
 
-changeConditionNumberTolerance=(conditionNumberTol,ICPS)->(
+updateConditionNumberTolerance=(conditionNumberTol,ICPS)->(
     sols:=ICPS.WitnessSuperSet;
     wpIndex := delete(null,
 	apply(#sols,i->(
@@ -507,7 +497,7 @@ peek oo
 first importMainDataFile(ICPS.SaveFileDirectory,NameMainDataFile=>"main_data_ss")
 
 
-changeEvaluationTolerance(-100,ICPS)	
+updateEvaluationTolerance(-100,ICPS)	
 --assert({}==ICPS#Points)--Issue with keys here TODO. 
 isolatedRegularCriticalPointSet(u,g,LVW)
 isolatedRegularCriticalPointSet(u,g,LVW,Strategy=>1)
@@ -806,3 +796,39 @@ radical I==I
 S = ring dualI
 
 
+
+--rename to lagrangeVarietyWitness.
+--langrangeRing Could inherit from conormalRing. 
+--This is analagous to conormal variety.
+---Variety WI contains the variety of I. 
+-*
+witnessLagrangeVariety = method(Options => {});
+-- Computes a witness system for a lagrange variety 
+-- AR plays the role of conormalRing
+witnessLagrangeVariety (Ideal,Ideal, LagrangeRing) := LagrangeVarietyWitness => opts -> (WI,I,AR) -> (
+  if not ring I === AR.PrimalRing then error "expected ideal in primal ring";  
+  c := #AR.LagrangeCoordinates;
+  if numgens WI =!= c then error "expected numgens WI to equal the number of lagrange coordinates";  
+  jacWI := sub(diff(matrix{AR.PrimalCoordinates}, transpose gens WI), AR.AmbientRing);
+  jacBar := sub(matrix{AR.DualCoordinates}, AR.AmbientRing) || sub(jacWI,AR.AmbientRing);
+  J0 := sub(WI,AR.AmbientRing);
+  J1 := sub(I,AR.AmbientRing);
+  J2 := ideal (sub(matrix{{1}|AR.LagrangeCoordinates},AR.AmbientRing)*jacBar);
+  new LagrangeVarietyWitness from {
+      LagrangeRing =>AR,
+      WitnessPrimalIdeal =>J0,
+      PrimalIdeal=>J1,
+      JacobianConstraint=>J2}
+)
+witnessLagrangeVariety (Ideal,Ideal) := LagrangeVarietyWitness => opts -> (WI,I) -> (
+    AR:=makeLagrangeRing(numgens WI,ring I,opts);
+    witnessLagrangeVariety(WI,I,AR,opts)
+    )
+witnessLagrangeVariety (Ideal) := LagrangeVarietyWitness => opts -> I -> (
+  R:= ring I; 
+  if isCofficientRingInexact(R) then error"Not implemented for RR or CC coefficient ring. Try makeLagrangeRing(ZZ,Ring).";
+  WI := findRegularSequence I;--This may not be generically reduced.
+  AR:=makeLagrangeRing(numgens WI,R,opts);
+  witnessLagrangeVariety(WI,I,AR,opts)
+  )
+*-
