@@ -1425,57 +1425,53 @@ assert( shorten( C2, K ) == linearCode(F, shortL) )
 assert( shorten( C3, K ) == linearCode(F, shortL) )
 ///
 
--*
 TEST ///
- -- vNumner of the ideal I=ideal(t1*t2^2-t1^2*t2,t1*t3^3-t1^3t3,t2*t3^3-t2^3*t3)
-   K=ZZ/3; 
-   R=K[t3,t2,t1,MonomialOrder=>Lex];
-   I=ideal(t1*t2^2-t1^2*t2,t1*t3^3-t1^3*t3,t2*t3^3-t2^3*t3);
-   vNumber(I);
-   assert(vNumber(I)==regularity coker gens gb I-1)
+-- vNumner of the ideal I=ideal(t1*t2^2-t1^2*t2,t1*t3^3-t1^3t3,t2*t3^3-t2^3*t3)
+K=ZZ/3
+R=K[t3,t2,t1,MonomialOrder=>Lex]
+I=ideal(t1*t2^2-t1^2*t2,t1*t3^3-t1^3*t3,t2*t3^3-t2^3*t3)
+vNumber(I)
+assert(vNumber(I)==regularity coker gens gb I-1)
 ///
 
-
- TEST ///
- -- footPrint function of the ideal I=ideal(t1^3,t2*t3) with parameters d=2, r=3
-   K=QQ;
-   R=K[t1,t2,t3];
-   I=ideal(t1^3,t2*t3);
-   footPrint(3,4,I);
-   assert(footPrint(3,4,I)==4)
+TEST ///
+-- footPrint function of the ideal I=ideal(t1^3,t2*t3) with parameters d=2, r=3
+K=QQ
+R=K[t1,t2,t3]
+I=ideal(t1^3,t2*t3)
+footPrint(3,4,I)
+assert(footPrint(3,4,I)==4)
 ///
 
-
-
- TEST ///
- -- hYpFunction of the ideal I=ideal(t1*t6-t3*t4,t2*t6-t3*t5) with parameters d=1, r=1
-   K=ZZ/3;
-   R=K[t1,t2,t3,t4,t5,t6];
-   I=ideal(t1*t6-t3*t4,t2*t6-t3*t5);
-   hYpFunction(1,1,I);
-   assert(hYpFunction(1,1,I)==1)
+TEST ///
+-- hYpFunction of the ideal I=ideal(t1*t6-t3*t4,t2*t6-t3*t5) with parameters d=1, r=1
+K=ZZ/3
+R=K[t1,t2,t3,t4,t5,t6]
+I=ideal(t1*t6-t3*t4,t2*t6-t3*t5)
+hYpFunction(1,1,I)
+assert(hYpFunction(1,1,I)==1)
 ///
 
 
 TEST ///
- -- gMdFunction of the ideal I=ideal(t1*t6-t3*t4,t2*t6-t3*t5) with parameters d=1, r=1
-   K=ZZ/3;
-   R=K[t1,t2,t3,t4,t5,t6];
-   I=ideal(t1*t6-t3*t4,t2*t6-t3*t5);
-   gMdFunction(1,1,I);
-   assert(gMdFunction(1,1,I)==3)
+-- gMdFunction of the ideal I=ideal(t1*t6-t3*t4,t2*t6-t3*t5) with parameters d=1, r=1
+K=ZZ/3
+R=K[t1,t2,t3,t4,t5,t6]
+I=ideal(t1*t6-t3*t4,t2*t6-t3*t5)
+gMdFunction(1,1,I)
+assert(gMdFunction(1,1,I)==3)
 ///
 
 
- TEST ///
+TEST ///
  -- vasFunction of the ideal I=ideal(t1^2,t1*t2,t2^2) with parameters d=1, r=1
-   K=ZZ/3;
-   R=K[t1,t2];
-   I=ideal(t1^2,t1*t2,t2^2);
-   vasFunction(1,1,I);
-   assert(vasFunction(1,1,I)==1)
+K=ZZ/3
+R=K[t1,t2]
+I=ideal(t1^2,t1*t2,t2^2)
+vasFunction(1,1,I)
+assert(vasFunction(1,1,I)==1)
 ///
-*-
+
 
 TEST /// 
 -- random test
