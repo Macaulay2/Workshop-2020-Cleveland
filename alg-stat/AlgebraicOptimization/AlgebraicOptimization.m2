@@ -18,6 +18,11 @@ newPackage(
   PackageImports => {"Elimination","NumericalAlgebraicGeometry","Bertini"}
 )
 
+-----GOALS (5/15)
+-- June 10 is the deadline for ISSAC Poster Submission: 
+-- https://issac-conference.org/2020/calls/call-for-demo-posters.txt
+-- Idea: Have the symbolic methods ready and call this package AlgebraicOptimizationDegree. 
+-- If things go well, then we can do a JSAG submission called AlgebraicOptimization, which is an extended version that computes critical points 
 
 
 export {
