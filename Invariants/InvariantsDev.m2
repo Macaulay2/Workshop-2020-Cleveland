@@ -16,7 +16,7 @@ newPackage(
         AuxiliaryFiles => false
         )
 
--- TO DO: 1. Eliminate any unused exported symbols (linearInvariants?) below.
+-- TO DO: 1. Eliminate any unused exported symbols below.
 --    	  2. Eliminate any unused protected symbols below.
 --    	  3. Determine whether there are functions that do not need to be exported.
 
@@ -24,9 +24,9 @@ newPackage(
 -- Any symbols or functions that the user is to have access to
 -- must be placed in one of the following two lists
 export {
-    "abelianInvariants",
     "action",
     "actionMatrix",
+    "finiteAbelianAction",
     "finiteAction",
     "group",
     "hilbertIdeal",
@@ -34,7 +34,6 @@ export {
     "invariantRing",
     "isAbelian",
     "isInvariant",
-    "linearInvariants",
     "linearlyReductiveAction",
     "reynoldsOperator",
     "schreierGraph",
@@ -48,8 +47,6 @@ export {
 protect Action
 protect Abelian	       -- Strategy option for isInvariant
 protect Nonabelian     -- Default strategy option for isInvariant
-protect RepDimension
-protect GroupIdeal
 
 needsPackage("Polyhedra", Reload => true)
 needsPackage("Elimination", Reload => true)
@@ -57,8 +54,8 @@ needsPackage("Elimination", Reload => true)
 
 GroupAction = new Type of HashTable
 FiniteGroupAction = new Type of GroupAction
-FiniteAbelianAction = new Type of FiniteGroupAction
 TorusAction = new Type of GroupAction
+FiniteAbelianAction = new Type of GroupAction
 LinearlyReductiveAction = new Type of GroupAction
 RingOfInvariants = new Type of HashTable    	  
 -- For some reason, InvariantRing already seems to be a protected symbol. 
@@ -162,20 +159,6 @@ addHook(FiniteGroupAction, symbol relations, G -> break (
     unique relators 
     ))
 
-addHook(FiniteGroupAction, symbol size, G -> break (
-    if not isAbelian G then (error "size: Expected group to be abelian.");
-    relators := relations G;
-    m := numgens G;
-    relators = transpose matrix apply(relators, L -> (
-	    counts := apply(L, l -> applyValues(partition(i -> i, l), val -> #val) );
-	    counts = apply(counts, l -> apply(m, i -> if l#?i then l#i else 0) );
-	    first counts - last counts
-	    )
-	);
-    relators = relations minimalPresentation coker relators;
-    apply(m, i -> relators_i_i)
-    ))
-
 addHook(LinearlyReductiveAction, symbol hilbertIdeal, V -> break (
     A := groupIdeal V;
     M := actionMatrix V;
@@ -200,7 +183,8 @@ addHook(LinearlyReductiveAction, symbol hilbertIdeal, V -> break (
     
     -- return the result back in the user's input ring R
     trim(sub(II, join(apply(n, i -> x_(i+1) => R_i),apply(n, i -> y_(i+1) => 0), apply(l, i -> z_(i+1) => 0))))
-))
+    ))
+
 
 -------------------------------------------
 --- GroupAction methods -------------------
@@ -218,10 +202,9 @@ dim GroupAction := ZZ => G -> dim ring G
 -- TO DO: 1. Port and improve the remaining methods from the package "InvariantRing"
 --    	     to act on the type FiniteGroupAction (rewritten as hooks as appropriate).
 --    	  2. Create examples/documentation/tests for FiniteGroupAction methods.
---    	  3. Write functions to extract list of cyclic factor/weights for FiniteGroupAction
---    	     presented as a list of matrices.  Add hook functions to   
---    	  4. Modify generateGroup, group, schreierGraph, words to work when a finite abelian
---    	     group is initialized using a list of cyclic factors and a weight matrix.
+--    	  3. Write functions to extract list of cyclic factors/weights for FiniteGroupAction
+--    	     that happens to be abelian.  
+--    	  4. Add OrderBound option to prevent infinite loops if passed an infinite group.
 
 
 finiteAction = method()
@@ -243,38 +226,12 @@ finiteAction (List, PolynomialRing) := FiniteGroupAction => (G, R) -> (
 	}
     )
 
-finiteAction (Matrix, PolynomialRing, List) := FiniteGroupAction => (W, R, L) -> (
-    if not isField coefficientRing R then (error "abelianGroupAction: Expected the second argument to be a polynomial ring over a field.");
-    if ring W =!= ZZ then (error "abelianGroupAction: Expected the first argument to be a matrix of integer weights.");
-    if numColumns W =!= dim R then (error "abelianGroupAction: Expected the number of columns of the matrix to equal the dimension of the polynomial ring.");
-    if numRows W =!= #L then (error "abelianGroupAction: Expected the number of rows of the matrix to equal the size of the list."); 
-    new FiniteGroupAction from {
-	cache => new CacheTable from {
-	    (symbol isAbelian) => true,
-	    (symbol actionMatrix) => W,
-	    (symbol rank) => numRows W,
-	    (symbol size) => L,
-	    (symbol relations) => diagonalMatrix L,
-	    (symbol group) => coker diagonalMatrix L,
-	    },
-	(symbol ring) => R,
-	(symbol generators) => gens ZZ^(numRows W),
-	(symbol numgens) => numRows W, 
-	}
-    )
 
 -------------------------------------------
 
 net FiniteGroupAction := G -> (net G.ring)|" <- "|(net G.generators)
 -- If the list of generators is long, consider rewriting  to print only the first few generators together with "...".
 -- Or find a better way to print if the size of the matrices is large.
-
-rank FiniteGroupAction := ZZ => G -> (
-    if isAbelian G then G.cache.rank
-    else (error "rank: Expected group to be abelian.")
-    )
-
-size FiniteGroupAction := { } >> opts -> (cacheValue (symbol size)) (G -> runHooks(FiniteGroupAction, symbol size, G) )
 
 generators FiniteGroupAction := opts -> G -> G.generators
 -- gens must pass 'opts' before the argument, or it will not run!!
@@ -337,6 +294,27 @@ reynoldsOperator (RingElement, FiniteGroupAction) := RingElement => (f, G) -> (
 
 
 -------------------------------------------
+
+-- Unexported function used to extract the cyclic factors of a FiniteGroupAction that is abelian.
+-- Currently, this does not keep track of which generators of the group are the minimal generators 
+-- corresponding to the cyclic factors.
+
+cyclicFactors = G -> (
+    if not isAbelian G then (error "cyclicFactors: Expected group to be abelian.");
+    relators := relations G;
+    m := numgens G;
+    relators = transpose matrix apply(relators, L -> (
+	    counts := apply(L, l -> applyValues(partition(i -> i, l), val -> #val) );
+	    counts = apply(counts, l -> apply(m, i -> if l#?i then l#i else 0) );
+	    first counts - last counts
+	    )
+	);
+    relators = relations minimalPresentation coker relators;
+    apply(numRows relators, i -> relators_i_i)
+    )
+
+
+-------------------------------------------
 --- TorusAction methods -------------------
 -------------------------------------------
 
@@ -366,10 +344,44 @@ weights = method()
 
 weights TorusAction := Matrix => T -> T.actionMatrix 
 
-weights FiniteGroupAction := Matrix => G -> (
-    if isAbelian G then G.cache.actionMatrix
-    else (error "weights: Expected group to be abelian.")
+
+-------------------------------------------
+--- FiniteAbelianAction methods -----------
+-------------------------------------------
+
+finiteAbelianAction = method()
+
+finiteAbelianAction (List, Matrix, PolynomialRing) := FiniteAbelianAction => (L, W, R) -> (
+    if not isField coefficientRing R then (error "finiteAbelianAction: Expected the thirs argument to be a polynomial ring over a field.");
+    if ring W =!= ZZ then (error "finiteAbelianAction: Expected the second argument to be a matrix of integer weights.");
+    if numColumns W =!= dim R then (error "finiteAbelianAction: Expected the number of columns of the matrix to equal the dimension of the polynomial ring.");
+    if numRows W =!= #L then (error "finiteAbelianAction: Expected the number of rows of the matrix to equal the size of the list."); 
+    new FiniteAbelianAction from {
+	cache => new CacheTable,
+	(symbol actionMatrix) => W,
+	(symbol size) => L,
+	(symbol ring) => R,
+	(symbol numgens) => #L, 
+	}
     )
+
+-------------------------------------------
+
+net FiniteAbelianAction := G -> (
+    cyclicGroups := apply(G.numgens, i -> (
+	    if i == G.numgens - 1 then (net ZZ|"/"|net G.size#i)
+	    else (net ZZ|"/"|net G.size#i|" x ")
+	    )
+	);
+    (net G.ring)|" <- "|(horizontalJoin cyclicGroups)|" via "|net G.actionMatrix
+    )
+-- If the weight matrix is huge, consider rewriting to print something else.
+
+numgens FiniteAbelianAction := ZZ => G -> G.numgens
+
+size FiniteAbelianAction := List => G -> G.size
+
+weights FiniteAbelianAction := Matrix => G -> G.actionMatrix
 
 
 -------------------------------------------
@@ -410,79 +422,20 @@ hilbertIdeal = method()
 
 hilbertIdeal LinearlyReductiveAction := { } >> opts -> (cacheValue (symbol hilbertIdeal)) (V -> runHooks(LinearlyReductiveAction, symbol hilbertIdeal, V))
 
+
 -------------------------------------------
 --- Computing invariants ------------------
 -------------------------------------------
 
--- TO DO: 1. Finish creating invariants(FiniteGroupAction) after porting remaining
+-- TO DO: 1. Implement invariants(FiniteGroupAction) after porting remaining
 --    	     methods from the package "InvariantRing".
 --    	  2. After writing code to extract the weights from a finite group action 
 --    	     that happens to be abelian, add a Strategy option to invariants(FiniteGroupAction)
---    	     to let user decided whether to use abelianInvariants.
+--    	     to let user decided whether to use invariants(FiniteAbelianAction).
+--    	  3. Add error checking to isInvariant(LinearlyReductiveGroup).
 
-
-
-abelianInvariants = method()
-
-abelianInvariants FiniteGroupAction := List => T -> (
-    W := weights T;
-    R := ring T;
-    L := size T;
-    r := numRows W;
-    n := numColumns W;
-    temp1 := matrix{apply(flatten entries W^{0},i->i%L#0)};
-    scan(r-1,i->temp1 = temp1 || matrix{apply(flatten entries W^{i+1},j->j%L#(i+1))});
-    W = temp1;
-    t := 1; -- t is the size of abelian group
-    --sanity check 
-    if #L =!= r then error "abelianInvariants: Expected size of the group to match the weight matrix.";
-    scan(L,i->t = t*i);
-    local C; -- C is a list of all possible weights
-    for i from 0 to #L-1 do(
-	if i == 0 then(
-	    C = apply(L_i,j-> matrix {{j}});
-	) else (
-	temp := flatten apply(L_i,j->apply(C,M->M || matrix {{j}}));
-	C = temp;
-        );
-    );
-    S := new MutableHashTable from apply(C, w -> w => {});
-    scan(n, i -> S#(W_i) = {R_i});
-    U := flatten entries vars R;
-    local v, local m, local u, local v';
-    while  #U > 0 do(
-    m = min U; 
-    v = vector(apply(n,i->degree(R_i,m))); --degree vector of m
-    v = W*v; --weight vector of m
-    j := 0;
-    scan(n,i->if m % R_i == 0 then (j = i+1;break));
-    k := j;
-    while k > 0 do(
-        u = m*R_(k-1);
-        temp := flatten entries (v + W_(k-1));
-	temp = apply(#temp,i -> temp_i % L_i);
-	v' = matrix(vector temp);
-        if all(S#v', m' -> u%m' =!= 0_R) then (
-	    S#v' = S#v'|{u};
-            if first degree u < t then(
-		U = U | {u}; ---only testing monomials of degree < #G
-            );
-        );
-        k = k - 1;
-    );
-    U = delete(m, U);
-    );
-    return S#(matrix(0_(ZZ^r)))
-)
-
--------------------------------------------
 
 invariants = method()
-
-invariants FiniteGroupAction := List => G -> (
-    if isAbelian G then abelianInvariants G
-    else (error "invariants: Invariants of a non-abelian finite group action not yet implemented.")
-    )
 
 invariants TorusAction := List => T -> (
     R := ring T;
@@ -536,6 +489,57 @@ invariants TorusAction := List => T -> (
     
     -- The generating invariant monomials are the monomials in S of weight 0.
     return S#(0_(ZZ^r))
+    )
+
+invariants FiniteAbelianAction := List => G -> (
+    W := weights G;
+    R := ring G;
+    L := size G;
+    r := numRows W;
+    n := numColumns W;
+    temp1 := matrix{apply(flatten entries W^{0},i->i%L#0)};
+    scan(r-1,i->temp1 = temp1 || matrix{apply(flatten entries W^{i+1},j->j%L#(i+1))});
+    W = temp1;
+    t := 1; -- t is the size of abelian group
+    --sanity check 
+    if #L =!= r then error "abelianInvariants: Expected size of the group to match the weight matrix.";
+    scan(L,i->t = t*i);
+    local C; -- C is a list of all possible weights
+    for i from 0 to #L-1 do(
+	if i == 0 then(
+	    C = apply(L_i,j-> matrix {{j}});
+	) else (
+	temp := flatten apply(L_i,j->apply(C,M->M || matrix {{j}}));
+	C = temp;
+        );
+    );
+    S := new MutableHashTable from apply(C, w -> w => {});
+    scan(n, i -> S#(W_i) = {R_i});
+    U := flatten entries vars R;
+    local v, local m, local u, local v';
+    while  #U > 0 do(
+    m = min U; 
+    v = vector(apply(n,i->degree(R_i,m))); --degree vector of m
+    v = W*v; --weight vector of m
+    j := 0;
+    scan(n,i->if m % R_i == 0 then (j = i+1;break));
+    k := j;
+    while k > 0 do(
+        u = m*R_(k-1);
+        temp := flatten entries (v + W_(k-1));
+	temp = apply(#temp,i -> temp_i % L_i);
+	v' = matrix(vector temp);
+        if all(S#v', m' -> u%m' =!= 0_R) then (
+	    S#v' = S#v'|{u};
+            if first degree u < t then(
+		U = U | {u}; ---only testing monomials of degree < #G
+            );
+        );
+        k = k - 1;
+    );
+    U = delete(m, U);
+    );
+    return S#(matrix(0_(ZZ^r)))
     )
 
 
@@ -619,29 +623,26 @@ invariants (LinearlyReductiveAction) := List => V -> (
 
 -------------------------------------------
 
+isInvariant = method()
 
-isInvariant = method(TypicalValue => Boolean, Options => {Strategy => Nonabelian})
-
-isInvariant (RingElement, FiniteGroupAction) := Boolean => opts -> (f, G) -> (
-    if opts.Strategy == "Abelian" then (
-	W := weights G;
-	V := W * transpose(matrix(exponents(f)));
-	n := dim G;
-	L := size G;
-	all(n, i -> (V#i)%(L#i) == 0)
-	)
-    else (
+isInvariant (RingElement, FiniteGroupAction) := Boolean => (f, G) -> reynoldsOperator(f, G) == f
     -- reynoldsOperator already checks to see if f is in the ring on which G acts.
-    reynoldsOperator(f, G) == f
-    )
-) 
 
-isInvariant (RingElement, TorusAction) := Boolean => null -> (f, T) -> (
+isInvariant (RingElement, TorusAction) := Boolean => (f, T) -> (
     if ring f =!= ring T then (error "isInvariant: Expected an element from the ring on which the group acts.");
     return (weights T) * transpose(matrix(exponents(f))) == 0
     )
 
-isInvariant (RingElement, LinearlyReductiveAction) := Boolean => null -> (f, V) -> (
+isInvariant (RingElement, FiniteAbelianAction) := Boolean => (f, A) -> (
+    if ring f =!= ring A then (error "isInvariant: Expected an element from the ring on which the group acts.");
+    W := weights A;
+    V := W * transpose(matrix(exponents(f)));
+    n := dim A;
+    d := size A;
+    all(numgens A, i -> (V_0_i)%(d#i) == 0)
+    )
+
+isInvariant (RingElement, LinearlyReductiveAction) := Boolean => (f, V) -> (
     A := groupIdeal V;
     M := actionMatrix V;
     R := ring(f);
@@ -723,9 +724,9 @@ generators RingOfInvariants := List => opts -> S -> S.cache.generators
 
 
 beginDocumentation()
--*
+
 document { 
-	Key => Invariants,
+	Key => InvariantsDev,
 	Headline => "Computing Invariants for Tori and Abelian Groups",
 	EM "Invariants", " is a package implementing algorithms
 	to compute invariants of reductive groups.",
@@ -747,19 +748,37 @@ document {
 	}
 
 document {
-	Key => {torusInvariants, (torusInvariants,Matrix,PolynomialRing)},
-	Headline => "Computes the primary invariants for a diagonal torus action given by column weight vectors",
-	Usage => "torusInvariants(W,R)",
+	Key => {
+	    invariants, 
+	    (invariants, TorusAction),
+	    (invariants, FiniteAbelianAction)
+	    },
+	
+	Headline => "Computes the generating invariants of a group action",
+	
+	Usage => "invariants T, invariants A",
+	
 	Inputs => {  
-	    	"R" => PolynomialRing => {"on which the torus acts diagonally"},
-		"W" => Matrix => {"whose ith column is the weight vector of ", TT "R_i"}
+	    	"T" => TorusAction => {"a diagonal action of a torus on a polynomial ring"},
+		"A" => FiniteAbelianAction => {"a diagonal action of a finite abelian group on a polynomial ring"}
 		},
 	Outputs => {
-		List => {"A minimal set of generating invariants for the torus action"}
+		"L" => List => {"a minimal set of generating invariants for the group action"}
 		},
-	SeeAlso => {abelianInvariants},
+
 	PARA {
-	    "This function is provided by the package ", TO Invariants, ". It implements an algorithm by Derksen and Kemper for computing a minimal set of generating invariants for an action of a torus",
+	    "This function is provided by the package ", TO InvariantsDev, ". It implements algorithms to compute minimal sets 
+	    of generating invariants for diagonal actions of tori and finite abelian groups.  The algorithm for tori due to 
+	    Derksen and Kemper can be found in:"
+	    },
+       
+       UL { 
+	    {"Derksen, H. & Kemper, G. (2015).", EM "Computational Invariant Theory", 
+	   ". Heidelberg: Springer. pp 159-164"}
+        },
+    
+       PARA {
+	    "The algorithm for tori computes a minimal set of generating monomial invariants for an action of a torus",
 	    TEX /// $(k^\times)^r$ ///,
 	    " on a polynomial ring ",
 	    TEX /// $R = k[x_1,\ldots,x_n]$.///,
@@ -769,38 +788,36 @@ document {
 	    TEX /// $$(t_1,\ldots,t_r) \cdot x_j = t_1^{w_{1j}}\cdots t_r^{w_{rj}} x_j$$ ///,
 	    "for some integers ",
 	    TEX /// $w_{ij}$. ///,
-	    "These are the entries of the input matrix ", TT "W", ". In other words, the j-th column of ", TT "W", " is the weight vector of",
+	    "These are the entries of the input matrix ", TT "W", "for the torus action. In other words, the j-th column of ", TT "W", " is the weight vector of",
 	    TEX /// $x_j$. ///
 	},
+    
     	PARA {
 	    "Here is an example of a one-dimensional torus acting on a two-dimensional vector space:"
 	},
+    
     	EXAMPLE {
-		"torusInvariants(matrix{{1,-1}}, QQ[x_1,x_2])"
+	    	"R = QQ[x_1,x_2]",
+		"W = matrix{{1,-1}}",
+		"T = torusAction(W, R)",
+		"invariants T"
 		},
-      
-	UL { 
-	    {"Derksen, H. & Kemper, G. (2015). ", EM "Computational Invariant Theory", 
-	   ". Heidelberg: Springer. pp 174-177"}
-        }	
-}
-
-document {
-	Key => {abelianInvariants, (abelianInvariants,FiniteGroupAction)},
-	Headline => "Computes the generators of ring of invariants for an abelian group action given by column weight vectors",
-	Usage => "abelianInvariants(T)",
-	Inputs => {
-	        "T" => FiniteGroupAction => {"which encodes the action of a finite abelian group on a polynomial ring"}
-		},
-	Outputs => {
-		List => {"A minimal set of generating invariants for the abelian group action"}
-		},
-	SeeAlso => {invariants},
+	   
 	PARA {
-	    "This function is provided by the package ", TO Invariants, ". It is based on the same algorithm as ", TO invariants,
-	    " with some adjustments and optimizations for the finite group case; see the reference below for details. Writing the finite abelian group as",
+	    "The algorithm for finite abelian groups due to Gandini is based on the Derksen-Kemper algorithm for tori,
+	     with some adjustments and optimizations for the finite group case.  A description of this algorithm can be found in: "
+	     },
+	 
+        UL { 
+	    {"Gandini, F. ", EM "Ideals of Subspace Arrangements", 
+	   ". Thesis (Ph.D.)-University of Michigan. 2019. ISBN: 978-1392-76291-2. pp 29-34."}
+        },
+    
+    	PARA {	 
+	     "Writing the finite abelian group as",
 	    TEX /// $\mathbb{Z}/d_1 \oplus \cdots \oplus \mathbb{Z}/d_r$, ///,
-	    "the input ", TT "T", " is a finiteGroupAction which consists of " TT "L", " the list ", TT "{d_1,d_2,...,d_r}", ",", TT "R"," a polynomial ring and ",TT "W", " a weight matrix. We assume that the group acts diagonally on the polynomial ring",
+	    "the input ", TT "A", " is a finite abelian action which consists of ", TT "d", " the list ", TT "{d_1,d_2,...,d_r}, ", 
+	    TT "W", " a weight matrix, and ",  TT "R"," a polynomial ring. We assume that the group acts diagonally on the polynomial ring",
 	    TEX /// $R = k[x_1,\ldots,x_n]$, ///,
 	    "which is to say that if we denote the evident generators of the group by",
 	    TEX /// $g_1,\ldots,g_r$ ///,
@@ -812,24 +829,25 @@ document {
 	    TEX /// $d_i$///,
 	    "-th root of unity. The integers",
 	    TEX /// $w_{ij}$ ///,
-	    "comprise the weight matrix ", TT "W", "."
+	    "comprise the weight matrix ", TT "W", "."  
 	},
-        UL { 
-	    {"Gandini, F. ", EM "Ideals of Subspace Arrangements", 
-	   ". Thesis (Ph.D.)-University of Michigan. 2019. ISBN: 978-1392-76291-2. pp 29-34."}
-        },
+    
     	PARA {
 	    "Here is an example of a product of two cyclic groups of order 3 acting on a three-dimensional vector space:"
 	},
 	
 	EXAMPLE {
 	    "R = QQ[x_1..x_3]",
+	    "d = {3,3}",
 	    "W = matrix{{1,0,1},{0,1,1}}",
-	    "L = {3,3}",
-	    "T = finiteAction(W,R,L)",
-	    "abelianInvariants(T)"
-		}
-	}
+	    "A = finiteAbelianAction(d, W, R)",
+	    "invariants A"
+		},
+    
+    	SeeAlso => {invariantRing, torusAction, finiteAbelianAction, isInvariant},	
+}
+
+-*
 
 document {
 	Key => {hilbertIdeal, (hilbertIdeal,Ideal,Matrix,PolynomialRing)},
