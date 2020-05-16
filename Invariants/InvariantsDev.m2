@@ -636,12 +636,12 @@ isInvariant (RingElement, FiniteGroupAction) := Boolean => opts -> (f, G) -> (
     )
 ) 
 
-isInvariant (RingElement, TorusAction) := Boolean => (f, T) -> (
+isInvariant (RingElement, TorusAction) := Boolean => null -> (f, T) -> (
     if ring f =!= ring T then (error "isInvariant: Expected an element from the ring on which the group acts.");
     return (weights T) * transpose(matrix(exponents(f))) == 0
     )
 
-isInvariant (RingElement, LinearlyReductiveAction) := Boolean => (f, V) -> (
+isInvariant (RingElement, LinearlyReductiveAction) := Boolean => null -> (f, V) -> (
     A := groupIdeal V;
     M := actionMatrix V;
     R := ring(f);
@@ -1066,3 +1066,10 @@ L = {3,3}
 T = finiteAction(W,R1,L)
 R1^T
 invariantRing T
+
+S = QQ[z]
+A = ideal(z^2 - 1)
+M = matrix{{(1+z)/2, (1-z)/2},{(1-z)/2,(1+z)/2}}
+R = QQ[a,b]
+X = linearlyReductiveAction(A,M,R)
+isInvariant(a,X)
