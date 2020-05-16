@@ -19,7 +19,8 @@ newPackage(
 export {
 	"genericProjection", 
 	"projectionToHypersurface",
-	"randomCoordinateChange", 
+	"randomCoordinateChange",
+--    "randomPointViaLinearIntersection", 
 	"randomPoint", 
 	"MyOption", 
 	"NumPointsToCheck", 
@@ -30,12 +31,24 @@ export {
     "LinearIntersection",  --a valid value for [RandomPoint, Strategy]
     "ModifiedBruteForce",  --a valid value for [RandomPoint, Strategy]
 	"ProjectionAttempts", --used in the GenericProjection strategy
-    "IntersectionAttempts" --used in the LinearIntersection strategy
+    "IntersectionAttempts", --used in the LinearIntersection strategy
+    "ExtendField" --used in GenericProjection and LinearIntersection strategy
     }
 exportMutable {}
 
-needsPackage "MinimalPrimes"
+needsPackage "SwitchingFields";
+needsPackage "MinimalPrimes";
 installMinprimes();
+
+optRandomPoints := {
+    Strategy=>BruteForce, 
+    Homogeneous => true, 
+    MaxChange => 0, 
+    Codimension => null,
+    IntersectionAttempts => 20,
+    ProjectionAttempts => 20,
+    ExtendField => false
+}
 
 pointToIdeal = method(Options =>{Homogeneous => false});
 
@@ -198,8 +211,8 @@ projectionToHypersurface(Ideal) := opts -> (I1) -> (
 
 
 --Function to check if random point is in the variety by intersecting with a linear space
-randomPointViaLinearIntersection = method(Options => {Strategy=>null, Homogeneous => true, Codimension => null, ProjectionAttempts => 20, IntersectionAttempts => 20});
-randomPointViaLinearIntersection := opts -> (n1, I1) -> (
+randomPointViaLinearIntersection = method(Options => optRandomPoints);
+randomPointViaLinearIntersection(ZZ, Ideal) := opts -> (n1, I1) -> (
     c1 := opts.Codimension;
     if (c1 === null) then (c1 = codim I1); --don't compute it if we already know it.
     R1 := ring I1;
@@ -207,18 +220,36 @@ randomPointViaLinearIntersection := opts -> (n1, I1) -> (
     i := 0;
     j := 0 ;
     local finalPoint;
-    local ptList;
+    local ptList; local newPtList;
+    local phi;
+    local myDeg;
+    local m2;
+    --1/0;
     while(i < opts.IntersectionAttempts) do ( 
-        ideal apply((dim R1) - c1, i -> random(1, R1) + random(0, R1));
+        linearSpace = ideal apply((dim R1) - c1, i -> random(1, R1) + random(0, R1));
         J0 := linearSpace + I1;
-        ptList = random decompose(J0);
-        j = 0;
-        while (j < #ptList) do (
-            if (degree(ptList#j) == 1) then (
-                finalPoint = apply(idealToPoint(ptList#j), s -> sub(s, R1));
-                return finalPoint;
+        if (dim J0 == 0) then (
+            ptList = random decompose(J0);
+            j = 0;
+            while (j < #ptList) do (
+                myDeg = degree(ptList#j);
+                if (myDeg == 1) then (
+                    finalPoint = apply(idealToPoint(ptList#j), s -> sub(s, R1));
+                    return finalPoint;
+                )
+                else if (opts.ExtendField == true) then (
+                    if (debugLevel > 0) then print "randomPointViaLinearIntersection:  extending the field.";
+                    phi = (extendFieldByDegree(myDeg, R1))#1;
+                    m2 = phi(ptList#j);
+                    newPtList = random decompose(m2);
+--                    1/0;
+                    if (#newPtList > 0) then ( 
+                        finalPoint =  apply(idealToPoint(newPtList#0), s -> sub(s, target phi));
+                        return finalPoint
+                    ); 
+                );
+                j = j+1;
             );
-            j = j+1;
         );
         if (debugLevel > 0) then print "randomPointViaLinearIntersection:  failed, looping and trying a new linear space.";
         i = i+1;
@@ -226,7 +257,7 @@ randomPointViaLinearIntersection := opts -> (n1, I1) -> (
     return false;
 );
 
-randomPointViaGenericProjection = method(Options => {Strategy=>null, Homogeneous => true, MaxChange => 0, Codimension => null, IntersectionAttempts => 20, ProjectionAttempts => 20});
+randomPointViaGenericProjection = method(Options => optRandomPoints);
 randomPointViaGenericProjection(ZZ, Ideal) := opts -> (n1, I1) -> (
     flag := true;
     local phi;
@@ -236,6 +267,11 @@ randomPointViaGenericProjection(ZZ, Ideal) := opts -> (n1, I1) -> (
     local ptList;
     local j;
     local finalPoint;
+    local newPtList;
+    local phi;
+    local myDeg;
+    local m2;
+    R1 := ring I1;  
     i := 0;
     while(flag) and (i < opts.ProjectionAttempts) do (
         (phi, I0) = projectionToHypersurface(I1, Homogeneous=>opts.Homogeneous, MaxChange => opts.MaxChange, Codimension => opts.Codimension);
@@ -247,9 +283,21 @@ randomPointViaGenericProjection(ZZ, Ideal) := opts -> (n1, I1) -> (
                     ptList = random decompose(J0);
                     j = 0;
                     while (j < #ptList) do (
-                        if (degree (ptList#j) == 1) then (
+                        myDeg = degree (ptList#j);
+                        print myDeg;
+                        if (myDeg == 1) then (
                             finalPoint = apply(idealToPoint(ptList#j), s -> sub(s, coefficientRing ring I1));
                             return finalPoint;
+                        )                        
+                        else if (opts.ExtendField == true) then (
+                            if (debugLevel > 0) then print "randomPointViaGenericProjection:  extending the field.";
+                            phi = (extendFieldByDegree(myDeg, R1))#1;
+                            m2 = phi(ptList#j);
+                            newPtList = random decompose(m2);
+                            if (#newPtList > 0) then ( 
+                                finalPoint =  apply(idealToPoint(newPtList#0), s -> sub(s, target phi));
+                                return finalPoint
+                            ); 
                         );
                         j = j+1;
                     )
@@ -263,7 +311,7 @@ randomPointViaGenericProjection(ZZ, Ideal) := opts -> (n1, I1) -> (
 );
 
 
-randomPoint = method( Options=>{Strategy=>BruteForce, Homogeneous => true, MaxChange => 0, Codimension => null});
+randomPoint = method( Options=>optRandomPoints);
 
 randomPoint(Ring) := opts -> (R1) -> (
     noVar := #generators R1;
@@ -325,7 +373,11 @@ randomPoint(ZZ,Ideal):=opts->(n1,I1)->(
 		return randomPointViaGenericProjection(n1, I1, opts)
 	)
     else if (opts.Strategy == LinearIntersection) then (
-        return randomPointViaGenericProjection(n1, I1, opts)
+        --1/0;
+        return randomPointViaLinearIntersection(n1, I1, opts)
+    )
+    else (
+        error "randomPoint:  Not a valid Strategy"
     )
 );
 
