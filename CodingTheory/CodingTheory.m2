@@ -67,6 +67,7 @@ export {
     "cartesianCode",
     "RMCode",
     "orderCode",
+    "RSCode",
     
     
     -- Families of Codes
@@ -430,11 +431,8 @@ evaluationCode(Ring,List,List) := EvaluationCode => opts -> (F,P,S) -> (
     -- outputs: The list of points, the list of polynomials, the vanishing ideal and the linear code.
     
     R := ring S#0;
-
     I := intersect apply(P,i->ideal apply(numgens R,j->R_j-i#j)); -- Vanishing ideal of the set of points.
-
     G := transpose matrix apply(P,i->flatten entries sub(matrix(R,{S}),matrix(F,{i}))); -- Evaluate the elements in S over the elements on P.
-    
     return new EvaluationCode from{
 	symbol VanishingIdeal => I,
 	symbol Points => P,
@@ -447,18 +445,12 @@ evaluationCode(Ring,List,List) := EvaluationCode => opts -> (F,P,S) -> (
 evaluationCode(Ring,List,Matrix) := EvaluationCode => opts -> (F,P,M) -> (
     -- Constructor for a evaluation (monomial) code.
     -- inputs: a field, a list of points (as a tuples) of the same length and a matrix of exponents.
-    -- outputs: a F-module.
-    
+    -- outputs: a F-module.    
     -- We should check if all the points of P are in the same F-vector space.
-
     m := numgens image M; -- number of monomials.
-    
     t := getSymbol "t";
-
     R := F[t_0..t_(m-1)];
-
-    S := apply(entries M, i -> vectorToMonomial(vector i,R));
-    
+    S := apply(entries M, i -> vectorToMonomial(vector i,R));    
     evaluationCode(F,P,S)
     )
 
@@ -470,9 +462,7 @@ net EvaluationCode := c -> (
 -- Evaluation Code constructors:
 ------------------------------------------
 
-   
 toricCode = method(Options => {})
-
 toricCode(Ring,Matrix) := EvaluationCode => opts -> (F,M) -> (
     -- Constructor for a toric code.
     -- inputs: a Galois field, an integer matrix 
@@ -512,21 +502,15 @@ evCodeGraph  = method(Options => {});
 
 evCodeGraph (Ring,Matrix,List) := evCodeGraph  => opts -> (F,M,S) -> (
     -- input: a field, Incidence matrix of the graph , a set of polynomials.
-    -- outputs: a monomial code over the list of points.
-    
+    -- outputs: a monomial code over the list of points.    
     -- We should check if all the points lives in the same F-vector space.
     -- Should we check if all the monomials lives in the same ring?
     
     P := entries transpose M;
- 
     R := ring S#0;
-
     I := intersect apply(P,i->ideal apply(numgens R-1,j->R_j-i#j)); -- Vanishing ideal of the set of points.
-
     S = toList apply(apply(S,i->promote(i,R/I)),j->lift(j,R))-set{0*S#0}; -- Drop the elements in S that was already in I.
-
-    G := matrix apply(P,i->flatten entries sub(matrix(R,{S}),matrix(F,{i}))); -- Evaluate the elements in S over the elements on P.
-    
+    G := matrix apply(P,i->flatten entries sub(matrix(R,{S}),matrix(F,{i}))); -- Evaluate the elements in S over the elements on P.    
     
     new EvaluationCode from{
 	symbol AmbientSpace => F^(#P),
@@ -547,11 +531,9 @@ codeGraph  = method(TypicalValue => Module);
 codeGraph (Matrix,ZZ,ZZ) := (M,d,p)->(
     K:=ZZ/p;
     tMatInc:=transpose M;
-    X:=entries tMatInc;
-    
+    X:=entries tMatInc;    
     t := getSymbol "t";
-    R:=K[t_(0)..t_(numgens target M-1)];
-    
+    R:=K[t_(0)..t_(numgens target M-1)];    
     SetPoly:=flatten entries basis(d,R);
     SetPolySys:=apply(0..length SetPoly-1, x->polySystem{SetPoly#x});
     XX:=apply(X,x->point{x});
@@ -576,11 +558,9 @@ codeGraphInc = method(TypicalValue => Module);
 codeGraphInc (Matrix,ZZ):= (M,p)->(
     K:=ZZ/p;
     tInc:=transpose M;
-    X:=entries tInc;
-    
+    X:=entries tInc;    
     t := getSymbol "t";
-    R:=K[t_(0)..t_(numgens target M-1)];
-    
+    R:=K[t_(0)..t_(numgens target M-1)];    
     SetPol:=flatten entries basis(1,R);
     SetPolSys:=apply(0..length SetPol-1, x->polySystem{SetPol#x});
     XX:=apply(X,x->point{x});
@@ -608,11 +588,13 @@ cartesianCode(Ring,List,List) := EvaluationCode => opts -> (F,S,M) -> (
     I := ideal apply(m,i->product apply(S#i,j->R_i-j));
     P := set S#0;
     for i from 1 to m-1 do P=P**set S#i;
-    P = apply(toList(P/deepSplice),i->toList i);
+    if m==1 then {P = apply(toList(P/deepSplice),i->{i})} else
+    {P = apply(toList(P/deepSplice),i->toList i)};
     G := transpose matrix apply(P,i->flatten entries sub(matrix(R,{M}),matrix(F,{i})));
     
     new EvaluationCode from{
 	symbol Sets => S,
+	symbol Points => P,
 	symbol VanishingIdeal => I,
 	symbol PolynomialSet => M,
 	symbol LinearCode => linearCode(G),
@@ -625,11 +607,9 @@ cartesianCode(Ring,List,ZZ) := EvaluationCode => opts -> (F,S,d) -> (
     -- inputs: A field F, a set of tuples representing the subsets of F and the degree d.
     -- outputs: the cartesian code of degree d.
     m:=#S;
-    
     t := getSymbol "t";
     R:=F[t_0..t_(m-1)];
     M:=apply(flatten entries basis(R/monomialIdeal basis(d+1,R)),i->lift(i,R));
-    
     cartesianCode(F,S,M)
     )
    
@@ -651,35 +631,38 @@ cartesianCode(Ring,List,Matrix) := EvaluationCode => opts -> (F,S,M) -> (
 
 
 RMCode = method(TypicalValue => EvaluationCode)
-    
 RMCode(ZZ,ZZ,ZZ) := EvaluationCode => (q,m,d) -> (
-    -- Contructor for a generalized Reed-Muller code.
+    -- Contructor for a Reed-Muller code.
     -- Inputs: A prime power q (the order of the finite field), m the number of variables in the defining ring  and an integer d (the degree of the code).
     -- outputs: The cartesian code of the GRM code.
-    
     F := GF(q);
     S := apply(q-1, i->F_0^i)|{0*F_0};
     S = apply(m, i->S);
-    
     cartesianCode(F,S,d)
+    )
+
+
+RSCode = method(TypicalValue => EvaluationCode)
+RSCode(Ring,List,ZZ) := EvaluationCode => (F,S,d) -> (
+    -- Contructor for a Reed-Solomon code.
+    -- Inputs: Field, subset of the field and an integer d (polynomials of degree less than d will be evaluated).
+    cartesianCode(F,S,d-1)
     )
 
 
 orderCode = method(Options => {})
 
-orderCode(Ring,List,List,ZZ) := EvaluationCode => opts -> (F,G,P,l) -> (
+orderCode(Ring,List,List,ZZ) := EvaluationCode => opts -> (F,P,G,l) -> (
     -- Order codes are defined through a set of points and a numerical semigroup.
     -- Inputs: A field, a list of points P, the minimal generating set of the semigroup (where G_1<G_2<...) of the order function, a bound l.
-    -- Outputs: the evaluation code evaluated in P by the polynomials with weight less or equal than l.
-    
+    -- Outputs: the evaluation code evaluated in P by the polynomials with weight less or equal than l.    
     -- We should add a check to way if all the points are of the same length.
     
     m := length P#0;
-    
     t := getSymbol "t";
     R := F[t_0..t_(m-1), Degrees=>G];
     M := matrix apply(toList sum apply(l+1, i -> set flatten entries basis(i,R)),j->first exponents j);
-    
+
     evaluationCode(F,P,M)
     )
 
@@ -688,8 +671,7 @@ orderCode(Ideal,List,List,ZZ) := EvaluationCode => opts -> (I,P,G,l) -> (
     -- Inputs: The ideal I that defines the finite algebra of the order function, the points to evaluate over, the minimal generating set of the semigroups associated to the order function and the bound.
     -- Outpus: an evaluation code.
     
-    m := #flatten entries basis(1,I.ring);
-    
+    m := #flatten entries basis(1,I.ring);    
     t := getSymbol "t";
     R := (coefficientRing I.ring)[t_1..t_m, Degrees=>G, MonomialOrder => (reverse apply(flatten entries basis(1,I.ring),i -> Weights => first exponents i))];
     J := sub(I,matrix{gens R});
@@ -701,7 +683,7 @@ orderCode(Ideal,List,List,ZZ) := EvaluationCode => opts -> (I,P,G,l) -> (
 
 orderCode(Ideal,List,ZZ) := EvaluationCode => opts -> (I,G,l) -> (
     -- The same as before, but taking P as the rational points of I.
-    
+
     P := rationalPoints I;
     orderCode(I,P,G,l)
     )
@@ -1443,57 +1425,53 @@ assert( shorten( C2, K ) == linearCode(F, shortL) )
 assert( shorten( C3, K ) == linearCode(F, shortL) )
 ///
 
--*
 TEST ///
- -- vNumner of the ideal I=ideal(t1*t2^2-t1^2*t2,t1*t3^3-t1^3t3,t2*t3^3-t2^3*t3)
-   K=ZZ/3; 
-   R=K[t3,t2,t1,MonomialOrder=>Lex];
-   I=ideal(t1*t2^2-t1^2*t2,t1*t3^3-t1^3*t3,t2*t3^3-t2^3*t3);
-   vNumber(I);
-   assert(vNumber(I)==regularity coker gens gb I-1)
+-- vNumner of the ideal I=ideal(t1*t2^2-t1^2*t2,t1*t3^3-t1^3t3,t2*t3^3-t2^3*t3)
+K=ZZ/3
+R=K[t3,t2,t1,MonomialOrder=>Lex]
+I=ideal(t1*t2^2-t1^2*t2,t1*t3^3-t1^3*t3,t2*t3^3-t2^3*t3)
+vNumber(I)
+assert(vNumber(I)==regularity coker gens gb I-1)
 ///
 
-
- TEST ///
- -- footPrint function of the ideal I=ideal(t1^3,t2*t3) with parameters d=2, r=3
-   K=QQ;
-   R=K[t1,t2,t3];
-   I=ideal(t1^3,t2*t3);
-   footPrint(3,4,I);
-   assert(footPrint(3,4,I)==4)
+TEST ///
+-- footPrint function of the ideal I=ideal(t1^3,t2*t3) with parameters d=2, r=3
+K=QQ
+R=K[t1,t2,t3]
+I=ideal(t1^3,t2*t3)
+footPrint(3,4,I)
+assert(footPrint(3,4,I)==4)
 ///
 
-
-
- TEST ///
- -- hYpFunction of the ideal I=ideal(t1*t6-t3*t4,t2*t6-t3*t5) with parameters d=1, r=1
-   K=ZZ/3;
-   R=K[t1,t2,t3,t4,t5,t6];
-   I=ideal(t1*t6-t3*t4,t2*t6-t3*t5);
-   hYpFunction(1,1,I);
-   assert(hYpFunction(1,1,I)==1)
+TEST ///
+-- hYpFunction of the ideal I=ideal(t1*t6-t3*t4,t2*t6-t3*t5) with parameters d=1, r=1
+K=ZZ/3
+R=K[t1,t2,t3,t4,t5,t6]
+I=ideal(t1*t6-t3*t4,t2*t6-t3*t5)
+hYpFunction(1,1,I)
+assert(hYpFunction(1,1,I)==1)
 ///
 
 
 TEST ///
- -- gMdFunction of the ideal I=ideal(t1*t6-t3*t4,t2*t6-t3*t5) with parameters d=1, r=1
-   K=ZZ/3;
-   R=K[t1,t2,t3,t4,t5,t6];
-   I=ideal(t1*t6-t3*t4,t2*t6-t3*t5);
-   gMdFunction(1,1,I);
-   assert(gMdFunction(1,1,I)==3)
+-- gMdFunction of the ideal I=ideal(t1*t6-t3*t4,t2*t6-t3*t5) with parameters d=1, r=1
+K=ZZ/3
+R=K[t1,t2,t3,t4,t5,t6]
+I=ideal(t1*t6-t3*t4,t2*t6-t3*t5)
+gMdFunction(1,1,I)
+assert(gMdFunction(1,1,I)==3)
 ///
 
 
- TEST ///
+TEST ///
  -- vasFunction of the ideal I=ideal(t1^2,t1*t2,t2^2) with parameters d=1, r=1
-   K=ZZ/3;
-   R=K[t1,t2];
-   I=ideal(t1^2,t1*t2,t2^2);
-   vasFunction(1,1,I);
-   assert(vasFunction(1,1,I)==1)
+K=ZZ/3
+R=K[t1,t2]
+I=ideal(t1^2,t1*t2,t2^2)
+vasFunction(1,1,I)
+assert(vasFunction(1,1,I)==1)
 ///
-*-
+
 
 TEST /// 
 -- random test
@@ -1532,8 +1510,41 @@ assert( length C2 == 15)
 -- Use this section for Evaluation Code Tests
 -----------------------------------------------
 -----------------------------------------------
+TEST ///
+-- Cartesian codes
+C=cartesianCode(ZZ/11,{{1,2,3},{2,6,8}},3)
+assert( length C.LinearCode == 9)
+///
 
+TEST ///
+-- Reed-Muller codes
+C=RMCode(3,3,4);
+assert( length C.LinearCode == 27)
+///
 
+TEST ///
+-- Reed-Solomon codes
+C=RSCode(ZZ/11,{{1,2,3}},3);
+assert( length C.LinearCode == 3)
+///
+
+TEST ///
+-- Reed-Solomon codes
+C=RSCode(ZZ/17,{{0,1,2,3,7,11}},4)
+dim C.LinearCode
+assert( dim C.LinearCode == 4)
+///
+
+TEST ///
+-- Order codes
+F=GF(4);
+R=F[x,y];
+I=ideal(x^3+y^2+y);
+l=7;
+C=orderCode(I,{2,3},l);
+assert(length C.LinearCode==8)
+assert( dim C.LinearCode==7)
+///
 
 ------------------------------------------
 ------------------------------------------
@@ -1856,11 +1867,105 @@ document {
 -----------------------------------------------
 -----------------------------------------------
 
- 
-       
-       
-       
-       
+
+document {
+    Key => {cartesianCode, (cartesianCode,Ring,List,List), (cartesianCode,Ring,List,ZZ), (cartesianCode,Ring,List,Matrix)},
+    Headline => "Constructs a Cartesian code.",
+    Usage => "cartesianCode(F,L,S)\ncartesianCode(F,L,d)\ncartesianCode(F,L,M)",
+    Inputs => {
+	"F" => Ring => {"Field."},
+	"L" => List => {"Sets of F to make a Cartesian product."},
+	"S" => List => {"Sets of polynomials to evaluate."},
+	"d" => ZZ => {"Polynomials up to dedree d will be evaluated."}, 
+	"M" => Matrix => {"Matrix whose rows are the exponents of the monomials to evaluate."}
+	},
+    Outputs => {
+	"C" => EvaluationCode => {"Cartesian code."}
+	},
+    "F is a field, L  is a list of sets of F and d is an integer",
+    "Returns the Cartesian code obtained when polynomials up to degree d are evaluated over the points on the Cartesian product made by the sets of L.",
+    EXAMPLE {
+	"C=cartesianCode(ZZ/11,{{1,2,3},{2,6,8}},3);",
+	"C.Sets",
+	"C.VanishingIdeal",
+	"C.PolynomialSet",
+	"C.LinearCode",
+	"length C.LinearCode"	
+	}
+    }
+
+document {
+    Key => {RMCode, (RMCode,ZZ,ZZ,ZZ)},
+    Headline => "Constructs the Reed-Muller code.",
+    Usage => "RMCode(q,m,d)",
+    Inputs => {
+	"q" => ZZ => {"Size of the field."},
+	"m" => ZZ => {"Number of varibles."},
+	"d" => ZZ => {"Polynomials up to dedree d will be evaluated."}	
+	},
+    Outputs => {
+	"C" => EvaluationCode => {"Reed-Muller code."}
+	},
+    "q, m and d are integers",
+    "Returns the Reed-Muller code obtained when polynomials in m variables up to total degree d are evaluated over the points on GF(q)^m.",
+    EXAMPLE {
+	"C=RMCode(2,3,4);",
+	"C.Sets",
+	"C.VanishingIdeal",
+	"C.PolynomialSet",
+	"C.LinearCode",
+	"length C.LinearCode"
+	}
+    }
+
+document {
+    Key => {RSCode, (RSCode,Ring,List,ZZ)},
+    Headline => "Constructs the Reed-Muller code.",
+    Usage => "RMCode(F,L,k)",
+    Inputs => {
+	"F" => Ring => {"Finite field."},
+	"L" => List => {"Elements of the field to evaluate."},
+	"k" => ZZ => {"Polynomials of dedree less than k will be evaluated."}	
+	},
+    Outputs => {
+	"C" => EvaluationCode => {"Reed-Solomon code."}
+	},
+    "F is a finite fiel, L={{a_1,...,a_n}} contains the elements to evaluate, polynomials of degree less than k are used to evaluate",
+    "Returns the Reed-Solomon code obtained when polynomials of degree less than k are evaluated on the elements of L .",
+    EXAMPLE {
+	"C=RSCode(ZZ/31,{{1,2,3}},3);",
+	"peek C"
+	}
+    }
+
+document {
+    Key => {orderCode, (orderCode,Ring,List,List,ZZ), (orderCode,Ideal,List,List,ZZ), (orderCode,Ideal,List,ZZ)},
+    Headline => "Order codes.",
+    Usage => "orderCode(F,P,G,d)\norderCode(I,P,G,d)\norderCode(I,G,d)\n",
+    Inputs => {
+	"F" => Ring => {"Finite field."},
+	"P" => List => {"A list of points to evaluate."},
+	"G" => List => {"A list of natural numbers."},
+	"I" => Ideal => {"Ideal whose rational points will be evaluated."},
+	"l" => ZZ  => {"Polynomials up to weigth l will be evaluated."}	
+	},
+    Outputs => {
+	"C" => EvaluationCode => {"Order code."}
+	},
+    "F is a field, P is a list of points to evaluate, G is a list of natural numbers",
+    "Returns the Evaluation code obtained when polynomials in #P variables up to weight l are evaluated over the points on P.",
+    EXAMPLE {
+	"F=GF(4);",
+	"R=F[x,y];",
+	"I=ideal(x^3+y^2+y);",
+	"l=7;",
+	"C=orderCode(I,{2,3},l);",
+	"peek C"
+	}
+    }
+
+
+
        
        
 end
