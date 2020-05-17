@@ -307,53 +307,72 @@ assert(2 == # keys gradient({x},{y}))
 
 --witnessCriticalVariety and Optimization degree
 CriticalIdeal = new Type of MutableHashTable
-criticalIdeal = method(Options => {});
-criticalIdeal (List,Gradient,LagrangeIdeal) := CriticalIdeal => opts  -> (v,g,aLI) ->(
+criticalIdeal = method(Options => {Data=>null});--Evaluate data option. 
+criticalIdeal (Gradient,LagrangeIdeal) := CriticalIdeal => opts  -> (g,aLI) ->(
     if degreeLength  ring aLI==4 then(
 	u := gens coefficientRing ring (aLI);
-	if #v =!= #u then error "data does not agree with number of parameters. ";
-	--if #y =!= #g.Numerators then error "gradient numerators does not agree with number of dual variables. ";
-	--if #y =!= #g.Denominators then error "gradient denominators does not agree with number of dual variables. ";
-	dataSub :=apply(u,v,(i,j) -> i => j);
-    	print(class g);
-    	JC := newJC(g,aLI) ;	
+	dataSub := if opts.Data===null then {} else apply(u,opts.Data,(i,j) -> i => j);
+    	print("ds"); 
+    	print(dataSub);
+    	gCN := sub(g,aLI);
+    	print( gCN.Numerators);
+    	newJC := aLI.JacobianConstraint;
+	print ("oldJC"=>newJC);
+    	Lam := sub(aLI.ConormalRing.Factors#2//gens,aLI);
+	y:=sub(aLI.ConormalRing.Factors#1//gens,aLI);
+    	newJC = ideal apply(#y,
+	    i->(
+	    	lamSub := Lam/(j->j=>j*gCN.Denominators#i);	    	    
+	    	gCN.Numerators#i + sub( newJC_i, lamSub )-y_i
+		)
+	    );
+	print("newJC"=>newJC)  ;  
 	CI := new CriticalIdeal from {
-	    Ideal=>sub(aLI.Ideal,dataSub),
-	    Data => v,
+	    Data => opts.Data,
 	    Gradient => g,
 	    LagrangeIdeal => aLI,
-	    JacobianConstraint => JC	    
+	    JacobianConstraint => sub(newJC,dataSub)
 	    };
 	return CI
 	)
     else error"degreeLength is not 4."--Should be able to handle any degree length
     )
 
-criticalIdeal (List,List,LagrangeIdeal) := CriticalIdeal => opts  -> (v,g,aLI) ->criticalIdeal(v,gradient g,aLI)
-criticalIdeal (List,RingElement,LagrangeIdeal) := CriticalIdeal =>opts -> (v,psi,aLI) -> (
+criticalIdeal (List,LagrangeIdeal) := CriticalIdeal => opts  -> (g,aLI) ->criticalIdeal(gradient g,aLI,opts)
+criticalIdeal (RingElement,LagrangeIdeal) := CriticalIdeal =>opts -> (psi,aLI) -> (
     g := apply(gens ring psi,x->diff(x,psi));
-    criticalIdeal(v,g,aLI);
+    criticalIdeal(g,aLI,opts);
     )
 
-criticalIdeal (List,Gradient,Ideal) := CriticalIdeal =>opts -> (v,g,WI) -> (
+criticalIdeal (Gradient,Ideal) := CriticalIdeal =>opts -> (g,WI) -> (
     aLI := lagrangeIdeal WI;
-    criticalIdeal(v,g,aLI);
+    criticalIdeal(g,aLI,opts);
     )
-criticalIdeal (List,List,Ideal) := CriticalIdeal =>opts -> (v, g,WI) ->criticalIdeal(v,gradient g,WI)
-criticalIdeal (List,RingElement,Ideal) := CriticalIdeal =>opts -> (v,psi,WI) -> (
+criticalIdeal (List,Ideal) := CriticalIdeal =>opts -> (g,WI) ->criticalIdeal(gradient g,WI)
+criticalIdeal (RingElement,Ideal) := CriticalIdeal =>opts -> (psi,WI) -> (
     g := apply(gens ring psi,x->diff(x,psi));
-    criticalIdeal(v,g,WI);
+    criticalIdeal(g,WI,opts);
     )
 
-criticalIdeal (List,Gradient,Ideal,Ideal) := CriticalIdeal =>opts -> (v,g,WI,I) -> (
+criticalIdeal (Gradient,Ideal,Ideal) := CriticalIdeal =>opts -> (g,WI,I) -> (
     aLI := lagrangeIdeal(WI,I);
-    criticalIdeal(v,g,aLI);
+    criticalIdeal(g,aLI,opts);
     )
-criticalIdeal (List,List,Ideal,Ideal) := CriticalIdeal =>opts -> (v,g,WI,I) ->criticalIdeal(v,gradient g,WI,I)
-criticalIdeal (List,RingElement,Ideal,Ideal) := CriticalIdeal =>opts -> (v,psi,WI,I) -> (
+criticalIdeal (List,Ideal,Ideal) := CriticalIdeal =>opts -> (g,WI,I) ->criticalIdeal(gradient g,WI,I)
+criticalIdeal (RingElement,Ideal,Ideal) := CriticalIdeal =>opts -> (psi,WI,I) -> (
     g := apply(gens ring psi,x->diff(x,psi));
-    criticalIdeal(v,g,WI,I);
+    criticalIdeal(g,WI,I,opts);
     )
+
+degree (CriticalIdeal) :=  CI -> (
+    w := CI#JacobianConstraint;
+    if CI#LagrangeIdeal#?PrimalIdeal 
+    then w= w+sub(CI#LagrangeIdeal#PrimalIdeal,CI#LagrangeIdeal)
+    else error"CriticalIdeal#LagrangeIdeal#?PrimalIdeal is false. ";
+    u := gens coefficientRing ring (CI#LagrangeIdeal);
+    dataSub := if CI.Data===null then {} else apply(u,CI.Data,(i,j)->i=>j);
+    degree sub(w,dataSub)
+    )    
 
 
 TEST/// 
@@ -361,10 +380,28 @@ R=QQ[a,b][x,y]
 I=ideal(x^2+y^2-1)
 WI=I
 aLI = lagrangeIdeal(WI,I)
+peek criticalIdeal
 ring aLI
-WCI = criticalIdeal({7,99},{x-a,y-b},aLI)
+ WCI = criticalIdeal({x-a,y-b},aLI)
+peek WCI
+assert(4==degree WCI)
 
-assert (2 ==degree (WCI))--ED degree of circle
+WCI = criticalIdeal({x-a,y-b},aLI,Data=>{2,19})
+assert(2==degree WCI)--ED degree of the circle
+
+
+WCI#Ideal_*//netList
+W = sub(WCI#Ideal,apply(gens coefficientRing R,WCI.Data,(i,j)->i=>j))
+decompose W
+eliminate({last gens ring W},W)
+degree WCI
+WCI#Ideal
+
+
+sub()
+degree 
+decompose ((WCI#Ideal)+sub(I,aLI))
+assert (2 ==degree (WCI#Ideal))--ED degree of circle
 sub(RingElement, LagrangeIdeal) := (f,aLI) -> sub(f,ring aLI)
 
 
@@ -637,19 +674,6 @@ findRegularSequence = I -> (
 	)
     );
     WI)
-
--- computes jacobian constraints with the objective function replacing the dual variables AND clearing denominators
---Used in IsolatedCriticalPointSet
-newJC = (g,aLI) -> (
-    gCN := sub(g,aLI);
-    JC := aLI.JacobianConstraint;
-    Lam := sub(aLI.ConormalRing.Factors#2//gens,aLI);
-    ideal apply(#Lam,i->(
-	    lamSub := Lam/(j->j=>j*gCN.Denominators#i);	    	    
-	    gCN.Numerators#i + sub( JC_i, lamSub )
-	    )
-	)
-    )       
 
     
 
