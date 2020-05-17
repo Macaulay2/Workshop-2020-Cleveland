@@ -49,7 +49,7 @@ toricHilbertFunction (Matrix, ZZ) := Thing => (W, d) -> (
     -- extract its coefficients and degree
     (M,C) := coefficients(D,Variables=>{T_R});
     -- call the function that computes the value recursively
-    recursion(d,n,C,R)
+    recHilb(d,n,C,R)
     )
 
 -- TO DO: should cache and reuse values
@@ -59,11 +59,30 @@ toricHilbertFunction (Matrix, ZZ) := Thing => (W, d) -> (
 -- C matrix of coefficients of denominator, R degrees ring
 -- COMMENT: calling from toricHilbertFunction creates all
 -- inputs correctly
-recursion = (d, n, C, R) -> (
+recHilb = (d, n, C, R) -> (
     if d==0 then return 1_R;    
     -sum(toList(1..min(d,n)), k -> 
-	binomial(d,k) * k!*C_(k,0) * (d-k)!*recursion(d-k,n,C,R)
+	binomial(d,k) * k!*C_(k,0) * (d-k)!*recHilb(d-k,n,C,R)
 	)//d!
+    )
+
+-- for testing only
+-- can be removed eventually
+testHilbertFunction = method()
+testHilbertFunction (Matrix, ZZ) := Thing => (W, d) -> (
+    r := numRows W;
+    z := getSymbol "z";
+    T := getSymbol "T";
+    R := ZZ[z_1..z_r,T, Inverses => true, MonomialOrder=>RevLex];
+    -- the degree zero component has dimension 1
+    n := numColumns W;
+    -- compute the denominator of the Hilbert series
+    -- which is a polynomial in T of degree n
+    ms := apply(n, i -> R_(flatten entries W_{i}));
+    fs := apply(n, i -> sum apply(d+1, j -> (ms#i*(T_R))^j));
+    g := product fs;
+    (M,C) := coefficients(g,Variables=>{T_R});
+    C_(d,0)
     )
 
 TEST ///
