@@ -34,6 +34,7 @@ export {
   "conormalRing",
   "conormalIdeal",
   "multiDegreeEDDegree",
+  "symboliclagrangeMultiplierEDDegree",
   -- Options
   "DualVariable",
   --Types and keys
@@ -138,6 +139,21 @@ assert(multiDegreeEDDegree(J) == 13)
 ///
 
 
+--------------------
+--LagrangeMultiplierEDDegree
+--------------------
+symboliclagrangeMultiplierEDDegree = method(Options => {Data => null});
+symboliclagrangeMultiplierEDDegree Ideal := ZZ => opts -> I -> (
+    aLI := lagrangeIdeal(I,I);
+    X := gens ring I;
+    g := if opts.Data==null then apply(X,i->random(1,1000) ) else opts.Data;
+    degree criticalIdeal(X-g,aLI)
+    )
+
+TEST///
+symboliclagrangeMultiplierEDDegree(ideal(x^2+y^2-1))
+symboliclagrangeMultiplierEDDegree(ideal((x^2+y^2+x)^2-x^2-y^2))
+///
 
 ------------------------------
 -- Lagrange multipliers code
@@ -309,7 +325,7 @@ assert(2 == # keys gradient({x},{y}))
 CriticalIdeal = new Type of MutableHashTable
 criticalIdeal = method(Options => {Data=>null});--Evaluate data option. 
 criticalIdeal (Gradient,LagrangeIdeal) := CriticalIdeal => opts  -> (g,aLI) ->(
-    if degreeLength  ring aLI==4 then(
+    if degreeLength  ring aLI<4 then(
 	u := gens coefficientRing ring (aLI);
 	dataSub := if opts.Data===null then {} else apply(u,opts.Data,(i,j) -> i => j);
     	print("ds"); 
@@ -388,37 +404,23 @@ assert(4==degree WCI)
 
 WCI = criticalIdeal({x-a,y-b},aLI,Data=>{2,19})
 assert(2==degree WCI)--ED degree of the circle
+///
 
 
-WCI#Ideal_*//netList
-W = sub(WCI#Ideal,apply(gens coefficientRing R,WCI.Data,(i,j)->i=>j))
-decompose W
-eliminate({last gens ring W},W)
-degree WCI
-WCI#Ideal
 
-
-sub()
-degree 
-decompose ((WCI#Ideal)+sub(I,aLI))
-assert (2 ==degree (WCI#Ideal))--ED degree of circle
-sub(RingElement, LagrangeIdeal) := (f,aLI) -> sub(f,ring aLI)
-
-
-R=QQ[a,b][x,y]
-I=ideal(x^2+3*y^2-1)
+TEST/// 
+R=QQ[x,y]
+I=ideal(x^2+y^2-1)
 WI=I
-LVW = witnessLagrangeVariety(WI,I)
-ring LVW
-WCI = witnessCriticalIdeal({7,99},{x-a,y-b},LVW)
-assert (4 ==degree (WCI_1+WCI_2))--ED degree of ellipse
-needsPackage"Bertini"
-makeB'InputFile(storeBM2Files,
-    AffVariableGroup=>{x,y,lambda_0},
-    B'Polynomials=>(WCI_0+WCI_2)_*   
-    )
-runBertini(storeBM2Files)
-assert(4==#importSolutionsFile(storeBM2Files))
+aLI = lagrangeIdeal(WI,I)
+peek criticalIdeal
+ring aLI
+ WCI = criticalIdeal({x-2,y-19},aLI)
+peek WCI
+assert(2==degree WCI)
+
+WCI = criticalIdeal({x-a,y-b},aLI,Data=>{2,19})
+assert(2==degree WCI)--ED degree of the circle
 ///
 
 
@@ -552,6 +554,22 @@ bertiniCriticalPointSet = (u,g,LVW,bic)->(
     ICPS
     )
 
+TEST/// 
+R=QQ[a,b][x,y]
+I=ideal(x^2+3*y^2-1)
+WI=I
+LVW = witnessLagrangeVariety(WI,I)
+ring LVW
+WCI = witnessCriticalIdeal({7,99},{x-a,y-b},LVW)
+assert (4 ==degree (WCI_1+WCI_2))--ED degree of ellipse
+needsPackage"Bertini"
+makeB'InputFile(storeBM2Files,
+    AffVariableGroup=>{x,y,lambda_0},
+    B'Polynomials=>(WCI_0+WCI_2)_*   
+    )
+runBertini(storeBM2Files)
+assert(4==#importSolutionsFile(storeBM2Files))
+///
 ------------------------------
 --Index the stategies  code
 ------------------------------
