@@ -36,7 +36,11 @@ doc ///
 	    There were 213 solutions found in 1.07843 seconds (with a Bezout bound of 243).
 	    
 	    Reference: 
+	    Karin Gatermann.
+	    "Symbolic solution of polynomial equation systems with symmetry",
+	    Proceedings of ISSAC-90, pp 112-119, ACM New York, 1990.
 	    
+	    See also: http://homepages.math.uic.edu/~jan/Demo/cpdm5.html
 	    
 	Example
 	    cpdm5(QQ)
