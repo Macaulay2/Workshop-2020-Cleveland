@@ -557,7 +557,7 @@ bertiniCriticalPointSet = (u,g,LVW,bic)->(
     updateConditionNumberTolerance(1e10,ICPS);    
     ICPS
     )
-
+ 
 TEST/// 
 R=QQ[a,b][x,y] 
 I=ideal(x^2+1*y^2-1)
@@ -567,8 +567,17 @@ u ={7,99}
 g= {x-a,y-b}
 bic={}
 bertiniCriticalPointSet(u,g,LVW,bic)
-isolatedRegularCriticalPointSet (u,g,LVW)
+ICPS = isolatedRegularCriticalPointSet (u,g,LVW)
+
+ICPS = isolatedRegularCriticalPointSet (u,g,LVW,Strategy=>1)
+--assert(2==#ICPS.Points)--Issue with keys here TODO. 
+updateEvaluationTolerance(-100,ICPS)	
+peek ICPS
+--assert({}==ICPS.Points)--Issue with keys here TODO. 
+isolatedRegularCriticalPointSet(u,g,LVW)
+isolatedRegularCriticalPointSet(u,g,LVW,Strategy=>1)
 peek oo
+
 
 ///
 ------------------------------
@@ -598,44 +607,6 @@ bezoutBertiniIsolatedRegularCriticalPointSet = (u,g,LVW)->(
     bic := {"TrackType"=>0,"UseRegeneration"=>0};
     bertiniCriticalPointSet(u,g,LVW,bic))
 
-
-TEST///
-needsPackage"Bertini"
-R=QQ[a,b][x,y]
-I=ideal(x^2+y^2-1)
-WI=I
-aLI = lagrangeIdeal(I)
-(u,g)=({7,99},{x-a,y-b})
-ICPS = regenerateBertiniIsolatedRegularCriticalPointSet(u,g,LVW)
---assert(2==#ICPS.Points)--Key issue here. 
-peek oo
-first importMainDataFile(ICPS.SaveFileDirectory,NameMainDataFile=>"main_data_ss")
-
-
-updateEvaluationTolerance(-100,ICPS)	
---assert({}==ICPS#Points)--Issue with keys here TODO. 
-isolatedRegularCriticalPointSet(u,g,LVW)
-isolatedRegularCriticalPointSet(u,g,LVW,Strategy=>1)
-peek oo
-///
-
-
-
-TEST///
-R=QQ[a,b][x,y]
-I=ideal(x^2+y^2-1)
-WI=I
-LVW = witnessLagrangeVariety(WI,I)
-ring LVW
-assert (2 ==degree witnessCriticalIdeal({7,99},{x-a,y-b},LVW))--ED degree of circle
-
-R=QQ[a,b][x,y]
-I=ideal(x^2+3*y^2-1)
-WI=I
-LVW = witnessLagrangeVariety(WI,I)
-ring LVW
-assert (4 ==degree witnessCriticalIdeal({7,99},{x-a,y-b},LVW))--ED degree of ellipse
-///
 
 --TODO : bertiniSolve
 --TODO : monodromySolve
@@ -694,14 +665,9 @@ findRegularSequence = I -> (
     );
     WI)
 
-    
-
-
 newRingFromSymbol = (n,s,kk)->(
     kk[s_0..s_(n - 1)]
     )
-
-
 
 -*
 optimizationDegree = method(Options => options makeLagrangeRing);
