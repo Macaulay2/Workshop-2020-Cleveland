@@ -32,7 +32,9 @@ export {
     "ModifiedBruteForce",  --a valid value for [RandomPoint, Strategy]
 	"ProjectionAttempts", --used in the GenericProjection strategy
     "IntersectionAttempts", --used in the LinearIntersection strategy
-    "ExtendField" --used in GenericProjection and LinearIntersection strategy
+    "ExtendField", --used in GenericProjection and LinearIntersection strategy
+    "checkRandomPoint",
+    "PointCheckAttempts"
     }
 exportMutable {}
 
@@ -47,7 +49,8 @@ optRandomPoints := {
     Codimension => null,
     IntersectionAttempts => 20,
     ProjectionAttempts => 20,
-    ExtendField => false
+    ExtendField => false,
+    PointCheckAttempts => 100
 }
 
 pointToIdeal = method(Options =>{Homogeneous => false});
@@ -212,7 +215,7 @@ projectionToHypersurface(Ideal) := opts -> (I1) -> (
 
 --Function to check if random point is in the variety by intersecting with a linear space
 randomPointViaLinearIntersection = method(Options => optRandomPoints);
-randomPointViaLinearIntersection(ZZ, Ideal) := opts -> (n1, I1) -> (
+randomPointViaLinearIntersection(Ideal) := opts -> (I1) -> (
     c1 := opts.Codimension;
     if (c1 === null) then (c1 = codim I1); --don't compute it if we already know it.
     R1 := ring I1;
@@ -258,7 +261,7 @@ randomPointViaLinearIntersection(ZZ, Ideal) := opts -> (n1, I1) -> (
 );
 
 randomPointViaGenericProjection = method(Options => optRandomPoints);
-randomPointViaGenericProjection(ZZ, Ideal) := opts -> (n1, I1) -> (
+randomPointViaGenericProjection(Ideal) := opts -> (I1) -> (
     flag := true;
     local phi;
     local I0;
@@ -276,7 +279,7 @@ randomPointViaGenericProjection(ZZ, Ideal) := opts -> (n1, I1) -> (
     while(flag) and (i < opts.ProjectionAttempts) do (
         (phi, I0) = projectionToHypersurface(I1, Homogeneous=>opts.Homogeneous, MaxChange => opts.MaxChange, Codimension => opts.Codimension);
         if (codim I0 == 1) then (
-            pt = randomPoint(n1, I0, Strategy=>BruteForce); --find a point on the generic projection
+            pt = randomPoint(I0, Strategy=>BruteForce); --find a point on the generic projection
             if (not pt === false) then (
                 J0 = I1 + sub(ideal apply(dim source phi, i -> (first entries matrix phi)#i - pt#i), target phi); --lift the point to the original locus
                 if dim(J0) == 0 then( --hopefully the preimage is made of points
@@ -310,18 +313,7 @@ randomPointViaGenericProjection(ZZ, Ideal) := opts -> (n1, I1) -> (
     return false;
 );
 
-
-randomPoint = method( Options=>optRandomPoints);
-
-randomPoint(Ring) := opts -> (R1) -> (
-    noVar := #generators R1;
-    K:=coefficientRing R1;
-    L:=toList apply(noVar, i ->random(K));
-    if (opts.Homogeneous == true) then if (all(L, i->i==0)) then return randomPoint(R1);
-    return L
-);  
-
-randomPoint(Ideal) := List => opts->(I1)->(
+checkRandomPoint =(I1)->(
     genList:= first entries gens I1;
 	K:=coefficientRing ring I1;
     point:=randomPoint(ring I1);
@@ -335,7 +327,19 @@ randomPoint(Ideal) := List => opts->(I1)->(
     if (tempEval ==0) then return point else return false;
 )
 
-randomPoint(ZZ,Ideal):=opts->(n1,I1)->(
+randomPoint = method( Options=>optRandomPoints);
+
+randomPoint(Ring) := opts -> (R1) -> (
+    noVar := #generators R1;
+    K:=coefficientRing R1;
+    L:=toList apply(noVar, i ->random(K));
+    if (opts.Homogeneous == true) then if (all(L, i->i==0)) then return randomPoint(R1);
+    return L
+);  
+
+
+
+randomPoint(Ideal):=opts->(I1)->(
     local apoint;
     local outpt;
     local eval;
@@ -345,8 +349,8 @@ randomPoint(ZZ,Ideal):=opts->(n1,I1)->(
     local flag;
     if (opts.Strategy == BruteForce) then (
     	j=0;
-		while( j<n1) do (
-			apoint=randomPoint(I1, opts);
+		while( j<opts.PointCheckAttempts) do (
+			apoint=checkRandomPoint(I1);
 			if not (apoint===false ) then return apoint; 
 			j=j+1;
 		);
@@ -355,7 +359,7 @@ randomPoint(ZZ,Ideal):=opts->(n1,I1)->(
     else if (opts.Strategy == ModifiedBruteForce) then (
         j = 0;
         genList := first entries gens I1;
-        while (j < n1) do (
+        while (j < opts.PointCheckAttempts) do (
             i=0;
             flag = true;
 	        while(i< #genList) do (
@@ -370,16 +374,38 @@ randomPoint(ZZ,Ideal):=opts->(n1,I1)->(
         );
     )
 	else if (opts.Strategy == GenericProjection) then (
-		return randomPointViaGenericProjection(n1, I1, opts)
+		return randomPointViaGenericProjection(I1, opts)
 	)
     else if (opts.Strategy == LinearIntersection) then (
         --1/0;
-        return randomPointViaLinearIntersection(n1, I1, opts)
+        return randomPointViaLinearIntersection(I1, opts)
     )
     else (
         error "randomPoint:  Not a valid Strategy"
     )
 );
+
+randomPoint(ZZ,Ideal):=opts->(n1,I1)->(
+        i:=0;
+        local apoint;
+        local apoint1;
+        local L;
+        L=set{};
+        while(#L < n1 ) do ( 
+            apoint=randomPoint(I1);
+            if not(apoint===false) then(
+            L =L + set {apoint};
+            )
+            else L=L;
+            
+    ); 
+    return L;
+);
+
+
+
+
+
 
 
 -- A function with an optional argument
@@ -527,18 +553,21 @@ doc ///
             I = ideal(t_1,t_2+t_3);
             randomPoint(1000,I)
 ///
+
+
  ----- TESTS -----
 
 TEST///
- R=QQ[t_1..t_3];
- I = ideal(t_1,t_2+t_3);
- assert(#(createRandomPoints(I))===3)
+ 
 ///
 
 TEST///
- R=QQ[t_1..t_3];
- I = ideal(t_1,t_2+t_3, t_1-1);
- assert(evaluate(I)===false);
+ 
+///
+
+TEST///
+
+
 ///
 
 end
