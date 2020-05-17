@@ -32,30 +32,42 @@ equivariantHilbertSeries (Matrix) := Expression => W -> (
 
 
 
-
-deriv = method()
-deriv (Matrix, ZZ) := Thing => (W, d) -> (
+-- INPUT: W weight matrix for diagonal torus action on ring,
+-- d desired degree for Hilbert function
+toricHilbertFunction = method()
+toricHilbertFunction (Matrix, ZZ) := Thing => (W, d) -> (
     r := numRows W;
     z := getSymbol "z";
     T := getSymbol "T";
     R := ZZ[z_1..z_r,T, Inverses => true, MonomialOrder=>RevLex];
-    if d==0 then return 1_R;    
+    -- the degree zero component has dimension 1
     n := numColumns W;
+    -- compute the denominator of the Hilbert series
+    -- which is a polynomial in T of degree n
     ms := apply(n, i -> R_(flatten entries W_{i}));
     D := product apply(ms, m -> 1_R-(m*T_R));
+    -- extract its coefficients and degree
     (M,C) := coefficients(D,Variables=>{T_R});
-    deg := numRows(C) - 1;
-    if d-deg>0 then C = C || map(R^(d-deg),R^1,0);
-    recursion(W,d,R,deg,C)
+    -- call the function that computes the value recursively
+    recursion(d,n,C,R)
     )
 
-recursion = (W, d, R, deg, C) -> (
-    s := -sum(d,k->binomial(d,k)*(d-k)!*C_(d-k,0)*recursion(W,k,R,deg,C))//d!;
-    return s;
+-- TO DO: should cache and reuse values
+-- this computes toric hilbert series recursively
+-- it is not exported and not to be called directly
+-- INPUT: d desired degree, n degree of denominator of hilbert series,
+-- C matrix of coefficients of denominator, R degrees ring
+-- COMMENT: calling from toricHilbertFunction creates all
+-- inputs correctly
+recursion = (d, n, C, R) -> (
+    if d==0 then return 1_R;    
+    -sum(toList(1..min(d,n)), k -> 
+	binomial(d,k) * k!*C_(k,0) * (d-k)!*recursion(d-k,n,C,R)
+	)//d!
     )
 
 TEST ///
-W=matrix {{-1,0,1},{0,-1,1}};
+W=-matrix {{-1,0,1},{0,-1,1}};
 d=9;
 s=partialToricHilbertSeries(W,d)
 R= ring s;
