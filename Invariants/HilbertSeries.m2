@@ -1,18 +1,3 @@
-partialToricHilbertSeries = method()
-partialToricHilbertSeries (Matrix, ZZ) := Thing => (W, d) -> (
-    r := numRows W;
-    n := numColumns W;
-    W=-W;
-    z := getSymbol "z";
-    t := getSymbol "t";
-    R := QQ[z_1..z_r,t, Inverses => true, MonomialOrder=>Lex];
-    ms := apply(n, i -> R_(flatten entries W_{i}));
-    fs := apply(n, i -> sum apply(d, j -> (ms#i*(t_R))^j));
-    g := product fs;
-    L := sum select(terms g, term -> (isSubset(support(term),{t_R}) and first degree term <= d));
-    L
-)
-
 -- this method prints the equivariant hilbert series
 -- for a diagonal torus action on a polynomial ring
 -- INPUT: weight matrix for action of torus on variables
@@ -34,6 +19,8 @@ equivariantHilbertSeries (Matrix) := Expression => W -> (
 
 -- INPUT: W weight matrix for diagonal torus action on ring,
 -- d desired degree for Hilbert function
+-- OUTPUT: a Laurent polynomial which is the character of the
+-- degree d component of the polynomial ring wrt the torus action
 toricHilbertFunction = method()
 toricHilbertFunction (Matrix, ZZ) := Thing => (W, d) -> (
     r := numRows W;
@@ -49,6 +36,7 @@ toricHilbertFunction (Matrix, ZZ) := Thing => (W, d) -> (
     -- extract its coefficients and degree
     (M,C) := coefficients(D,Variables=>{T_R});
     -- call the function that computes the value recursively
+    -- and pass the ring so it's not recreated each time
     recHilb(d,n,C,R)
     )
 
@@ -64,6 +52,18 @@ recHilb = (d, n, C, R) -> (
     -sum(toList(1..min(d,n)), k -> 
 	binomial(d,k) * k!*C_(k,0) * (d-k)!*recHilb(d-k,n,C,R)
 	)//d!
+    )
+
+
+-- INPUT: W weight matrix for diagonal torus action on ring,
+-- d desired degree for Hilbert function
+-- OUTPUT: dim of degree d component of ring of invariants
+-- WARNING: improve consistency with existing hilbertFunction format
+hilbertFunction (Matrix, ZZ) := ZZ => (W, d) -> (
+    p := toricHilbertFunction(W,d);
+    n := numgens ring p;
+    -- subbing 0 in variables of Laurent ring always gives 0
+    sub(p,matrix{toList(n:0)})
     )
 
 -- for testing only
@@ -84,6 +84,26 @@ testHilbertFunction (Matrix, ZZ) := Thing => (W, d) -> (
     (M,C) := coefficients(g,Variables=>{T_R});
     C_(d,0)
     )
+
+
+
+------------------------------
+-- Luigi's code --------------
+------------------------------
+partialToricHilbertSeries = method()
+partialToricHilbertSeries (Matrix, ZZ) := Thing => (W, d) -> (
+    r := numRows W;
+    n := numColumns W;
+    W=-W;
+    z := getSymbol "z";
+    t := getSymbol "t";
+    R := QQ[z_1..z_r,t, Inverses => true, MonomialOrder=>Lex];
+    ms := apply(n, i -> R_(flatten entries W_{i}));
+    fs := apply(n, i -> sum apply(d, j -> (ms#i*(t_R))^j));
+    g := product fs;
+    L := sum select(terms g, term -> (isSubset(support(term),{t_R}) and first degree term <= d));
+    L
+)
 
 TEST ///
 W=-matrix {{-1,0,1},{0,-1,1}};
