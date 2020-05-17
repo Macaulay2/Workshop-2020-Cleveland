@@ -424,11 +424,12 @@ assert(2==degree WCI)--ED degree of the circle
 
 --Each method in this section will rely on strategies 
 -- These vary by implementation and algorithms used. 
-possibleStategies={
+-*
+strategyIndex=new HashTable from {
 	0=>regenerateBertiniIsolatedRegularCriticalPointSet,
 	1=>bezoutBertiniIsolatedRegularCriticalPointSet
 	}
-
+*-
 
 ------------------------------
 --IsolatedCriticalPointSet code
@@ -453,7 +454,10 @@ IsolatedCriticalPointSet = new Type of WitnessSet;
 
 isolatedRegularCriticalPointSet = method(Options => {Strategy=>0});--Carry options over?
 isolatedRegularCriticalPointSet (List,List,LagrangeIdeal) := IsolatedCriticalPointSet => opts  -> (u,g,aLI) ->(
-    strategyIndex := new HashTable from possibleStategies;
+    strategyIndex := new HashTable from {
+	0=>regenerateBertiniIsolatedRegularCriticalPointSet,
+	1=>bezoutBertiniIsolatedRegularCriticalPointSet
+	};
     f := strategyIndex#(opts.Strategy);
     f(u,g,aLI)
     )
@@ -563,6 +567,7 @@ u ={7,99}
 g= {x-a,y-b}
 bic={}
 bertiniCriticalPointSet(u,g,LVW,bic)
+isolatedRegularCriticalPointSet (u,g,LVW)
 peek oo
 
 ///
