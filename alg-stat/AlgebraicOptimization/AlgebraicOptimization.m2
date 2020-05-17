@@ -307,7 +307,6 @@ gradient (List,List) := Gradient => opts  -> (n,d) ->(
 gradient (List) := Gradient => opts  -> (n) ->gradient(n,apply(n,i->1_(ring i)))
 
 sub(Gradient,LagrangeIdeal) :=  (g,aLI) -> (
-    print "gradient sub";
     n := apply(g.Numerators,i->sub(i,aLI));
     d := apply(g.Denominators,i->sub(i,aLI));
     gradient(n,d)    
@@ -325,15 +324,11 @@ assert(2 == # keys gradient({x},{y}))
 CriticalIdeal = new Type of MutableHashTable
 criticalIdeal = method(Options => {Data=>null});--Evaluate data option. 
 criticalIdeal (Gradient,LagrangeIdeal) := CriticalIdeal => opts  -> (g,aLI) ->(
-    if degreeLength  ring aLI<4 then(
+    if degreeLength  ring aLI<=4 then(
 	u := gens coefficientRing ring (aLI);
 	dataSub := if opts.Data===null then {} else apply(u,opts.Data,(i,j) -> i => j);
-    	print("ds"); 
-    	print(dataSub);
     	gCN := sub(g,aLI);
-    	print( gCN.Numerators);
     	newJC := aLI.JacobianConstraint;
-	print ("oldJC"=>newJC);
     	Lam := sub(aLI.ConormalRing.Factors#2//gens,aLI);
 	y:=sub(aLI.ConormalRing.Factors#1//gens,aLI);
     	newJC = ideal apply(#y,
@@ -342,7 +337,6 @@ criticalIdeal (Gradient,LagrangeIdeal) := CriticalIdeal => opts  -> (g,aLI) ->(
 	    	gCN.Numerators#i + sub( newJC_i, lamSub )-y_i
 		)
 	    );
-	print("newJC"=>newJC)  ;  
 	CI := new CriticalIdeal from {
 	    Data => opts.Data,
 	    Gradient => g,
@@ -509,17 +503,19 @@ updateConditionNumberTolerance=(conditionNumberTol,ICPS)->(
 --bertiniCriticalPointSet code
 --------------------
 
-	
+
+--Data,gradient,aLI,bic	
 bertiniCriticalPointSet = (u,g,LVW,bic)->(
     evalTol :=-6;
-    (WI,I,JC) := criticalIdeal(u,g,LVW);--Err
+    CI := criticalIdeal(g,LVW);
     dir := temporaryFileName();
     if not fileExists dir then mkdir dir;
-    avg := AffVariableGroup=>{
-	    LVW#ConormalRing#PrimalRing//gens,--Err
-	    LVW#ConormalRing#LagrangeIdeal//gens  --Err
-	    };
-    bc := B'Constants => apply(gens coefficientRing LVW,u,(i,j)->i=>j);
+    arCoords := CI#LagrangeIdeal.ConormalRing.Coordinates;
+    avg := AffVariableGroup=>{arCoords#0,arCoords#2};
+    print avg;
+    bc := B'Constants => apply(gens coefficientRing ring LVW,u,(i,j)->i=>j);
+    JC := CI.JacobianConstraint;
+    WI := LVW.WitnessPrimalIdeal;
     makeB'InputFile(dir,avg,bc,
 	NameB'InputFile=>"input_ss",
 	BertiniInputConfiguration=>bic,
@@ -527,13 +523,16 @@ bertiniCriticalPointSet = (u,g,LVW,bic)->(
     runBertini(dir,NameB'InputFile=>"input_ss");
     sols := importMainDataFile(dir);
     moveB'File(dir,"main_data","main_data_ss");
+    I := LVW.PrimalIdeal;
     makeB'InputFile(dir,
-	NameB'InputFile=>"input_mt_primal",avg,bc,
+	avg,bc,
+	NameB'InputFile=>"input_mt_primal",
 	BertiniInputConfiguration=>{"TrackType" => -4},
 	B'Polynomials =>I_*);
     scan(#sols,i->(
 	    p := sols_i;
-	    writeStartFile(dir,{coordinates p},NameStartFile=>"start");
+	    writeStartFile(dir,{coordinates p},
+		NameStartFile=>"start");
 	    runBertini(dir,NameB'InputFile =>"input_mt_primal");
 	    fn := "evaluation_"|i|"_mt_primal";
 	    moveB'File(dir,"function",fn)));
@@ -546,8 +545,9 @@ bertiniCriticalPointSet = (u,g,LVW,bic)->(
     	WitnessSuperSet => sols,
 	Points => null,
 	IsIrreducible => null,
-    	CriticalIdeal => null--Err
+    	CriticalIdeal => CI
 	};
+    print currentTime();
     updateEvaluationTolerance(evalTol,ICPS);
     updateMultiplicityTolerance(1,ICPS);
     updateConditionNumberTolerance(1e10,ICPS);    
@@ -555,20 +555,16 @@ bertiniCriticalPointSet = (u,g,LVW,bic)->(
     )
 
 TEST/// 
-R=QQ[a,b][x,y]
-I=ideal(x^2+3*y^2-1)
-WI=I
-LVW = witnessLagrangeVariety(WI,I)
+R=QQ[a,b][x,y] 
+I=ideal(x^2+1*y^2-1)
+LVW = lagrangeIdeal(I,I)
 ring LVW
-WCI = witnessCriticalIdeal({7,99},{x-a,y-b},LVW)
-assert (4 ==degree (WCI_1+WCI_2))--ED degree of ellipse
-needsPackage"Bertini"
-makeB'InputFile(storeBM2Files,
-    AffVariableGroup=>{x,y,lambda_0},
-    B'Polynomials=>(WCI_0+WCI_2)_*   
-    )
-runBertini(storeBM2Files)
-assert(4==#importSolutionsFile(storeBM2Files))
+u ={7,99}
+g= {x-a,y-b}
+bic={}
+bertiniCriticalPointSet(u,g,LVW,bic)
+peek oo
+
 ///
 ------------------------------
 --Index the stategies  code
