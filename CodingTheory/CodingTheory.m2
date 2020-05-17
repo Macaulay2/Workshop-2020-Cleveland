@@ -60,6 +60,7 @@ export {
     "AmbientSpace",
     "IncidenceMatrix",
     "Sets",
+    "evaluationCode",
     "toricCode",
     "evCodeGraph",
     "codeGraph",
