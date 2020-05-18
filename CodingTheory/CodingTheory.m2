@@ -410,14 +410,14 @@ toString LinearCode := c -> toString c.Generators
 
 -*
     new EvaluationCode from{
-	symbol Points => P, --- the points of (F*)^m
-	symbol VanishingIdeal => I, --the vanishing ideal of (F*)^m
+	symbol Points => P, --- a set of points of F^m
+	symbol VanishingIdeal => I, --the vanishing ideal of polynomials in m variables
 	symbol ExponentsMatrix => LL, -- the matrix of exponents, exponent vectors are rows
-	symbol IncidenceMatrix => M,
-	symbol PolynomialSet => S,
-	symbol LinearCode => linearCode(G), -- the linear code
-	symbol Sets => S,
-	symbol AmbientSpace => F^(#P),
+	symbol IncidenceMatrix => M, -- the incidence matrix of a graph
+	symbol PolynomialSet => S,  --- a set of polynomials 
+	symbol LinearCode => linearCode(G), -- the linear code associated with the evaluation code
+	symbol Sets => S, -- the collection of subsets used for constracting a Cartesian code
+	symbol AmbientSpace => F^(#P),  --- the ambient space for an evaluation code
 	symbol cache => {}
 	}
 *-
@@ -428,17 +428,18 @@ evaluationCode = method(Options => {})
 
 evaluationCode(Ring,List,List) := EvaluationCode => opts -> (F,P,S) -> (
     -- constructor for the evaluation code
-    -- input: a field, a list of points, a set of polynomials.
-    -- outputs: The list of points, the list of polynomials, the vanishing ideal and the linear code.
+    -- input: a field F, a list of points in F^m, a set of polynomials over F in m variables.
+    -- outputs: The list of points, the list of polynomials, the vanishing ideal and the linear code, the linear code.
     
-    R := ring S#0;
+    m := # P#0;
+    if class(ring ideal S) === PolynomialRing then R:=(ring ideal S) else (t := getSymbol "t", R=F[t_1..t_m], S=apply(S,i->promote(i,R)));
     I := intersect apply(P,i->ideal apply(numgens R,j->R_j-i#j)); -- Vanishing ideal of the set of points.
     G := transpose matrix apply(P,i->flatten entries sub(matrix(R,{S}),matrix(F,{i}))); -- Evaluate the elements in S over the elements on P.
     return new EvaluationCode from{
-	symbol VanishingIdeal => I,
+	symbol VanishingIdeal => I, 
 	symbol Points => P,
 	symbol PolynomialSet => S,
-	symbol LinearCode => linearCode G,
+	symbol LinearCode => linearCode G, -- the linear code produced by the evaluation code construction
 	symbol cache => {}
 	}
     )
@@ -484,7 +485,7 @@ toricCode(Ring,Matrix) := EvaluationCode => opts -> (F,M) -> (
     LL:=matrix apply(L, i-> first entries transpose i); --converts the list of lattice points to a matrix of exponents
     G:=matrix apply(entries LL,i->apply(P,j->product apply(m,k->(j#k)^(i#k)))); -- the matrix of generators; rows form a generating set of codewords
     
-    t := getSymbol t;
+    t := getSymbol "t";
     
     R:=F[t_1..t_m]; --- defines the ring containing monomials corresponding to exponents
     I := ideal apply(m,j->R_j^(q-1)-1); --  the vanishing ideal of (F*)^m
@@ -504,11 +505,11 @@ evCodeGraph  = method(Options => {});
 evCodeGraph (Ring,Matrix,List) := evCodeGraph  => opts -> (F,M,S) -> (
     -- input: a field, Incidence matrix of the graph , a set of polynomials.
     -- outputs: a monomial code over the list of points.    
-    -- We should check if all the points lives in the same F-vector space.
-    -- Should we check if all the monomials lives in the same ring?
+    -- We should check if all the points live in the same F-vector space.
+    -- Should we check if all the monomials live in the same ring?
     
     P := entries transpose M;
-    R := ring S#0;
+    R := ring S#0;  --- MAY NOT WORK if the first element of S is a constant polynomial!
     I := intersect apply(P,i->ideal apply(numgens R-1,j->R_j-i#j)); -- Vanishing ideal of the set of points.
     S = toList apply(apply(S,i->promote(i,R/I)),j->lift(j,R))-set{0*S#0}; -- Drop the elements in S that was already in I.
     G := matrix apply(P,i->flatten entries sub(matrix(R,{S}),matrix(F,{i}))); -- Evaluate the elements in S over the elements on P.    
@@ -585,7 +586,7 @@ cartesianCode(Ring,List,List) := EvaluationCode => opts -> (F,S,M) -> (
     --outputs: The evaluation code using the cartesian product of the elements in S and the polynomials in M.
     
     m := #S;
-    if class(ring ideal M) === PolynomialRing then R:=(ring ideal M) else (t := getSymbol "t", R=F[t], M=apply(M,i->promote(i,R)));
+    if class(ring ideal M) === PolynomialRing then R:=(ring ideal M) else (t := getSymbol "t", R=F[t_1..t_m], M=apply(M,i->promote(i,R)));
     I := ideal apply(m,i->product apply(S#i,j->R_i-j));
     P := set S#0;
     for i from 1 to m-1 do P=P**set S#i;
@@ -1511,6 +1512,35 @@ assert( length C2 == 15)
 -- Use this section for Evaluation Code Tests
 -----------------------------------------------
 -----------------------------------------------
+
+TEST ///
+-- Evaluation code
+F=GF(4);
+R=F[x,y,z];
+P={{0,0,0},{1,0,0},{0,1,0},{0,0,1},{1,1,1},{a,a,a}};
+S={x+y+z,a+y*z^2,z^2,x+y+z+z^2};
+C=evaluationCode(F,P,S);
+assert(length C.LinearCode == 6)
+assert(dim C.LinearCode == 3)
+///
+
+TEST ///
+-- Toric code
+M=matrix{{1,2,10},{4,5,6}} -- martrix of exponent vectors definind the polytope P, exponents vectors are columns
+T=toricCode(GF 4,M) --- a toric code over F_4 with polytope P
+assert(length T.LinearCode == 9)
+assert(dim T.LinearCode == 5)
+///
+
+TEST ///
+-- Cartesian code
+F=GF(4);
+R=F[x,y];
+C=cartesianCode(F,{{0,1,a},{0,1,a}},{1+x+y,x*y})
+assert(length C.LinearCode == 9)
+assert(dim C.LinearCode == 2)
+///
+
 TEST ///
 -- Cartesian codes
 C=cartesianCode(ZZ/11,{{1,2,3},{2,6,8}},3)
