@@ -584,7 +584,7 @@ cartesianCode(Ring,List,List) := EvaluationCode => opts -> (F,S,M) -> (
     --outputs: The evaluation code using the cartesian product of the elements in S and the polynomials in M.
     
     m := #S;
-    R := ring M#0;
+    if class(ring ideal M) === PolynomialRing then R:=(ring ideal M) else (t := getSymbol "t", R=F[t], M=apply(M,i->promote(i,R)));
     I := ideal apply(m,i->product apply(S#i,j->R_i-j));
     P := set S#0;
     for i from 1 to m-1 do P=P**set S#i;
@@ -646,7 +646,7 @@ RSCode = method(TypicalValue => EvaluationCode)
 RSCode(Ring,List,ZZ) := EvaluationCode => (F,S,d) -> (
     -- Contructor for a Reed-Solomon code.
     -- Inputs: Field, subset of the field and an integer d (polynomials of degree less than d will be evaluated).
-    cartesianCode(F,S,d-1)
+    cartesianCode(F,{S},d-1)
     )
 
 
@@ -1524,13 +1524,13 @@ assert( length C.LinearCode == 27)
 
 TEST ///
 -- Reed-Solomon codes
-C=RSCode(ZZ/11,{{1,2,3}},3);
+C=RSCode(ZZ/11,{1,2,3},3);
 assert( length C.LinearCode == 3)
 ///
 
 TEST ///
 -- Reed-Solomon codes
-C=RSCode(ZZ/17,{{0,1,2,3,7,11}},4)
+C=RSCode(ZZ/17,{0,1,2,3,7,11},4)
 dim C.LinearCode
 assert( dim C.LinearCode == 4)
 ///
@@ -1933,7 +1933,7 @@ document {
     "F is a finite fiel, L={{a_1,...,a_n}} contains the elements to evaluate, polynomials of degree less than k are used to evaluate",
     "Returns the Reed-Solomon code obtained when polynomials of degree less than k are evaluated on the elements of L .",
     EXAMPLE {
-	"C=RSCode(ZZ/31,{{1,2,3}},3);",
+	"C=RSCode(ZZ/31,{1,2,3},3);",
 	"peek C"
 	}
     }
