@@ -45,5 +45,5 @@ doc ///
 	    
 	    See also: http://homepages.math.uic.edu/~jan/Demo/discret3.html
 	Example
-	    discret3(QQ)
+	    discret3(RR_53)
     ///
