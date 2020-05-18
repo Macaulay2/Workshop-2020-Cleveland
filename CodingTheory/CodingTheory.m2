@@ -60,6 +60,7 @@ export {
     "AmbientSpace",
     "IncidenceMatrix",
     "Sets",
+    "evaluationCode",
     "toricCode",
     "evCodeGraph",
     "codeGraph",
@@ -109,7 +110,9 @@ export {
     "hYpFunction",
     "gMdFunction",
     "vasFunction",
-    "tannerGraph"
+    "tannerGraph",
+    "randNoRepeats",
+    "randLDPC"
     }
 
 exportMutable {}
@@ -409,14 +412,14 @@ toString LinearCode := c -> toString c.Generators
 
 -*
     new EvaluationCode from{
-	symbol Points => P, --- the points of (F*)^m
-	symbol VanishingIdeal => I, --the vanishing ideal of (F*)^m
+	symbol Points => P, --- a set of points of F^m
+	symbol VanishingIdeal => I, --the vanishing ideal of polynomials in m variables
 	symbol ExponentsMatrix => LL, -- the matrix of exponents, exponent vectors are rows
-	symbol IncidenceMatrix => M,
-	symbol PolynomialSet => S,
-	symbol LinearCode => linearCode(G), -- the linear code
-	symbol Sets => S,
-	symbol AmbientSpace => F^(#P),
+	symbol IncidenceMatrix => M, -- the incidence matrix of a graph
+	symbol PolynomialSet => S,  --- a set of polynomials 
+	symbol LinearCode => linearCode(G), -- the linear code associated with the evaluation code
+	symbol Sets => S, -- the collection of subsets used for constracting a Cartesian code
+	symbol AmbientSpace => F^(#P),  --- the ambient space for an evaluation code
 	symbol cache => {}
 	}
 *-
@@ -427,17 +430,18 @@ evaluationCode = method(Options => {})
 
 evaluationCode(Ring,List,List) := EvaluationCode => opts -> (F,P,S) -> (
     -- constructor for the evaluation code
-    -- input: a field, a list of points, a set of polynomials.
-    -- outputs: The list of points, the list of polynomials, the vanishing ideal and the linear code.
+    -- input: a field F, a list of points in F^m, a set of polynomials over F in m variables.
+    -- outputs: The list of points, the list of polynomials, the vanishing ideal and the linear code, the linear code.
     
-    R := ring S#0;
+    m := # P#0;
+    if class(ring ideal S) === PolynomialRing then R:=(ring ideal S) else (t := getSymbol "t", R=F[t_1..t_m], S=apply(S,i->promote(i,R)));
     I := intersect apply(P,i->ideal apply(numgens R,j->R_j-i#j)); -- Vanishing ideal of the set of points.
     G := transpose matrix apply(P,i->flatten entries sub(matrix(R,{S}),matrix(F,{i}))); -- Evaluate the elements in S over the elements on P.
     return new EvaluationCode from{
-	symbol VanishingIdeal => I,
+	symbol VanishingIdeal => I, 
 	symbol Points => P,
 	symbol PolynomialSet => S,
-	symbol LinearCode => linearCode G,
+	symbol LinearCode => linearCode G, -- the linear code produced by the evaluation code construction
 	symbol cache => {}
 	}
     )
@@ -483,7 +487,7 @@ toricCode(Ring,Matrix) := EvaluationCode => opts -> (F,M) -> (
     LL:=matrix apply(L, i-> first entries transpose i); --converts the list of lattice points to a matrix of exponents
     G:=matrix apply(entries LL,i->apply(P,j->product apply(m,k->(j#k)^(i#k)))); -- the matrix of generators; rows form a generating set of codewords
     
-    t := getSymbol t;
+    t := getSymbol "t";
     
     R:=F[t_1..t_m]; --- defines the ring containing monomials corresponding to exponents
     I := ideal apply(m,j->R_j^(q-1)-1); --  the vanishing ideal of (F*)^m
@@ -503,11 +507,11 @@ evCodeGraph  = method(Options => {});
 evCodeGraph (Ring,Matrix,List) := evCodeGraph  => opts -> (F,M,S) -> (
     -- input: a field, Incidence matrix of the graph , a set of polynomials.
     -- outputs: a monomial code over the list of points.    
-    -- We should check if all the points lives in the same F-vector space.
-    -- Should we check if all the monomials lives in the same ring?
+    -- We should check if all the points live in the same F-vector space.
+    -- Should we check if all the monomials live in the same ring?
     
     P := entries transpose M;
-    R := ring S#0;
+    R := ring S#0;  --- MAY NOT WORK if the first element of S is a constant polynomial!
     I := intersect apply(P,i->ideal apply(numgens R-1,j->R_j-i#j)); -- Vanishing ideal of the set of points.
     S = toList apply(apply(S,i->promote(i,R/I)),j->lift(j,R))-set{0*S#0}; -- Drop the elements in S that was already in I.
     G := matrix apply(P,i->flatten entries sub(matrix(R,{S}),matrix(F,{i}))); -- Evaluate the elements in S over the elements on P.    
@@ -584,7 +588,7 @@ cartesianCode(Ring,List,List) := EvaluationCode => opts -> (F,S,M) -> (
     --outputs: The evaluation code using the cartesian product of the elements in S and the polynomials in M.
     
     m := #S;
-    if class(ring ideal M) === PolynomialRing then R:=(ring ideal M) else (t := getSymbol "t", R=F[t], M=apply(M,i->promote(i,R)));
+    if class(ring ideal M) === PolynomialRing then R:=(ring ideal M) else (t := getSymbol "t", R=F[t_1..t_m], M=apply(M,i->promote(i,R)));
     I := ideal apply(m,i->product apply(S#i,j->R_i-j));
     P := set S#0;
     for i from 1 to m-1 do P=P**set S#i;
@@ -1337,6 +1341,65 @@ tannerGraph(Matrix) := H -> (
     Graphs$graph(symsA|symsB, flatten tannerEdges)    
 );
 
+
+randNoRepeats = method(TypicalValue => List)
+randNoRepeats (ZZ, ZZ) := (a, k) -> (
+    
+    if a < 0 or k < 1 then (
+    	error "Invalid arguments for randNoRepeats.";
+    	);
+    
+    -- we want it to work in cases like a=0, k=1
+    if k > a+1 then(
+    	error "Argument k to randNoRepeats is too large.";
+	);
+    
+    n := a;
+    population := toList(0..n);
+    result := new MutableList from (toList (0..(k-1)));
+    pool := new MutableList from population;
+    
+    for i from 0 to k-1 do(
+	j := random(0, n-i);
+	result#i = pool#j;
+	-- Move the non-selected item to a place where it can be selected. 
+	pool#j = pool#(n-i);
+	); 
+    toList result
+    );
+
+
+
+-*
+*-
+randLDPC = method(TypicalValue => Matrix)
+randLDPC(ZZ, ZZ, RR, ZZ) := (n, k, m, b) -> (
+    
+    if(n <= k) then(
+	error "n must be less than k.";
+	);
+    
+    popcount := floor(n*m + b);
+    
+    if popcount > n*(n-k) then(
+	popcount = n*(n-k);
+	);
+    
+    
+    R := GF(2);
+    
+    H := new MutableList from for i from 1 to n*(n-k) list(0_R);
+    ones := randNoRepeats( ((n-k)*n)-1, popcount);
+    for i from 0 to (length ones)-1 do(
+	H#(ones#i) = 1_R;
+	);
+    matrix(R, pack(toList H, n))
+    )
+
+
+
+
+
 ------------------------------------------
 ------------------------------------------
 -- Tests
@@ -1348,6 +1411,30 @@ tannerGraph(Matrix) := H -> (
 -- Use this section for LinearCode tests:
 -----------------------------------------------
 -----------------------------------------------
+
+TEST ///
+-- randLDPC test
+for i from 0 to 25 do(
+    n := random(10, 20);
+    k := random(1, n-1);
+    
+    H := randLDPC(n, k, 3.0, 0);
+    assert(numgens target H == (n-k));
+    assert(numgens source H == n);    
+    );
+///
+TEST ///
+-- randNoRepeats test
+assert(randNoRepeats(0,1) == {0});
+for i from 0 to 50 do(
+    a := random(0,100);
+    k := random(1,a+1);  
+    assert(set(randNoRepeats(a, a+1)) == set(toList(0..a)));
+    -- check it actually has no repeats.
+    test := randNoRepeats(a, k);
+    assert(length test == #(set(test)))
+    );
+///
 
 TEST ///
 -- tannerGraph test
@@ -1510,6 +1597,35 @@ assert( length C2 == 15)
 -- Use this section for Evaluation Code Tests
 -----------------------------------------------
 -----------------------------------------------
+
+TEST ///
+-- Evaluation code
+F=GF(4);
+R=F[x,y,z];
+P={{0,0,0},{1,0,0},{0,1,0},{0,0,1},{1,1,1},{a,a,a}};
+S={x+y+z,a+y*z^2,z^2,x+y+z+z^2};
+C=evaluationCode(F,P,S);
+assert(length C.LinearCode == 6)
+assert(dim C.LinearCode == 3)
+///
+
+TEST ///
+-- Toric code
+M=matrix{{1,2,10},{4,5,6}} -- martrix of exponent vectors definind the polytope P, exponents vectors are columns
+T=toricCode(GF 4,M) --- a toric code over F_4 with polytope P
+assert(length T.LinearCode == 9)
+assert(dim T.LinearCode == 5)
+///
+
+TEST ///
+-- Cartesian code
+F=GF(4);
+R=F[x,y];
+C=cartesianCode(F,{{0,1,a},{0,1,a}},{1+x+y,x*y})
+assert(length C.LinearCode == 9)
+assert(dim C.LinearCode == 2)
+///
+
 TEST ///
 -- Cartesian codes
 C=cartesianCode(ZZ/11,{{1,2,3},{2,6,8}},3)
@@ -1753,6 +1869,45 @@ doc ///
 	   C1 == C2
        
 ///
+   
+document {
+   Key => {randLDPC, (randLDPC, ZZ, ZZ, RR, ZZ)},
+   Headline => "Generates a low density family of parity check matrices with the given parameters.",
+   Usage => "randLDPC(n, k, m, b)",
+   Inputs => {
+	"n" => ZZ => {"The number of columns of H."},
+	"k" => ZZ => {"The number of rows of H is n-k."},
+	"m" => RR => {"The slope of the line which relates n and the number of ones in H."},
+	"b" => ZZ => {"The constant term of the line which relates n and the number of ones in H."}
+	},
+   Outputs => {
+       "H" => Matrix => {"An (n-k) x n matrix over GF(2). "}
+	},
+    	"The number of ones in H is determined by the formula floor(n*m) + b. ",
+	"Since this formula is linear in the number of columns of H, randLDPC produces a sparse sequence of matrices ",
+    	"for a fixed set of parameters k, m and b.",
+
+	EXAMPLE {
+	"randLDPC(10,5,3.0,0)"
+	}
+ }  
+document {
+   Key => {randNoRepeats, (randNoRepeats,ZZ,ZZ)},
+   Headline => "Generates a list of random integers from a specified range with no repitions.",
+   Usage => "randNoRepeats(n,k)",
+   Inputs => {
+	"n" => Ideal => {"The maximum possible value in the random list."},
+	"k" => ZZ => {"The number of random integers to generate."}
+	},
+   Outputs => {
+       "L" => List => {"A list of k random integers between 0 and n (inclusive) with no repeats. "}
+	},
+	EXAMPLE {
+	"randNoRepeats(10,4)",
+	"randNoRepeats(0,1)",
+        "randNoRepeats(25,5)"
+	}
+ }  
 
 document {
    Key => {vNumber, (vNumber,Ideal)},
