@@ -109,7 +109,9 @@ export {
     "hYpFunction",
     "gMdFunction",
     "vasFunction",
-    "tannerGraph"
+    "tannerGraph",
+    "randNoRepeats",
+    "randLDPC"
     }
 
 exportMutable {}
@@ -1337,6 +1339,65 @@ tannerGraph(Matrix) := H -> (
     Graphs$graph(symsA|symsB, flatten tannerEdges)    
 );
 
+
+randNoRepeats = method(TypicalValue => List)
+randNoRepeats (ZZ, ZZ) := (a, k) -> (
+    
+    if a < 0 or k < 1 then (
+    	error "Invalid arguments for randNoRepeats.";
+    	);
+    
+    -- we want it to work in cases like a=0, k=1
+    if k > a+1 then(
+    	error "Argument k to randNoRepeats is too large.";
+	);
+    
+    n := a;
+    population := toList(0..n);
+    result := new MutableList from (toList (0..(k-1)));
+    pool := new MutableList from population;
+    
+    for i from 0 to k-1 do(
+	j := random(0, n-i);
+	result#i = pool#j;
+	-- Move the non-selected item to a place where it can be selected. 
+	pool#j = pool#(n-i);
+	); 
+    toList result
+    );
+
+
+
+-*
+*-
+randLDPC = method(TypicalValue => Matrix)
+randLDPC(ZZ, ZZ, RR, ZZ) := (n, k, m, b) -> (
+    
+    if(n <= k) then(
+	error "n must be less than k.";
+	);
+    
+    popcount := floor(n*m + b);
+    
+    if popcount > n*(n-k) then(
+	popcount = n*(n-k);
+	);
+    
+    
+    R := GF(2);
+    
+    H := new MutableList from for i from 1 to n*(n-k) list(0_R);
+    ones := randNoRepeats( ((n-k)*n)-1, popcount);
+    for i from 0 to (length ones)-1 do(
+	H#(ones#i) = 1_R;
+	);
+    matrix(R, pack(toList H, n))
+    )
+
+
+
+
+
 ------------------------------------------
 ------------------------------------------
 -- Tests
@@ -1348,6 +1409,30 @@ tannerGraph(Matrix) := H -> (
 -- Use this section for LinearCode tests:
 -----------------------------------------------
 -----------------------------------------------
+
+TEST ///
+-- randLDPC test
+for i from 0 to 25 do(
+    n := random(10, 20);
+    k := random(1, n-1);
+    
+    H := randLDPC(n, k, 3.0, 0);
+    assert(numgens target H == (n-k));
+    assert(numgens source H == n);    
+    );
+///
+TEST ///
+-- randNoRepeats test
+assert(randNoRepeats(0,1) == {0});
+for i from 0 to 50 do(
+    a := random(0,100);
+    k := random(1,a+1);  
+    assert(set(randNoRepeats(a, a+1)) == set(toList(0..a)));
+    -- check it actually has no repeats.
+    test := randNoRepeats(a, k);
+    assert(length test == #(set(test)))
+    );
+///
 
 TEST ///
 -- tannerGraph test
@@ -1753,6 +1838,45 @@ doc ///
 	   C1 == C2
        
 ///
+   
+document {
+   Key => {randLDPC, (randLDPC, ZZ, ZZ, RR, ZZ)},
+   Headline => "Generates a low density family of parity check matrices with the given parameters.",
+   Usage => "randLDPC(n, k, m, b)",
+   Inputs => {
+	"n" => ZZ => {"The number of columns of H."},
+	"k" => ZZ => {"The number of rows of H is n-k."},
+	"m" => RR => {"The slope of the line which relates n and the number of ones in H."},
+	"b" => ZZ => {"The constant term of the line which relates n and the number of ones in H."}
+	},
+   Outputs => {
+       "H" => Matrix => {"An (n-k) x n matrix over GF(2). "}
+	},
+    	"The number of ones in H is determined by the formula floor(n*m) + b. ",
+	"Since this formula is linear in the number of columns of H, randLDPC produces a sparse sequence of matrices ",
+    	"for a fixed set of parameters k, m and b.",
+
+	EXAMPLE {
+	"randLDPC(10,5,3.0,0)"
+	}
+ }  
+document {
+   Key => {randNoRepeats, (randNoRepeats,ZZ,ZZ)},
+   Headline => "Generates a list of random integers from a specified range with no repitions.",
+   Usage => "randNoRepeats(n,k)",
+   Inputs => {
+	"n" => Ideal => {"The maximum possible value in the random list."},
+	"k" => ZZ => {"The number of random integers to generate."}
+	},
+   Outputs => {
+       "L" => List => {"A list of k random integers between 0 and n (inclusive) with no repeats. "}
+	},
+	EXAMPLE {
+	"randNoRepeats(10,4)",
+	"randNoRepeats(0,1)",
+        "randNoRepeats(25,5)"
+	}
+ }  
 
 document {
    Key => {vNumber, (vNumber,Ideal)},
