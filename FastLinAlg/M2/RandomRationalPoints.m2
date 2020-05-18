@@ -21,15 +21,15 @@ export {
 	"projectionToHypersurface",
 	"randomCoordinateChange",
 --    "randomPointViaLinearIntersection", 
-	"randomPoint", 
+	"randomPoints", 
 	"MyOption", 
 	"NumPointsToCheck", 
 	"Codimension",
 	"MaxChange",
-	"BruteForce", --a valid value for [RandomPoint, Strategy]
-    "GenericProjection",  --a valid value for [RandomPoint, Strategy]
-    "LinearIntersection",  --a valid value for [RandomPoint, Strategy]
-    "ModifiedBruteForce",  --a valid value for [RandomPoint, Strategy]
+	"BruteForce", --a valid value for [RandomPoints, Strategy]
+    "GenericProjection",  --a valid value for [RandomPoints, Strategy]
+    "LinearIntersection",  --a valid value for [RandomPoints, Strategy]
+    "ModifiedBruteForce",  --a valid value for [RandomPoints, Strategy]
 	"ProjectionAttempts", --used in the GenericProjection strategy
     "IntersectionAttempts", --used in the LinearIntersection strategy
     "ExtendField", --used in GenericProjection and LinearIntersection strategy
@@ -257,7 +257,7 @@ randomPointViaLinearIntersection(Ideal) := opts -> (I1) -> (
         if (debugLevel > 0) then print "randomPointViaLinearIntersection:  failed, looping and trying a new linear space.";
         i = i+1;
     );
-    return false;
+    return {};
 );
 
 randomPointViaGenericProjection = method(Options => optRandomPoints);
@@ -279,8 +279,8 @@ randomPointViaGenericProjection(Ideal) := opts -> (I1) -> (
     while(flag) and (i < opts.ProjectionAttempts) do (
         (phi, I0) = projectionToHypersurface(I1, Homogeneous=>opts.Homogeneous, MaxChange => opts.MaxChange, Codimension => opts.Codimension);
         if (codim I0 == 1) then (
-            pt = randomPoint(I0, Strategy=>BruteForce); --find a point on the generic projection
-            if (not pt === false) then (
+            pt = randomPoints(I0, Strategy=>BruteForce); --find a point on the generic projection
+            if (not pt === {}) then (
                 J0 = I1 + sub(ideal apply(dim source phi, i -> (first entries matrix phi)#i - pt#i), target phi); --lift the point to the original locus
                 if dim(J0) == 0 then( --hopefully the preimage is made of points
                     ptList = random decompose(J0);
@@ -310,36 +310,36 @@ randomPointViaGenericProjection(Ideal) := opts -> (I1) -> (
         if (debugLevel >0) then print "randomPointViaGenericProjection: That didn't work, trying again...";
         i = i+1;
     );
-    return false;
+    return {};
 );
 
 checkRandomPoint =(I1)->(
     genList:= first entries gens I1;
 	K:=coefficientRing ring I1;
-    point:=randomPoint(ring I1);
+    point:=randomPoints(ring I1);
 	eval:= map(K,ring I1,point);
 	j:=0;
 	while(j< #genList) do (
         tempEval:=eval(genList_j);
-        if not (tempEval==0) then return false;
+        if not (tempEval==0) then return {};
         j=j+1
     );
-    if (tempEval ==0) then return point else return false;
+    if (tempEval ==0) then return point else return {};
 )
 
-randomPoint = method( Options=>optRandomPoints);
+randomPoints = method( Options=>optRandomPoints);
 
-randomPoint(Ring) := opts -> (R1) -> (
+randomPoints(Ring) := opts -> (R1) -> (
     noVar := #generators R1;
     K:=coefficientRing R1;
     L:=toList apply(noVar, i ->random(K));
-    if (opts.Homogeneous == true) then if (all(L, i->i==0)) then return randomPoint(R1);
+    if (opts.Homogeneous == true) then if (all(L, i->i==0)) then return randomPoints(R1);
     return L
 );  
 
 
 
-randomPoint(Ideal):=opts->(I1)->(
+randomPoints(Ideal):=opts->(I1)->(
     local apoint;
     local outpt;
     local eval;
@@ -351,10 +351,10 @@ randomPoint(Ideal):=opts->(I1)->(
     	j=0;
 		while( j<opts.PointCheckAttempts) do (
 			apoint=checkRandomPoint(I1);
-			if not (apoint===false ) then return apoint; 
+			if not (apoint==={} ) then return apoint; 
 			j=j+1;
 		);
-		return false;
+		return {};
 	)
     else if (opts.Strategy == ModifiedBruteForce) then (
         j = 0;
@@ -363,7 +363,7 @@ randomPoint(Ideal):=opts->(I1)->(
             i=0;
             flag = true;
 	        while(i< #genList) do (
-                apoint=randomPoint(ring I1);
+                apoint=randomPoints(ring I1);
                 eval= map(K,ring I1,apoint);
                 outpt=eval(genList_i);
                 if not (outpt==0) then (flag = false; break);
@@ -381,25 +381,21 @@ randomPoint(Ideal):=opts->(I1)->(
         return randomPointViaLinearIntersection(I1, opts)
     )
     else (
-        error "randomPoint:  Not a valid Strategy"
+        error "randomPoints:  Not a valid Strategy"
     )
 );
 
-randomPoint(ZZ,Ideal):=opts->(n1,I1)->(
+randomPoints(ZZ,Ideal):=opts->(n1,I1)->(
         i:=0;
         local apoint;
-        local apoint1;
         local L;
-        L=set{};
-        while(#L < n1 ) do ( 
-            apoint=randomPoint(I1);
-            if not(apoint===false) then(
-            L =L + set {apoint};
-            )
-            else L=L;
-            
-    ); 
-    return L;
+        L= {};
+        while(i < n1 ) do ( 
+            apoint=randomPoints(I1);
+            L = join(L,{apoint});
+            i=i+1;
+    );  
+          return L;
 );
 
 
@@ -503,12 +499,12 @@ doc ///
 ///
 doc ///
     Key
-        randomPoint
-        (randomPoint, Ideal)
+        randomPoints
+        (randomPoints, Ideal)
     Headline
         a function to check if  a random point is  in a variety
     Usage
-        randomPoint(I)
+        randomPoints(I)
     Inputs
         I:Ideal
             inside a polynomial ring
@@ -518,11 +514,11 @@ doc ///
 /// 
 doc ///
     Key
-	(randomPoint, Ring)
+	(randomPoints, Ring)
     Headline
         Gives a random point in the affine space.
     Usage
-        randomPoint(R)
+        randomPoints(R)
     Inputs
         R:Ring
 	    a polynomial ring
@@ -533,32 +529,36 @@ doc ///
 
 doc ///
     Key
-        (randomPoint,ZZ,Ideal)
+        (randomPoints,ZZ,Ideal)
     Headline
-        a function to find  a random point  in a variety upto a given number of trials
+        a function to find random points  in a variety. 
     Usage
-        randomPoint(n,I)
+        randomPoints(n,I)
     Inputs
         n: ZZ
-            an integer denoting the number of desired trials.
+            an integer denoting the number of desired points.
         I:Ideal
-            inside a polynomial ring
+            inside a polynomial ring.
     Outputs
         :List
     Description
         Text  
-       	   Gives a point in a variety $V(I)$, by $n$ trials. 
+           Gives at most $n$ many point in a variety $V(I)$.  
         Example
             R=ZZ/5[t_1..t_3];
             I = ideal(t_1,t_2+t_3);
-            randomPoint(1000,I)
+            randomPoints(3,I)
 ///
+
 
 
  ----- TESTS -----
 
 TEST///
- 
+R=ZZ/5[x,y,z,w];
+I = ideal(x,y^2,w^3+x^2);
+genericProjection(2,I);
+assert(map)
 ///
 
 TEST///
