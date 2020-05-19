@@ -36,6 +36,6 @@ doc ///
 	    Reference: "A product-decomposition theorem for bounding Bezout numbers" by A.P. Morgan, A.J. Sommese, and C.W. Wampler (pages 1308-1325).
 	        
 	    See also: http://homepages.math.uic.edu/~jan/Demo/proddeco.html.
-    Example
-    	proddeco(RR_53)
+        Example
+    	    proddeco(RR_53)
    ///

@@ -39,6 +39,6 @@ doc ///
 	    Reference: See the PoSSo test suite.
 	        
 	    See also: http://homepages.math.uic.edu/~jan/Demo/trinks.html.
-    Example
-    	trinks(QQ)
+        Example
+    	    trinks(QQ)
    ///

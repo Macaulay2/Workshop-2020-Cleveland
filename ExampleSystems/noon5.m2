@@ -19,6 +19,8 @@ doc ///
 	(noon5,Ring)
     Headline
     	A neural network modeled by an adaptive Lotka-Volterra system with 5 variables
+    Usage
+        noon5(kk)
     Inputs
     	kk:Ring
 	    	the coefficient ring

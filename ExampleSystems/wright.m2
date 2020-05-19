@@ -40,6 +40,6 @@ doc ///
  	    polynomial systems" by W. Zulehner (pages 167-177).
 	        
 	    See also: http://homepages.math.uic.edu/~jan/Demo/wright.html.
-    Example
-    	wright(QQ)
+        Example
+    	    wright(QQ)
    ///

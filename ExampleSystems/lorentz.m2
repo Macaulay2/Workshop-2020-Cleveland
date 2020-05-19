@@ -38,6 +38,6 @@ doc ///
 	    Reference: "Solving polynomial systems" by Tien-Yien Li (pages 33-39).
 	        
 	    See also: http://homepages.math.uic.edu/~jan/Demo/lorentz.html.
-    Example
-    	lorentz(QQ)
+        Example
+    	    lorentz(QQ)
    ///

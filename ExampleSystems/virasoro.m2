@@ -41,6 +41,6 @@ doc ///
 	    Reference: "Generalized Virasoro Constructions for SU(3)" by S. Schrans and W. Troost (pages 584-606).
 	        
 	    See also: http://homepages.math.uic.edu/~jan/Demo/virasoro.html.
-    Example
-    	virasoro(QQ)
+        Example
+    	    virasoro(QQ)
    ///

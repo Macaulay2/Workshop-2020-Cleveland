@@ -15,9 +15,9 @@ scurve726 (Ring) := kk -> (
  	}
  )
 
-
+-*
     	F = scurve726(QQ)
 	time sols = solveSystem F;
 	#sols
 	product(F/degree/first) == true
-	
+*-

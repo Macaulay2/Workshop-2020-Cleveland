@@ -37,6 +37,6 @@ doc ///
 	    Reference: "Testing unconstrained optimization software" by J.J. More, B.S. Garbow and K.E. Hilstrom (pages 17-41).
 	        
 	    See also: http://homepages.math.uic.edu/~jan/Demo/wood.html.
-    Example
-    	wood(RR_53)
+        Example
+    	    wood(RR_53)
    ///
