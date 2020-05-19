@@ -2293,7 +2293,7 @@ document {
 document {
     Key => {RSCode, (RSCode,Ring,List,ZZ)},
     Headline => "Constructs the Reed-Solomon code.",
-    Usage => "RMCode(F,L,k)",
+    Usage => "RSCode(F,L,k)",
     Inputs => {
 	"F" => Ring => {"Finite field."},
 	"L" => List => {"Elements of the field to evaluate."},
