@@ -30,8 +30,9 @@ export{"probRing",
     "liftBinomialTableau",
     "liftHierPoly",
     "quadsM",
-    "margP",
-    "gcutP"
+    "margP"
+    "corrMatrix",
+    "gcutMatrix"
     }
 
 --Creates the ring the toric ideal lives in
@@ -185,36 +186,66 @@ margP(List,List) :=  (r,Facets) -> (
     P
     );
 
--- Creates another convex polytope afinely isomorphic to the parginal polytope, with a better parametrization
-gcutP=(r,Facets)->(
-P:=subsets(#r-1);
-F:=Facets;
-R=QQ[for i in P list x_i]; -- the source ring
-Delta={};
-for i from 0 to (#F-1) do(
-    Delta=append(Delta,subsets F_i));
+
+-- Creates a simplicial complex out of its facets (minus the empty set
+SimplicialComplex = method(Options => {});
+SimplicialComplex(List) := List => opts -> (Facets) -> (
+  Delta:={};
+for i from 0 to (#Facets-1) do(
+    Delta=append(Delta,subsets Facets_i));
 Delta=delete({},unique flatten Delta);
-S1=QQ[for i in Delta list y_i];
-S2=QQ[for i in Delta list z_i];
-S=tensor(S1,S2);
-images={};
-apply(P,j->(
-	j=set j;
-	a=1;
-	for i in Delta do (
-	    k=set i;	
-	    (if #(k*j)%2==1 then  a=a*y_i
-	    else if #(k*j)%2==0 then a=a*z_i););
-	images=append(images,a)));
-psi=map(S,R,images);
-D=mutableMatrix (ZZ, numgens S, numgens R);
-for j from 0 to (numgens R-1) do(
-    for i from  0  to (numgens S-1) do(
-	if gcd(S_i,images_j)!=1  then D_(i,j)=1));
-A:= matrix entries D;
-B:= toricMarkov A;
-I:=toBinomial(B, R);
-return(A,I))
+Delta
+);
+
+--Creates the ring the toric ideal lives in
+setsRing = method(Options => {});
+setsRing(List,List) :=  Ring => opts -> (r,Facets) -> (
+    x := symbol x;
+R=QQ[for i in subsets(#r) list x_i]; -- the source ring
+R);
+
+-- Creates the ring of parameters of a gencut
+simplcomplexRing = method(Options => {});
+simplcomplexRing(List, List) := Ring => opts -> (r, Facets) -> (
+Delta:=SimplicialComplex(Facets);
+y := symbol y;
+S=QQ[for i in Delta list y_i];
+S
+);
+
+-- Produces the matrix for gencutP
+gcutMatrix = method(Options => {});
+gcutMatrix(List, List) := Matrix => opts -> (r, Facets) -> (
+    R := setsRing(r,Facets);
+    S := simplcomplexRing(r, Facets);
+    B := mutableMatrix (ZZ, numgens S, numgens R);
+    for j from 0 to (numgens R - 1) do(
+	probIndex := last baseName (gens R)_j;
+	for i from  0 to (numgens S - 1) do(
+	    paramIndex := last baseName (gens S)_i;
+	    if #(set probIndex*set paramIndex)%2==1 then B_(i,j) = 1;
+	    );
+	);
+        A := matrix entries B;
+        A
+    );
+
+-- Produces the matrix for the correlation  polytope
+corrMatrix = method(Options => {});
+corrMatrix(List, List) := Matrix => opts -> (r, Facets) -> (
+    R := setsRing(r,Facets);
+    S := simplcomplexRing(r, Facets);
+    B := mutableMatrix (ZZ, numgens S, numgens R);
+    for j from 0 to (numgens R - 1) do(
+	probIndex := last baseName (gens R)_j;
+	for i from  0 to (numgens S - 1) do(
+	    paramIndex := last baseName (gens S)_i;
+	    if isSubset(set paramIndex,set probIndex)==true then B_(i,j) = 1;
+	    );
+	);
+        A := matrix entries B;
+        A
+    );
 
 ------------------------------------------------
 --Documentation
@@ -247,7 +278,7 @@ using the formula in Theorem 2.6 [2].
    Ann. Statist. 26, 1998.
  
 [2] Serkan Hoşten and Seth Sullivant, {\em Gröbner bases and polyhedral geometry of reducible and cyclic models},
-  J. Combin. Theory,  \textbf{100}, 277301, 2002.
+  J. Combin. Theory,  100, 277301, 2002.
 
 [3] Seth Sullivant, {\em Toric fiber products}, J. Algebra 316, no. 2, 560577, 2007.
  
@@ -348,8 +379,8 @@ Key
               S = parameterRing({2,3,2},{{0,1},{1,2}})  
        SeeAlso
             probRing
-       hierToric42    
-        hierMatrix
+       	    hierToric42    
+            hierMatrix
 
 ///
 ----------------------------------
@@ -464,4 +495,3 @@ end
 restart
 installPackage"HierarchicalModels"
 viewHelp HierarchicalModels
-
