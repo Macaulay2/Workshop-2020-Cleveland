@@ -6,7 +6,8 @@ newPackage(
     	Authors => {
 	     {Name => "Sankhaneel Bisui", Email => "sbisu@tulane.edu", HomePage=>"https://sites.google.com/view/sankhaneelbisui/home"},
 	     {Name=> "Thai Nguyen", Email =>"tnguyen11@tulane.edu", HomePage=>"https://sites.google.com/view/thainguyenmath "},
-	     {Name=>"Karl Schwede", Email=>"schwede@math.utah.edu", HomePage=>"https://www.math.utah.edu/~schwede/" }
+	     {Name=>"Karl Schwede", Email=>"schwede@math.utah.edu", HomePage=>"https://www.math.utah.edu/~schwede/" },
+	     {Name => "Sarasij Maitra", Email => "sm3vg@virginia.edu", HomePage => "https://people.virginia.edu~sm3vg"}
 	     },
     	Headline => "A Package To Compute A Random Point In A Given Variety",
 		DebuggingMode => true, 
@@ -20,7 +21,8 @@ export {
 	"genericProjection", 
 	"projectionToHypersurface",
 	"randomCoordinateChange",
---    "randomPointViaLinearIntersection", 
+    "randomPointViaLinearIntersection",
+     "randomPointViaGenericProjection",
 	"randomPoints", 
 	"MyOption", 
 	"NumPointsToCheck", 
@@ -34,7 +36,8 @@ export {
     "IntersectionAttempts", --used in the LinearIntersection strategy
     "ExtendField", --used in GenericProjection and LinearIntersection strategy
     "checkRandomPoint",
-    "PointCheckAttempts"
+    "PointCheckAttempts",
+    "extendingIdealByNonVanishingMinor"
     }
 exportMutable {}
 
@@ -398,7 +401,40 @@ randomPoints(ZZ,Ideal):=opts->(n1,I1)->(
           return L;
 );
 
-
+extendingIdealByNonVanishingMinor = method(Options=>{})
+extendingIdealByNonVanishingMinor(Ideal,Matrix, ZZ):= opts -> (I, M, n) -> (
+    local P;
+    local kk; 
+    local R;
+    local phi;
+    local N; local N1; local N2; local N1new; local N2new;
+    local J; local M2;
+    R = ring I;
+    kk = coefficientRing R;
+    P = randomPointViaLinearIntersection(I);
+    if (P == {}) 
+    then error "No Point Found"
+    else (
+        phi =  map(kk,R,sub(matrix{P},kk));
+        N = mutableMatrix phi(M);
+        rk := rank(N);
+        if (rk < n) then return I;
+        N1 = columnRankProfile(N);
+        N2 = rowRankProfile(N);
+        M1 := mutableMatrix M;
+	N1new = {};
+	N2new = {};
+	for i from  0 to n-1 do(
+	    N1new = join(N1new, {N1#i});
+	    N2new = join(N2new, {N2#i});
+	    );
+	M2 = M1_N1new^N2new;
+    	M3 := matrix M2;
+    	L1 := ideal (det(M3));
+    	Ifin := I + L1;
+    	return Ifin;
+    );	
+);
 
 
 
@@ -550,6 +586,68 @@ doc ///
             randomPoints(3,I)
 ///
 
+doc ///
+    Key 
+    	randomPointViaGenericProjection
+	(randomPointViaGenericProjection, Ideal)
+    Headline
+    	
+    Usage
+    	randomPointViaGenericProjection(I)
+    Inputs
+    	I:Ideal
+    Outputs
+    	:List    	
+///
+
+doc ///
+    Key 
+    	randomPointViaLinearIntersection
+	(randomPointViaLinearIntersection, Ideal)
+    Headline
+    	
+    Usage
+    	randomPointViaLinearInteresection(I)
+    Inputs
+    	I:Ideal
+    Outputs
+    	:List    	
+doc ///
+    Key
+    	extendingIdealByNonVanishingMinor
+	(extendingIdealByNonVanishingMinor, Ideal, Matrix, ZZ)
+    Headline
+    	extends the ideal to aid finding singular locus
+    Usage
+    	extendingIdealByNonVanishingMinor(I,M,n)
+    Inputs
+    	I: Ideal
+	    in a polynomial ring over QQ or ZZ/p for p prime 
+	M: Matrix
+	    over the polynomial ring
+	n: ZZ
+	    the size of the minors to look at to find
+	    one non-vanishing minor 
+    Outputs
+    	:Ideal
+	    the original ideal extended by the determinant of 
+	    the non vanishing minor found
+    Description
+    	Text
+	    Given an ideal, a matrix and an integer, this function uses the @TO 
+	    randomPointViaLinearIntersection@ function to find a point in 
+	    $V(I)$. Then it plugs the point in the matrix and tries to find
+	    a non-zero  minor of size equal to the given integer. 
+	    It then extracts the minor from the original given matrix corresponding
+	    to this non-vanishing minor, finds its determinant and
+	    adds it to the original ideal. 
+    	Example
+	    R = ZZ/5[t_1..t_3];
+            I = ideal(t_1,t_2+t_3);
+	    M = jacobian I;
+            extendingIdealByNonVanishingMinor(I,M,2)
+      
+///	
 
 
  ----- TESTS -----
@@ -566,6 +664,10 @@ TEST///
 ///
 
 TEST///
+R = ZZ[t_1..t_3];
+I = ideal(t_1,t_2+t_3);
+M = jacobian I;           
+assert(extendingIdealByNonVanishingMinor(I,M,2) === (t_1,t_2+t_3,1))
 
 
 ///
