@@ -6,10 +6,6 @@ newPackage(
     {Name => "Fatemeh Tarashi Kashani", 
     Email => "tarashikashanifatemeh@gmail.com", 
     HomePage => "https://www.linkedin.com/in/fatemehtarashi/"},
-    {Name => "Your name here",
-    Email => "Your email here",
-    HomePage => "Your page here"}
-  },
   Headline => "A package for ikelihood equations",
   DebuggingMode => true,
 )
@@ -23,61 +19,69 @@ export {
 }
 
 
-pLikelihood = method(); -- option must be add
+MLdegree = method(); -- option must be add
 -- (Alg. 18 in Solving the Likelihood Equations(https://arxiv.org/pdf/math/0408270)
 -- input: Polynomials f_0,...,f_n with ∑ f_i = 1 and vector u
 -- output: Generators of the parametric likelihood ideal
-pLikelihood List := flist  -> (
-    m1 := diagonalMatrix flist;
-    mlist = for i in flist list transpose jacobian ideal(i);
-    m2 =  fold(mlist, (i,j) -> i || j);
-    M = m1 | m2;
-    Ju' = ideal generators ker M;
-    ju = saturate(Ju', product F)
+MLdegree (List,List) := (F,u)-> (
+    if not (sum F ==1) then error("The sum of functions is not equal to one.");
+    m1 = diagonalMatrix F;
+    m2 = for i in F list transpose jacobian ideal(i);
+    m2p = fold(m2, (i,j) -> i || j);
+    M = m1 | m2p;
+    g = generators ker M;
+    g'=matrix drop(entries g,-numrows g+#u);
+    Ju'=ideal (matrix {u} * g');
+    Ju = saturate(Ju');
+    
+    degree Ju
 )
 
 TEST ///
-R= QQ[p,s,t];
-f_0=     p *       (1-s)^4 +     (1-p) *       (1-t)^4;
-f_1= 4 * p * s   * (1-s)^3 + 4 * (1-p) * t   * (1-t)^3;
-f_2= 6 * p * s^2 * (1-s)^2 + 6 * (1-p) * t^2 * (1-t)^2;
-f_3= 4 * p * s^3 * (1-s)   + 4 * (1-p) * t^3 * (1-t);
-f_4=     p * s^4           +     (1-p) * t^4;
-F = {f_0,f_1,f_2,f_3,f_4}; --- list of function as input
-lf = pLikelihood F
+R = QQ[t]
+s=1
+f_0 = s^3 * (-t^3-t^2-t+1)
+f_1 = s^2*t
+f_2 = s*t^2
+f_3 = t^3
+u = {2,3,5,7}
+F = {f_0,f_1,f_2,f_3} --- list of function as input
 
-assert( lf == ) 
+assert( MLdegree (F,u) == 3) 
 ///
 
 
 doc ///
 Key
-  pLikelihood
-  (pLikelihood, List)
+   MLdegree
+   (MLdegree,List,List) 
 Headline
-  Generators of the parametric likelihood ideal
+  Degree of the parametric likelihood
 Usage
-  pLikelihood(Flist)
+  MLdegree (F,u)
 Inputs
-  Flist:
+  F:
     list of function
+  u:
+    list of numerical data
 Outputs
-  :Ideal
-    Generators of the parametric likelihood ideal
+  :Number
+    The Maximum Likelihood Degree
 --Consequences
 --  asd
 Description
   Text
     ---
   Example
-    R= QQ[p,s,t]
-    f_0=     p *       (1-s)^4 +     (1-p) *       (1-t)^4;
-    f_1= 4 * p * s   * (1-s)^3 + 4 * (1-p) * t   * (1-t)^3;
-    f_2= 6 * p * s^2 * (1-s)^2 + 6 * (1-p) * t^2 * (1-t)^2;
-    f_3= 4 * p * s^3 * (1-s)   + 4 * (1-p) * t^3 * (1-t);
-    f_4=     p * s^4           +     (1-p) * t^4;
-    F = {f_0,f_1,f_2,f_3,f_4}; --- list of function as input
-    pLikelihood(F)
+    R = QQ[t]
+    s=1
+    f_0 = s^3 * (-t^3-t^2-t+1)
+    f_1 = s^2*t
+    f_2 = s*t^2
+    f_3 = t^3
+    u = {2,3,5,7}
+    F = {f_0,f_1,f_2,f_3} --- list of function as input
+    MLdegree (F,u)
 --  Code
 --    todo
 --  Pre
