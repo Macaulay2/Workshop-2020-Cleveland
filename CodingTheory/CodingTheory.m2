@@ -7,7 +7,8 @@ newPackage(
 	     {Name => "Hiram Lopez", Email => "h.lopezvaldez@csuohio.edu"},
 	     {Name => "Gwyn Whieldon", Email => "gwyn.whieldon@gmail.com"},
 	     {Name => "Taylor Ball", Email => "trball13@gmail.com"},
-	     {Name => "Nathan Nichols", Email => "nathannichols454@gmail.com"}
+	     {Name => "Nathan Nichols", Email => "nathannichols454@gmail.com"},
+	     {Name => "Henry Chimal-Dzul", Email => "hc118813@ohio.edu"}
 	     },
     	HomePage => "https://academic.csuohio.edu/h_lopez/",
     	Headline => "a package for coding theory in M2",
@@ -74,6 +75,8 @@ export {
     -- Families of Codes
     "zeroCode",
     "universeCode",
+    "repetitionCode",
+    "zeroSumCode",
     "cyclicMatrix",
     "quasiCyclicCode",
     "HammingCode",
@@ -747,6 +750,30 @@ universeCode(GaloisField,ZZ) := LinearCode => (F,n) -> (
 	};    
     )
 
+repetitionCode = method()
+repetitionCode(GaloisField,ZZ) := LinearCode => (F,n) -> (
+    --construct the repetition code of length n over F
+    --check n is positive
+    if n > 0 then {
+	l := {apply(toList(0..n-1),i-> sub(1,F))};
+	return linearCode(F,n,l)
+	} else {
+	error "The legnth of the code should be positive."
+	};
+)
+
+zeroSumCode = method ()
+zeroSumCode(GaloisField,ZZ):= LinearCode => (F,n) -> (
+    -- construct the dual of the repetition code of length n over F.
+    --check n is positive
+    if n>0 then {
+	l := {apply(toList(0..n-1),i-> sub(1,F))};
+	return linearCode(F,n,l,ParityCheck => true)
+	} else {
+	error "The length of the code should be positive."
+	}
+  )
+
 
 ------------------------------------------
 ------------------------------------------
@@ -1413,6 +1440,39 @@ randLDPC(ZZ, ZZ, RR, ZZ) := (n, k, m, b) -> (
 -----------------------------------------------
 
 TEST ///
+-- zeroCode constructor
+F = GF 2
+n = 7
+C = zeroCode(F,n)
+C.ParityCheckMatrix
+///
+
+TEST ///
+--universeCode constructor
+F = GF(2,3) 
+n = 7
+C = universeCode(F,n)
+C.ParityCheckMatrix
+///
+
+TEST ///
+--repetitionCode constructor
+F = GF 9
+n = 5
+C=repetitionCode(F,n)
+C.ParityCheckMatrix
+///
+
+TEST ///
+--zeroSumCode constructor
+D = zeroSumCode(GF 3,5)
+D.ParityCheckMatrix
+E = zeroSumCode(GF 8,5)
+E.ParityCheckMatrix
+///
+
+
+TEST ///
 -- randLDPC test
 for i from 0 to 25 do(
     n := random(10, 20);
@@ -1714,6 +1774,81 @@ document {
 	"F = GF(2,4);codeLen = 7;codeDim = 3;",
         "L = apply(toList(1..codeDim),j-> apply(toList(1..codeLen),i-> random(F))); VerticalList(L)",
 	"C = linearCode(F,L)"
+	}
+    }
+document {
+    Key => {zeroCode,(zeroCode,GaloisField,ZZ)},
+    Headline => "Constructs the linear code whose only codeword is the zero codeword",
+    Usage => "zeroCode(F,n)",
+    "This constructor is provided by the package", TO CodingTheory, ".",
+    Inputs => {
+	"F" => GaloisField => {},
+	"n" => ZZ => {"which is the length of the code."}
+	},
+    Outputs => {
+	LinearCode => {}
+	},
+    EXAMPLE {
+	"F = GF 4; n=7;",
+	"C=zeroCode(F,n)",
+	"C.ParityCheckMatrix",
+	}
+    }
+document {
+    Key => {universeCode,(universeCode,GaloisField,ZZ)},
+    Headline => "Constructs the linear code F^n",
+    Usage => "universeCode(F,n)",
+    "This constructor is provided by the package", TO CodingTheory, ".",
+    Inputs => {
+	"F" => GaloisField => {},
+	"n" => ZZ => {"which is the length of the code."}
+	},
+    Outputs => {
+	LinearCode => {}
+	},
+    EXAMPLE {
+	"F = GF(2,3); n=7;",
+	"C=universeCode(F,n)",
+	"C.ParityCheckMatrix"
+	}
+    }
+document {
+    Key => {repetitionCode,(repetitionCode,GaloisField,ZZ)},
+    Headline => "Constructs the linear reperition code",
+    Usage => "repetitionCode(F,n)",
+    "These constructor is provided by the package", TO CodingTheory, ".",
+    Inputs => {
+	"F" => GaloisField => {"A Galois Field."},
+	"n" => ZZ => { "which is the length of the code."}
+	},
+    Outputs => {
+	LinearCode => {}
+	},
+    EXAMPLE {
+	"F = GF(2,3); n=7;",
+	"C=repetitionCode(F,n)",
+	"C.ParityCheckMatrix"
+	}
+    }
+document {
+    Key => {zeroSumCode, (zeroSumCode,GaloisField,ZZ)},
+    Headline => "Constructs the linear code in which the entries of each codeword add up zero.",
+    Usage => "zeroSumCode(F,n)",
+    "The zero sum code equals the dual of the linear repetition code.\n",
+    "In the binary case, this code equals the code of all even-weight codewords.\n",
+    "This constructor is provided by the package", TO CodingTheory, ".",
+    Inputs => {
+	"F" => GaloisField => {},
+	"n" => ZZ => {"which is the length of the code"}
+	},
+    Outputs => {
+	LinearCode => {}
+	},
+    EXAMPLE {
+	"D=zeroSumCode(GF 3,5)",
+	"D.ParityCheckMatrix",
+	"E = zeroSumCode(GF 8,5)",
+	"E.ParityCheckMatrix"
 	}
     }
 document {
