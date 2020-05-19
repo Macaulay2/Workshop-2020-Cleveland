@@ -1444,15 +1444,15 @@ TEST ///
 F = GF 2
 n = 7
 C = zeroCode(F,n)
-C.ParityCheckMatrix
+assert (length C == 7)
 ///
 
 TEST ///
 --universeCode constructor
-F = GF(2,3) 
+F = GF(2,3)
 n = 7
 C = universeCode(F,n)
-C.ParityCheckMatrix
+assert (length C == 7)
 ///
 
 TEST ///
@@ -1460,15 +1460,13 @@ TEST ///
 F = GF 9
 n = 5
 C=repetitionCode(F,n)
-C.ParityCheckMatrix
+assert (length C == 5)
 ///
 
 TEST ///
 --zeroSumCode constructor
-D = zeroSumCode(GF 3,5)
-D.ParityCheckMatrix
-E = zeroSumCode(GF 8,5)
-E.ParityCheckMatrix
+C = zeroSumCode(GF 3,5)
+assert (length C == 5)
 ///
 
 
@@ -1894,13 +1892,12 @@ document {
     Usage => "HammingCode(q,r)",
     Inputs => {
 	"q" => ZZ => {"Size of the field."},
-	"r" => Vector => {"Dimension of the dual of the Hamming code."}	
+	"r" => ZZ => {"Dimension of the dual of the Hamming code."}	
 	},
     Outputs => {
 	"C" => LinearCode => {"Hamming code."}
 	},
-    "q and r and integers",
-    "Returns the Hamming code over GF(q) and dimensino of the dual r.",
+    "Returns the Hamming code over GF(q) and dimension of the dual r.",
     EXAMPLE {
 	"C1= HammingCode(2,3);",
 	"C1.ParityCheckMatrix",
@@ -2054,6 +2051,7 @@ document {
    Outputs => {
 	"i" => ZZ => {"v-number of the ideal."}
 	},
+    	"Definition of the v-number can be found at Definition 4.1 at https://arxiv.org/pdf/1812.06529.pdf ",
 	EXAMPLE {
 	"K=ZZ/3;",
         "R=K[t3,t2,t1,MonomialOrder=>Lex];",
@@ -2065,16 +2063,17 @@ document {
 
  document {
    Key => {footPrint, (footPrint,ZZ,ZZ,Ideal)},
-   Headline => "Gives the footPrint value of an ideal with parameters (d,r)",
+   Headline => "Gives the value of the generalized footprint function of the ideal I at (d,r)",
    Usage => "footPrint(d,r,I)",
    Inputs => {
 	"I" => Ideal => {"Graded ideal."},
-	"d" => ZZ => {"Degree of the monomials in the Gröbner éscalier of I."},
-	"r" => ZZ => {"Length of the sequences in the Gröbner éscalier of I of degree d."}
+	"d" => ZZ => {"Polynomials up to degree d are used."},
+	"r" => ZZ => {"Number of l.i. polynomials that are used."}
 	},
    Outputs => {
-	"i" => ZZ => {"footPrint value of an ideal with parameters (d,r)."}
+	"i" => ZZ => {"Value of the generalized footprint function of I at (d,r)"}
 	},
+    	"Definition of the generalized footprint function can be found at Definition 1.3 at https://arxiv.org/pdf/1812.06529.pdf ",
 	EXAMPLE {
 	"K=QQ;", 
         "R=K[t1,t2,t3];",
@@ -2087,16 +2086,17 @@ document {
     
 document {
    Key => {hYpFunction, (hYpFunction,ZZ,ZZ,Ideal)},
-   Headline => "Gives the hYp value of an ideal with parameters (d,r)",
+   Headline => "Gives the value of the hyp function of the ideal I at (d,r)",
    Usage => "hYpFunction(d,r,I)",
    Inputs => {
 	"I" => Ideal => {"Graded ideal."},
-	"d" => ZZ => {"Degree of certain homogenous component of ring I."},
-	"r" => ZZ => {"Length of the sequences in homogenous component of degree d."}
+	"d" => ZZ => {"Polynomials up to degree d are used."},
+	"r" => ZZ => {"Number of l.i. polynomials that are used."}
 	},
    Outputs => {
-       "i" => ZZ => {"The hYp value of an ideal with parameters (d,r)."}
+       "i" => ZZ => {"Value of the hyp function of I at (d,r)."}
 	},
+    	"Definition of the hyp function can be found at Definition 1.2 at https://arxiv.org/pdf/1812.06529.pdf ",
 	EXAMPLE {
 	"K=ZZ/3;", 
         "R=K[t1,t2,t3,t4,t5,t6];",
@@ -2108,16 +2108,17 @@ document {
 
  document {
    Key => {gMdFunction, (gMdFunction,ZZ,ZZ,Ideal)},
-   Headline => "Gives the Generalized minimum distance value of an ideal with parameters (d,r)",
+   Headline => "Gives the value of the generalized minimum distance function of the ideal I at (d,r)",
    Usage => "gMdFunction(d,r,I)",
    Inputs => {
 	"I" => Ideal => {"Graded ideal."},
-	"d" => ZZ => {"Degree of certain homogenous component of ring I."},
-	"r" => ZZ => {"Length of the sequences in homogenous component of degree d."}
+	"d" => ZZ => {"Polynomials up to degree d are used."},
+	"r" => ZZ => {"Number of l.i. polynomials that are used."}
 	},
    Outputs => {
-       "i" => ZZ => {"Gives the Generalized minimum distance value of an ideal with parameters (d,r)."}
+       "i" => ZZ => {"Value of the generalized minimum distance function of I at (d,r)"}
 	},
+    	"Definition of the generalized minimum distance function can be found at Definition 1.1 at https://arxiv.org/pdf/1812.06529.pdf ",
 	EXAMPLE {
 	"K=ZZ/3;", 
         "R=K[t1,t2,t3,t4,t5,t6];",
@@ -2132,16 +2133,17 @@ document {
  
  document {
    Key => {vasFunction , (vasFunction,ZZ,ZZ,Ideal)},
-   Headline => "Gives the Vasconcelos function of an ideal with parameters (d,r)",
+   Headline => "Gives the value of the Vasconcelos function of the ideal I at (d,r)",
    Usage => "vasFunction (d,r,I)",
    Inputs => {
 	"I" => Ideal => {"Graded ideal."},
-	"d" => ZZ => {"Degree of certain homogenous component of ring I."},
-	"r" => ZZ => {"Length of the sequences in homogenous component of degree d."}
+	"d" => ZZ => {"Polynomials up to degree d are used."},
+	"r" => ZZ => {"Number of l.i. polynomials that are used."}
 	},
    Outputs => {
-       "i" => ZZ => {"The Vasconcelos function of an ideal with parameters (d,r)"}
+       "i" => ZZ => {"Value of the Vasconcelos function of I at (d,r)"}
 	},
+    	"Definition of the Vasconcelos function can be found at Definition 3.4 at https://arxiv.org/pdf/1812.06529.pdf ",
 	EXAMPLE {
 	"K=QQ;", 
         "R=K[t1,t2,t3];",
@@ -2211,7 +2213,7 @@ document {
 document {
     Key => {RSCode, (RSCode,Ring,List,ZZ)},
     Headline => "Constructs the Reed-Muller code.",
-    Usage => "RMCode(F,L,k)",
+    Usage => "RSCode(F,L,k)",
     Inputs => {
 	"F" => Ring => {"Finite field."},
 	"L" => List => {"Elements of the field to evaluate."},
@@ -2220,7 +2222,7 @@ document {
     Outputs => {
 	"C" => EvaluationCode => {"Reed-Solomon code."}
 	},
-    "F is a finite fiel, L={{a_1,...,a_n}} contains the elements to evaluate, polynomials of degree less than k are used to evaluate",
+    "F is a finite fiel, L={a_1,...,a_n} contains the elements to evaluate, polynomials of degree less than k are used to evaluate",
     "Returns the Reed-Solomon code obtained when polynomials of degree less than k are evaluated on the elements of L .",
     EXAMPLE {
 	"C=RSCode(ZZ/31,{1,2,3},3);",
