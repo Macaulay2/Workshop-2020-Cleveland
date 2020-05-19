@@ -2021,6 +2021,31 @@ document {
 -- Use this section for Evaluation Code documentation:
 -----------------------------------------------
 -----------------------------------------------
+doc ///
+	Key
+    	 EvaluationCode
+	Headline
+	 types of evaluation codes
+	Description
+	 Text
+	  The EvaluationCode is the class of linear codes obtained by evaluating m-variate polynomials over a finite field F at a set of points in F^m. There are different constructions of evaluation codes depending on how the polynomials and points are chosen. Examples include Reed-Muller codes, monomial codes, cartesian codes, toric codes, and others.	    
+	 Text
+	  The basic structure is a HashTable. One of the keys is the linear resulting linear code linearCode of type LinearCode. Other keys include the set of points, its vanishing ideal, the set of polynomials, and more.
+	 Example
+	  F=GF(4);
+	  R=F[x,y];
+	  P={{0,0},{1,0},{0,1},{a,a}};
+	  S={x+y,x^2+y^2, a+x*y^2};
+	  C=evaluationCode(F,P,S);
+	  C.VanishingIdeal
+	  C.PolynomialSet
+	  C.LinearCode
+	  length C.LinearCode
+	  dim C.LinearCode
+///
+
+
+
 
 document {
     Key => {evaluationCode, (evaluationCode,Ring,List,List), (evaluationCode,Ring,List,Matrix)},
@@ -2130,7 +2155,7 @@ document {
 
 document {
     Key => {RSCode, (RSCode,Ring,List,ZZ)},
-    Headline => "Constructs the Reed-Muller code.",
+    Headline => "Constructs the Reed-Solomon code.",
     Usage => "RMCode(F,L,k)",
     Inputs => {
 	"F" => Ring => {"Finite field."},
