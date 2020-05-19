@@ -6,10 +6,12 @@ newPackage(
     	Authors => {
 	     {Name => "Sankhaneel Bisui", Email => "sbisu@tulane.edu", HomePage=>"https://sites.google.com/view/sankhaneelbisui/home"},
 	     {Name=> "Thai Nguyen", Email =>"tnguyen11@tulane.edu", HomePage=>"https://sites.google.com/view/thainguyenmath "},
-	     {Name=>"Karl Schwede", Email=>"schwede@math.utah.edu", HomePage=>"https://www.math.utah.edu/~schwede/" }
-	     },
+	     {Name=>"Karl Schwede", Email=>"schwede@math.utah.edu", HomePage=>"https://www.math.utah.edu/~schwede/" },
+	     {Name => "Sarasij Maitra", Email => "sm3vg@virginia.edu", HomePage => "https://people.virginia.edu~sm3vg"}
+	     }
+	     {Name
     	Headline => "A Package To Compute A Random Point In A Given Variety",
-		--DebuggingMode => true, 
+		DebuggingMode => true, 
 		Reload=>true,
 		AuxiliaryFiles => false -- set to true if package comes with auxiliary files
     	)
@@ -41,8 +43,8 @@ export {
 exportMutable {}
 
 needsPackage "SwitchingFields";
---needsPackage "MinimalPrimes";
---installMinprimes();
+needsPackage "MinimalPrimes";
+installMinprimes();
 
 optRandomPoints := {
     Strategy=>BruteForce, 
@@ -406,27 +408,30 @@ extendingIdealByNonVanishingMinor(Ideal,Matrix, ZZ):= opts -> (I, M, n) -> (
     local kk; 
     local R;
     local phi;
-    local N; local N1; local N2;
-    local J; local M2; local M3;
+    local N; local N1; local N2; local N1new; local N2new;
+    local J; local M2;
     R = ring I;
     kk = coefficientRing R;
     P = randomPointViaLinearIntersection(I);
     if (P == {}) 
     then error "No Point Found"
     else (
-        phi =  map(kk,R,P);
+        phi =  map(kk,R,sub(matrix{P},kk));
         N = mutableMatrix phi(M);
         rk := rank(N);
-        if (rk < n) then return null;
+        if (rk < n) then return I;
         N1 = columnRankProfile(N);
         N2 = rowRankProfile(N);
         M1 := mutableMatrix M;
-    	for i from 0 to n-1 do (
-            M2 = M1_{N1#i};
-            M3 = M2^{N2#i};
-            );
-    	M4 := matrix M3;
-    	L1 := ideal (det(M4));
+	N1new = {};
+	N2new = {};
+	for i from  0 to n-1 do(
+	    N1new = join(N1new, {N1#i});
+	    N2new = join(N2new, {N2#i});
+	    );
+	M2 = M1_N1new^N2new;
+    	M3 := matrix M2;
+    	L1 := ideal (det(M3));
     	Ifin := I + L1;
     	return Ifin;
     );	
@@ -614,6 +619,12 @@ doc ///
 	    It then extracts the minor from the original given matrix corresponding
 	    to this non-vanishing minor, finds its determinant and
 	    adds it to the original ideal.
+    	Example
+	    R = ZZ/5[t_1..t_3];
+            I = ideal(t_1,t_2+t_3);
+	    M = jacobian I;
+            extendingIdealByNonVanishingMinor(I,M,2)
+      
 ///	
 
  ----- TESTS -----
