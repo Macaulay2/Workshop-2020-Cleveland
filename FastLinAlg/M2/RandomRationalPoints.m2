@@ -1,7 +1,7 @@
 -- -*- coding: utf-8 -*-
 newPackage(
         "RandomRationalPoints",
-    	Version => "1.0",
+    	Version => "1.2",
     	Date => "May 13, 2020",
     	Authors => {
 	     {Name => "Sankhaneel Bisui", Email => "sbisu@tulane.edu", HomePage=>"https://sites.google.com/view/sankhaneelbisui/home"},
