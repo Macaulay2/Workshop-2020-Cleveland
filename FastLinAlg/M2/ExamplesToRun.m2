@@ -25,5 +25,6 @@ J = I + chooseGoodMinors(5, 4, M);
     PointCheckAttempts => 100
 }
 
+R = ZZ/5[x,y]
 R = ZZ/11[x,y,z]
 I2 = intersect(ideal(x,y),ideal(x,z), ideal(y,z))
