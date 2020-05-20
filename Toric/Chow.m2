@@ -12,7 +12,13 @@ newPackage(
 	       HomePage => ""},
 	    {Name => "Corey Harris",
        	       Email => "harris@mis.mpg.de",
-	       HomePage => "http://coreyharris.name"}
+	       HomePage => "http://coreyharris.name"},
+	   {Name => "Erika Pirnes",
+	       Email => "erika.pirnes@wisc.edu",
+	       HomePage => "https://sites.google.com/view/erikapirnes" },
+	   {Name => "Ritvik Ramkumar",
+	       Email => "ritvik@berkeley.edu",
+	       HomePage => "https://math.berkeley.edu/~ritvik/" }
 	   },
      Headline => "Chow computations for toric varieties",
      DebuggingMode => true,
@@ -29,8 +35,7 @@ export {
      "iintersectionRing",
      "ToricCycle",
      "toricCycle",
-     "isTransverse",
-     "tDivisor"
+     "isTransverse"
      }
 
 protect ChowGroupBas 
@@ -367,15 +372,16 @@ ToricCycle - ToricCycle := ToricCycle => (C,D) -> (
 
 - ToricCycle := ToricCycle => (C) -> (-1)*C
 
--- IMHO this should be called toricDivisor
-tDivisor = method()
-tDivisor(Vector,NormalToricVariety) := (u,X) -> (
+
+--toricDivisor = method()
+toricDivisor(Vector,NormalToricVariety) := opts -> (u,X) -> (
     -- u is a vector in M
     -- returns the divisor of zeros and poles of chi^u
-    cs := for r in rays X list (
-        u * vector(r)    
-    ); 
-    sum apply(cs,0..(#(rays X) - 1), (c,i) -> c*X_i)
+    --cs := for r in rays X list (
+    --    u * vector(r)    
+    --); 
+    --sum apply(cs,0..(#(rays X) - 1), (c,i) -> c*X_i)    
+    sum (#(rays X), i -> (u * vector((rays X)_i))*X_i)
 )
 
 Vector * Vector := (a,b) -> (
@@ -418,11 +424,15 @@ ToricDivisor * List := (D, C) -> (
 
 NormalToricVariety _ List := (X,L) -> (toricCycle({(L,1)},X))
 
+-- Need to be careful when cycle class is supported on a point
+-- Output is the point normalToricVariet({{}},{{}}). The NormalToricVarieties 
+-- package doesn't treat this as a Toric variety.
 normalToricVariety(ToricCycle) := opts -> C -> (
     s := support C;
     if #s > 1 then error "Expected a cycle of a cone";
     normalToricVariety(first s, variety C)
 )
+
 
 normalToricVariety(List,NormalToricVariety) := opts -> (r,X) -> (
     if any(r, e -> class e === List) then error "Expected a list of rays"; 
@@ -939,6 +949,34 @@ doc ///
 
 doc ///
     Key
+      (symbol *, ToricDivisor, ToricCycle)
+    Headline
+      multiplication of a ToricDivisor and ToricCycle 
+    Usage
+      D*C
+    Inputs
+      D:ToricDivisor
+      C:ToricCycle
+    Description
+      Text
+        Computes the product of a ToricDivisor with a ToricCycle.
+      Example
+	X = toricProjectiveSpace 4
+	D = X_0 + 2*X_1+3*X_2+4*X_3
+	C = X_{2,3}
+	D*C   
+      Text
+      	Self intersection of the exceptional divisor.
+      Example
+	X = toricProjectiveSpace 2
+	Y = toricBlowup({0,1},X)
+	D = Y_3
+	C = Y_{3}
+	D*C       	
+/// 
+
+doc ///
+    Key
       (symbol +, ToricCycle, ToricCycle)
       (symbol -, ToricCycle, ToricCycle)
       (symbol -, ToricCycle)
@@ -971,7 +1009,6 @@ doc ///
 	cyc - altcyc
 	-cyc
 ///
-
 doc ///
     Key
         (normalToricVariety, ToricCycle)
@@ -985,8 +1022,8 @@ doc ///
         X:NormalToricVariety
     Description
         Text
-	    Given an irreducible ToricCycle Z, supported on only
-	    one cone, this function returns
+            Given an irreducible ToricCycle Z, supported on only
+            one cone, this function returns
 	    the toric variety of the corresponding orbit closure.
 	Example
 	    X = toricProjectiveSpace 4
@@ -994,6 +1031,28 @@ doc ///
 	    Y = normalToricVariety Z
 	    dim Y
 	    rays Y
+///
+
+doc ///
+    Key
+        (toricDivisor, Vector, NormalToricVariety)
+    Headline
+        creates the principal divisor corresponding to the torus-invariant function
+    Usage
+        toricDivisor(u,X)
+    Inputs
+        u:Vector
+	X:NormalToricVariety
+    Outputs
+        Z:ToricDivisor
+    Description
+        Text
+	    Given a vector u in M, the function returns the divisor
+	    of the torus-invariant function chi^u.
+	Example
+	    X = affineSpace 2
+	    u = vector({29,73})
+	    Z = toricDivisor(u,X)	
 ///
 
 
@@ -1174,8 +1233,12 @@ viewHelp Chow
 X = toricProjectiveSpace 4
 D = X_1
 u = vector({1,2,3,4})
-Z = tDivisor(u,X)
+Z = toricDivisor(u,X)
 D' = D + Z
+
+X = affineSpace 2
+u = vector({29,73})
+Z = toricDivisor(u,X)
 
 rayList={{1,0},{0,1},{-1,-1},{0,-1}}
 coneList={{0,1},{1,2},{2,3},{3,0}}
@@ -1212,7 +1275,6 @@ for g in gammas do (
 
 uninstallPackage "Chow"
 restart
-loadPackage "Chow"
 installPackage("Chow",RemakeAllDocumentation=>false,RunExamples=>false,RerunExamples=>false)
 installPackage "Chow"
 check "Chow"
