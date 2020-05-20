@@ -247,6 +247,23 @@ corrMatrix(List, List) := Matrix => opts -> (r, Facets) -> (
         A
     );
 
+-- Produces the linear map from gcut to  the correlation polytope
+gcutCorrMatrix = method(Options => {});
+gcutCorrMatrix(List, List) := Matrix => opts -> (r, Facets) -> (
+    S := simplcomplexRing(r, Facets);
+    B := mutableMatrix (frac(ZZ), numgens S, numgens S);
+    for j from 0 to (numgens S - 1) do(
+	probIndex := last baseName (gens S)_j;
+	for i from  0 to (numgens S - 1) do(
+	    paramIndex := last baseName (gens S)_i;
+	    if isSubset(set paramIndex,set probIndex)==true then B_(i,j) = (-1)^(#paramIndex)/2^(#probIndex);
+	    );
+	);
+        A := matrix entries B;
+        A
+    );
+
+
 ------------------------------------------------
 --Documentation
 -----------------------------------------------
