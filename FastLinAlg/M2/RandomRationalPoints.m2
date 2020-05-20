@@ -22,7 +22,7 @@ export {
 	"projectionToHypersurface",
 	"randomCoordinateChange",
     "randomPointViaLinearIntersection",
-     "randomPointViaGenericProjection",
+    "randomPointViaGenericProjection",
 	"randomPoints", 
 	"MyOption", 
 	"NumPointsToCheck", 
@@ -35,13 +35,9 @@ export {
 	"ProjectionAttempts", --used in the GenericProjection strategy
     "IntersectionAttempts", --used in the LinearIntersection strategy
     "ExtendField", --used in GenericProjection and LinearIntersection strategy
-<<<<<<< HEAD
     "checkRandomPoint",
     "PointCheckAttempts",
     "extendingIdealByNonVanishingMinor"
-=======
-    "PointCheckAttempts"
->>>>>>> sankhaneel
     }
 exportMutable {}
 
@@ -606,17 +602,6 @@ doc ///
             randomPoints(4,I, Strategy => GenericProjection)
             randomPoints(4,I, Strategy => LinearIntersection)
 ///
-doc ///
-    Key
-        PointCheckAttempts
-        [randomPoints, PointCheckAttempts]
-    Headline
-        default value is 100, can be changed. 
-    Description
-        Text
-           Specify the number of points.
-///
-<<<<<<< HEAD
 
 doc ///
     Key 
@@ -644,6 +629,7 @@ doc ///
     	I:Ideal
     Outputs
     	:List    	
+///        
 doc ///
     Key
     	extendingIdealByNonVanishingMinor
@@ -678,10 +664,7 @@ doc ///
             I = ideal(t_1,t_2+t_3);
 	    M = jacobian I;
             extendingIdealByNonVanishingMinor(I,M,2)
-      
 ///	
-=======
->>>>>>> sankhaneel
 
 
  ----- TESTS -----
