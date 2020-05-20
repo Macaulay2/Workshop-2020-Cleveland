@@ -12,19 +12,24 @@ newPackage(
 
 -- Any symbols or functions that the user is to have access to
 -- must be placed in one of the following two lists
-export {"mtSearchPoints"}
+export {
+    "mtSearchPoints",
+    "MyOption",
+    "NumPointsToCheck",
+    "NumThreads"
+    }
 exportMutable {}
 
-mtSearchPoints = method(TypicalValue => List, Options => {})
-mtSearchPoints(ideal, ZZ) := List => opts -> (I, nn) -> (
+mtSearchPoints = method(TypicalValue => List, Options => {NumPointsToCheck => 1000, NumThreads => 4});
+mtSearchPoints(Ideal) := List => opts -> (I) -> (
     genList := first entries gens I;
     R := ring I;
     K := coefficientRing R;
     n := #gens R;
     
 
-    taskList := apply(4, (i)->(
-	    return createTask(searchPoints, (nn,n,K,R,genList));
+    taskList := apply(opts.NumThreads, (i)->(
+	    return createTask(searchPoints, (opts.NumPointsToCheck,n,K,R,genList));
 	    )
 	);
 
@@ -54,7 +59,7 @@ evalAtPoint = (n, K, R, genList, point) -> (
 
 searchPoints = (nn, n, K, R, genList) -> (
     for i from 1 to nn do (
-	point = getAPoint(n, K);
+	point := getAPoint(n, K);
 	if evalAtPoint(n, K, R, genList, point)
 	then return point
 	);
@@ -65,7 +70,7 @@ searchPoints = (nn, n, K, R, genList) -> (
 
 beginDocumentation()
 document { 
-    Key => Temp
+    Key => Temp,
     Headline => " "
 }
 
