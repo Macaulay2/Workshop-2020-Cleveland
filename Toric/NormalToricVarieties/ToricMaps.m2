@@ -277,19 +277,17 @@ isSurjective ToricMap := Boolean => (cacheValue symbol isSurjective) (f -> (
     	if not isDominant f then return false;
 	X := source f;
 	Y := target f;
+	A := matrix f;
+	-- we remove the cones {} corresponding to the dense tori
     	sourceCones := flatten drop (values orbits X, -1);	
     	targetCones := reverse flatten drop (values orbits Y, -1);
-	-- find images of vectors in the relative interior of each source cone
 	raysX := rays X;
-    	imageSourceCones := for sigma in sourceCones list (
-	    (matrix f) * (transpose matrix {sum raysX_sigma})
-	    );
-	-- check whether every target cone is contains a vector
-    	for v in imageSourceCones do (
-	    if targetCones === {} then return true;			    
-	    for sigma in targetCones do (
-	    	if isRelativeInterior(Y, sigma, v) then (
-		    targetCones = delete(sigma, targetCones);
+    	for sigma in sourceCones do (
+	    if targetCones === {} then return true;
+	    v := A * (transpose matrix {sum raysX_sigma});
+	    for tau in targetCones do (
+	    	if isRelativeInterior(Y, tau, v) then (
+		    targetCones = delete(tau, targetCones);
 		    break);
 		);
 	    );

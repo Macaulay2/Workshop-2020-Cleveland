@@ -1093,9 +1093,14 @@ doc ///
 	    that is @TO true@ if the map is surjective
     Description
         Text
-	    A morphism $f : X \to Y$ is surjective if $f(X) = Y$ as sets. 
-	    A toric map is surjective if and only if the induced map of fans
-	    is surjective.
+	    A morphism $f : X \to Y$ is surjective if $f(X) = Y$ as sets.  To
+	    be surjective toric map, the dimension of $X$ must be greater than
+	    or equal to $Y$ and the image of the algebraic torus in $X$ must
+	    be equal to the algebraic torus in $Y$.  Since $f$ is
+	    torus-equivariant, it follows that $f$ is surjective if and only
+	    if its image contains a point in each torus orbit in $Y$.  This
+	    method checks whether all of the cones in the target fan contain a
+	    point from the relative interior of a cone in the source fan.
 	Text
 	    The canonical 
 	    @TO2((symbol ^, NormalToricVariety, Array), "projections")@ from a
@@ -1121,6 +1126,18 @@ doc ///
 	    isDominant f
     	    isSurjective f
 	    assert (isWellDefined f and isDominant f and not isSurjective f)
+	Text
+	    For a toric map to be surjective, the underlying map of fans need
+	    not be surjective.  
+	Example
+	    Y = (toricProjectiveSpace 1) ** (toricProjectiveSpace 1);
+	    X = normalToricVariety(
+		{{1,0},{1,1},{0,1},{-1,1},{-1,0},{-1,-1},{0,-1},{1,-1}},
+		{{0},{1},{2},{3},{4},{5},{6},{7}});
+    	    g = map(Y,X,1)
+	    isSurjective g
+	    isComplete X
+    	    assert (isWellDefined g and isSurjective g and not isComplete X)	
 	Text
 	    To avoid repeating a computation, the package caches the result in
 	    the @TO CacheTable@ of the toric map.	    
