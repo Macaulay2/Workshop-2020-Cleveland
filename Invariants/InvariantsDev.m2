@@ -1098,7 +1098,8 @@ document {
 	    TEX /// $$(t_1,\ldots,t_r) \cdot x_j = t_1^{w_{1j}}\cdots t_r^{w_{rj}} x_j$$ ///,
 	    "for some integers ",
 	    TEX /// $w_{ij}$. ///,
-	    "These are the entries of the input matrix ", TT "W", "for the torus action. In other words, the j-th column of ", TT "W", " is the weight vector of",
+	    "These are the entries of the input matrix ", TT "W",
+	    " for the torus action. In other words, the j-th column of ", TT "W", " is the weight vector of",
 	    TEX /// $x_j$. ///
 	},
     
@@ -1170,13 +1171,28 @@ document {
 		TorusAction => {"the (diagonal) torus action with the given weight matrix"}
 		},
 	"This function is provided by the package ", TO InvariantsDev,". ",
-	    PARA {
+       	PARA {
+	    "Use this function to set up an action of a torus",
+	    TEX /// $(k^\times)^r$ ///,
+	    " on a polynomial ring ",
+	    TEX /// $R = k[x_1,\ldots,x_n]$.///,
+	    " We assume that the action is diagonal, meaning that ",
+	    TEX /// $(t_1,\ldots,t_r) \in (k^\times)^r$ ///,
+	    " acts by",
+	    TEX /// $$(t_1,\ldots,t_r) \cdot x_j = t_1^{w_{1j}}\cdots t_r^{w_{rj}} x_j$$ ///,
+	    "for some integers ",
+	    TEX /// $w_{ij}$. ///,
+	    "These are the entries of the input matrix ", TT "W",
+	    " for the torus action. In other words, the j-th column of ", TT "W", " is the weight vector of",
+	    TEX /// $x_j$. ///
+	    },
+    	PARA {
 	"The following example defines an action of a 
 	two-dimensional torus on a four-dimensional vector space
 	with a basis of weight vectors whose weights are
 	the columns of the input matrix."
 	},
-    	
+        	
 	EXAMPLE {
 	    "R = QQ[x_1..x_4]",
 	    "W = matrix{{0,1,-1,1},{1,0,-1,-1}}",
