@@ -15,13 +15,13 @@ newPackage(
 export {
     "mtSearchPoints",
     "MyOption",
-    "NumPointsToCheck",
+    "NumPoints",
     "NumThreads",
     "UsePregeneratedList"
     }
 exportMutable {}
 
-mtSearchPoints = method(TypicalValue => List, Options => {NumPointsToCheck => 100, NumThreads => 4, UsePregeneratedList => false});
+mtSearchPoints = method(TypicalValue => List, Options => {NumPoints => 100, NumThreads => 4, UsePregeneratedList => false});
 mtSearchPoints(Ideal) := List => opts -> (I) -> (
     genList := first entries gens I;
     R := ring I;
@@ -31,24 +31,29 @@ mtSearchPoints(Ideal) := List => opts -> (I) -> (
     local taskList;
     if (opts.UsePregeneratedList)
     then (
-        randomPointsList := apply(opts.NumPointsToCheck * opts.NumThreads, (i)->( 
-	    return getAPoint(n, K);
-	    )
-	);
-        taskList = apply(opts.NumThreads, (i)->(
-	    return createTask(modifiedSearchPoints, (take(randomPointsList, {i * opts.NumPointsToCheck, (i + 1) * opts.NumPointsToCheck - 1}), n, K, R, genList));
-	    )
-	);
-    )
-    else (taskList = apply(opts.NumThreads, (i)->(
-	    return createTask(searchPoints, (opts.NumPointsToCheck,n,K,R,genList));
-	    )
-	);
-    );
+        randomPointsList := apply(
+	                           opts.NumPoints * opts.NumThreads, 
+			           (i)->(return getAPoint(n, K);)
+	                         );
+        taskList = apply(
+	                  opts.NumThreads, 
+			  (i)->(return createTask(
+				  modifiedSearchPoints, 
+				  (take(randomPointsList, {i * opts.NumPoints, (i + 1) * opts.NumPoints - 1}), R, genList)
+				  );)
+	                );
+         )
+    else (
+	taskList = apply(
+	                  opts.NumThreads, 
+			  (i)->(return createTask(searchPoints, (opts.NumPoints, R, genList));)
+	                );
+         );
+     
     apply(taskList, t -> schedule t);
     while true do (
         nanosleep 100000000;--this should be replaced by a usleep or nanosleep command.
-        if (all(taskList, t->isReady(t))) then break;
+        if (all(taskList, t -> isReady(t))) then break;
         );
     myList := apply(taskList, t -> taskResult(t));
     return myList;
@@ -56,29 +61,35 @@ mtSearchPoints(Ideal) := List => opts -> (I) -> (
 
 --some helper functions
 
-getAPoint = (n,K) -> (toList apply(n, (i)->random(K)));
+getAPoint = (n, K) -> (toList apply(n, (i) -> random(K)));
 
-evalAtPoint = (n, K, R, genList, point) -> (
+evalAtPoint = (R, genList, point) -> (
+    K := coefficientRing R;
+    n := #gens R;
     eval := map(K, R, point);
-    for i in genList do ( 
-	if not eval(i) == 0 
+    for f in genList do ( 
+	if not eval(f) == 0 
 	then return false;
 	);
     return true;
     );
 
-modifiedSearchPoints = (pointsList, n, K, R, genList) -> (
+modifiedSearchPoints = (pointsList, R, genList) -> (
+    K := coefficientRing R;
+    n := #gens R;
     for point in pointsList do (
-	if evalAtPoint(n, K, R, genList, point)
+	if evalAtPoint(R, genList, point)
 	then return point
 	);
     return {};
     );
 
-searchPoints = (nn, n, K, R, genList) -> (
+searchPoints = (nn, R, genList) -> (
+    K := coefficientRing R;
+    n := #gens R;
     for i from 1 to nn do (
 	point := getAPoint(n, K);
-	if evalAtPoint(n, K, R, genList, point)
+	if evalAtPoint(R, genList, point)
 	then return point
 	);
     return {};

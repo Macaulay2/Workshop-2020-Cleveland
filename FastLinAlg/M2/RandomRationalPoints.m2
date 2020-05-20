@@ -2,12 +2,13 @@
 newPackage(
         "RandomRationalPoints",
     	Version => "1.2",
-    	Date => "May 13, 2020",
+    	Date => "May 19, 2020",
     	Authors => {
 	     {Name => "Sankhaneel Bisui", Email => "sbisu@tulane.edu", HomePage=>"https://sites.google.com/view/sankhaneelbisui/home"},
 	     {Name=> "Thai Nguyen", Email =>"tnguyen11@tulane.edu", HomePage=>"https://sites.google.com/view/thainguyenmath "},
 	     {Name=>"Karl Schwede", Email=>"schwede@math.utah.edu", HomePage=>"https://www.math.utah.edu/~schwede/" },
-	     {Name => "Sarasij Maitra", Email => "sm3vg@virginia.edu", HomePage => "https://people.virginia.edu~sm3vg"}
+	     {Name => "Sarasij Maitra", Email => "sm3vg@virginia.edu", HomePage => "https://people.virginia.edu~sm3vg"},
+	     {Name => "Zhan Jiang", Email => "zoeng@umich.edu", HomePage => "http://www-personal.umich.edu/~zoeng/"}
 	     },
     	Headline => "A Package To Compute A Random Point In A Given Variety",
 		DebuggingMode => true, 
@@ -24,7 +25,8 @@ export {
     "randomPointViaLinearIntersection",
     "randomPointViaGenericProjection",
 	"randomPoints", 
-	"MyOption", 
+	"mtSearchPoints",
+	"MyOption",
 	"NumPointsToCheck", 
 	"Codimension",
 	"MaxChange",
@@ -37,7 +39,10 @@ export {
     "ExtendField", --used in GenericProjection and LinearIntersection strategy
     "checkRandomPoint",
     "PointCheckAttempts",
-    "extendingIdealByNonVanishingMinor"
+    "extendingIdealByNonVanishingMinor",
+     "NumPoints", -- used in the multi-thread search function mtSearchPoints
+    "NumThreads", -- used in the multi-thread search function mtSearchPoints
+    "UsePregeneratedList" -- used in the multi-thread search function mtSearchPoints
     }
 exportMutable {}
 
@@ -438,6 +443,81 @@ extendingIdealByNonVanishingMinor(Ideal,Matrix, ZZ):= opts -> (I, M, n) -> (
 
 
 
+mtSearchPoints = method(TypicalValue => List, Options => {NumPoints => 100, NumThreads => 4, UsePregeneratedList => false});
+mtSearchPoints(Ideal) := List => opts -> (I) -> (
+    genList := first entries gens I;
+    R := ring I;
+    K := coefficientRing R;
+    n := #gens R;
+    
+    local taskList;
+    if (opts.UsePregeneratedList)
+    then (
+        randomPointsList := apply(
+	                           opts.NumPoints * opts.NumThreads, 
+			           (i)->(return getAPoint(n, K);)
+	                         );
+        taskList = apply(
+	                  opts.NumThreads, 
+			  (i)->(return createTask(
+				  modifiedSearchPoints, 
+				  (take(randomPointsList, {i * opts.NumPoints, (i + 1) * opts.NumPoints - 1}), R, genList)
+				  );)
+	                );
+         )
+    else (
+	taskList = apply(
+	                  opts.NumThreads, 
+			  (i)->(return createTask(searchPoints, (opts.NumPoints, R, genList));)
+	                );
+         );
+     
+    apply(taskList, t -> schedule t);
+    while true do (
+        nanosleep 100000000;--this should be replaced by a usleep or nanosleep command.
+        if (all(taskList, t -> isReady(t))) then break;
+        );
+    myList := apply(taskList, t -> taskResult(t));
+    return myList;
+);
+
+--some helper functions for mtSearchPoints
+
+getAPoint = (n, K) -> (toList apply(n, (i) -> random(K)));
+
+evalAtPoint = (R, genList, point) -> (
+    K := coefficientRing R;
+    n := #gens R;
+    eval := map(K, R, point);
+    for f in genList do ( 
+	if not eval(f) == 0 
+	then return false;
+	);
+    return true;
+    );
+
+modifiedSearchPoints = (pointsList, R, genList) -> (
+    K := coefficientRing R;
+    n := #gens R;
+    for point in pointsList do (
+	if evalAtPoint(R, genList, point)
+	then return point
+	);
+    return {};
+    );
+
+searchPoints = (nn, R, genList) -> (
+    K := coefficientRing R;
+    n := #gens R;
+    for i from 1 to nn do (
+	point := getAPoint(n, K);
+	if evalAtPoint(R, genList, point)
+	then return point
+	);
+    return {};
+    );
+
+---
 
 
 -- A function with an optional argument
@@ -665,6 +745,38 @@ doc ///
 	    M = jacobian I;
             extendingIdealByNonVanishingMinor(I,M,2)
 ///	
+
+
+doc ///
+    Key
+       mtSearchPoints
+	(mtSearchPoints, Ideal)
+    Headline
+    	searching points in $V(I)$ using multiple threads
+    Usage
+        mtSearchPoints I   
+    Inputs
+        I:Ideal
+            an ideal in a polynomial Ring
+	NumPoints => ZZ
+	    default 100, can be changed
+        NumThreads => ZZ
+	    default 4
+        UsePregeneratedList => Boolean
+	    default false
+    Outputs
+        :List
+            a list of points in the variety $V(I)$.
+    Description
+        Text
+	    This function use \TT NumThreads threads to search for points in the variety.
+       	 
+	   
+       Example
+         R=ZZ/101[x,y,z];
+         I = ideal "xy-z,x2-y+z-1";
+	 mtSearchPoints I
+///
 
 
  ----- TESTS -----
