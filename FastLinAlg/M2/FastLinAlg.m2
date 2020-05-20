@@ -63,7 +63,6 @@ export{
   "StrategyLexSmallest",
   "StrategyRandom",
   "StrategyCurrent",
-  "MaxSteps",
   "SPairsFunction",
   "UseOnlyFastCodim"
 }
@@ -116,7 +115,7 @@ optRn := {
 --    MaxMinorsFunction => , 
     MinMinorsFunction => ((x) -> 2*x + 3), 
     CodimCheckFunction => ((k) -> 1.3^k),
-    MaxSteps => 4,
+    PairLimit => 100,
     UseOnlyFastCodim => false, 
 --    DegreeFunction => ( (t,i) -> ceiling((i+1)*t))
     SPairsFunction => (i -> ceiling(i^1.5))
@@ -154,7 +153,7 @@ optChooseGoodMinors := {
 
 optIsCodimAtLeast := {
     Verbose => false,
-    MaxSteps => 10,
+    PairLimit => 100,
     --DegreeFunction => ( (t,i) -> ceiling((i+1)*t))
     SPairsFunction => (i -> ceiling(i^1.5))
 };
@@ -807,7 +806,7 @@ Rn(ZZ, Ring) := opts -> (n1, R1) -> (
         if (opts.Verbose or debugLevel > 0) then print concatenate("Rn:  Loop step, about to compute dimension.  Submatrices considered: ", toString(i), ", and computed = ", toString(# keys searchedSet) );
         mutM2 = mutableMatrix(nonzeroM); --reset this matrix periodically
         mutM1 = mutableMatrix(M1);
-        if (true === isCodimAtLeast((D - r) + n1 + 1, Id + sumMinors, MaxSteps=>opts.MaxSteps, SPairsFunction => opts.SPairsFunction)) then (
+        if (true === isCodimAtLeast((D - r) + n1 + 1, Id + sumMinors, PairLimit=>opts.PairLimit, SPairsFunction => opts.SPairsFunction)) then (
             d = r-n1 - 1;
             if (opts.Verbose or debugLevel > 0) then print concatenate("Rn:  singularLocus dimension verified by isCodimAtLeast");            
         );
@@ -981,10 +980,10 @@ isCodimAtLeast(ZZ, Ideal) := opts -> (n1, I1) -> (
     local myGB;
     
     gensList := null;
-    while (i < opts.MaxSteps) do(
+    while (i < opts.PairLimit) do(
         curLimit = opts.SPairsFunction(i);
 --        curLimit = apply(baseDeg, tt -> (opts.SPairsFunction)(tt,i));
-        if (opts.Verbose or debugLevel > 0) then print concatenate("isCodimAtLeast: about to compute gb DegreeLimit => ", toString curLimit);
+        if (opts.Verbose or debugLevel > 0) then print concatenate("isCodimAtLeast: about to compute gb PairLimit => ", toString curLimit);
         myGB = gb(I2, PairLimit=>curLimit);
         gensList = first entries leadTerm gb(I2, PairLimit=>curLimit);    
         if (#gensList > 0) then (
@@ -992,7 +991,7 @@ isCodimAtLeast(ZZ, Ideal) := opts -> (n1, I1) -> (
             if (opts.Verbose or debugLevel > 0) then print concatenate("isCodimAtLeast: computed gb, now computing codim ");
             if (codim monIdeal - dAmb >= n1) then return true;
         );
-        if (isGBDone(myGB)) then i = opts.MaxSteps;
+        if (isGBDone(myGB)) then i = opts.PairLimit;
         i = i + 1;
     );
     return null;
@@ -1457,7 +1456,7 @@ doc ///
         [Rn, ModP]
         [Rn, MinMinorsFunction]
         [Rn, CodimCheckFunction]
-        [Rn, MaxSteps]
+        [Rn, PairLimit]
         [Rn, UseOnlyFastCodim]
         [Rn, SPairsFunction]
         MinMinorsFunction
@@ -1543,7 +1542,7 @@ doc ///
             The minimum number of minors computed before checking the codimension, can also be controlled by an option {\tt MinMinorsFunction}.  This is should be a function of a single variable, the number of minors computed.  Finally, via the option {\tt CodimCheckFunction}, you can pass the {\tt Rn} a function which controls how frequently the codimension of the partial Jacobian ideal is computed.  By default this is the floor of {\tt 1.3^k}.  
             Finally, passing the option {\tt ModP => p} will do the computation after changing the coefficient ring to {\tt ZZ/p}.
         Text
-            The options {\tt MaxSteps} and {\tt SPairsFunction} are passed directly to {\tt isCodimAtLeast}.  You can turn off internal calls to {\tt codim/dim}, and only use {\tt isCodimAtLeast} by setting {\tt UseOnlyFastCodim => true}.
+            The options {\tt PairLimit} and {\tt SPairsFunction} are passed directly to {\tt isCodimAtLeast}.  You can turn off internal calls to {\tt codim/dim}, and only use {\tt isCodimAtLeast} by setting {\tt UseOnlyFastCodim => true}.
     SeeAlso
         isCodimAtLeast
 ///
@@ -1793,9 +1792,8 @@ doc ///
         (isCodimAtLeast, ZZ, Ideal)
         [isCodimAtLeast, Verbose]
         [isCodimAtLeast, SPairsFunction]
-        [isCodimAtLeast, MaxSteps]
+        [isCodimAtLeast, PairLimit]
         SPairsFunction
-        MaxSteps
     Headline
         returns true if we can quickly see if the codim is at least a given number
     Usage
@@ -1823,16 +1821,15 @@ doc ///
             r = rank myDiff;
             time isCodimAtLeast(3, chooseGoodMinors(15, r, myDiff, Strategy=>StrategyDefaultNonRandom))
         Text
-            The function works by computing {\tt gb(I, DegreeLimit=>f(t,i))} for successive values of {\tt i}.  Here {tt f(t,i)} is a function that takes {\tt t}, some approximation of the base degree value
+            The function works by computing {\tt gb(I, PairLimit=>f(i))} for successive values of {\tt i}.  Here {tt f(i)} is a function that takes {\tt t}, some approximation of the base degree value
             of the polynomial ring (for example, in a standard graded polynomial ring, this is probably expected to be {\tt \{1\}}).  And {\tt i} is a counting variable.  
-            You can provide your own function by calling {\tt isCodimAtLeast(n, I, SPairsFunction=>( (t,i) -> f(t,i) )}.   Perhaps more commonly however, the user may want to 
-            instead tell the function to compute for larger values of {\tt i}.  This is done via the option {\tt MaxSteps}.  This is the max value of {\tt i} to consider before the function gives up.
+            You can provide your own function by calling {\tt isCodimAtLeast(n, I, SPairsFunction=>( (i) -> f(i) )}.   Perhaps more commonly however, the user may want to 
+            instead tell the function to compute for larger values of {\tt i}.  This is done via the option {\tt PairLimit}.  This is the max value of {\tt i} to consider before the function gives up.
         Example
-            time isCodimAtLeast(3, chooseGoodMinors(15, r, myDiff, Strategy=>StrategyDefaultNonRandom), MaxSteps => 3, Verbose=>true)
-            time isCodimAtLeast(3, chooseGoodMinors(15, r, myDiff, Strategy=>StrategyDefaultNonRandom), MaxSteps => 15, Verbose=>true)
+            time isCodimAtLeast(3, chooseGoodMinors(15, r, myDiff, Strategy=>StrategyDefaultNonRandom), PairLimit => 3, Verbose=>true)
+            time isCodimAtLeast(3, chooseGoodMinors(15, r, myDiff, Strategy=>StrategyDefaultNonRandom), PairLimit => 15, Verbose=>true)
         Text
-            Notice in the first case the function returned {\tt null}, because the depth of search was not high enough.  The second returned true, but it did so as soon as the answer
-            was found (and before we hit the {\tt MaxSteps} limit).
+            Notice in the first case the function returned {\tt null}, because the depth of search was not high enough.  The second returned true, but it did so as soon as the answer was found (and before we hit the {\tt PairLimit} limit).
 ///
 
 doc ///
@@ -1841,7 +1838,7 @@ doc ///
         (isDimAtMost, ZZ, Ideal)
         [isDimAtMost, Verbose]
         [isDimAtMost, SPairsFunction]
-        [isDimAtMost, MaxSteps]
+        [isDimAtMost, PairLimit]
     Headline
         returns true if we can quickly see if the dim is at most a given number
     Usage
