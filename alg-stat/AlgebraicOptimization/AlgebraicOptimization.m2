@@ -9,6 +9,9 @@ newPackage(
     {Name => "Jose Israel Rodriguez", 
     Email => "jose@math.wisc.edu", 
     HomePage => "https://www.math.wisc.edu/~jose/"},
+    {Name => "Fatemeh Tarashi Kashani",
+    Email => "tarashikashanifatemeh@gmail.com",
+    HomePage => "https://www.linkedin.com/in/fatemehtarashi/",}
     {Name => "Your name here",
     Email => "Your email here",
     HomePage => "Your page here"}
@@ -34,6 +37,7 @@ export {
   "conormalRing",
   "conormalIdeal",
   "multiDegreeEDDegree",
+  "MLDegree",
   "symboliclagrangeMultiplierEDDegree",
   -- Options
   "DualVariable",
@@ -140,6 +144,33 @@ assert(multiDegreeEDDegree(J) == 13)
 
 
 --------------------
+--MLDegree
+--------------------
+MLDegree = method(); 
+MLDegree (List,List) := (F,u)-> (
+    if not (sum F ==1) then error("The sum of functions is not equal to one.");
+    m1 := diagonalMatrix F;
+    m2 := for i in F list transpose jacobian ideal(i);
+    m2p := fold(m2, (i,j) -> i || j);
+    M := m1 | m2p;
+    
+    g := generators ker M;
+    g' := matrix drop(entries g,-numrows g+#u);
+    Ju' := ideal (matrix {u} * g');
+    Ju := saturate(Ju');
+    
+    degree Ju
+)
+
+TEST ///
+R = QQ[t]
+s=1
+u = {2,3,5,7}
+F = {s^3*(-t^3-t^2-t+1),s^2*t,s*t^2,t^3}
+assert( MLDegree (F,u) == 3) 
+///
+
+--------------------
 --LagrangeMultiplierEDDegree
 --------------------
 symboliclagrangeMultiplierEDDegree = method(Options => {Data => null});
@@ -156,7 +187,7 @@ symboliclagrangeMultiplierEDDegree(ideal((x^2+y^2+x)^2-x^2-y^2))
 ///
 
 ------------------------------
--- Lagrange multipliers code
+--Lagrange multipliers code
 ------------------------------
 
 LagrangeIdeal = new Type of MutableHashTable; 
@@ -814,6 +845,45 @@ Caveat
   The conormal variety cannot intersect the diagonal $\Delta(\mathbb{P}^{n-1}) \subset \mathbb{P}^{n-1} \times \mathbb{P}^{n-1}$.
   At the moment this is not checked.
 ///
+
+
+doc ///
+Key
+   MLDegree
+   (MLDegree,List,List) 
+Headline
+  Degree of the parametric likelihood
+Usage
+  MLDegree (F,u)
+Inputs
+  F:
+    list of function
+  u:
+    list of numerical data
+Outputs
+  :Number
+    The Maximum Likelihood Degree
+--Consequences
+--  asd
+Description
+  Text
+    ---
+  Example
+    R = QQ[t]
+    s=1
+    u = {2,3,5,7}
+    F = {s^3*(-t^3-t^2-t+1),s^2*t,s*t^2,t^3}
+    MLDegree (F,u)
+--  Code
+--    todo
+--  Pre
+--    todo
+--Caveat
+--  todo
+--SeeAlso
+--  
+///
+
 
 TEST ///
   -- test code and assertions here
