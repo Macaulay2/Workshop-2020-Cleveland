@@ -1189,6 +1189,51 @@ document {
 
 
 document {
+	Key => {isAbelian, (isAbelian, FiniteGroupAction)},
+	
+	Headline => "whether a finite group action is abelian",
+	
+	Usage => "isAbelian G",
+	Inputs => {
+	    	"G" => FiniteGroupAction => {"a finite group action"},
+		},
+	Outputs => {
+		Boolean => {"whether ", TT "G", " is abelian"}
+		},
+	
+	"This function is provided by the package ", TO InvariantsDev,".",
+	
+	PARA {
+	    "The following example defines the action of
+	    a symmetric group permuting the three variables generating
+	    a polynomial ring."
+	    },
+	
+	EXAMPLE {
+	    	"R = QQ[x_1..x_3]",
+		"L = {matrix {{0,1,0},{1,0,0},{0,0,1}}, matrix {{0,0,1},{0,1,0},{1,0,0}} }",
+		"G = finiteAction(L, R)",
+		"isAbelian G"
+		},
+	
+	PARA {
+	    "The following example defines the action of
+	    the product of two cyclic groups. One group has order 3
+	    and cyclically permutes the three variables generating
+	    a polynomial ring. The other group has order 2 and
+	    multiplies the variables by -1."
+	    },
+	
+	EXAMPLE {
+	    	"R = QQ[x_1..x_3]",
+		"L = {matrix {{0,0,1},{0,1,0},{1,0,0}}, matrix {{-1,0,0},{0,-1,0},{0,0,-1}} }",
+		"G = finiteAction(L, R)",
+		"isAbelian G"
+		},
+
+	    }
+
+document {
 	Key => {schreierGraph, (schreierGraph, FiniteGroupAction)},
 	
 	Headline => "Schreier graph of a finite group",
