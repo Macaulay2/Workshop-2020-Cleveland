@@ -928,5 +928,54 @@ dualI = projectiveDual(I)
 radical I==I
 S = ring dualI
 
+-* For parametric ML degree
+restart
+R=QQ[s,t]
+S =QQ[x,y,z,w]
+d = {x=>s^3, y=>s^2*t,z=>s*t^2, w=>t^3}
+m = map(R,S,d)
+kernel m
+toString oo
+
+m y
+help eliminate
+help map
+image m
 
 
+restart--
+data ={2,3,5,7}
+s=1
+R=QQ[t]; --target m
+S =QQ[x,y,z,w]--source m
+d = {x=>s^3, y=>s^2*t,z=>s*t^2, w=>t^3}
+m = map(R,S,d)
+affineI = kernel m--this is the twisted cubic's ideal  
+homogenize(affineI,x)--twisted cubic again. 
+
+f= d/last--
+sum f ==1--This isn't true, so we replace one of the f's to get this condition to hold.
+g = drop(f,1)
+f = {1- sum g}|g
+sum f ==1 --
+
+m1 = diagonalMatrix f
+m2 = transpose matrix{for i in f list jacobian ideal(i)}
+M = m1 | m2
+gk = generators ker M
+gk'=matrix drop(entries gk,-numrows gk+#data)
+V = matrix{data}
+
+
+Ju' =ideal(V*gk'   )
+Ju =Ju'
+scan(f,i->Ju = saturate(Ju,i))
+degree Ju
+
+
+degree coimage m
+
+degree coimage m
+
+methods class m 
+*-
