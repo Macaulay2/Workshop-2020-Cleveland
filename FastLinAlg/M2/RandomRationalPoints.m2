@@ -1,12 +1,14 @@
 -- -*- coding: utf-8 -*-
 newPackage(
         "RandomRationalPoints",
-    	Version => "1.0",
-    	Date => "May 13, 2020",
+    	Version => "1.2",
+    	Date => "May 19, 2020",
     	Authors => {
 	     {Name => "Sankhaneel Bisui", Email => "sbisu@tulane.edu", HomePage=>"https://sites.google.com/view/sankhaneelbisui/home"},
 	     {Name=> "Thai Nguyen", Email =>"tnguyen11@tulane.edu", HomePage=>"https://sites.google.com/view/thainguyenmath "},
-	     {Name=>"Karl Schwede", Email=>"schwede@math.utah.edu", HomePage=>"https://www.math.utah.edu/~schwede/" }
+	     {Name=>"Karl Schwede", Email=>"schwede@math.utah.edu", HomePage=>"https://www.math.utah.edu/~schwede/" },
+	     {Name => "Sarasij Maitra", Email => "sm3vg@virginia.edu", HomePage => "https://people.virginia.edu~sm3vg"},
+	     {Name => "Zhan Jiang", Email => "zoeng@umich.edu", HomePage => "http://www-personal.umich.edu/~zoeng/"}
 	     },
     	Headline => "A Package To Compute A Random Point In A Given Variety",
 		DebuggingMode => true, 
@@ -20,9 +22,11 @@ export {
 	"genericProjection", 
 	"projectionToHypersurface",
 	"randomCoordinateChange",
---    "randomPointViaLinearIntersection", 
-	"randomPoint", 
-	"MyOption", 
+    "randomPointViaLinearIntersection",
+    "randomPointViaGenericProjection",
+	"randomPoints", 
+	"mtSearchPoints",
+	"MyOption",
 	"NumPointsToCheck", 
 	"Codimension",
 	"MaxChange",
@@ -35,7 +39,11 @@ export {
     "IntersectionAttempts", --used in the LinearIntersection strategy
     "ExtendField", --used in GenericProjection and LinearIntersection strategy
     "checkRandomPoint",
-    "PointCheckAttempts"
+    "PointCheckAttempts",
+    "extendingIdealByNonVanishingMinor",
+     "NumPoints", -- used in the multi-thread search function mtSearchPoints
+    "NumThreads", -- used in the multi-thread search function mtSearchPoints
+    "UsePregeneratedList" -- used in the multi-thread search function mtSearchPoints
     }
 exportMutable {}
 
@@ -268,7 +276,7 @@ randomPointViaLinearIntersection(Ideal) := opts -> (I1) -> (
         if (debugLevel > 0) then print "randomPointViaLinearIntersection:  failed, looping and trying a new linear space.";
         i = i+1;
     );
-    return false;
+    return {};
 );
 
 
@@ -296,7 +304,7 @@ randomPointViaGenericProjection(Ideal) := opts -> (I1) -> (
             else if (opts.Strategy == HybridProjectionIntersection) then (
                 pt = randomPoint(I0, switchStrategy(opts, LinearIntersection))
             ); --find a point on the generic projection (differently, depending on strategy)
-            if (not pt === false) then (
+            if (not pt === {}}) then (
                 J0 = I1 + sub(ideal apply(dim source phi, i -> (first entries matrix phi)#i - pt#i), target phi); --lift the point to the original locus
                 if dim(J0) == 0 then( --hopefully the preimage is made of points
                     ptList = random decompose(J0);
@@ -331,36 +339,36 @@ randomPointViaGenericProjection(Ideal) := opts -> (I1) -> (
         if (debugLevel >0) then print "randomPointViaGenericProjection: That didn't work, trying again...";
         i = i+1;
     );
-    return false;
+    return {};
 );
 
 checkRandomPoint =(I1)->(
     genList:= first entries gens I1;
 	K:=coefficientRing ring I1;
-    point:=randomPoint(ring I1);
+    point:=randomPoints(ring I1);
 	eval:= map(K,ring I1,point);
 	j:=0;
 	while(j< #genList) do (
         tempEval:=eval(genList_j);
-        if not (tempEval==0) then return false;
+        if not (tempEval==0) then return {};
         j=j+1
     );
-    if (tempEval ==0) then return point else return false;
+    if (tempEval ==0) then return point else return {};
 )
 
-randomPoint = method( Options=>optRandomPoints);
+randomPoints = method( Options=>optRandomPoints);
 
-randomPoint(Ring) := opts -> (R1) -> (
+randomPoints(Ring) := opts -> (R1) -> (
     noVar := #generators R1;
     K:=coefficientRing R1;
     L:=toList apply(noVar, i ->random(K));
-    if (opts.Homogeneous == true) then if (all(L, i->i==0)) then return randomPoint(R1);
+    if (opts.Homogeneous == true) then if (all(L, i->i==0)) then return randomPoints(R1);
     return L
 );  
 
 
 
-randomPoint(Ideal):=opts->(I1)->(
+randomPoints(Ideal):=opts->(I1)->(
     local apoint;
     local outpt;
     local eval;
@@ -372,10 +380,10 @@ randomPoint(Ideal):=opts->(I1)->(
     	j=0;
 		while( j<opts.PointCheckAttempts) do (
 			apoint=checkRandomPoint(I1);
-			if not (apoint===false ) then return apoint; 
+			if not (apoint==={} ) then return apoint; 
 			j=j+1;
 		);
-		return false;
+		return {};
 	)
     else if (opts.Strategy == ModifiedBruteForce) then (
         j = 0;
@@ -384,7 +392,7 @@ randomPoint(Ideal):=opts->(I1)->(
             i=0;
             flag = true;
 	        while(i< #genList) do (
-                apoint=randomPoint(ring I1);
+                apoint=randomPoints(ring I1);
                 eval= map(K,ring I1,apoint);
                 outpt=eval(genList_i);
                 if not (outpt==0) then (flag = false; break);
@@ -404,31 +412,135 @@ randomPoint(Ideal):=opts->(I1)->(
         return randomPointViaLinearIntersection(I1, opts)
     )
     else (
-        error "randomPoint:  Not a valid Strategy"
+        error "randomPoints:  Not a valid Strategy"
     )
 );
 
-randomPoint(ZZ,Ideal):=opts->(n1,I1)->(
+randomPoints(ZZ,Ideal):=opts->(n1,I1)->(
         i:=0;
         local apoint;
-        local apoint1;
         local L;
-        L=set{};
-        while(#L < n1 ) do ( 
-            apoint=randomPoint(I1);
-            if not(apoint===false) then(
-            L =L + set {apoint};
-            )
-            else L=L;
-            
-    ); 
-    return L;
+        L= {};
+        while(i < n1 ) do ( 
+            apoint=randomPoints(I1);
+            L = join(L,{apoint});
+            i=i+1;
+    );  
+          return L;
+);
+
+extendingIdealByNonVanishingMinor = method(Options=>{})
+extendingIdealByNonVanishingMinor(Ideal,Matrix, ZZ):= opts -> (I, M, n) -> (
+    local P;
+    local kk; 
+    local R;
+    local phi;
+    local N; local N1; local N2; local N1new; local N2new;
+    local J; local M2;
+    R = ring I;
+    kk = coefficientRing R;
+    P = randomPointViaLinearIntersection(I);
+    if (P == {}) 
+    then error "No Point Found"
+    else (
+        phi =  map(kk,R,sub(matrix{P},kk));
+        N = mutableMatrix phi(M);
+        rk := rank(N);
+        if (rk < n) then return I;
+        N1 = columnRankProfile(N);
+        N2 = rowRankProfile(N);
+        M1 := mutableMatrix M;
+	N1new = {};
+	N2new = {};
+	for i from  0 to n-1 do(
+	    N1new = join(N1new, {N1#i});
+	    N2new = join(N2new, {N2#i});
+	    );
+	M2 = M1_N1new^N2new;
+    	M3 := matrix M2;
+    	L1 := ideal (det(M3));
+    	Ifin := I + L1;
+    	return Ifin;
+    );	
 );
 
 
 
+mtSearchPoints = method(TypicalValue => List, Options => {NumPoints => 100, NumThreads => 4, UsePregeneratedList => false});
+mtSearchPoints(Ideal) := List => opts -> (I) -> (
+    genList := first entries gens I;
+    R := ring I;
+    K := coefficientRing R;
+    n := #gens R;
+    
+    local taskList;
+    if (opts.UsePregeneratedList)
+    then (
+        randomPointsList := apply(
+	                           opts.NumPoints * opts.NumThreads, 
+			           (i)->(return getAPoint(n, K);)
+	                         );
+        taskList = apply(
+	                  opts.NumThreads, 
+			  (i)->(return createTask(
+				  modifiedSearchPoints, 
+				  (take(randomPointsList, {i * opts.NumPoints, (i + 1) * opts.NumPoints - 1}), R, genList)
+				  );)
+	                );
+         )
+    else (
+	taskList = apply(
+	                  opts.NumThreads, 
+			  (i)->(return createTask(searchPoints, (opts.NumPoints, R, genList));)
+	                );
+         );
+     
+    apply(taskList, t -> schedule t);
+    while true do (
+        nanosleep 100000000;--this should be replaced by a usleep or nanosleep command.
+        if (all(taskList, t -> isReady(t))) then break;
+        );
+    myList := apply(taskList, t -> taskResult(t));
+    return myList;
+);
 
+--some helper functions for mtSearchPoints
 
+getAPoint = (n, K) -> (toList apply(n, (i) -> random(K)));
+
+evalAtPoint = (R, genList, point) -> (
+    K := coefficientRing R;
+    n := #gens R;
+    eval := map(K, R, point);
+    for f in genList do ( 
+	if not eval(f) == 0 
+	then return false;
+	);
+    return true;
+    );
+
+modifiedSearchPoints = (pointsList, R, genList) -> (
+    K := coefficientRing R;
+    n := #gens R;
+    for point in pointsList do (
+	if evalAtPoint(R, genList, point)
+	then return point
+	);
+    return {};
+    );
+
+searchPoints = (nn, R, genList) -> (
+    K := coefficientRing R;
+    n := #gens R;
+    for i from 1 to nn do (
+	point := getAPoint(n, K);
+	if evalAtPoint(R, genList, point)
+	then return point
+	);
+    return {};
+    );
+
+---
 
 
 -- A function with an optional argument
@@ -445,6 +557,8 @@ doc ///
         genericProjection
         (genericProjection, Ideal)
         (genericProjection,ZZ,Ideal)
+        [genericProjection, Homogeneous]
+        [genericProjection, MaxChange]
     Headline
        Finds a random generic projections of the ideal.
     Usage
@@ -454,6 +568,9 @@ doc ///
             in a polynomial Ring
         n:ZZ
             an integer specifying how many dimensions down to project
+        MaxChange => ZZ
+            can be changed
+        Homogeneous => Boolean
     Outputs
         :RingMap
             a Projection map.
@@ -484,6 +601,9 @@ doc ///
     Inputs
         R:Ring
             a polynomial Ring
+        MaxChange => ZZ 
+            can be changed
+        Homogeneous => Boolean
     Outputs
         :RingMap
             the coordinate change map.
@@ -509,6 +629,10 @@ doc ///
     Inputs
         I:Ideal
             an ideal in a polynomial Ring
+        MaxChange => ZZ
+            can be changed
+        Codimension => ZZ
+        Homogeneous => Boolean
     Outputs
         :RingMap
             a Projection map.
@@ -526,62 +650,165 @@ doc ///
 ///
 doc ///
     Key
-        randomPoint
-        (randomPoint, Ideal)
+        randomPoints
+        (randomPoints,ZZ,Ideal)
+        (randomPoints, Ring)
+        (randomPoints, Ideal)
+        [randomPoints, Strategy]
+        [randomPoints,ProjectionAttempts]
+        [randomPoints, PointCheckAttempts]
+        [randomPoints, MaxChange]
+        [randomPoints, IntersectionAttempts]
+        [randomPoints, Homogeneous ]
+        [randomPoints,ExtendField]
+        [randomPoints,Codimension]
     Headline
-        a function to check if  a random point is  in a variety
+        a function to find random points  in a variety. 
     Usage
-        randomPoint(I)
-    Inputs
-        I:Ideal
-            inside a polynomial ring
-    Outputs
-        :List
-            a point if it is in the variety otherwise false.
-/// 
-doc ///
-    Key
-	(randomPoint, Ring)
-    Headline
-        Gives a random point in the affine space.
-    Usage
-        randomPoint(R)
-    Inputs
-        R:Ring
-	    a polynomial ring
-    Outputs
-        :List
-	    a point in the affine space.
-///  
-
-doc ///
-    Key
-        (randomPoint,ZZ,Ideal)
-    Headline
-        a function to find  a random point  in a variety upto a given number of trials
-    Usage
-        randomPoint(n,I)
+        randomPoints(n,I)
+        randomPoints(I)
+        randomPoints(R)
+        randomPoints(n,I, Strategy => GenericProjection)
+        randomPoints(n,I, Strategy=> LinearIntersection )
     Inputs
         n: ZZ
-            an integer denoting the number of desired trials.
+            an integer denoting the number of desired points.
         I:Ideal
-            inside a polynomial ring
+            inside a polynomial ring.
+        R:Ring
+            a polynomial ring
+        Strategy => String
+            to specify whether to use method of Linear Intersection or of GenericProjection
+        ProjectionAttempts => ZZ
+            can be changed
+        PointCheckAttempts => ZZ
+            can be changed
+        MaxChange => ZZ
+            can be changed
+        Codimension => ZZ
+            can be changed
+        ExtendField =>Ring
+        IntersectionAttempts => ZZ
+            can be changed
+        Homogeneous => Boolean
     Outputs
         :List
+            a list of points in the variety with possible repetitions.
     Description
         Text  
-       	   Gives a point in a variety $V(I)$, by $n$ trials. 
+           Gives at most $n$ many point in a variety $V(I)$. 
+
         Example
             R=ZZ/5[t_1..t_3];
             I = ideal(t_1,t_2+t_3);
-            randomPoint(3,I)
+            randomPoints(3,I)
+            randomPoints(4,I, Strategy => GenericProjection)
+            randomPoints(4,I, Strategy => LinearIntersection)
+///
+
+doc ///
+    Key 
+    	randomPointViaGenericProjection
+	(randomPointViaGenericProjection, Ideal)
+    Headline
+    	
+    Usage
+    	randomPointViaGenericProjection(I)
+    Inputs
+    	I:Ideal
+    Outputs
+    	:List    	
+///
+
+doc ///
+    Key 
+    	randomPointViaLinearIntersection
+	(randomPointViaLinearIntersection, Ideal)
+    Headline
+    	
+    Usage
+    	randomPointViaLinearInteresection(I)
+    Inputs
+    	I:Ideal
+    Outputs
+    	:List    	
+///        
+doc ///
+    Key
+    	extendingIdealByNonVanishingMinor
+	(extendingIdealByNonVanishingMinor, Ideal, Matrix, ZZ)
+    Headline
+    	extends the ideal to aid finding singular locus
+    Usage
+    	extendingIdealByNonVanishingMinor(I,M,n)
+    Inputs
+    	I: Ideal
+	    in a polynomial ring over QQ or ZZ/p for p prime 
+	M: Matrix
+	    over the polynomial ring
+	n: ZZ
+	    the size of the minors to look at to find
+	    one non-vanishing minor 
+    Outputs
+    	:Ideal
+	    the original ideal extended by the determinant of 
+	    the non vanishing minor found
+    Description
+    	Text
+	    Given an ideal, a matrix and an integer, this function uses the @TO 
+	    randomPointViaLinearIntersection@ function to find a point in 
+	    $V(I)$. Then it plugs the point in the matrix and tries to find
+	    a non-zero  minor of size equal to the given integer. 
+	    It then extracts the minor from the original given matrix corresponding
+	    to this non-vanishing minor, finds its determinant and
+	    adds it to the original ideal. 
+    	Example
+	    R = ZZ/5[t_1..t_3];
+            I = ideal(t_1,t_2+t_3);
+	    M = jacobian I;
+            extendingIdealByNonVanishingMinor(I,M,2)
+///	
+
+
+doc ///
+    Key
+       mtSearchPoints
+	(mtSearchPoints, Ideal)
+    Headline
+    	searching points in $V(I)$ using multiple threads
+    Usage
+        mtSearchPoints I   
+    Inputs
+        I:Ideal
+            an ideal in a polynomial Ring
+	NumPoints => ZZ
+	    default 100, can be changed
+        NumThreads => ZZ
+	    default 4
+        UsePregeneratedList => Boolean
+	    default false
+    Outputs
+        :List
+            a list of points in the variety $V(I)$.
+    Description
+        Text
+	    This function use \TT NumThreads threads to search for points in the variety.
+       	 
+	   
+       Example
+         R=ZZ/101[x,y,z];
+         I = ideal "xy-z,x2-y+z-1";
+	 mtSearchPoints I
 ///
 
 
  ----- TESTS -----
 
 TEST///
- 
+R=ZZ/5[x,y,z,w];
+I = ideal(x,y^2,w^3+x^2);
+genericProjection(2,I);
+assert(map)
 ///
 
 TEST///
@@ -589,6 +816,10 @@ TEST///
 ///
 
 TEST///
+R = ZZ[t_1..t_3];
+I = ideal(t_1,t_2+t_3);
+M = jacobian I;           
+assert(extendingIdealByNonVanishingMinor(I,M,2) === (t_1,t_2+t_3,1))
 
 
 ///
