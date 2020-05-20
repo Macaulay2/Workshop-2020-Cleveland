@@ -1446,14 +1446,13 @@ syndromeDecode(LinearCode, Vector, ZZ) := (C, v, minDist) -> (
 	    if member(i, x) then 1 else 0
 	    )
 	);
-    lookupTable = apply(lookupTable, x ->
-       	{entries (H*(vector x)),x} 
-	);
+    
+    lookupTable = apply(lookupTable, x -> {entries (H*(vector x)),x});
     lookupHash := new HashTable from lookupTable;
+    
     C.cache#"syndromeLUT" = lookupHash;
     coset := lookupHash#(entries syndrome);
-        
-    entries(v+ vector(lookupHash#(entries syndrome)))
+    (entries v) + coset
     );
 
 
@@ -1468,6 +1467,41 @@ syndromeDecode(LinearCode, Vector, ZZ) := (C, v, minDist) -> (
 -- Use this section for LinearCode tests:
 -----------------------------------------------
 -----------------------------------------------
+
+TEST ///
+-- syndromeDecode test
+R := GF(2);
+-- The binary Golay code. It can correct 3 errors.
+G:={{1,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,1,1,1,0,0,0,1,1},
+    {0,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,1,0,0,1,0},
+    {0,0,1,0,0,0,0,0,0,0,0,0,1,1,0,1,0,0,1,0,1,0,1,1},
+    {0,0,0,1,0,0,0,0,0,0,0,0,1,1,0,0,0,1,1,1,0,1,1,0},
+    {0,0,0,0,1,0,0,0,0,0,0,0,1,1,0,0,1,1,0,1,1,0,0,1},
+    {0,0,0,0,0,1,0,0,0,0,0,0,0,1,1,0,0,1,1,0,1,1,0,1},
+    {0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,1,0,0,1,1,0,1,1,1},
+    {0,0,0,0,0,0,0,1,0,0,0,0,1,0,1,1,0,1,1,1,1,0,0,0},
+    {0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,1,1,0,1,1,1,1,0,0},
+    {0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,1,1,0,1,1,1,1,0},
+    {0,0,0,0,0,0,0,0,0,0,1,0,1,0,1,1,1,0,0,0,1,1,0,1},
+    {0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,1,1,1,0,0,0,1,1,1}};
+G = matrix(R,G);
+C := linearCode G;
+for i from 1 to 50 do(
+    message := vector (for n from 1 to numgens target G list(random(R)));
+    codeword := (transpose G)*message;
+    errors := sum apply(take(random entries basis module codeword, 3), v -> vector(v));
+    recieved := codeword+errors;
+    decoded := syndromeDecode(C, recieved, 8);
+
+    if(decoded != {}) then (
+	assert(decoded == entries codeword);
+	print(toString(i) |" (pass)");
+    	)else(
+    	error "SyndromeDecode should have been able to decode this.";
+	);
+    );
+///
+
 
 TEST ///
 -- zeroCode constructor
@@ -1804,6 +1838,34 @@ document {
 	"C = linearCode(F,L)"
 	}
     }
+document {
+    Key => {syndromeDecode,(syndromeDecode, LinearCode, Vector, ZZ)},
+    Headline => "Performs syndrome decoding on a binary linear code.",
+    Usage => "syndromeDecode(C,v,minDist)",
+    "When this function runs, it checks the cache of the LinearCode C for an existing syndrome look-up table. If a look-up table ",
+    "is not found, it automatically generates one. Because of this, the first time this function is called will take longer than subsequent",
+    " calls. If you want to access the look-up table, it can be obtained from C.cache#\"syndromeLUT\".",
+    "The minDist argument only effects the behavior of this function on the first call because it is only used when generating the syndrome",
+    " look-up table.",
+    Inputs => {
+	"C" => LinearCode => {"A linear code over GF(2)."},
+	"v" => Vector => {"The recieved vector. Must have entries in GF(2)."},
+	"minDist" => ZZ => {"The minimum distance of the code C."}
+	},
+    Outputs => {
+	List => {"A codeword corresponding to the recieved vector v."}
+	},
+    EXAMPLE {
+	"C = HammingCode(2,3)",
+	"msg = matrix {{1,0,1,0}}",
+	"v = msg*(C.GeneratorMatrix)",
+    	"err = matrix take(random entries basis source v, 1)",
+	"recieved = vector (transpose (v+err))",
+	"syndromeDecode(C, recieved, 3)"
+
+	}
+    }
+
 document {
     Key => {zeroCode,(zeroCode,GaloisField,ZZ)},
     Headline => "Constructs the linear code whose only codeword is the zero codeword",
