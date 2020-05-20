@@ -918,6 +918,35 @@ document {
 	    }
 
 document {
+	Key => {group, (group, FiniteGroupAction)},
+	
+	Headline => "Elements of a finite group",
+	
+	Usage => "group G",
+	Inputs => {
+	    	"G" => FiniteGroupAction => {"a finite group action"},
+		},
+	Outputs => {
+		List => {"of matrices representing all elements of group"}
+		},
+	
+	"This function is provided by the package ", TO InvariantsDev,".",
+	
+	PARA {
+	    "The following example defines the permutation action of
+	    a symmetric group on three elements using only two
+	    generators, then returns all group elements."
+	    },
+	
+	EXAMPLE {
+	    	"R = QQ[x_1..x_3]",
+		"L = {matrix {{0,1,0},{1,0,0},{0,0,1}}, matrix {{0,0,1},{0,1,0},{1,0,0}} }",
+		"G = finiteAction(L, R)",
+		"group G"
+		},
+	    }
+
+document {
 	Key => {hilbertIdeal, (hilbertIdeal, LinearlyReductiveAction)},
 	
 	Headline => "Computes (possibly non-invariant) generators for the Hilbert ideal",
