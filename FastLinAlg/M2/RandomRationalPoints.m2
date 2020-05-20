@@ -574,7 +574,7 @@ doc ///
         Example
             R=ZZ/5[t_1..t_3];
             I = ideal(t_1,t_2+t_3);
-            randomPoint(1000,I)
+            randomPoint(3,I)
 ///
 
 
