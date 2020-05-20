@@ -383,7 +383,7 @@ weights TorusAction := Matrix => T -> T.actionMatrix
 finiteAbelianAction = method()
 
 finiteAbelianAction (List, Matrix, PolynomialRing) := FiniteAbelianAction => (L, W, R) -> (
-    if not isField coefficientRing R then (error "finiteAbelianAction: Expected the thirs argument to be a polynomial ring over a field.");
+    if not isField coefficientRing R then (error "finiteAbelianAction: Expected the third argument to be a polynomial ring over a field.");
     if ring W =!= ZZ then (error "finiteAbelianAction: Expected the second argument to be a matrix of integer weights.");
     if numColumns W =!= dim R then (error "finiteAbelianAction: Expected the number of columns of the matrix to equal the dimension of the polynomial ring.");
     if numRows W =!= #L then (error "finiteAbelianAction: Expected the number of rows of the matrix to equal the size of the list."); 
@@ -869,6 +869,52 @@ document {
 		"L = {matrix {{0,1,0},{1,0,0},{0,0,1}}, matrix {{0,0,1},{0,1,0},{1,0,0}} }",
 		"finiteAction(L, R)"
 		},
+	    }
+
+document {
+	Key => {finiteAbelianAction, (finiteAbelianAction, List, Matrix, PolynomialRing)},
+	Headline => "Finite abelian group action via weights",
+	Usage => "finiteAbelianAction(d, W, R)",
+	Inputs => {
+	    	"d" => List => {"of orders of factors in the decomposition of the group"},
+	    	"W" => Matrix => {"of weights of the group action"},
+		"R" => PolynomialRing => {"on which the group acts"}
+		},
+	Outputs => {
+		FiniteAbelianAction => {"the (diagonal) action of the finite abelian group corresponding to the given weight matrix"}
+		},
+	"This function is provided by the package ", TO InvariantsDev,". ",
+
+    	PARA {	 
+	    "Writing the finite abelian group as",
+	    TEX /// $\mathbb{Z}/d_1 \oplus \cdots \oplus \mathbb{Z}/d_r$, ///,
+	    "the list ", TT "d = {d_1,d_2,...,d_r},",  " contains the orders of the factors.",
+	    " We assume that the group acts diagonally on the polynomial ring",
+	    TEX /// $R = k[x_1,\ldots,x_n]$, ///,
+	    "which is to say that if we denote the evident generators of the group by",
+	    TEX /// $g_1,\ldots,g_r$ ///,
+	    "then we have",
+	    TEX /// $$g_i \cdot x_j = \zeta_i^{w_{ij}} x_j$$ ///,
+	    "for",
+	    TEX /// $\zeta_i$ ///,
+	    "a primitive",
+	    TEX /// $d_i$///,
+	    "-th root of unity. The integers",
+	    TEX /// $w_{ij}$ ///,
+	    "comprise the weight matrix ", TT "W", "."  
+	},
+    
+    	PARA {
+	    "Here is an example of a product of two cyclic groups of order 3 acting on a three-dimensional vector space:"
+	},
+	
+	EXAMPLE {
+	    "R = QQ[x_1..x_3]",
+	    "d = {3,3}",
+	    "W = matrix{{1,0,1},{0,1,1}}",
+	    "A = finiteAbelianAction(d, W, R)",
+		},
+    
 	    }
 
 document {
