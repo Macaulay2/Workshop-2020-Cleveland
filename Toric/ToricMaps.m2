@@ -385,7 +385,6 @@ pullback (ToricMap, Module) := Module => (f, M) -> (
 pullback (ToricMap, CoherentSheaf) := CoherentSheaf => (f, F) -> sheaf(source f, pullback(f, module F))
 
 -- Given ToricMap f: X -> Y, with simplicial X and Y, returns the RingMap Cox Y -> Cox X
--- FIXME: correct degreeMaps
 inducedMap ToricMap := RingMap => opts -> (cacheValue symbol inducedMap) (f -> (
     Y := target f;
     S := ring Y;
