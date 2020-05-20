@@ -30,7 +30,7 @@ export{"probRing",
     "liftBinomialTableau",
     "liftHierPoly",
     "quadsM",
-    "margP"
+    "margP",
     "corrMatrix",
     "gcutMatrix"
     }
