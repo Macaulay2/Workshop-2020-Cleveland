@@ -359,11 +359,15 @@ checkRandomPoint =(I1)->(
 randomPoints = method( Options=>optRandomPoints);
 
 randomPoints(Ring) := opts -> (R1) -> (
-    noVar := #generators R1;
-    K:=coefficientRing R1;
-    L:=toList apply(noVar, i ->random(K));
-    if (opts.Homogeneous == true) then if (all(L, i->i==0)) then return randomPoints(R1);
-    return L
+    if (class R1 === QuotientRing) then return randomPoints(ideal R1, opts); --if we take a polynomial ring
+    if (class R1 === PolynomialRing) then (
+        noVar := #generators R1;
+        K:=coefficientRing R1;
+        L:=toList apply(noVar, i ->random(K));
+        if (opts.Homogeneous == true) then if (all(L, i->i==0)) then return randomPoints(R1, opts);
+        return L
+    );
+    error "(randomPoints, Ring):  Only implemented for QuotientRing and PolynomialRing.";
 );  
 
 
@@ -376,6 +380,9 @@ randomPoints(Ideal):=opts->(I1)->(
     local j;
     local i;
     local flag;
+    --if they give us an ideal of a quotient ring, then 
+    if (class ring I1 === QuotientRing) then return randomPoints(sub(I1, ambient ring I1) + ideal ring I1, opts);
+    if (not class ring I1 === PolynomialRing) then error "randomPoints: must be an ideal in a polynomial ring or a quotient thereof";
     if (opts.Strategy == BruteForce) then (
     	j=0;
 		while( j<opts.PointCheckAttempts) do (
@@ -392,7 +399,7 @@ randomPoints(Ideal):=opts->(I1)->(
             i=0;
             flag = true;
 	        while(i< #genList) do (
-                apoint=randomPoints(ring I1);
+                apoint=randomPoints(ring I1, opts);
                 eval= map(K,ring I1,apoint);
                 outpt=eval(genList_i);
                 if not (outpt==0) then (flag = false; break);
@@ -417,12 +424,13 @@ randomPoints(Ideal):=opts->(I1)->(
 );
 
 randomPoints(ZZ,Ideal):=opts->(n1,I1)->(
+    --todo:  The generic projection in particular, would be able to do this much better, without a loop.
         i:=0;
         local apoint;
         local L;
         L= {};
         while(i < n1 ) do ( 
-            apoint=randomPoints(I1);
+            apoint=randomPoints(I1, opts);
             L = join(L,{apoint});
             i=i+1;
     );  

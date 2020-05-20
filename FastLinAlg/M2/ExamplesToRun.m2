@@ -1,4 +1,5 @@
 uninstallPackage "RandomRationalPoints";
+loadPackage "RandomRationalPoints";
 installPackage "RandomRationalPoints";
 
 loadPackage "RandomRationalPoints";
