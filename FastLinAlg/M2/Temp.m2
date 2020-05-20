@@ -16,30 +16,40 @@ export {
     "mtSearchPoints",
     "MyOption",
     "NumPointsToCheck",
-    "NumThreads"
+    "NumThreads",
+    "UsePregeneratedList"
     }
 exportMutable {}
 
-mtSearchPoints = method(TypicalValue => List, Options => {NumPointsToCheck => 1000, NumThreads => 4});
+mtSearchPoints = method(TypicalValue => List, Options => {NumPointsToCheck => 100, NumThreads => 4, UsePregeneratedList => false});
 mtSearchPoints(Ideal) := List => opts -> (I) -> (
     genList := first entries gens I;
     R := ring I;
     K := coefficientRing R;
     n := #gens R;
     
-
-    taskList := apply(opts.NumThreads, (i)->(
+    local taskList;
+    if (opts.UsePregeneratedList)
+    then (
+        randomPointsList := apply(opts.NumPointsToCheck * opts.NumThreads, (i)->( 
+	    return getAPoint(n, K);
+	    )
+	);
+        taskList = apply(opts.NumThreads, (i)->(
+	    return createTask(modifiedSearchPoints, (take(randomPointsList, {i * opts.NumPointsToCheck, (i + 1) * opts.NumPointsToCheck - 1}), n, K, R, genList));
+	    )
+	);
+    )
+    else (taskList = apply(opts.NumThreads, (i)->(
 	    return createTask(searchPoints, (opts.NumPointsToCheck,n,K,R,genList));
 	    )
 	);
-
+    );
     apply(taskList, t -> schedule t);
-
     while true do (
         nanosleep 100000000;--this should be replaced by a usleep or nanosleep command.
         if (all(taskList, t->isReady(t))) then break;
         );
-
     myList := apply(taskList, t -> taskResult(t));
     return myList;
 );
@@ -55,6 +65,14 @@ evalAtPoint = (n, K, R, genList, point) -> (
 	then return false;
 	);
     return true;
+    );
+
+modifiedSearchPoints = (pointsList, n, K, R, genList) -> (
+    for point in pointsList do (
+	if evalAtPoint(n, K, R, genList, point)
+	then return point
+	);
+    return {};
     );
 
 searchPoints = (nn, n, K, R, genList) -> (
