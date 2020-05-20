@@ -71,7 +71,7 @@ addHook(FiniteGroupAction, symbol isAbelian, G -> break (
 	X := G.generators;
     	n := #X;
     	if n == 1 then(
-	    return true 
+	    true 
 	    )
     	else(
 	    all(n - 1, i -> all(n - 1 - i, j -> (X#j)*(X#(n - 1 - i)) == (X#(n - 1 - i))*(X#j) ) )
