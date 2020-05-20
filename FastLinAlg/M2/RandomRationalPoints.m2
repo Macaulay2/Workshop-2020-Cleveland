@@ -300,11 +300,11 @@ randomPointViaGenericProjection(Ideal) := opts -> (I1) -> (
         (phi, I0) = projectionToHypersurface(I1, Homogeneous=>opts.Homogeneous, MaxChange => opts.MaxChange, Codimension => opts.Codimension);
         if (codim I0 == 1) then (
             if (opts.Strategy == GenericProjection) then (
-                pt = randomPoint(I0, switchStrategy(opts, BruteForce)))
+            pt = randomPoints(I0, switchStrategy(opts, BruteForce)))
             else if (opts.Strategy == HybridProjectionIntersection) then (
-                pt = randomPoint(I0, switchStrategy(opts, LinearIntersection))
+                pt = randomPoints(I0, switchStrategy(opts, LinearIntersection))
             ); --find a point on the generic projection (differently, depending on strategy)
-            if (not pt === {}}) then (
+            if (not pt === {}) then (
                 J0 = I1 + sub(ideal apply(dim source phi, i -> (first entries matrix phi)#i - pt#i), target phi); --lift the point to the original locus
                 if dim(J0) == 0 then( --hopefully the preimage is made of points
                     ptList = random decompose(J0);
