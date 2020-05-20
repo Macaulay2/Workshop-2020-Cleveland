@@ -33,7 +33,6 @@ export {
 	"ProjectionAttempts", --used in the GenericProjection strategy
     "IntersectionAttempts", --used in the LinearIntersection strategy
     "ExtendField", --used in GenericProjection and LinearIntersection strategy
-    "checkRandomPoint",
     "PointCheckAttempts"
     }
 exportMutable {}
@@ -418,6 +417,8 @@ doc ///
         genericProjection
         (genericProjection, Ideal)
         (genericProjection,ZZ,Ideal)
+        [genericProjection, Homogeneous]
+        [genericProjection, MaxChange]
     Headline
        Finds a random generic projections of the ideal.
     Usage
@@ -427,6 +428,9 @@ doc ///
             in a polynomial Ring
         n:ZZ
             an integer specifying how many dimensions down to project
+        MaxChange => ZZ
+            can be changed
+        Homogeneous => Boolean
     Outputs
         :RingMap
             a Projection map.
@@ -457,6 +461,9 @@ doc ///
     Inputs
         R:Ring
             a polynomial Ring
+        MaxChange => ZZ 
+            can be changed
+        Homogeneous => Boolean
     Outputs
         :RingMap
             the coordinate change map.
@@ -482,6 +489,10 @@ doc ///
     Inputs
         I:Ideal
             an ideal in a polynomial Ring
+        MaxChange => ZZ
+            can be changed
+        Codimension => ZZ
+        Homogeneous => Boolean
     Outputs
         :RingMap
             a Projection map.
@@ -500,56 +511,70 @@ doc ///
 doc ///
     Key
         randomPoints
-        (randomPoints, Ideal)
-    Headline
-        a function to check if  a random point is  in a variety
-    Usage
-        randomPoints(I)
-    Inputs
-        I:Ideal
-            inside a polynomial ring
-    Outputs
-        :List
-            a point if it is in the variety otherwise false.
-/// 
-doc ///
-    Key
-	(randomPoints, Ring)
-    Headline
-        Gives a random point in the affine space.
-    Usage
-        randomPoints(R)
-    Inputs
-        R:Ring
-	    a polynomial ring
-    Outputs
-        :List
-	    a point in the affine space.
-///  
-
-doc ///
-    Key
         (randomPoints,ZZ,Ideal)
+        (randomPoints, Ring)
+        (randomPoints, Ideal)
+        [randomPoints, Strategy]
+        [randomPoints,ProjectionAttempts]
+        [randomPoints, PointCheckAttempts]
+        [randomPoints, MaxChange]
+        [randomPoints, IntersectionAttempts]
+        [randomPoints, Homogeneous ]
+        [randomPoints,ExtendField]
+        [randomPoints,Codimension]
     Headline
         a function to find random points  in a variety. 
     Usage
         randomPoints(n,I)
+        randomPoints(I)
+        randomPoints(R)
+        randomPoints(n,I, Strategy => GenericProjection)
+        randomPoints(n,I, Strategy=> LinearIntersection )
     Inputs
         n: ZZ
             an integer denoting the number of desired points.
         I:Ideal
             inside a polynomial ring.
+        R:Ring
+            a polynomial ring
+        Strategy => String
+            to specify whether to use method of Linear Intersection or of GenericProjection
+        ProjectionAttempts => ZZ
+            can be changed
+        PointCheckAttempts => ZZ
+            can be changed
+        MaxChange => ZZ
+            can be changed
+        Codimension => ZZ
+            can be changed
+        ExtendField =>Ring
+        IntersectionAttempts => ZZ
+            can be changed
+        Homogeneous => Boolean
     Outputs
         :List
+            a list of points in the variety with possible repetitions.
     Description
         Text  
-           Gives at most $n$ many point in a variety $V(I)$.  
+           Gives at most $n$ many point in a variety $V(I)$. 
+
         Example
             R=ZZ/5[t_1..t_3];
             I = ideal(t_1,t_2+t_3);
             randomPoints(3,I)
+            randomPoints(4,I, Strategy => GenericProjection)
+            randomPoints(4,I, Strategy => LinearIntersection)
 ///
-
+doc ///
+    Key
+        PointCheckAttempts
+        [randomPoints, PointCheckAttempts]
+    Headline
+        default value is 100, can be changed. 
+    Description
+        Text
+           Specify the number of points.
+///
 
 
  ----- TESTS -----
