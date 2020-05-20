@@ -1,3 +1,4 @@
+-- Presentation on Friday May 15th, 2020
 -------------------------------------------------------------------------------
 -- Examples for the ToricMaps package (to be merged in NormalToricVarieties) --
 -------------------------------------------------------------------------------
@@ -13,7 +14,7 @@ X = PP2 ** PP2;
 n = dim PP2
 
 -- Defining the projection into the first factor
-f = map(PP2, X, id_(ZZ^2) | (0 * id_(ZZ^2)))
+f = map(PP2, X, id_(ZZ^n) | (0 * id_(ZZ^n)))
 assert isWellDefined f
 
 -- Checking some properties
