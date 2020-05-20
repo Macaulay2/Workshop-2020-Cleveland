@@ -1189,6 +1189,45 @@ document {
 
 
 document {
+	Key => {schreierGraph, (schreierGraph, FiniteGroupAction)},
+	
+	Headline => "Schreier graph of a finite group",
+	
+	Usage => "schreierGraph G",
+	Inputs => {
+	    	"G" => FiniteGroupAction => {"a finite group action"},
+		},
+	Outputs => {
+		HashTable => {"representing the Schreier graph of the group"}
+		},
+	
+	"This function is provided by the package ", TO InvariantsDev,".",
+	
+	PARA {
+	    "For a finite group action, we form a ", TO "HashTable",
+	    " whose keys are the generators provided
+	    by the user. The value corresponding to a generator ",
+	    TT "g", " is a ", TO "HashTable", " containing all pairs ",
+	    TT "a => b", " such that ", TT "a*g == b",
+	    ". This represents the Schreier graph of the group
+	    relative to the generating set provided by the user."
+	    },
+	
+	PARA {
+	    "The following example defines the permutation action of
+	    a symmetric group on three elements using only two
+	    generators, a transposition and a 3-cycle."
+	    },
+	
+	EXAMPLE {
+	    	"R = QQ[x_1..x_3]",
+		"L = {matrix {{0,1,0},{1,0,0},{0,0,1}}, matrix {{0,0,1},{0,1,0},{1,0,0}} }",
+		"G = finiteAction(L, R)",
+		"schreierGraph G"
+		},
+	    }
+
+document {
 	Key => {torusAction, (torusAction, Matrix, PolynomialRing)},
 	Headline => "Torus action from a weight matrix",
 	Usage => "torusAction(W, R)",
