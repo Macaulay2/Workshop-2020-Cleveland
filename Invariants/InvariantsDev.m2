@@ -896,7 +896,7 @@ document {
 	    },
        	
 	UL { 
-	    {"Derksen, H. & Kemper, G. (2015).", EM "Computational Invariant Theory", 
+	    {"Derksen, H. & Kemper, G. (2015).", EM " Computational Invariant Theory", 
 	   ". Heidelberg: Springer. pp 159-164"}
         },
 	
@@ -905,13 +905,25 @@ document {
 	    but the crucial step of the Reynolds operator is still missing."
 	    },
 	
+	
+	PARA {
+	    "The next example constructs a cyclic group of order 2
+	    as a set of two affine points. Then it introduces an
+	    action of this group on a polynomial ring in two variables
+	    and computes the Hilbert ideal. The action permutes the
+	    variables of the polynomial ring. Note that the
+	    generators of the Hilbert ideal need not be invariant."
+	    },
+	
 	EXAMPLE {
 		"S = QQ[z]",
 		"A = ideal(z^2 - 1)",
 		"M = matrix{{(z+1)/2, (1-z)/2},{(1-z)/2, (z+1)/2}}",
+		"sub(M,z=>1),sub(M,z=>-1)",
 		"R = QQ[x,y]",
 		"V = linearlyReductiveAction(A, M, R)",
-		"hilbertIdeal V"
+		"I = hilbertIdeal V",
+		"apply(I_*, f -> isInvariant(f,V))"
 		},
 	    }
 
