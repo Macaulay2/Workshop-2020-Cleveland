@@ -28,6 +28,7 @@ export {
 	"MaxChange",
 	"BruteForce", --a valid value for [RandomPoint, Strategy]
     "GenericProjection",  --a valid value for [RandomPoint, Strategy]
+    "HybridProjectionIntersection", --a valid value for [RandomPoint, Strategy]
     "LinearIntersection",  --a valid value for [RandomPoint, Strategy]
     "ModifiedBruteForce",  --a valid value for [RandomPoint, Strategy]
 	"ProjectionAttempts", --used in the GenericProjection strategy
@@ -210,7 +211,12 @@ projectionToHypersurface(Ideal) := opts -> (I1) -> (
 );
 *-
 
-
+--this function just switches one strategy in an option table for another
+switchStrategy := (opts, newStrat) -> (
+    tempHashTable := new MutableHashTable from opts;
+    tempHashTable#Strategy = newStrat;
+    return new OptionTable from tempHashTable;
+);
 
 
 --Function to check if random point is in the variety by intersecting with a linear space
@@ -244,11 +250,16 @@ randomPointViaLinearIntersection(Ideal) := opts -> (I1) -> (
                     if (debugLevel > 0) then print "randomPointViaLinearIntersection:  extending the field.";
                     phi = (extendFieldByDegree(myDeg, R1))#1;
                     m2 = phi(ptList#j);
-                    newPtList = random decompose(m2);
+                    newPtList = random decompose(m2); --make sure we are picking points randomly from this decomposition
 --                    1/0;
                     if (#newPtList > 0) then ( 
                         finalPoint =  apply(idealToPoint(newPtList#0), s -> sub(s, target phi));
-                        return finalPoint
+                        if (opts.Homogeneous) then ( --only return point in the homogeneous case if its not the origin
+                            if (any(finalPoint, t -> t != 0)) then return finalPoint;
+                        )
+                        else(
+                            return finalPoint;
+                        );
                     ); 
                 );
                 j = j+1;
@@ -259,6 +270,7 @@ randomPointViaLinearIntersection(Ideal) := opts -> (I1) -> (
     );
     return false;
 );
+
 
 randomPointViaGenericProjection = method(Options => optRandomPoints);
 randomPointViaGenericProjection(Ideal) := opts -> (I1) -> (
@@ -279,7 +291,11 @@ randomPointViaGenericProjection(Ideal) := opts -> (I1) -> (
     while(flag) and (i < opts.ProjectionAttempts) do (
         (phi, I0) = projectionToHypersurface(I1, Homogeneous=>opts.Homogeneous, MaxChange => opts.MaxChange, Codimension => opts.Codimension);
         if (codim I0 == 1) then (
-            pt = randomPoint(I0, Strategy=>BruteForce); --find a point on the generic projection
+            if (opts.Strategy == GenericProjection) then (
+                pt = randomPoint(I0, switchStrategy(opts, BruteForce)))
+            else if (opts.Strategy == HybridProjectionIntersection) then (
+                pt = randomPoint(I0, switchStrategy(opts, LinearIntersection))
+            ); --find a point on the generic projection (differently, depending on strategy)
             if (not pt === false) then (
                 J0 = I1 + sub(ideal apply(dim source phi, i -> (first entries matrix phi)#i - pt#i), target phi); --lift the point to the original locus
                 if dim(J0) == 0 then( --hopefully the preimage is made of points
@@ -287,10 +303,15 @@ randomPointViaGenericProjection(Ideal) := opts -> (I1) -> (
                     j = 0;
                     while (j < #ptList) do (
                         myDeg = degree (ptList#j);
-                        print myDeg;
+                        --print myDeg;
                         if (myDeg == 1) then (
                             finalPoint = apply(idealToPoint(ptList#j), s -> sub(s, coefficientRing ring I1));
-                            return finalPoint;
+                            if (opts.Homogeneous) then( 
+                                if (any(finalPoint, t -> t != 0)) then return finalPoint;
+                            )
+                            else(
+                                return finalPoint;
+                            );
                         )                        
                         else if (opts.ExtendField == true) then (
                             if (debugLevel > 0) then print "randomPointViaGenericProjection:  extending the field.";
@@ -377,7 +398,9 @@ randomPoint(Ideal):=opts->(I1)->(
 		return randomPointViaGenericProjection(I1, opts)
 	)
     else if (opts.Strategy == LinearIntersection) then (
-        --1/0;
+        return randomPointViaLinearIntersection(I1, opts)
+    )
+    else if (opts.Strategy == HybridProjectionIntersection) then (
         return randomPointViaLinearIntersection(I1, opts)
     )
     else (
