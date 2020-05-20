@@ -8,7 +8,7 @@ newPackage(
 	     {Name => "Gwyn Whieldon", Email => "gwyn.whieldon@gmail.com"},
 	     {Name => "Taylor Ball", Email => "trball13@gmail.com"},
 	     {Name => "Nathan Nichols", Email => "nathannichols454@gmail.com"},
-	     {Name => "Henry Chimal-Dzul", Email => "hc118813@ohio.edu"}
+	     {Name => "German Vera", Email => "gveram1100@gmail.com"}
 	     },
     	HomePage => "https://academic.csuohio.edu/h_lopez/",
     	Headline => "a package for coding theory in M2",
@@ -61,7 +61,6 @@ export {
     "AmbientSpace",
     "IncidenceMatrix",
     "Sets",
-    "evaluationCode",
     "toricCode",
     "evCodeGraph",
     "codeGraph",
@@ -75,11 +74,10 @@ export {
     -- Families of Codes
     "zeroCode",
     "universeCode",
-    "repetitionCode",
-    "zeroSumCode",
     "cyclicMatrix",
     "quasiCyclicCode",
     "HammingCode",
+    "cyclicCode",
     
     -- LRC codes
     "TargetParameters",
@@ -113,9 +111,7 @@ export {
     "hYpFunction",
     "gMdFunction",
     "vasFunction",
-    "tannerGraph",
-    "randNoRepeats",
-    "randLDPC"
+    "tannerGraph"
     }
 
 exportMutable {}
@@ -415,14 +411,14 @@ toString LinearCode := c -> toString c.Generators
 
 -*
     new EvaluationCode from{
-	symbol Points => P, --- a set of points of F^m
-	symbol VanishingIdeal => I, --the vanishing ideal of polynomials in m variables
+	symbol Points => P, --- the points of (F*)^m
+	symbol VanishingIdeal => I, --the vanishing ideal of (F*)^m
 	symbol ExponentsMatrix => LL, -- the matrix of exponents, exponent vectors are rows
-	symbol IncidenceMatrix => M, -- the incidence matrix of a graph
-	symbol PolynomialSet => S,  --- a set of polynomials 
-	symbol LinearCode => linearCode(G), -- the linear code associated with the evaluation code
-	symbol Sets => S, -- the collection of subsets used for constracting a Cartesian code
-	symbol AmbientSpace => F^(#P),  --- the ambient space for an evaluation code
+	symbol IncidenceMatrix => M,
+	symbol PolynomialSet => S,
+	symbol LinearCode => linearCode(G), -- the linear code
+	symbol Sets => S,
+	symbol AmbientSpace => F^(#P),
 	symbol cache => {}
 	}
 *-
@@ -433,18 +429,17 @@ evaluationCode = method(Options => {})
 
 evaluationCode(Ring,List,List) := EvaluationCode => opts -> (F,P,S) -> (
     -- constructor for the evaluation code
-    -- input: a field F, a list of points in F^m, a set of polynomials over F in m variables.
-    -- outputs: The list of points, the list of polynomials, the vanishing ideal and the linear code, the linear code.
+    -- input: a field, a list of points, a set of polynomials.
+    -- outputs: The list of points, the list of polynomials, the vanishing ideal and the linear code.
     
-    m := # P#0;
-    if class(ring ideal S) === PolynomialRing then R:=(ring ideal S) else (t := getSymbol "t", R=F[t_1..t_m], S=apply(S,i->promote(i,R)));
+    R := ring S#0;
     I := intersect apply(P,i->ideal apply(numgens R,j->R_j-i#j)); -- Vanishing ideal of the set of points.
     G := transpose matrix apply(P,i->flatten entries sub(matrix(R,{S}),matrix(F,{i}))); -- Evaluate the elements in S over the elements on P.
     return new EvaluationCode from{
-	symbol VanishingIdeal => I, 
+	symbol VanishingIdeal => I,
 	symbol Points => P,
 	symbol PolynomialSet => S,
-	symbol LinearCode => linearCode G, -- the linear code produced by the evaluation code construction
+	symbol LinearCode => linearCode G,
 	symbol cache => {}
 	}
     )
@@ -474,23 +469,23 @@ toricCode(Ring,Matrix) := EvaluationCode => opts -> (F,M) -> (
     -- Constructor for a toric code.
     -- inputs: a Galois field, an integer matrix 
     -- outputs: the evaluation code defined by evaluating all monomials corresponding to integer 
-    ---         points in the convex hull (lattice polytope) of the rows of M at the points of the algebraic torus (F*)^n
+    ---         points in the convex hull (lattice polytope) of the columns of M at the points of the algebraic torus (F*)^n
     
     z:=F_0;  --- define the primitive element of the field
     q:=F.order; --- define the size of the field
     s:=set apply(q-1,i->z^i); -- set of non-zero elements in the field
-    m:=numgens target transpose M; --- the length of the exponent vectors, i.e. number of variables for monomials, i.e.the dim of the ambient space containing the polytope
+    m:=numgens target M; --- the length of the exponent vectors, i.e. number of variables for monomials, i.e.the dim of the ambient space containing the polytope
     ss:=s; 
     for i from 1 to m-1 do (
     	ss=set toList ss/splice**s;  
     );
     P:=toList ss/splice;   -- the loop above creates the list of all m-tuples of non-zero elements of F, i.e. the list of points in the algebraic torus (F*)^m
-    Polytop:=convexHull transpose M; -- the convex hull of the rows of M
+    Polytop:=convexHull M; -- the convex hull of the columns of M
     L:=latticePoints Polytop; -- the list of lattice points in Polytop
     LL:=matrix apply(L, i-> first entries transpose i); --converts the list of lattice points to a matrix of exponents
     G:=matrix apply(entries LL,i->apply(P,j->product apply(m,k->(j#k)^(i#k)))); -- the matrix of generators; rows form a generating set of codewords
     
-    t := getSymbol "t";
+    t := getSymbol t;
     
     R:=F[t_1..t_m]; --- defines the ring containing monomials corresponding to exponents
     I := ideal apply(m,j->R_j^(q-1)-1); --  the vanishing ideal of (F*)^m
@@ -510,11 +505,11 @@ evCodeGraph  = method(Options => {});
 evCodeGraph (Ring,Matrix,List) := evCodeGraph  => opts -> (F,M,S) -> (
     -- input: a field, Incidence matrix of the graph , a set of polynomials.
     -- outputs: a monomial code over the list of points.    
-    -- We should check if all the points live in the same F-vector space.
-    -- Should we check if all the monomials live in the same ring?
+    -- We should check if all the points lives in the same F-vector space.
+    -- Should we check if all the monomials lives in the same ring?
     
     P := entries transpose M;
-    R := ring S#0;  --- MAY NOT WORK if the first element of S is a constant polynomial!
+    R := ring S#0;
     I := intersect apply(P,i->ideal apply(numgens R-1,j->R_j-i#j)); -- Vanishing ideal of the set of points.
     S = toList apply(apply(S,i->promote(i,R/I)),j->lift(j,R))-set{0*S#0}; -- Drop the elements in S that was already in I.
     G := matrix apply(P,i->flatten entries sub(matrix(R,{S}),matrix(F,{i}))); -- Evaluate the elements in S over the elements on P.    
@@ -591,7 +586,7 @@ cartesianCode(Ring,List,List) := EvaluationCode => opts -> (F,S,M) -> (
     --outputs: The evaluation code using the cartesian product of the elements in S and the polynomials in M.
     
     m := #S;
-    if class(ring ideal M) === PolynomialRing then R:=(ring ideal M) else (t := getSymbol "t", R=F[t_1..t_m], M=apply(M,i->promote(i,R)));
+    if class(ring ideal M) === PolynomialRing then R:=(ring ideal M) else (t := getSymbol "t", R=F[t], M=apply(M,i->promote(i,R)));
     I := ideal apply(m,i->product apply(S#i,j->R_i-j));
     P := set S#0;
     for i from 1 to m-1 do P=P**set S#i;
@@ -750,30 +745,6 @@ universeCode(GaloisField,ZZ) := LinearCode => (F,n) -> (
 	};    
     )
 
-repetitionCode = method()
-repetitionCode(GaloisField,ZZ) := LinearCode => (F,n) -> (
-    --construct the repetition code of length n over F
-    --check n is positive
-    if n > 0 then {
-	l := {apply(toList(0..n-1),i-> sub(1,F))};
-	return linearCode(F,n,l)
-	} else {
-	error "The legnth of the code should be positive."
-	};
-)
-
-zeroSumCode = method ()
-zeroSumCode(GaloisField,ZZ):= LinearCode => (F,n) -> (
-    -- construct the dual of the repetition code of length n over F.
-    --check n is positive
-    if n>0 then {
-	l := {apply(toList(0..n-1),i-> sub(1,F))};
-	return linearCode(F,n,l,ParityCheck => true)
-	} else {
-	error "The length of the code should be positive."
-	}
-  )
-
 
 ------------------------------------------
 ------------------------------------------
@@ -885,6 +856,62 @@ ParityCheckMatrix => | 1 1 1 1 0 0 0 |
                      | 0 1 0 1 1 1 0 |
                      | 0 1 1 0 0 1 1 |
 *-
+
+cyclicCode = method (TypicalValue => LinearCode) 
+
+cyclicCode(GaloisField ,RingElement, ZZ) := LinearCode => (F,G,n) -> (
+    
+    --Constructor for Cyclic Codes generated by a polynomial.
+    -- input: The generating polynomial and the lenght of the code
+    --outputs: a cyclic code defined by the initial polynomial .
+    
+    -- We should make a list of the coefficients of the polynomial. 
+    ring G;
+    x:=(gens ring G)#0;
+    f:=x^n-1;
+    t:=quotientRemainder(G,f);
+    g:=t#1;  
+    if (quotientRemainder(f,g))#1==0 then {print "Cyclic Code";
+	             r:=toList apply(0.. (n-1),i->first flatten entries sub(matrix{{g//x^i}}, x=>0 ));
+    -- Generate the generating matrix using the funtion cyclicMatrix 
+     R:=toList apply(toList(0..n-1-(degree g)#0), i -> apply(toList(0..n-1),j -> r_((j-i)%n)));
+     return linearCode(coefficientRing (ring G),R)}
+    
+     else {print  "Code with a circulant matrix as generating matrix";
+      l:=toList apply(0.. (n-1),i->first flatten entries sub(matrix{{g//x^i}}, x=>0 ));
+    -- Generate the generating matrix using the funtion cyclicMatrix 
+     L:=toList apply(toList(0..n-1), i -> apply(toList(0..n-1),j -> l_((j-i)%n)));
+     return linearCode(coefficientRing (ring G),L)}
+    
+      )
+  
+  cyclicCode(GaloisField, ZZ, ZZ) := LinearCode => (F,G,n) -> (
+        a:=promote (G,F);
+	 if a==0 then return zeroCode(F,n)
+	 else return universeCode(F,n)
+	 )
+     
+-*
+EXAMPLE:
+GF(7)[x]
+cyclicCode(GF(7),(x+3)*(x-1)*(x^3-2),9)
+Cyclic Code
+
+ Code with Generator Matrix:     | -1 3  -2 -3 2  1  0  0 0 |
+                                 | 0  -1 3  -2 -3 2  1  0 0 |
+                                 | 0  0  -1 3  -2 -3 2  1 0 |
+                                 | 0  0  0  -1 3  -2 -3 2 1 |
+				 
+ cyclicCode(GF(7),5,4)
+
+Code with Generator Matrix: | 1 0 0 0 |
+                                  | 0 1 0 0 |
+                                  | 0 0 1 0 |
+                                  | 0 0 0 1 |
+
+ LinearCode
+*- 
+
 
 
 
@@ -1368,65 +1395,6 @@ tannerGraph(Matrix) := H -> (
     Graphs$graph(symsA|symsB, flatten tannerEdges)    
 );
 
-
-randNoRepeats = method(TypicalValue => List)
-randNoRepeats (ZZ, ZZ) := (a, k) -> (
-    
-    if a < 0 or k < 1 then (
-    	error "Invalid arguments for randNoRepeats.";
-    	);
-    
-    -- we want it to work in cases like a=0, k=1
-    if k > a+1 then(
-    	error "Argument k to randNoRepeats is too large.";
-	);
-    
-    n := a;
-    population := toList(0..n);
-    result := new MutableList from (toList (0..(k-1)));
-    pool := new MutableList from population;
-    
-    for i from 0 to k-1 do(
-	j := random(0, n-i);
-	result#i = pool#j;
-	-- Move the non-selected item to a place where it can be selected. 
-	pool#j = pool#(n-i);
-	); 
-    toList result
-    );
-
-
-
--*
-*-
-randLDPC = method(TypicalValue => Matrix)
-randLDPC(ZZ, ZZ, RR, ZZ) := (n, k, m, b) -> (
-    
-    if(n <= k) then(
-	error "n must be less than k.";
-	);
-    
-    popcount := floor(n*m + b);
-    
-    if popcount > n*(n-k) then(
-	popcount = n*(n-k);
-	);
-    
-    
-    R := GF(2);
-    
-    H := new MutableList from for i from 1 to n*(n-k) list(0_R);
-    ones := randNoRepeats( ((n-k)*n)-1, popcount);
-    for i from 0 to (length ones)-1 do(
-	H#(ones#i) = 1_R;
-	);
-    matrix(R, pack(toList H, n))
-    )
-
-
-
-
-
 ------------------------------------------
 ------------------------------------------
 -- Tests
@@ -1438,61 +1406,6 @@ randLDPC(ZZ, ZZ, RR, ZZ) := (n, k, m, b) -> (
 -- Use this section for LinearCode tests:
 -----------------------------------------------
 -----------------------------------------------
-
-TEST ///
--- zeroCode constructor
-F = GF 2
-n = 7
-C = zeroCode(F,n)
-assert (length C == 7)
-///
-
-TEST ///
---universeCode constructor
-F = GF(2,3)
-n = 7
-C = universeCode(F,n)
-assert (length C == 7)
-///
-
-TEST ///
---repetitionCode constructor
-F = GF 9
-n = 5
-C=repetitionCode(F,n)
-assert (length C == 5)
-///
-
-TEST ///
---zeroSumCode constructor
-C = zeroSumCode(GF 3,5)
-assert (length C == 5)
-///
-
-
-TEST ///
--- randLDPC test
-for i from 0 to 25 do(
-    n := random(10, 20);
-    k := random(1, n-1);
-    
-    H := randLDPC(n, k, 3.0, 0);
-    assert(numgens target H == (n-k));
-    assert(numgens source H == n);    
-    );
-///
-TEST ///
--- randNoRepeats test
-assert(randNoRepeats(0,1) == {0});
-for i from 0 to 50 do(
-    a := random(0,100);
-    k := random(1,a+1);  
-    assert(set(randNoRepeats(a, a+1)) == set(toList(0..a)));
-    -- check it actually has no repeats.
-    test := randNoRepeats(a, k);
-    assert(length test == #(set(test)))
-    );
-///
 
 TEST ///
 -- tannerGraph test
@@ -1655,35 +1568,6 @@ assert( length C2 == 15)
 -- Use this section for Evaluation Code Tests
 -----------------------------------------------
 -----------------------------------------------
-
-TEST ///
--- Evaluation code
-F=GF(4);
-R=F[x,y,z];
-P={{0,0,0},{1,0,0},{0,1,0},{0,0,1},{1,1,1},{a,a,a}};
-S={x+y+z,a+y*z^2,z^2,x+y+z+z^2};
-C=evaluationCode(F,P,S);
-assert(length C.LinearCode == 6)
-assert(dim C.LinearCode == 3)
-///
-
-TEST ///
--- Toric code
-M=matrix{{1,4},{2,5},{10,6}} -- martrix of exponent vectors definind the polytope P, exponents vectors are rows
-T=toricCode(GF 4,M) --- a toric code over F_4 with polytope P
-assert(length T.LinearCode == 9)
-assert(dim T.LinearCode == 5)
-///
-
-TEST ///
--- Cartesian code
-F=GF(4);
-R=F[x,y];
-C=cartesianCode(F,{{0,1,a},{0,1,a}},{1+x+y,x*y})
-assert(length C.LinearCode == 9)
-assert(dim C.LinearCode == 2)
-///
-
 TEST ///
 -- Cartesian codes
 C=cartesianCode(ZZ/11,{{1,2,3},{2,6,8}},3)
@@ -1775,81 +1659,6 @@ document {
 	}
     }
 document {
-    Key => {zeroCode,(zeroCode,GaloisField,ZZ)},
-    Headline => "Constructs the linear code whose only codeword is the zero codeword",
-    Usage => "zeroCode(F,n)",
-    "This constructor is provided by the package", TO CodingTheory, ".",
-    Inputs => {
-	"F" => GaloisField => {},
-	"n" => ZZ => {"which is the length of the code."}
-	},
-    Outputs => {
-	LinearCode => {}
-	},
-    EXAMPLE {
-	"F = GF 4; n=7;",
-	"C=zeroCode(F,n)",
-	"C.ParityCheckMatrix",
-	}
-    }
-document {
-    Key => {universeCode,(universeCode,GaloisField,ZZ)},
-    Headline => "Constructs the linear code F^n",
-    Usage => "universeCode(F,n)",
-    "This constructor is provided by the package", TO CodingTheory, ".",
-    Inputs => {
-	"F" => GaloisField => {},
-	"n" => ZZ => {"which is the length of the code."}
-	},
-    Outputs => {
-	LinearCode => {}
-	},
-    EXAMPLE {
-	"F = GF(2,3); n=7;",
-	"C=universeCode(F,n)",
-	"C.ParityCheckMatrix"
-	}
-    }
-document {
-    Key => {repetitionCode,(repetitionCode,GaloisField,ZZ)},
-    Headline => "Constructs the linear reperition code",
-    Usage => "repetitionCode(F,n)",
-    "These constructor is provided by the package", TO CodingTheory, ".",
-    Inputs => {
-	"F" => GaloisField => {"A Galois Field."},
-	"n" => ZZ => { "which is the length of the code."}
-	},
-    Outputs => {
-	LinearCode => {}
-	},
-    EXAMPLE {
-	"F = GF(2,3); n=7;",
-	"C=repetitionCode(F,n)",
-	"C.ParityCheckMatrix"
-	}
-    }
-document {
-    Key => {zeroSumCode, (zeroSumCode,GaloisField,ZZ)},
-    Headline => "Constructs the linear code in which the entries of each codeword add up zero.",
-    Usage => "zeroSumCode(F,n)",
-    "The zero sum code equals the dual of the linear repetition code.\n",
-    "In the binary case, this code equals the code of all even-weight codewords.\n",
-    "This constructor is provided by the package", TO CodingTheory, ".",
-    Inputs => {
-	"F" => GaloisField => {},
-	"n" => ZZ => {"which is the length of the code"}
-	},
-    Outputs => {
-	LinearCode => {}
-	},
-    EXAMPLE {
-	"D=zeroSumCode(GF 3,5)",
-	"D.ParityCheckMatrix",
-	"E = zeroSumCode(GF 8,5)",
-	"E.ParityCheckMatrix"
-	}
-    }
-document {
     Key => {bitflipDecode, (bitflipDecode,Matrix, Vector)},
     Headline => "This does not work and it will likely be removed.",
     Usage => "bitflipDecode(H,v)",
@@ -1892,12 +1701,13 @@ document {
     Usage => "HammingCode(q,r)",
     Inputs => {
 	"q" => ZZ => {"Size of the field."},
-	"r" => ZZ => {"Dimension of the dual of the Hamming code."}	
+	"r" => Vector => {"Dimension of the dual of the Hamming code."}	
 	},
     Outputs => {
 	"C" => LinearCode => {"Hamming code."}
 	},
-    "Returns the Hamming code over GF(q) and dimension of the dual r.",
+    "q and r and integers",
+    "Returns the Hamming code over GF(q) and dimensino of the dual r.",
     EXAMPLE {
 	"C1= HammingCode(2,3);",
 	"C1.ParityCheckMatrix",
@@ -1905,6 +1715,31 @@ document {
 	"C2.ParityCheckMatrix"
 	}
     }
+
+document {
+    Key => {cyclicCode, (cyclicCode, GaloisField , RingElement, ZZ)},
+    Headline => "Given a polynomial generates a cyclic code of lenght n over the GaloisField.",
+    Usage => "cyclicCode(F ,G, n)",
+    Inputs => {
+        "F" => GaloisField => {"The Ring of coefficients of the polynomial."},
+	"G" => RingElement => {"A polynomial with coefficients in F."},
+	"n" => ZZ => {"The lenght of the code."}
+	},
+    
+    Outputs => {
+	  "C" => LinearCode => {"if G is a divisor of x^n-1 Cyclic returns a Code with generating polynomial G and lenght n.
+                                  Else  Returns a code with a circulant matrix as generating matrix"}
+	  },
+      "G is a polynomial over F and n is an integer.",
+      "Returns the Cyclic code with generating polynomial G over F and lenght n.",
+      EXAMPLE {
+	  "F=GF(5);",
+	   "R=F[x];",
+	   "G=x-1;",
+	   "C1=cyclicCode(F,G,8);"
+	   }
+        }
+    
 
 document {
     Key => MaxIterations,
@@ -2001,45 +1836,6 @@ doc ///
 	   C1 == C2
        
 ///
-   
-document {
-   Key => {randLDPC, (randLDPC, ZZ, ZZ, RR, ZZ)},
-   Headline => "Generates a low density family of parity check matrices with the given parameters.",
-   Usage => "randLDPC(n, k, m, b)",
-   Inputs => {
-	"n" => ZZ => {"The number of columns of H."},
-	"k" => ZZ => {"The number of rows of H is n-k."},
-	"m" => RR => {"The slope of the line which relates n and the number of ones in H."},
-	"b" => ZZ => {"The constant term of the line which relates n and the number of ones in H."}
-	},
-   Outputs => {
-       "H" => Matrix => {"An (n-k) x n matrix over GF(2). "}
-	},
-    	"The number of ones in H is determined by the formula floor(n*m) + b. ",
-	"Since this formula is linear in the number of columns of H, randLDPC produces a sparse sequence of matrices ",
-    	"for a fixed set of parameters k, m and b.",
-
-	EXAMPLE {
-	"randLDPC(10,5,3.0,0)"
-	}
- }  
-document {
-   Key => {randNoRepeats, (randNoRepeats,ZZ,ZZ)},
-   Headline => "Generates a list of random integers from a specified range with no repitions.",
-   Usage => "randNoRepeats(n,k)",
-   Inputs => {
-	"n" => Ideal => {"The maximum possible value in the random list."},
-	"k" => ZZ => {"The number of random integers to generate."}
-	},
-   Outputs => {
-       "L" => List => {"A list of k random integers between 0 and n (inclusive) with no repeats. "}
-	},
-	EXAMPLE {
-	"randNoRepeats(10,4)",
-	"randNoRepeats(0,1)",
-        "randNoRepeats(25,5)"
-	}
- }  
 
 document {
    Key => {vNumber, (vNumber,Ideal)},
@@ -2051,7 +1847,6 @@ document {
    Outputs => {
 	"i" => ZZ => {"v-number of the ideal."}
 	},
-    	"Definition of the v-number can be found at Definition 4.1 at https://arxiv.org/pdf/1812.06529.pdf ",
 	EXAMPLE {
 	"K=ZZ/3;",
         "R=K[t3,t2,t1,MonomialOrder=>Lex];",
@@ -2063,17 +1858,16 @@ document {
 
  document {
    Key => {footPrint, (footPrint,ZZ,ZZ,Ideal)},
-   Headline => "Gives the value of the generalized footprint function of the ideal I at (d,r)",
+   Headline => "Gives the footPrint value of an ideal with parameters (d,r)",
    Usage => "footPrint(d,r,I)",
    Inputs => {
 	"I" => Ideal => {"Graded ideal."},
-	"d" => ZZ => {"Polynomials up to degree d are used."},
-	"r" => ZZ => {"Number of l.i. polynomials that are used."}
+	"d" => ZZ => {"Degree of the monomials in the Gröbner éscalier of I."},
+	"r" => ZZ => {"Length of the sequences in the Gröbner éscalier of I of degree d."}
 	},
    Outputs => {
-	"i" => ZZ => {"Value of the generalized footprint function of I at (d,r)"}
+	"i" => ZZ => {"footPrint value of an ideal with parameters (d,r)."}
 	},
-    	"Definition of the generalized footprint function can be found at Definition 1.3 at https://arxiv.org/pdf/1812.06529.pdf ",
 	EXAMPLE {
 	"K=QQ;", 
         "R=K[t1,t2,t3];",
@@ -2086,17 +1880,16 @@ document {
     
 document {
    Key => {hYpFunction, (hYpFunction,ZZ,ZZ,Ideal)},
-   Headline => "Gives the value of the hyp function of the ideal I at (d,r)",
+   Headline => "Gives the hYp value of an ideal with parameters (d,r)",
    Usage => "hYpFunction(d,r,I)",
    Inputs => {
 	"I" => Ideal => {"Graded ideal."},
-	"d" => ZZ => {"Polynomials up to degree d are used."},
-	"r" => ZZ => {"Number of l.i. polynomials that are used."}
+	"d" => ZZ => {"Degree of certain homogenous component of ring I."},
+	"r" => ZZ => {"Length of the sequences in homogenous component of degree d."}
 	},
    Outputs => {
-       "i" => ZZ => {"Value of the hyp function of I at (d,r)."}
+       "i" => ZZ => {"The hYp value of an ideal with parameters (d,r)."}
 	},
-    	"Definition of the hyp function can be found at Definition 1.2 at https://arxiv.org/pdf/1812.06529.pdf ",
 	EXAMPLE {
 	"K=ZZ/3;", 
         "R=K[t1,t2,t3,t4,t5,t6];",
@@ -2108,17 +1901,16 @@ document {
 
  document {
    Key => {gMdFunction, (gMdFunction,ZZ,ZZ,Ideal)},
-   Headline => "Gives the value of the generalized minimum distance function of the ideal I at (d,r)",
+   Headline => "Gives the Generalized minimum distance value of an ideal with parameters (d,r)",
    Usage => "gMdFunction(d,r,I)",
    Inputs => {
 	"I" => Ideal => {"Graded ideal."},
-	"d" => ZZ => {"Polynomials up to degree d are used."},
-	"r" => ZZ => {"Number of l.i. polynomials that are used."}
+	"d" => ZZ => {"Degree of certain homogenous component of ring I."},
+	"r" => ZZ => {"Length of the sequences in homogenous component of degree d."}
 	},
    Outputs => {
-       "i" => ZZ => {"Value of the generalized minimum distance function of I at (d,r)"}
+       "i" => ZZ => {"Gives the Generalized minimum distance value of an ideal with parameters (d,r)."}
 	},
-    	"Definition of the generalized minimum distance function can be found at Definition 1.1 at https://arxiv.org/pdf/1812.06529.pdf ",
 	EXAMPLE {
 	"K=ZZ/3;", 
         "R=K[t1,t2,t3,t4,t5,t6];",
@@ -2133,17 +1925,16 @@ document {
  
  document {
    Key => {vasFunction , (vasFunction,ZZ,ZZ,Ideal)},
-   Headline => "Gives the value of the Vasconcelos function of the ideal I at (d,r)",
+   Headline => "Gives the Vasconcelos function of an ideal with parameters (d,r)",
    Usage => "vasFunction (d,r,I)",
    Inputs => {
 	"I" => Ideal => {"Graded ideal."},
-	"d" => ZZ => {"Polynomials up to degree d are used."},
-	"r" => ZZ => {"Number of l.i. polynomials that are used."}
+	"d" => ZZ => {"Degree of certain homogenous component of ring I."},
+	"r" => ZZ => {"Length of the sequences in homogenous component of degree d."}
 	},
    Outputs => {
-       "i" => ZZ => {"Value of the Vasconcelos function of I at (d,r)"}
+       "i" => ZZ => {"The Vasconcelos function of an ideal with parameters (d,r)"}
 	},
-    	"Definition of the Vasconcelos function can be found at Definition 3.4 at https://arxiv.org/pdf/1812.06529.pdf ",
 	EXAMPLE {
 	"K=QQ;", 
         "R=K[t1,t2,t3];",
@@ -2158,87 +1949,7 @@ document {
 -- Use this section for Evaluation Code documentation:
 -----------------------------------------------
 -----------------------------------------------
-doc ///
-	Key
-    	 EvaluationCode
-	Headline
-	 types of evaluation codes
-	Description
-	 Text
-	  The EvaluationCode is the class of linear codes obtained by evaluating m-variate polynomials over a finite field F at a set of points in F^m. There are different constructions of evaluation codes depending on how the polynomials and points are chosen. Examples include Reed-Muller codes, monomial codes, cartesian codes, toric codes, and others.	    
-	 Text
-	  The basic structure is a HashTable. One of the keys is the linear resulting linear code linearCode of type LinearCode. Other keys include the set of points, its vanishing ideal, the set of polynomials, and more.
-	 Example
-	  F=GF(4);
-	  R=F[x,y];
-	  P={{0,0},{1,0},{0,1},{a,a}};
-	  S={x+y,x^2+y^2, a+x*y^2};
-	  C=evaluationCode(F,P,S);
-	  C.VanishingIdeal
-	  C.PolynomialSet
-	  C.LinearCode
-	  length C.LinearCode
-	  dim C.LinearCode
-///
 
-
-
-
-document {
-    Key => {evaluationCode, (evaluationCode,Ring,List,List), (evaluationCode,Ring,List,Matrix)},
-    Headline => "An evaluation code construction.",
-    Usage => "evaluationCode(F,P,S)\nevaluationCode(F,P,M)",
-    Inputs => {
-	"F" => Ring => {"A finite field."},
-	"P" => List => {"A list of points in F^m."},
-	"S" => List => {"A set of polynomials over F in m variables."}, 
-	"M" => Matrix => {"Matrix whose rows are the exponents of the monomials to evaluate."}
-	},
-    Outputs => {
-	"C" => EvaluationCode => {"Evaluation code."}
-	},
-    "Given a finite field F, an ordered list of points in an affine space F^m, and an ordered list of m-variate polynomials over F, ",
-    "this method produces a linear code generated by codewords obtained by evaluating the given polynomials at the given points. ",
-    "In the case when the polynomials are monomials, one may give the matrix of exponent vectors instead of the list of polynomials.\n",
-    EXAMPLE {
-	"F=GF(4);",
-	"R=F[x,y,z];",
-	"P={{0,0,0},{1,0,0},{0,1,0},{0,0,1},{1,1,1},{a,a,a}};",
-	"S={x+y+z,a+y*z^2,z^2,x+y+z+z^2};",
-	"C=evaluationCode(F,P,S);",
-	"C.VanishingIdeal",
-	"C.PolynomialSet",
-	"C.LinearCode",
-	"length C.LinearCode",
-	"dim C.LinearCode"
-	}
-    }
-
-document {
-    Key => {toricCode, (toricCode,Ring,Matrix)},
-    Headline => "A toric code construction.",
-    Usage => "toricCode(F,M)",
-    Inputs => {
-	"F" => Ring => {"A finite field."},
-	"M" => Matrix => {"An integer matrix."}
-	},
-    Outputs => {
-	"C" => EvaluationCode => {"Toric code."}
-	},
-    "Given a finite field F and an integer matrix M, ",
-    "this method produces a toric code whose lattice polytope P is the convex hull of the row vectors of M. ",
-    "By definition, the toric code is generated by codewords obtained by evaluating the monomials corresponding ",
-    "to the lattice points of P at the points of the algebraic torus (F*)^m, where m is the number of columns of M.\n",
-    EXAMPLE {
-	"M=matrix{{1,4},{2,5},{10,6}};",
-	"T=toricCode(GF 4,M);",
-	"T.VanishingIdeal",
-	"T.ExponentsMatrix",
-	"T.LinearCode",
-	"length T.LinearCode",
-	"dim T.LinearCode"
-	}
-    }
 
 document {
     Key => {cartesianCode, (cartesianCode,Ring,List,List), (cartesianCode,Ring,List,ZZ), (cartesianCode,Ring,List,Matrix)},
@@ -2292,8 +2003,8 @@ document {
 
 document {
     Key => {RSCode, (RSCode,Ring,List,ZZ)},
-    Headline => "Constructs the Reed-Solomon code.",
-    Usage => "RSCode(F,L,k)",
+    Headline => "Constructs the Reed-Muller code.",
+    Usage => "RMCode(F,L,k)",
     Inputs => {
 	"F" => Ring => {"Finite field."},
 	"L" => List => {"Elements of the field to evaluate."},
@@ -2302,7 +2013,7 @@ document {
     Outputs => {
 	"C" => EvaluationCode => {"Reed-Solomon code."}
 	},
-    "F is a finite fiel, L={a_1,...,a_n} contains the elements to evaluate, polynomials of degree less than k are used to evaluate",
+    "F is a finite fiel, L={{a_1,...,a_n}} contains the elements to evaluate, polynomials of degree less than k are used to evaluate",
     "Returns the Reed-Solomon code obtained when polynomials of degree less than k are evaluated on the elements of L .",
     EXAMPLE {
 	"C=RSCode(ZZ/31,{1,2,3},3);",
