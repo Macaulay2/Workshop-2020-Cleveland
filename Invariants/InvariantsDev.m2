@@ -1234,6 +1234,76 @@ document {
 	    }
 
 document {
+	Key => {isInvariant,
+	    (isInvariant, RingElement, FiniteGroupAction),
+	    (isInvariant, RingElement, FiniteAbelianAction),
+	    (isInvariant, RingElement, TorusAction),
+	    (isInvariant, RingElement, LinearlyReductiveAction)
+	    },
+	
+	Headline => "whether a polynomial is invariant for a group action",
+	
+	Usage => "isInvariant(f,G)",
+	Inputs => {
+	    	"f" => RingElement => {"a polynomial"},
+	    	"G" => GroupAction => {"any type of group action"}
+		},
+	Outputs => {
+		Boolean => {"whether ", TT "f",
+		    " is invariant for the action of ", TT "G"}
+		},
+	
+	"This function is provided by the package ", TO InvariantsDev,".",
+	
+	PARA {
+	    "This function checks if a polynomial is invariant
+	    under a certain group action."
+	    },
+	
+	PARA {
+	    "The following example defines the permutation action
+	    of a symmetric group on a polynomial ring with three
+	    variables."
+	    },
+	
+	EXAMPLE {
+	    	"R = QQ[x_1..x_3]",
+		"L = {matrix {{0,1,0},{1,0,0},{0,0,1}}, matrix {{0,0,1},{0,1,0},{1,0,0}} }",
+		"G = finiteAction(L, R)",
+		"isInvariant(1+x_1*x_2*x_3,G)",
+		"isInvariant(x_1^2+x_2+x_3,G)"
+		},
+	
+    	PARA {
+	    "Here is an example of a product of two cyclic groups
+	    of order 3 acting on a three-dimensional vector space:"
+	},
+	
+	EXAMPLE {
+	    "R = QQ[x_1..x_3]",
+	    "d = {3,3}",
+	    "W = matrix{{1,0,1},{0,1,1}}",
+	    "A = finiteAbelianAction(d, W, R)",
+	    "isInvariant(x_1*x_2*x_3,A)",
+	    "isInvariant((x_1*x_2*x_3)^3,A)"
+		},
+    
+    	PARA {
+	    "Here is another example with a two-dimensional torus
+	    acting on polynomial ring in four variables:"
+	},
+	
+	EXAMPLE {
+	    "R = QQ[x_1..x_4]",
+	    "W = matrix{{0,1,-1,1},{1,0,-1,-1}}",
+	    "T = torusAction(W, R)",
+	    "isInvariant(x_1*x_2*x_3,T)",
+	    "isInvariant(x_1*x_2*x_4,T)"
+		},
+    
+	    }
+
+document {
 	Key => {schreierGraph, (schreierGraph, FiniteGroupAction)},
 	
 	Headline => "Schreier graph of a finite group",
