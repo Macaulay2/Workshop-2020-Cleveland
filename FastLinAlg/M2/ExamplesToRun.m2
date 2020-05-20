@@ -2,6 +2,7 @@ uninstallPackage "RandomRationalPoints";
 loadPackage "RandomRationalPoints";
 installPackage "RandomRationalPoints";
 
+allowableThreads = 8;
 loadPackage "RandomRationalPoints";
 loadPackage "FastLinAlg";
 

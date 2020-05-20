@@ -485,23 +485,23 @@ mtSearchPoints(Ideal) := List => opts -> (I) -> (
     if (opts.UsePregeneratedList)
     then (
         randomPointsList := apply(
-	                           opts.NumPoints * opts.NumThreads, 
-			           (i)->(return getAPoint(n, K);)
-	                         );
+            opts.NumPoints * opts.NumThreads, 
+            (i)->(return getAPoint(n, K);)
+            );
         taskList = apply(
-	                  opts.NumThreads, 
-			  (i)->(return createTask(
-				  modifiedSearchPoints, 
-				  (take(randomPointsList, {i * opts.NumPoints, (i + 1) * opts.NumPoints - 1}), R, genList)
-				  );)
-	                );
-         )
+            opts.NumThreads, 
+            (i)->(return createTask(
+                modifiedSearchPoints, 
+                (take(randomPointsList, {i * opts.NumPoints, (i + 1) * opts.NumPoints - 1}), R, genList)
+            );)
+        );
+    )
     else (
-	taskList = apply(
-	                  opts.NumThreads, 
-			  (i)->(return createTask(searchPoints, (opts.NumPoints, R, genList));)
-	                );
-         );
+        taskList = apply(
+            opts.NumThreads, 
+            (i)->(return createTask(searchPoints, (opts.NumPoints, R, genList));)
+        );
+    );
      
     apply(taskList, t -> schedule t);
     while true do (
