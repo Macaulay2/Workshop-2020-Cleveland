@@ -814,6 +814,56 @@ document {
 	    }
 
 document {
+	Key => {(dim, GroupAction)},
+	
+	Headline => "dimension of the polynomial ring being acted upon",
+	
+	Usage => "dim G",
+	
+	Inputs => {
+	    	"G" => GroupAction => {"a group action on a polynomial ring"},
+		},
+	
+	Outputs => {
+		ZZ => {"the dimension of the polynomial ring being acted upon"}
+		},
+	
+	PARA {"This function is provided by the package ",
+	    TO InvariantsDev,"."},
+	
+	EXAMPLE {
+		"R = QQ[x_1..x_4]",
+		"T = torusAction(matrix {{0,1,-1,1},{1,0,-1,-1}}, R)",
+		"dim T == dim R"
+		},
+	    }
+
+document {
+	Key => {(ring, GroupAction)},
+	
+	Headline => "the polynomial ring being acted upon",
+	
+	Usage => "ring G",
+	
+	Inputs => {
+	    	"G" => GroupAction => {"a group action on a polynomial ring"},
+		},
+	
+	Outputs => {
+		Ring => {"the polynomial ring being acted upon"}
+		},
+	
+	PARA {"This function is provided by the package ",
+	    TO InvariantsDev,"."},
+	
+	EXAMPLE {
+		"R = QQ[x_1..x_4]",
+		"T = torusAction(matrix {{0,1,-1,1},{1,0,-1,-1}}, R)",
+		"ring(T) === R"
+		},
+	    }
+
+document {
 	Key => (generators, RingOfInvariants),
 	
 	Headline => "Get the generators for a ring of invariants",
