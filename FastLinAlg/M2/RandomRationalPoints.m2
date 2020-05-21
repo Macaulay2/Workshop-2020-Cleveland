@@ -56,7 +56,7 @@ installMinprimes();
 
 optRandomPoints := {
     Strategy=>BruteForce, 
-    Homogeneous => true, 
+    Homogeneous => true,  
     MaxCoordinatesToReplace => 0, 
     Codimension => null,
     IntersectionAttempts => 20,
@@ -327,7 +327,7 @@ randomPointViaGenericProjection(Ideal) := opts -> (I1) -> (
         (phi, I0) = projectionToHypersurface(I1, Homogeneous=>opts.Homogeneous, MaxCoordinatesToReplace => opts.MaxCoordinatesToReplace, Codimension => opts.Codimension);
         if (codim I0 == 1) then (
             if (opts.Strategy == GenericProjection) then (
-            pt = randomPoints(I0, switchStrategy(opts, BruteForce)))
+                pt = randomPoints(I0, switchStrategy(opts, BruteForce)))
             else if (opts.Strategy == HybridProjectionIntersection) then (
                 pt = randomPoints(I0, switchStrategy(opts, LinearIntersection))
             ); --find a point on the generic projection (differently, depending on strategy)
@@ -717,13 +717,35 @@ doc ///
          I = ideal(random(3,R)-2, random(2,R))
          projectionToHypersurface(I)
 ///
+
+doc ///
+    Key
+        [randomPoints, Strategy]
+        BruteForce
+        GenericProjection
+        LinearIntersection
+        HybridProjectionIntersection
+    Headline
+        values for the option Strategy when calling randomPoints
+    Description
+        Text
+            When calling {\tt randomPoints}, set the strategy to one of these.
+            {\tt BruteForce} simply tries random points and sees if they are on the variety.
+            {\tt GenericProjection} projects to a hypersurface, via {\tt projectionToHypersurface} and then uses a {\tt BruteForce} strategy.
+            {\tt LinearIntersection} intersects with an appropriately random linear space.
+            {\tt HybridProjectionIntersection} does a generic projection, followed by a linear intersection. Notice that speed, or success, varies depending on the strategy.
+    SeeAlso
+        randomPoints
+        randomKRationalPoint
+        projectionToHypersurface
+///
+
 doc ///
     Key
         randomPoints
         (randomPoints,ZZ,Ideal)
         (randomPoints, Ring)
         (randomPoints, Ideal)
-        [randomPoints, Strategy]
         [randomPoints,ProjectionAttempts]
         [randomPoints, PointCheckAttempts]
         [randomPoints, MaxCoordinatesToReplace]
@@ -802,25 +824,25 @@ doc ///
     Outputs
     	:List    	
 ///        
+
 doc ///
     Key
-    	extendingIdealByNonVanishingMinor
-	(extendingIdealByNonVanishingMinor, Ideal, Matrix, ZZ)
-	[extendindIdealByNonVanishingMinor, Strategy]
+        extendingIdealByNonVanishingMinor
+        (extendingIdealByNonVanishingMinor, Ideal, Matrix, ZZ)
     Headline
-    	extends the ideal to aid finding singular locus
+        extends the ideal to aid finding singular locus
     Usage
-    	extendingIdealByNonVanishingMinor(I,M,n, Strategy => GenericProjection)
-	extendingIdealByNonVanishingMinor(I,M,n, Strategy => LinearIntersection)
+        extendingIdealByNonVanishingMinor(I,M,n, Strategy => GenericProjection)
+        extendingIdealByNonVanishingMinor(I,M,n, Strategy => LinearIntersection)
     Inputs
-    	I: Ideal
-	    in a polynomial ring over QQ or ZZ/p for p prime 
-	M: Matrix
-	    over the polynomial ring
-	n: ZZ
-	    the size of the minors to look at to find
-	    one non-vanishing minor 
-    	Strategy => String
+        I: Ideal
+            in a polynomial ring over QQ or ZZ/p for p prime 
+        M: Matrix
+            over the polynomial ring
+        n: ZZ
+            the size of the minors to look at to find
+            one non-vanishing minor 
+        Strategy => String
             to specify whether to use method of Linear Intersection or of GenericProjection	    
     Outputs
     	:Ideal
@@ -879,7 +901,8 @@ doc ///
 
  ----- TESTS -----
 
-TEST///
+--this test tests ....
+TEST/// 
 R=ZZ/5[x,y,z,w];
 I = ideal(x,y^2,w^3+x^2);
 genericProjection(2,I);
@@ -891,12 +914,10 @@ TEST///
 ///
 
 TEST///
-R = ZZ[t_1..t_3];
+R = ZZ/7[t_1..t_3];
 I = ideal(t_1,t_2+t_3);
 M = jacobian I;           
-assert(extendingIdealByNonVanishingMinor(I,M,2,Strategy => LinearIntersection) === (t_1,t_2+t_3,1))
-
-
+assert(dim extendingIdealByNonVanishingMinor(I,M,2,Strategy => LinearIntersection) < 1)
 ///
 
 end
