@@ -21,36 +21,38 @@ matrixProductCode(List,Matrix) := LinearCode => (L,A) -> (
     )
 
 
-T = (K,x) -> (
-    
-    if (coefficientRing ambient F === coefficientRing ambient K and (degree ambient F)%(degree ambient K)==0) then m=(degree ambient F)//(degree ambient K) else error "Not a subfield!";
-    
-    F := ring x;
-    
-    q := K.order;
-    
-    sum apply(m,i->x^(q^i))
-    )
+Trace = method(TypicalValue => Sequence)
 
-
-Trace = (F,K) -> (
+Trace(Ring,Ring) := Sequence => (F,K) -> (
+    -- A long way to compute the trace of the field.
+    -- inputs: a field F of order q^m and a field K of order q.
+    -- output: two maps: the trace of the field (communicating the field F->K) and a function that does the opposite path (K->F).
     
-     TrF := toList set apply(F.order-1,i->T(K,(F_0)^i));
-
+     if (coefficientRing ambient F === coefficientRing ambient K and (degree ambient F)%(degree ambient K)==0) then m=(degree ambient F)//(degree ambient K) else error "Not a subfield!";
+     
      q := K.order;
      
+     T := e -> sum apply(m,i->e^(q^i));
+          
+     TrF := toList set apply(F.order-1,i->T((F_0)^i));
+
      fi := position(TrF, i->#(toList set apply(q-1,j->i^j))==q-1);
      
      x := TrF#fi;
      
      TrF = {0}|toList apply(1..q-1,i->x^i);
      
-     Tf := i -> (fi := position(TrF, j->T(K,i)==j); if fi== 0 then 0 else (K_0)^fi);
+     Tf := i -> (fi := position(TrF, j->T(i)==j); if fi== 0 then 0 else (K_0)^fi);
      
      Tf,map(F,K,{x})
      )
 
-subfieldCode = (K,C) -> (
+subfieldCode = method(TypicalValue=>Sequence)
+
+subfieldCode(Ring,LinearCode) := (K,C) -> (
+    -- A subfield subcode using Delsarte's Theorem.
+    -- inputs: a code C and a subfield K of its base field.
+    -- outputs: the subfield subcode and the map to identify K as a subset of F.
     
     F := C.BaseField;
     
@@ -64,5 +66,7 @@ subfieldCode = (K,C) -> (
     
     Ms := matrix apply(entries M,i->apply(i,j->Tf(j)));
     
-    Ms, invTF
+    Ms = transpose groebnerBasis transpose Ms;
+    
+    linearCode(Ms), invTF
     )
