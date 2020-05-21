@@ -31,6 +31,7 @@ export {
     "action",	     	     	  -- documented
     "actionMatrix",
     "finiteAbelianAction",
+    "FiniteAbelianAction",    	  -- exported type name
     "finiteAction",    	       	  -- documented
     "FiniteGroupAction",    	  -- exported type name
     "group",	    	    	  -- documented
@@ -936,6 +937,23 @@ document {
 	    }
 
 document {
+	Key => {FiniteAbelianAction},
+	
+	Headline => "the class of all diagonal actions by
+	finite abelian groups",
+	
+	"This class is provided by the package ", TO InvariantsDev,".",
+	
+	PARA {
+	    	TT "FiniteAbelianAction", " is the class of all
+		diagonal actions by finite abelian groups
+		on polynomial rings for the
+		purpose of computing invariants.
+		It is created using ", TO "finiteAbelianAction", "."
+	    },
+	}
+
+document {
 	Key => {finiteAction, 
 	    (finiteAction, List, PolynomialRing),
 	    (finiteAction, Matrix, PolynomialRing),
@@ -1478,6 +1496,39 @@ document {
 	    "isInvariant((x_1*x_2*x_3)^3, A)"
 		},
 	    }	
+
+document {
+	Key => {(numgens, FiniteAbelianAction)},
+	Headline => "number of generators of a finite abelian group",
+	Usage => "numgens A",
+	Inputs => {
+	    	"A" => FiniteAbelianAction =>
+		{"the action of a finite abelian group"},
+		},
+	Outputs => {
+		ZZ => {"the number of generators of the group"}
+		},
+	"This function is provided by the package ", TO InvariantsDev,". ",
+
+    	PARA {	 
+	    "Writing the finite abelian group as",
+	    TEX /// $\mathbb{Z}/d_1 \oplus \cdots \oplus \mathbb{Z}/d_r$, ///,
+	    "this function returns ", TT "r", "."
+	},
+    
+    	PARA {
+	    "Here is an example of a product of two cyclic groups
+	    of order 3 acting on a polynomial ring in 3 variables."
+	},
+	
+	EXAMPLE {
+	    "R = QQ[x_1..x_3]",
+	    "d = {3,3}",
+	    "W = matrix{{1,0,1},{0,1,1}}",
+	    "A = finiteAbelianAction(d, W, R)",
+	    "numgens A"
+		},
+	    }
 
 document {
 	Key => {(numgens, FiniteGroupAction)},
