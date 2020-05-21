@@ -23,12 +23,17 @@ newPackage(
 
 -- Any symbols or functions that the user is to have access to
 -- must be placed in one of the following two lists
+
+-- Type names must be exported if they are used in the documentation
+-- of an overloaded function.
+
 export {
     "action",	     	     	  -- documented
     "actionMatrix",
     "finiteAbelianAction",
     "finiteAction",    	       	  -- documented
     "group",	    	    	  -- documented
+    "GroupAction",    	      	  -- exported type name
     "hilbertIdeal",
     "invariants",    	     	  -- documented for TorusAction,FiniteAbelianAction
     "invariantRing",	    	  
@@ -37,6 +42,7 @@ export {
     "linearlyReductiveAction",
     "reynoldsOperator",	       	  -- documented
     "permutationMatrix",
+    "RingOfInvariants",	       	  -- exported type name
     "schreierGraph",
     "torusAction",    	      	  -- documented
     "weights",	      	      	  -- documented
@@ -44,10 +50,12 @@ export {
     }
 --exportMutable {}
 
--- Unexported functions:
+-- Unexported/overloaded functions:
 
--- cyclicFactors
--- generateGroup    	    	-- internally documented
+-- cyclicFactors    	    	-- unexported
+-- dim	      	      	      	-- overloaded, documented
+-- generateGroup    	    	-- unexported, internally documented
+-- ring	       	       	        -- overloaded, documented
 
 
 
@@ -66,7 +74,7 @@ FiniteAbelianAction = new Type of GroupAction
 LinearlyReductiveAction = new Type of GroupAction
 RingOfInvariants = new Type of HashTable    	  
 -- For some reason, InvariantRing already seems to be a protected symbol. 
--- Maybe because of the InvariantRing package?
+-- Not due to the InvariantRing package.
 
 
 -------------------------------------------
@@ -878,28 +886,49 @@ document {
 	    }
 
 document {
-	Key => {(ring, GroupAction)},
-	
-	Headline => "the polynomial ring being acted upon",
-	
-	Usage => "ring G",
-	
+	Key => {finiteAbelianAction, (finiteAbelianAction, List, Matrix, PolynomialRing)},
+	Headline => "Finite abelian group action via weights",
+	Usage => "finiteAbelianAction(d, W, R)",
 	Inputs => {
-	    	"G" => GroupAction => {"a group action on a polynomial ring"},
+	    	"d" => List => {"of orders of factors in the decomposition of the group"},
+	    	"W" => Matrix => {"of weights of the group action"},
+		"R" => PolynomialRing => {"on which the group acts"}
 		},
-	
 	Outputs => {
-		Ring => {"the polynomial ring being acted upon"}
+		FiniteAbelianAction => {"the (diagonal) action of the finite abelian group corresponding to the given weight matrix"}
 		},
-	
-	PARA {"This function is provided by the package ",
-	    TO InvariantsDev,"."},
+	"This function is provided by the package ", TO InvariantsDev,". ",
+
+    	PARA {	 
+	    "Writing the finite abelian group as",
+	    TEX /// $\mathbb{Z}/d_1 \oplus \cdots \oplus \mathbb{Z}/d_r$, ///,
+	    "the list ", TT "d = {d_1,d_2,...,d_r},",  " contains the orders of the factors.",
+	    " We assume that the group acts diagonally on the polynomial ring",
+	    TEX /// $R = k[x_1,\ldots,x_n]$, ///,
+	    "which is to say that if we denote the evident generators of the group by",
+	    TEX /// $g_1,\ldots,g_r$ ///,
+	    "then we have",
+	    TEX /// $$g_i \cdot x_j = \zeta_i^{w_{ij}} x_j$$ ///,
+	    "for",
+	    TEX /// $\zeta_i$ ///,
+	    "a primitive",
+	    TEX /// $d_i$///,
+	    "-th root of unity. The integers",
+	    TEX /// $w_{ij}$ ///,
+	    "comprise the weight matrix ", TT "W", "."  
+	},
+    
+    	PARA {
+	    "Here is an example of a product of two cyclic groups of order 3 acting on a three-dimensional vector space:"
+	},
 	
 	EXAMPLE {
-		"R = QQ[x_1..x_4]",
-		"T = torusAction(matrix {{0,1,-1,1},{1,0,-1,-1}}, R)",
-		"ring(T) === R"
+	    "R = QQ[x_1..x_3]",
+	    "d = {3,3}",
+	    "W = matrix{{1,0,1},{0,1,1}}",
+	    "A = finiteAbelianAction(d, W, R)",
 		},
+    
 	    }
 
 document {
@@ -1010,81 +1039,6 @@ document {
 	    },
 	
 	SeeAlso => {schreierGraph, relations, words}
-	    }
-
-document {
-	Key => {finiteAbelianAction, (finiteAbelianAction, List, Matrix, PolynomialRing)},
-	Headline => "Finite abelian group action via weights",
-	Usage => "finiteAbelianAction(d, W, R)",
-	Inputs => {
-	    	"d" => List => {"of orders of factors in the decomposition of the group"},
-	    	"W" => Matrix => {"of weights of the group action"},
-		"R" => PolynomialRing => {"on which the group acts"}
-		},
-	Outputs => {
-		FiniteAbelianAction => {"the (diagonal) action of the finite abelian group corresponding to the given weight matrix"}
-		},
-	"This function is provided by the package ", TO InvariantsDev,". ",
-
-    	PARA {	 
-	    "Writing the finite abelian group as",
-	    TEX /// $\mathbb{Z}/d_1 \oplus \cdots \oplus \mathbb{Z}/d_r$, ///,
-	    "the list ", TT "d = {d_1,d_2,...,d_r},",  " contains the orders of the factors.",
-	    " We assume that the group acts diagonally on the polynomial ring",
-	    TEX /// $R = k[x_1,\ldots,x_n]$, ///,
-	    "which is to say that if we denote the evident generators of the group by",
-	    TEX /// $g_1,\ldots,g_r$ ///,
-	    "then we have",
-	    TEX /// $$g_i \cdot x_j = \zeta_i^{w_{ij}} x_j$$ ///,
-	    "for",
-	    TEX /// $\zeta_i$ ///,
-	    "a primitive",
-	    TEX /// $d_i$///,
-	    "-th root of unity. The integers",
-	    TEX /// $w_{ij}$ ///,
-	    "comprise the weight matrix ", TT "W", "."  
-	},
-    
-    	PARA {
-	    "Here is an example of a product of two cyclic groups of order 3 acting on a three-dimensional vector space:"
-	},
-	
-	EXAMPLE {
-	    "R = QQ[x_1..x_3]",
-	    "d = {3,3}",
-	    "W = matrix{{1,0,1},{0,1,1}}",
-	    "A = finiteAbelianAction(d, W, R)",
-		},
-    
-	    }
-
-document {
-	Key => {group, (group, FiniteGroupAction)},
-	
-	Headline => "Elements of a finite group",
-	
-	Usage => "group G",
-	Inputs => {
-	    	"G" => FiniteGroupAction => {"a finite group action"},
-		},
-	Outputs => {
-		List => {"of matrices representing all elements of group"}
-		},
-	
-	"This function is provided by the package ", TO InvariantsDev,".",
-	
-	PARA {
-	    "The following example defines the permutation action of
-	    a symmetric group on three elements using only two
-	    generators, then returns all group elements."
-	    },
-	
-	EXAMPLE {
-	    	"R = QQ[x_1..x_3]",
-		"L = {matrix {{0,1,0},{1,0,0},{0,0,1}}, matrix {{0,0,1},{0,1,0},{1,0,0}} }",
-		"G = finiteAction(L, R)",
-		"group G"
-		},
 	    }
 
 document {
@@ -1206,7 +1160,8 @@ document {
 *-
 
 document {
-	Key => {invariantRing, (invariantRing, GroupAction),
+	Key => {invariantRing, 
+	    (invariantRing, GroupAction),
 	    (symbol ^, PolynomialRing, GroupAction)},
 	
 	Headline => "the ring of invariants of a group action",
@@ -1369,14 +1324,33 @@ document {
 		},
 	    
 	"This function is provided by the package ", TO InvariantsDev,". ",
+
+	PARA {
+	    "The following example defines the action of
+	    a symmetric group permuting the three variables generating
+	    a polynomial ring."
+	    },
     	
 	EXAMPLE {
 	    "R = QQ[x_1..x_4]",
 	    "P = apply(3, i -> permutationMatrix(4, [i + 1, i + 2] ) )",
 	    "S4 = finiteAction(P, R)",
 	    "isAbelian S4",
-	    "V4 = finiteAction({P#0, P#2}, R)",
-	    "isAbelian V4"
+	    },
+	    	    
+	PARA {
+	    "The following example defines the action of
+	    the product of two cyclic groups. One group has order 3
+	    and cyclically permutes the three variables generating
+	    a polynomial ring. The other group has order 2 and
+	    multiplies the variables by -1."
+	    },
+	
+	EXAMPLE {
+	    	"R = QQ[x_1..x_3]",
+		"L = {matrix {{0,0,1},{0,1,0},{1,0,0}}, matrix {{-1,0,0},{0,-1,0},{0,0,-1}} }",
+		"G = finiteAction(L, R)",
+		"isAbelian G"
 		},
 	    }
 
@@ -1399,17 +1373,55 @@ document {
 		},
 	    
 	Outputs => {
-		Boolean => "whether the polynomial is invariant under the given group action"
+		Boolean => "whether the given polynomial is invariant under the given group action"
 		},
 	    
 	"This function is provided by the package ", TO InvariantsDev,". ",
     	
+	PARA {
+	    "This function checks if a polynomial is invariant
+	    under a certain group action."
+	    },
+	
+	PARA {
+	    "The following example defines the permutation action
+	    of a symmetric group on a polynomial ring with three
+	    variables."
+	    },
+	
 	EXAMPLE {
 	    "R = QQ[x_1..x_3]",
 	    "L = apply(2, i -> permutationMatrix(3, [i + 1, i + 2] ) )",
 	    "S3 = finiteAction(L, R)",
-	    "isInvariant(x_1^2 + x_2^2 + x_3^2, S3)",
+	    "isInvariant(1 + x_1^2 + x_2^2 + x_3^2, S3)",
 	    "isInvariant(x_1*x_2*x_3^2, S3)"
+		},
+    
+    	PARA {
+	    "Here is an example with a two-dimensional torus
+	    acting on polynomial ring in four variables:"
+	    },
+	
+	EXAMPLE {
+	    "R = QQ[x_1..x_4]",
+	    "W = matrix{{0,1,-1,1},{1,0,-1,-1}}",
+	    "T = torusAction(W, R)",
+	    "isInvariant(x_1*x_2*x_3, T)",
+	    "isInvariant(x_1*x_2*x_4, T)"
+		},
+	    
+         PARA {
+	    "Here is another example of a product of two cyclic groups
+	    of order 3 acting on a three-dimensional vector space:"
+	    },
+	
+	EXAMPLE {
+	    "R = QQ[x_1..x_3]",
+	    "d = {3,3}",
+	    "W = matrix{{1,0,1},{0,1,1}}",
+	    "A = finiteAbelianAction(d, W, R)",
+	    "isInvariant(x_1*x_2*x_3, A)",
+	    "isInvariant((x_1*x_2*x_3)^3, A)"
 		},
 	    }	
 
@@ -1445,120 +1457,29 @@ document {
 		},
 	    }
 
-
 document {
-	Key => {isAbelian, (isAbelian, FiniteGroupAction)},
+	Key => {(ring, GroupAction)},
 	
-	Headline => "whether a finite group action is abelian",
+	Headline => "the polynomial ring being acted upon",
 	
-	Usage => "isAbelian G",
+	Usage => "ring G",
+	
 	Inputs => {
-	    	"G" => FiniteGroupAction => {"a finite group action"},
+	    	"G" => GroupAction => {"a group action on a polynomial ring"},
 		},
+	
 	Outputs => {
-		Boolean => {"whether ", TT "G", " is abelian"}
+		Ring => {"the polynomial ring being acted upon"}
 		},
 	
-	"This function is provided by the package ", TO InvariantsDev,".",
-	
-	PARA {
-	    "The following example defines the action of
-	    a symmetric group permuting the three variables generating
-	    a polynomial ring."
-	    },
+	PARA {"This function is provided by the package ",
+	    TO InvariantsDev,"."},
 	
 	EXAMPLE {
-	    	"R = QQ[x_1..x_3]",
-		"L = {matrix {{0,1,0},{1,0,0},{0,0,1}}, matrix {{0,0,1},{0,1,0},{1,0,0}} }",
-		"G = finiteAction(L, R)",
-		"isAbelian G"
+		"R = QQ[x_1..x_4]",
+		"T = torusAction(matrix {{0,1,-1,1},{1,0,-1,-1}}, R)",
+		"ring(T) === R"
 		},
-	
-	PARA {
-	    "The following example defines the action of
-	    the product of two cyclic groups. One group has order 3
-	    and cyclically permutes the three variables generating
-	    a polynomial ring. The other group has order 2 and
-	    multiplies the variables by -1."
-	    },
-	
-	EXAMPLE {
-	    	"R = QQ[x_1..x_3]",
-		"L = {matrix {{0,0,1},{0,1,0},{1,0,0}}, matrix {{-1,0,0},{0,-1,0},{0,0,-1}} }",
-		"G = finiteAction(L, R)",
-		"isAbelian G"
-		},
-
-	    }
-
-document {
-	Key => {isInvariant,
-	    (isInvariant, RingElement, FiniteGroupAction),
-	    (isInvariant, RingElement, FiniteAbelianAction),
-	    (isInvariant, RingElement, TorusAction),
-	    (isInvariant, RingElement, LinearlyReductiveAction)
-	    },
-	
-	Headline => "whether a polynomial is invariant for a group action",
-	
-	Usage => "isInvariant(f,G)",
-	Inputs => {
-	    	"f" => RingElement => {"a polynomial"},
-	    	"G" => GroupAction => {"any type of group action"}
-		},
-	Outputs => {
-		Boolean => {"whether ", TT "f",
-		    " is invariant for the action of ", TT "G"}
-		},
-	
-	"This function is provided by the package ", TO InvariantsDev,".",
-	
-	PARA {
-	    "This function checks if a polynomial is invariant
-	    under a certain group action."
-	    },
-	
-	PARA {
-	    "The following example defines the permutation action
-	    of a symmetric group on a polynomial ring with three
-	    variables."
-	    },
-	
-	EXAMPLE {
-	    	"R = QQ[x_1..x_3]",
-		"L = {matrix {{0,1,0},{1,0,0},{0,0,1}}, matrix {{0,0,1},{0,1,0},{1,0,0}} }",
-		"G = finiteAction(L, R)",
-		"isInvariant(1+x_1*x_2*x_3,G)",
-		"isInvariant(x_1^2+x_2+x_3,G)"
-		},
-	
-    	PARA {
-	    "Here is an example of a product of two cyclic groups
-	    of order 3 acting on a three-dimensional vector space:"
-	},
-	
-	EXAMPLE {
-	    "R = QQ[x_1..x_3]",
-	    "d = {3,3}",
-	    "W = matrix{{1,0,1},{0,1,1}}",
-	    "A = finiteAbelianAction(d, W, R)",
-	    "isInvariant(x_1*x_2*x_3,A)",
-	    "isInvariant((x_1*x_2*x_3)^3,A)"
-		},
-    
-    	PARA {
-	    "Here is another example with a two-dimensional torus
-	    acting on polynomial ring in four variables:"
-	},
-	
-	EXAMPLE {
-	    "R = QQ[x_1..x_4]",
-	    "W = matrix{{0,1,-1,1},{1,0,-1,-1}}",
-	    "T = torusAction(W, R)",
-	    "isInvariant(x_1*x_2*x_3,T)",
-	    "isInvariant(x_1*x_2*x_4,T)"
-		},
-    
 	    }
 
 document {
