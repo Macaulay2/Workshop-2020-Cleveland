@@ -437,7 +437,7 @@ randomPoints(ZZ,Ideal):=opts->(n1,I1)->(
           return L;
 );
 
-extendingIdealByNonVanishingMinor = method(Options=>{})
+extendingIdealByNonVanishingMinor = method(Options=>optRandomPoints)
 extendingIdealByNonVanishingMinor(Ideal,Matrix, ZZ):= opts -> (I, M, n) -> (
     local P;
     local kk; 
@@ -447,7 +447,7 @@ extendingIdealByNonVanishingMinor(Ideal,Matrix, ZZ):= opts -> (I, M, n) -> (
     local J; local M2;
     R = ring I;
     kk = coefficientRing R;
-    P = randomPointViaLinearIntersection(I);
+    P = randomPoints(I);
     if (P == {}) 
     then error "No Point Found"
     else (
@@ -745,10 +745,12 @@ doc ///
     Key
     	extendingIdealByNonVanishingMinor
 	(extendingIdealByNonVanishingMinor, Ideal, Matrix, ZZ)
+	[extendindIdealByNonVanishingMinor, Strategy]
     Headline
     	extends the ideal to aid finding singular locus
     Usage
-    	extendingIdealByNonVanishingMinor(I,M,n)
+    	extendingIdealByNonVanishingMinor(I,M,n, Strategy => GenericProjection)
+	extendingIdealByNonVanishingMinor(I,M,n, Strategy => LinearIntersection)
     Inputs
     	I: Ideal
 	    in a polynomial ring over QQ or ZZ/p for p prime 
@@ -757,6 +759,8 @@ doc ///
 	n: ZZ
 	    the size of the minors to look at to find
 	    one non-vanishing minor 
+    	Strategy => String
+            to specify whether to use method of Linear Intersection or of GenericProjection	    
     Outputs
     	:Ideal
 	    the original ideal extended by the determinant of 
@@ -774,7 +778,7 @@ doc ///
 	    R = ZZ/5[t_1..t_3];
             I = ideal(t_1,t_2+t_3);
 	    M = jacobian I;
-            extendingIdealByNonVanishingMinor(I,M,2)
+            extendingIdealByNonVanishingMinor(I,M,2, Strategy => LinearIntersection)
 ///	
 
 
@@ -827,7 +831,7 @@ TEST///
 R = ZZ[t_1..t_3];
 I = ideal(t_1,t_2+t_3);
 M = jacobian I;           
-assert(extendingIdealByNonVanishingMinor(I,M,2) === (t_1,t_2+t_3,1))
+assert(extendingIdealByNonVanishingMinor(I,M,2,Strategy => LinearIntersection) === (t_1,t_2+t_3,1))
 
 
 ///
