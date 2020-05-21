@@ -115,7 +115,8 @@ export {
     "vasFunction",
     "tannerGraph",
     "randNoRepeats",
-    "randLDPC"
+    "randLDPC",
+    "syndromeDecode"
     }
 
 exportMutable {}
@@ -304,7 +305,7 @@ rawLinearCode(List) := LinearCode => (inputVec) -> (
 	symbol ParityCheckRows  => newParRow,
 	symbol ParityCheckMatrix =>  newParMat,
 	symbol Code => codeSpace,
-	symbol cache => {}
+	symbol cache => new CacheTable
 	}
     
     )
@@ -423,7 +424,7 @@ toString LinearCode := c -> toString c.Generators
 	symbol LinearCode => linearCode(G), -- the linear code associated with the evaluation code
 	symbol Sets => S, -- the collection of subsets used for constracting a Cartesian code
 	symbol AmbientSpace => F^(#P),  --- the ambient space for an evaluation code
-	symbol cache => {}
+	symbol cache => new CacheTable
 	}
 *-
 
@@ -445,7 +446,7 @@ evaluationCode(Ring,List,List) := EvaluationCode => opts -> (F,P,S) -> (
 	symbol Points => P,
 	symbol PolynomialSet => S,
 	symbol LinearCode => linearCode G, -- the linear code produced by the evaluation code construction
-	symbol cache => {}
+	symbol cache => new CacheTable
 	}
     )
 
@@ -500,7 +501,7 @@ toricCode(Ring,Matrix) := EvaluationCode => opts -> (F,M) -> (
 	symbol VanishingIdeal => I, --the vanishing ideal of (F*)^m
 	symbol ExponentsMatrix => LL, -- the matrix of exponents, exponent vectors are rows
 	symbol LinearCode => linearCode(G), -- the linear code
-	symbol cache => {}
+	symbol cache => new CacheTable
 	}
 ) 
 
@@ -525,7 +526,7 @@ evCodeGraph (Ring,Matrix,List) := evCodeGraph  => opts -> (F,M,S) -> (
 	symbol VanishingIdeal => I,
 	symbol PolynomialSet => S,
 	symbol LinearCode => linearCode(G),
-	symbol cache => {}
+	symbol cache => new CacheTable
 	}
     )
 
@@ -551,7 +552,7 @@ codeGraph (Matrix,ZZ,ZZ) := (M,d,p)->(
 	symbol AmbientSpace => K^(#X),
 	symbol IncidenceMatrix => M,
 	symbol LinearCode => linearCode(G),
-	symbol cache => {}
+	symbol cache => new CacheTable
 	}
     
 )
@@ -578,7 +579,7 @@ codeGraphInc (Matrix,ZZ):= (M,p)->(
 	symbol AmbientSpace => K^(#X),
 	symbol IncidenceMatrix => M,
 	symbol LinearCode => linearCode(G),
-	symbol cache => {}
+	symbol cache => new CacheTable
 	}
 )
 
@@ -605,7 +606,7 @@ cartesianCode(Ring,List,List) := EvaluationCode => opts -> (F,S,M) -> (
 	symbol VanishingIdeal => I,
 	symbol PolynomialSet => M,
 	symbol LinearCode => linearCode(G),
-	symbol cache => {}
+	symbol cache => new CacheTable
 	}
     )
 
@@ -720,7 +721,7 @@ zeroCode(GaloisField,ZZ) := LinearCode =>(F,n)->(
 	    symbol GeneratorMatrix => GenMat,
 	    symbol ParityCheckMatrix =>  ParMat,
 	    symbol ParityCheckRows  => ParRows,
-	    symbol cache => {}
+	    symbol cache => new CacheTable
 	    }
     } else {
     error "The length of the code should be positive."
@@ -743,7 +744,7 @@ universeCode(GaloisField,ZZ) := LinearCode => (F,n) -> (
 	    symbol GeneratorMatrix => GenMat,
 	    symbol ParityCheckMatrix =>  ParMat,
 	    symbol ParityCheckRows  => ParRows,
-	    symbol cache => {}
+	    symbol cache => new CacheTable
 	    }	
 	} else {
 	error "The length of the code should be positive."
@@ -913,7 +914,7 @@ targetParameters (ZZ,ZZ,ZZ,ZZ) := TargetParameters => opts -> (q,n,k,r) -> (
 	symbol Length => n,
 	symbol Dimension => k,
 	symbol Locality => r,
-	symbol cache => {}
+	symbol cache => new CacheTable
 	}
     )
 
@@ -1395,10 +1396,6 @@ randNoRepeats (ZZ, ZZ) := (a, k) -> (
     toList result
     );
 
-
-
--*
-*-
 randLDPC = method(TypicalValue => Matrix)
 randLDPC(ZZ, ZZ, RR, ZZ) := (n, k, m, b) -> (
     
@@ -1421,10 +1418,72 @@ randLDPC(ZZ, ZZ, RR, ZZ) := (n, k, m, b) -> (
 	H#(ones#i) = 1_R;
 	);
     matrix(R, pack(toList H, n))
-    )
+    );
 
+-- Given a 0,1 valued list errorBinary, return a list of all the possible ways to replace the
+-- one values in errorBinary with a nonzero element of the finite field R. 
+enumerateError := (R, errorBinary) -> (
+    elts := for i from 1 to (R.order)-1 list( (first gens R)^i);
+    ones := positions(errorBinary, x -> x == 1);
+    prim := first gens R;
+    
+    if length ones == 0 then return {errorBinary};
+    
+    -- I would use fold here, but I can't figure out how to pass fold a function I don't
+    -- know how to write in prefix notation (instead of infix notation.)
+    -- (I.e., how do you use fold when you know the operator but not the identifier?)
+    ugly := set(elts);
+    for i from 1 to (length ones)-1 do(ugly = ugly ** set(elts));    
+    for i from 1 to (length ones)-1 do(ugly = ugly/splice);
+    ugly = apply(toList ugly, x -> toList x);
+    
+    -- ugly now contains lists of symbols we need to substitute in errorBinary.
+    current := new MutableList from errorBinary;
+    for i from 0 to (length ugly)-1 list(
+    	possibility := ugly#i;
+	
+	for j from 0 to (length ones)-1 do(
+	    current#(ones#j) = possibility#j;
+	    );	
+	toList current
+    	)
+    );
 
-
+syndromeDecode = method(TypicalValue => List)
+syndromeDecode(LinearCode, Matrix, ZZ) := (C, v, minDist) -> (
+    
+    R := ring(v);
+    if(minDist <= 0) then error "cannot have minimum distance less than 0.";
+    -- check ring(v) == ring(c)?
+    
+    H := C.ParityCheckMatrix;
+    syndrome := H*v;
+    
+    if (C.cache#?("syndromeLUT")) then(
+	syndromeLUT := C.cache#"syndromeLUT";
+	return v + (syndromeLUT#(syndrome));
+	);
+    
+    -- The idea is to associate all possible error vectors with their corresponding coset.
+    numErrors := floor((minDist-1)/2);
+    ground := toList(0..((length C)-1));
+        
+    lookupTable := flatten for i from 0 to numErrors list(subsets(ground, i));    
+    
+    lookupTable = apply(lookupTable, x -> 
+      	for i from 0 to (length C)-1 list(
+   	    if member(i, x) then 1 else 0
+	    )
+	);
+    lookupTable = flatten apply(lookupTable, x -> enumerateError(R, x));
+    lookupTable = apply(lookupTable, x -> transpose matrix(R, {x}));
+    lookupTable = apply(lookupTable, x -> {H*x,x});
+    lookupHash := new HashTable from lookupTable;
+    
+    C.cache#"syndromeLUT" = lookupHash;
+    coset := lookupHash#(syndrome);
+    v + coset
+    );
 
 
 ------------------------------------------
@@ -1440,6 +1499,35 @@ randLDPC(ZZ, ZZ, RR, ZZ) := (n, k, m, b) -> (
 -----------------------------------------------
 
 TEST ///
+
+-- syndromeDecode test
+R := GF(2);
+-- The binary Golay code. It can correct 3 errors.
+G:={{1,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,1,1,1,0,0,0,1,1},
+    {0,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,1,0,0,1,0},
+    {0,0,1,0,0,0,0,0,0,0,0,0,1,1,0,1,0,0,1,0,1,0,1,1},
+    {0,0,0,1,0,0,0,0,0,0,0,0,1,1,0,0,0,1,1,1,0,1,1,0},
+    {0,0,0,0,1,0,0,0,0,0,0,0,1,1,0,0,1,1,0,1,1,0,0,1},
+    {0,0,0,0,0,1,0,0,0,0,0,0,0,1,1,0,0,1,1,0,1,1,0,1},
+    {0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,1,0,0,1,1,0,1,1,1},
+    {0,0,0,0,0,0,0,1,0,0,0,0,1,0,1,1,0,1,1,1,1,0,0,0},
+    {0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,1,1,0,1,1,1,1,0,0},
+    {0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,1,1,0,1,1,1,1,0},
+    {0,0,0,0,0,0,0,0,0,0,1,0,1,0,1,1,1,0,0,0,1,1,0,1},
+    {0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,1,1,1,0,0,0,1,1,1}};
+G = matrix(R,G);
+C := linearCode G;
+for i from 1 to 50 do(
+    message := transpose matrix {(for n from 1 to numgens target G list(random(R)))};
+    codeword := (transpose G)*message;
+    errors := sum take(random entries basis target codeword, 3);
+    errors = transpose matrix({errors});
+    recieved := codeword+errors;
+    decoded := syndromeDecode(C, recieved, 8);
+    assert(decoded == codeword);
+    );
+///
+
 -- generatorToParityCheck constructor
 F = GF(8,Variable => a);
 G = matrix {{1,0,0,a,0,1,1,a},{0,0,0,1,1,1,1,0},{1,1,0,0,0,1,0,0},{1,0,1,0,0,1,1,0}};
@@ -1801,6 +1889,32 @@ document {
 	}
     }
 document {
+    Key => {syndromeDecode,(syndromeDecode, LinearCode, Matrix, ZZ)},
+    Headline => "Performs syndrome decoding on a linear code.",
+    Usage => "syndromeDecode(C,v,minDist)",
+    "When this function runs, it checks the cache of the LinearCode C for an existing syndrome look-up table. If a look-up table ",
+    "is not found, it automatically generates one. Because of this, the first time this function is called will take longer than subsequent",
+    " calls. If you want to access the look-up table, it can be obtained from C.cache#\"syndromeLUT\".",
+    "The minDist argument only effects the behavior of this function on the first call because it is only used when generating the syndrome",
+    " look-up table.",
+    Inputs => {
+	"C" => LinearCode => {"A linear code."},
+	"v" => Matrix => {"The recieved column vector."},
+	"minDist" => ZZ => {"The minimum distance of the code C."}
+	},
+    Outputs => {
+	List => {"A codeword corresponding to the recieved vector v."}
+	},
+    EXAMPLE {
+	"C = HammingCode(2,3)",
+	"msg = matrix {{1,0,1,0}}",
+	"v = msg*(C.GeneratorMatrix)",
+    	"err = matrix take(random entries basis source v, 1)",
+	"recieved = (transpose (v+err))",
+	"syndromeDecode(C, recieved, 3)"
+	}
+    }
+
     Key => {generatorToParityCheck, (generatorToParityCheck,Matrix)},
     Headline => "Constructs a parity check Matrix given a generator matrix of a linear code over a Galois field",
     Usage => "generatorToParityCheck(G)",
@@ -1846,6 +1960,7 @@ document {
 	"H* (transpose G)"
 	}
     }
+
 document {
     Key => {zeroCode,(zeroCode,GaloisField,ZZ)},
     Headline => "Constructs the linear code whose only codeword is the zero codeword",
@@ -1923,7 +2038,7 @@ document {
     }
 document {
     Key => {bitflipDecode, (bitflipDecode,Matrix, Vector)},
-    Headline => "This does not work and it will likely be removed.",
+    Headline => "An experimental implementation of a message passing decoder.",
     Usage => "bitflipDecode(H,v)",
     Inputs => {
 	"H" => Matrix => {"The parity check matrix."},
@@ -1932,8 +2047,8 @@ document {
     Outputs => {
 	List => {}
 	},
-    "The matrix H and the vector v must have entries in GF(2). ",
-    "Returns the empty list if MaxIterations is exceeded.",
+    "Attempts to decode the vector v relative to the parity check matrix H using a message passing decoding algorithm. The matrix H and the vector v must have entries in GF(2). Returns the empty list if MaxIterations is exceeded.",
+    " At each iteration, this function flips all the bits of v that fail the maximum number of parity check equations from H. This is experimental because it has not been fully tested. The output is only guarenteed to be a codeword of the code defined by H.",
     EXAMPLE {
 	"R=GF(2);",
 	"H := matrix(R, {{1,1,0,0,0,0,0},{0,1,1,0,0,0,0},{0,1,1,1,1,0,0},{0,0,0,1,1,0,0},{0,0,0,0,1,1,0},{0,0,0,0,1,0,1}});",
@@ -1944,7 +2059,7 @@ document {
 document {
     Key => {tannerGraph, (tannerGraph,Matrix)},
     Headline => "Outputs the Tanner graph associated with the given parity check matrix.",
-    Usage => "bitflipDecode(H,v)",
+    Usage => "tannerGraph(H)",
     Inputs => {
 	"H" => Matrix => {"The parity check matrix."}
       	},
@@ -2076,7 +2191,7 @@ doc ///
    
 document {
    Key => {randLDPC, (randLDPC, ZZ, ZZ, RR, ZZ)},
-   Headline => "Generates a low density family of parity check matrices with the given parameters.",
+   Headline => "Generates a low density family of parity check matrices with given parameters.",
    Usage => "randLDPC(n, k, m, b)",
    Inputs => {
 	"n" => ZZ => {"The number of columns of H."},
@@ -2085,12 +2200,11 @@ document {
 	"b" => ZZ => {"The constant term of the line which relates n and the number of ones in H."}
 	},
    Outputs => {
-       "H" => Matrix => {"An (n-k) x n matrix over GF(2). "}
+       "H" => Matrix => {"An (n-k) x n matrix over GF(2) with floor(n*m) + b ones. "}
 	},
     	"The number of ones in H is determined by the formula floor(n*m) + b. ",
 	"Since this formula is linear in the number of columns of H, randLDPC produces a sparse sequence of matrices ",
     	"for a fixed set of parameters k, m and b.",
-
 	EXAMPLE {
 	"randLDPC(10,5,3.0,0)"
 	}
@@ -2106,6 +2220,7 @@ document {
    Outputs => {
        "L" => List => {"A list of k random integers between 0 and n (inclusive) with no repeats. "}
 	},
+    "It is safe to use this in applications that have nothing to do with coding theory.",
 	EXAMPLE {
 	"randNoRepeats(10,4)",
 	"randNoRepeats(0,1)",
