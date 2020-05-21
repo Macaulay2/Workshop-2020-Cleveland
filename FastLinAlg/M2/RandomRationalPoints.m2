@@ -29,7 +29,10 @@ export {
 	"MyOption",
 	"NumPointsToCheck", 
 	"Codimension",
-	"MaxChange",
+	"MaxCoordinatesToReplace",
+    "Replacement",
+    "Simple",
+    "Full", 
 	"BruteForce", --a valid value for [RandomPoint, Strategy]
     "GenericProjection",  --a valid value for [RandomPoint, Strategy]
     "HybridProjectionIntersection", --a valid value for [RandomPoint, Strategy]
@@ -54,13 +57,13 @@ installMinprimes();
 optRandomPoints := {
     Strategy=>BruteForce, 
     Homogeneous => true, 
-    MaxChange => 0, 
+    MaxCoordinatesToReplace => 0, 
     Codimension => null,
     IntersectionAttempts => 20,
     ProjectionAttempts => 20,
     ExtendField => false,
     PointCheckAttempts => 100
-}
+};
 
 pointToIdeal = method(Options =>{Homogeneous => false});
 
@@ -124,37 +127,61 @@ createRandomPoints(Ideal):=List => opts->(I1) ->(
     return L )
 
 
-randomCoordinateChange = method(Options=>{Homogeneous=>true, MaxChange => infinity});
+randomCoordinateChange = method(Options=>{Homogeneous=>true, Replacement=>Full, MaxCoordinatesToReplace => infinity});
 
 randomCoordinateChange(Ring) := opts -> (R1) -> (
-        local phi;
-        if not class R1 === PolynomialRing then error "randomCoordinateChange: expected an ideal in a polynomial ring";
-        myMon := monoid R1;
-        S1 := (coefficientRing R1)(myMon);
-        if (opts.MaxChange == infinity) then (
-        if (opts.Homogeneous) then (
-        phi = map(R1, S1, apply(gens R1, t -> random(1, R1)));
-        )
-        else(
-        phi = map(R1, S1, apply(gens R1, t -> random(1, R1)+random(0, R1)));
+    if (debugLevel > 0) then print "randomCoordinateChange: starting.";
+    local phi;
+    if not class R1 === PolynomialRing then error "randomCoordinateChange: expected an ideal in a polynomial ring";
+    myMon := monoid R1;
+    S1 := (coefficientRing R1)(myMon);
+    genList := random gens R1;
+    genCount := #(genList);
+    local replacementFunction;
+    if (opts.Replacement == Simple) then (
+        if opts.Homogeneous then (
+            replacementFunction = trm -> (v2 := (random(0, R1))*trm + (random(0, R1))*(genList#(random(#genList))); if (v2 == 0) then trm else v2);) 
+        else (
+            replacementFunction = trm -> ((random(0, R1))*trm + random(0, R1));
         );
-        )
-        else( --if we only want to really change some (MaxChange) of the variables, and randomize the others
-        genList := random gens R1;
-        if (opts.Homogeneous) then (
---			genList = random apply(#(genList), t -> (if (t < opts.MaxChange) then random(1, R1) else genList#t) );
-        genList = random apply(#(genList), t -> (if (t < opts.MaxChange) then ((random(0, R1))*(genList#t) + (random(0, R1))*(genList#(random(#genList)))) else genList#t) );
+    )
+    else if (opts.Replacement == Full) then (
+        if opts.Homogeneous then (
+            replacementFunction = trm -> random(1, R1);)
+        else (
+            replacementFunction = trm -> random(1, R1)+random(0, R1);
+        );
+    );
+    genList = random apply(genCount, t -> if (t < opts.MaxCoordinatesToReplace) then replacementFunction(genList#t) else genList#t);
+    phi = map(R1, S1, genList);
+    --if it's working, great, otherwise recurse
+    if (rank jacobian matrix phi >= genCount) then return phi else return randomCoordinateChange(R1, opts);
 
+-*    if (opts.MaxCoordinatesToReplace >= genCount) then (
+        if (opts.Homogeneous) then (
+            phi = map(R1, S1, apply(gens R1, t -> random(1, R1)));
         )
         else(
-        genList = random apply(#(genList), t -> (if (t < opts.MaxChange) then random(1, R1)+random(0, R1) else genList#t	) );
+            phi = map(R1, S1, apply(gens R1, t -> random(1, R1)+random(0, R1)));
         );
-        phi = map(R1, S1, genList);
+    )
+    else( --if we only want to really change some (MaxCoordinatesToReplace) of the variables, and randomize the others
+    
+    if (opts.Homogeneous) then (
+    --			genList = random apply(#(genList), t -> (if (t < opts.MaxCoordinatesToReplace) then random(1, R1) else genList#t) );
+        genList = random apply(#(genList), 
+            t -> (if (t < opts.MaxCoordinatesToReplace) then ((random(0, R1))*(genList#t) + (random(0, R1))*(genList#(random(#genList)))) else genList#t) 
         );
-        return phi;
+    )
+    else(
+    genList = random apply(#(genList), t -> (if (t < opts.MaxCoordinatesToReplace) then random(1, R1)+random(0, R1) else genList#t	) );
+    );
+    phi = map(R1, S1, genList);
+    );
+    return phi;*-
 );
 
-genericProjection = method(Options =>{Homogeneous => true, MaxChange => infinity});
+genericProjection = method(Options =>{Homogeneous => true, Replacement=>Simple, MaxCoordinatesToReplace => infinity});
 
 genericProjection(Ideal) := opts -> (I1) -> (
         R1 := ring I1;
@@ -188,7 +215,7 @@ genericProjection(ZZ, Ideal) := opts -> (n1, I1) -> (
         return(psi*phi, f);
 );
 
-projectionToHypersurface = method(Options =>{Homogeneous => true, MaxChange => infinity, Codimension => null});
+projectionToHypersurface = method(Options =>{Homogeneous => true, Replacement=>Simple, MaxCoordinatesToReplace => infinity, Codimension => null});
 
 projectionToHypersurface(Ideal) := opts -> (I1) -> (
         local c1;
@@ -196,7 +223,7 @@ projectionToHypersurface(Ideal) := opts -> (I1) -> (
         c1 = codim I1;
         ) else (c1 = opts.Codimension);
         local curMap;
-        return genericProjection(c1-1, I1, Homogeneous => opts.Homogeneous, MaxChange => opts.MaxChange);
+        return genericProjection(c1-1, I1, Homogeneous => opts.Homogeneous, MaxCoordinatesToReplace => opts.MaxCoordinatesToReplace);
 );
 
 -*
@@ -206,14 +233,14 @@ projectionToHypersurface(Ideal) := opts -> (I1) -> (
 		c1 = codim I1;
 	) else (c1 = opts.Codimension);
 	local curMap;
-	tempList := genericProjection(I1, Homogeneous => opts.Homogeneous, MaxChange => opts.MaxChange);
+	tempList := genericProjection(I1, Homogeneous => opts.Homogeneous, MaxCoordinatesToReplace => opts.MaxCoordinatesToReplace);
 	assert(target (tempList#0) === ring I1);
 	if (c1 == 2) then (
 		return tempList; --if we are done, stop
 	);
 	assert(source (tempList#0) === ring (tempList#1));
 	--otherwise recurse
-	tempList2 := projectionToHypersurface(tempList#1, Hoxmogeneous => opts.Homogeneous, MaxChange => opts.MaxChange, Codimension=>c1-1);
+	tempList2 := projectionToHypersurface(tempList#1, Hoxmogeneous => opts.Homogeneous, MaxCoordinatesToReplace => opts.MaxCoordinatesToReplace, Codimension=>c1-1);
 	assert(target(tempList2#0) === ring (tempList#1));
 	return ((tempList#0)*(tempList2#0), tempList2#1);
 );
@@ -297,7 +324,7 @@ randomPointViaGenericProjection(Ideal) := opts -> (I1) -> (
     R1 := ring I1;  
     i := 0;
     while(flag) and (i < opts.ProjectionAttempts) do (
-        (phi, I0) = projectionToHypersurface(I1, Homogeneous=>opts.Homogeneous, MaxChange => opts.MaxChange, Codimension => opts.Codimension);
+        (phi, I0) = projectionToHypersurface(I1, Homogeneous=>opts.Homogeneous, MaxCoordinatesToReplace => opts.MaxCoordinatesToReplace, Codimension => opts.Codimension);
         if (codim I0 == 1) then (
             if (opts.Strategy == GenericProjection) then (
             pt = randomPoints(I0, switchStrategy(opts, BruteForce)))
@@ -566,7 +593,7 @@ doc ///
         (genericProjection, Ideal)
         (genericProjection,ZZ,Ideal)
         [genericProjection, Homogeneous]
-        [genericProjection, MaxChange]
+        [genericProjection, MaxCoordinatesToReplace]
     Headline
        Finds a random generic projections of the ideal.
     Usage
@@ -576,7 +603,7 @@ doc ///
             in a polynomial Ring
         n:ZZ
             an integer specifying how many dimensions down to project
-        MaxChange => ZZ
+        MaxCoordinatesToReplace => ZZ
             can be changed
         Homogeneous => Boolean
     Outputs
@@ -601,29 +628,49 @@ doc ///
 doc ///
     Key
         randomCoordinateChange
-	(randomCoordinateChange, Ring)
+        (randomCoordinateChange, Ring)
+        [randomCoordinateChange, MaxCoordinatesToReplace]
+        [randomCoordinateChange, Replacement]
+        [randomCoordinateChange, Homogeneous]
     Headline
-        Changes the co-orinate randomly.
+        produce linear automorphism of the ring
     Usage
         randomCoordinateChange R
     Inputs
         R:Ring
             a polynomial Ring
-        MaxChange => ZZ 
-            can be changed
+        MaxCoordinatesToReplace => ZZ 
+            how many coordinates should be replaced by linear functions
+        Replacement => Symbol 
+            whether coordinate replacements should be binomial (Simple) or fully random (Full) 
         Homogeneous => Boolean
+            whether coordinate replacements should be Homogeneous
     Outputs
         :RingMap
             the coordinate change map.
     Description
-       Text
-         Gives a random coordinate change map.  
-       	 
-	   
-       Example
-         R=ZZ/5[x,y,z]
-         randomCoordinateChange(R)
-      
+        Text
+            Given a polynomial ring, this will produce a linear automorphism of the ring. 
+        Example
+            R=ZZ/5[x,y,z]
+            randomCoordinateChange(R)
+        Text
+            In some applications, a full change of coordinates is not desired, as it might cause code to run slowly, and so a simpler change of coordinates might be preferred.  
+            These simpler changes of coordinates can be accomplished with the options {\tt Replacement} and {\tt MaxCoordinatesToReplace}.
+            {\tt Replacement} can take either {\tt Simple} or {\tt Full}.  If {\tt Simple} is specified, then only binomial changes of coordinates will be produced. 
+        Example
+            S = ZZ/11[a..e]
+            randomCoordinateChange(S, Replacement=>Simple)
+        Text
+            On the other hand, the user can specify that only a specified number of coordinates should be non-monomial changes.
+        Example
+            randomCoordinateChange(S, MaxCoordinatesToReplace=>2)
+        Text
+            Finally, if {\tt Homogeneous} is set to {\tt false}, then our change of coordinates is not homogeneous (although it is still linear).
+        Example 
+            randomCoordinateChange(R, Homogeneous=>false)
+        Text
+            Note, this function already checks whether the function is an isomorphism by computing the Jacobian.
 ///
 
 doc ///
@@ -637,7 +684,7 @@ doc ///
     Inputs
         I:Ideal
             an ideal in a polynomial Ring
-        MaxChange => ZZ
+        MaxCoordinatesToReplace => ZZ
             can be changed
         Codimension => ZZ
         Homogeneous => Boolean
@@ -665,7 +712,7 @@ doc ///
         [randomPoints, Strategy]
         [randomPoints,ProjectionAttempts]
         [randomPoints, PointCheckAttempts]
-        [randomPoints, MaxChange]
+        [randomPoints, MaxCoordinatesToReplace]
         [randomPoints, IntersectionAttempts]
         [randomPoints, Homogeneous ]
         [randomPoints,ExtendField]
@@ -691,7 +738,7 @@ doc ///
             can be changed
         PointCheckAttempts => ZZ
             can be changed
-        MaxChange => ZZ
+        MaxCoordinatesToReplace => ZZ
             can be changed
         Codimension => ZZ
             can be changed
