@@ -46,6 +46,7 @@ export {
     "RingOfInvariants",	       	  -- exported type name
     "schreierGraph",
     "torusAction",    	      	  -- documented
+    "TorusAction",    	      	  -- exported type name
     "weights",	      	      	  -- documented
     "words"    	       	       	  -- documented
     }
@@ -1659,33 +1660,116 @@ document {
 	    }
 	
 document {
-	Key => {weights, 
-	    (weights, TorusAction),
-	    (weights, FiniteAbelianAction)},
+	Key => {TorusAction},
 	
-	Headline => "the weight matrix of a diagonal abelian group action",
+	Headline => "the class of all diagonal torus actions",
 	
-	Usage => "weights T, weights A",
+	"This class is provided by the package ", TO InvariantsDev,".",
 	
+	PARA {
+	    	TT "TorusAction", " is the class of all
+		diagonal torus actions on polynomial rings for the
+		purpose of computing invariants.
+		It is created using ", TO "torusAction", "."
+	    },
+	}
+
+document {
+	Key => {weights},
+	Headline => "of a diagonal action",
+	Usage => "weights A\n
+	weights T",
 	Inputs => {
-	    	"T" => TorusAction,
-		"A" => FiniteAbelianAction
+	    	"A" => FiniteAbelianAction =>
+		{"the diagonal action of a finite abelian group"},
+	    	"T" => TorusAction =>
+		{"a diagonal torus action"},
 		},
-	    
 	Outputs => {
-		"W" => Matrix => {"of integer weights associated to the given
-		    (diagonal) abelian group action"}
+		Matrix => {"the weight matrix of the group action"}
 		},
-	    
 	"This function is provided by the package ", TO InvariantsDev,". ",
+
+}
+
+document {
+	Key => {(weights, FiniteAbelianAction)},
+	Headline => "for the diagonal action of a finite abelian group",
+	Usage => "weights A",
+	Inputs => {
+	    	"A" => FiniteAbelianAction =>
+		{"the action of a finite abelian group"},
+		},
+	Outputs => {
+		Matrix => {"the weight matrix of the group action"}
+		},
+	"This function is provided by the package ", TO InvariantsDev,". ",
+
+    	PARA {	 
+	    "Writing the finite abelian group as",
+	    TEX /// $\mathbb{Z}/d_1 \oplus \cdots \oplus \mathbb{Z}/d_r$, ///,
+	    "the list ", TT "d = {d_1,d_2,...,d_r},",  " contains the orders of the factors.",
+	    " We assume that the group acts diagonally on the polynomial ring",
+	    TEX /// $R = k[x_1,\ldots,x_n]$, ///,
+	    "which is to say that if we denote the evident generators of the group by",
+	    TEX /// $g_1,\ldots,g_r$ ///,
+	    "then we have",
+	    TEX /// $$g_i \cdot x_j = \zeta_i^{w_{ij}} x_j$$ ///,
+	    "for",
+	    TEX /// $\zeta_i$ ///,
+	    "a primitive",
+	    TEX /// $d_i$///,
+	    "-th root of unity. This function returns the weight
+	    matrix",
+	    TEX /// $(w_{ij})$ ///, "."  
+	},
+    
+    	PARA {
+	    "Here is an example of a product of two cyclic groups
+	    of order 3 acting on a polynomial ring in 3 variables."
+	},
 	
+	EXAMPLE {
+	    "R = QQ[x_1..x_3]",
+	    "d = {3,3}",
+	    "W = matrix{{1,0,1},{0,1,1}}",
+	    "A = finiteAbelianAction(d, W, R)",
+	    "weights A"
+		},
+	    }
+
+document {
+	Key => {(weights, TorusAction)},
+	Headline => "of a diagonal torus action",
+	Usage => "weights T",
+	Inputs => {
+	    	"T" => TorusAction => {"a torus action"},
+		},
+	Outputs => {
+		Matrix => {"the weight matrix of the torus action"}
+		},
+	"This function is provided by the package ", TO InvariantsDev,". ",
+    	PARA {
+	    "Use this function to recover the weight matrix of a
+	    diagonal torus action on a polynomial ring.
+	    The variables of the ring are weight vectors with
+	    weights corresponding in order to the columns of the
+	    weight matrix."
+	    },
+	
+    	PARA {
+	"The following example defines an action of a 
+	two-dimensional torus on a polynomial ring in four
+	variables."
+	},
+        	
 	EXAMPLE {
 	    "R = QQ[x_1..x_4]",
 	    "W = matrix{{0,1,-1,1},{1,0,-1,-1}}",
 	    "T = torusAction(W, R)",
 	    "weights T"
 		},
-	    }	
+	    }
 
 document {
 	Key => {words, (words, FiniteGroupAction)},
