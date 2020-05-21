@@ -11,7 +11,7 @@ newPackage(
     HomePage => "https://www.math.wisc.edu/~jose/"},
     {Name => "Fatemeh Tarashi Kashani",
     Email => "tarashikashanifatemeh@gmail.com",
-    HomePage => "https://www.linkedin.com/in/fatemehtarashi/",}
+    HomePage => "https://www.linkedin.com/in/fatemehtarashi/"},
     {Name => "Your name here",
     Email => "Your email here",
     HomePage => "Your page here"}
@@ -846,13 +846,10 @@ Caveat
   At the moment this is not checked.
 ///
 
-
 doc ///
 Key
    MLDegree
    (MLDegree,List,List) 
-Headline
-  Degree of the parametric likelihood
 Usage
   MLDegree (F,u)
 Inputs
@@ -862,22 +859,17 @@ Inputs
     list of numerical data
 Outputs
   :Number
-    The Maximum Likelihood Degree
---Consequences
---  asd
+    the ML-degree of $F$
 Description
   Text
-    ---
+    Computes the maximum likelihood degree by taking List of function and List of numerical data when summation F equal to 1.
+    See algorithm 18. Solving the Likelihood Equations https://arxiv.org/pdf/math/0408270
   Example
     R = QQ[t]
     s=1
     u = {2,3,5,7}
     F = {s^3*(-t^3-t^2-t+1),s^2*t,s*t^2,t^3}
     MLDegree (F,u)
---  Code
---    todo
---  Pre
---    todo
 --Caveat
 --  todo
 --SeeAlso
