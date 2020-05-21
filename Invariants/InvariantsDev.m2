@@ -29,6 +29,7 @@ export {
     "finiteAbelianAction",
     "finiteAction",
     "group",
+    "GroupAction",
     "hilbertIdeal",
     "invariants",
     "invariantRing",
@@ -947,6 +948,30 @@ document {
 	    }
 
 document {
+	Key => {GroupAction},
+	
+	Headline => "the class of all group actions",
+	
+	"This class is provided by the package ", TO InvariantsDev,".",
+	
+	PARA {
+	    	TT "GroupAction", " is the type of all group actions
+		on polynomial rings for the purpose of computing
+		invariants. This is not typically used directly,
+		delegating creation to the various constructor
+		functions for different kinds of group actions."
+	    },
+	
+	PARA {
+	    	"The class ", TT "GroupAction ", "is implemented as
+		a ", TT "HashTable", ". When created it stores
+		information such as the action (in a format
+		dependent upon the group) and the polynomial ring
+	    	being acted upon."
+	    },
+	}
+
+document {
 	Key => {hilbertIdeal, (hilbertIdeal, LinearlyReductiveAction)},
 	
 	Headline => "Computes (possibly non-invariant) generators for the Hilbert ideal",
@@ -1041,7 +1066,8 @@ document {
 *-
 
 document {
-	Key => {invariantRing, (invariantRing, GroupAction)},
+	Key => {invariantRing, (invariantRing, GroupAction),
+	    (symbol ^, PolynomialRing, GroupAction)},
 	
 	Headline => "The ring of invariants of a group action",
 	
