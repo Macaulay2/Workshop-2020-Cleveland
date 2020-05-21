@@ -32,6 +32,7 @@ export {
     "actionMatrix",
     "finiteAbelianAction",
     "finiteAction",    	       	  -- documented
+    "FiniteGroupAction",    	  -- exported type name
     "group",	    	    	  -- documented
     "GroupAction",    	      	  -- exported type name
     "hilbertIdeal",
@@ -55,6 +56,8 @@ export {
 -- cyclicFactors    	    	-- unexported
 -- dim	      	      	      	-- overloaded, documented
 -- generateGroup    	    	-- unexported, internally documented
+-- generators	     	     	-- overloaded, documented
+-- numgens    	      	      	-- overloaded, documented
 -- ring	       	       	        -- overloaded, documented
 
 
@@ -976,6 +979,56 @@ document {
 	    }
 
 document {
+	Key => {FiniteGroupAction},
+	
+	Headline => "the class of all finite group actions",
+	
+	"This class is provided by the package ", TO InvariantsDev,".",
+	
+	PARA {
+	    	TT "FiniteGroupAction", " is the class of all finite
+		matrix group actions on polynomial rings for the
+		purpose of computing invariants.
+		It is created using ", TO "finiteAction", ". ",
+		"Note that diagonal actions of finite abelian
+		groups can be created with the class ",
+		TO "FiniteAbelianAction", " which implements more
+		efficient methods for computing invariants."
+	    },
+	}
+
+document {
+	Key => {(generators, FiniteGroupAction)},
+	Headline => "generators of a finite group",
+	Usage => "generators G",
+	Inputs => {
+	    	"G" => FiniteGroupAction =>
+		{"the action of a finite group"},
+		},
+	Outputs => {
+		List => {"a list of generators of the group"}
+		},
+	"This function is provided by the package ", TO InvariantsDev,". ",
+
+    	PARA {
+	    "Use this function to get the user-defined
+	    generators of a group action."
+	},
+    
+    	PARA { "The following example defines the permutation action
+	    of a symmetric group on three elements using three
+	    transpositions."  },
+	
+	EXAMPLE {
+	    "R = QQ[x_1..x_3]",
+	    "L = {matrix {{0,1,0},{1,0,0},{0,0,1}}, matrix {{0,0,1},{0,1,0},{1,0,0}}, matrix {{1,0,0},{0,0,1},{0,1,0}} }",
+	    "G = finiteAction(L, R)",
+	    "generators G"
+	    },
+	    
+	    }
+
+document {
 	Key => (generators, RingOfInvariants),
 	
 	Headline => "the generators for a ring of invariants",
@@ -1424,6 +1477,42 @@ document {
 	    "isInvariant((x_1*x_2*x_3)^3, A)"
 		},
 	    }	
+
+document {
+	Key => {(numgens, FiniteGroupAction)},
+	Headline => "number of generators of a finite group",
+	Usage => "numgens G",
+	Inputs => {
+	    	"G" => FiniteGroupAction =>
+		{"the action of a finite group"},
+		},
+	Outputs => {
+		ZZ => {"the number of generators of the group"}
+		},
+	"This function is provided by the package ", TO InvariantsDev,". ",
+
+    	PARA {
+	    "Use this function to get the number of user-defined
+	    generators of a group action."
+	},
+    
+    	PARA { "The following example defines the permutation action
+	    of a symmetric group on three elements using three
+	    transpositions."  },
+	
+	EXAMPLE {
+	    "R = QQ[x_1..x_3]",
+	    "L = {matrix {{0,1,0},{1,0,0},{0,0,1}}, matrix {{0,0,1},{0,1,0},{1,0,0}}, matrix {{1,0,0},{0,0,1},{0,1,0}} }",
+	    "G = finiteAction(L, R)",
+	    "numgens G"
+	    },
+	
+	Caveat => {"The integer returned by this function is not
+	    necessarily the minimal number of generators of the
+	    group, rather it is the cardinality of the generating
+	    set defined by the user."}
+	    
+	    }
 
 document {
 	Key => {reynoldsOperator, (reynoldsOperator, RingElement, FiniteGroupAction)},
