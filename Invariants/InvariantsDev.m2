@@ -1121,11 +1121,36 @@ document {
 	"This class is provided by the package ", TO InvariantsDev,".",
 	
 	PARA {
-	    	TT "GroupAction", " is the type of all group actions
+	    	TT "GroupAction", " is the class of all group actions
 		on polynomial rings for the purpose of computing
 		invariants. This is not typically used directly,
 		delegating creation to the various constructor
-		functions for different kinds of group actions."
+		functions for different kinds of group actions:"
+	    },
+	UL {
+	    {TO "FiniteGroupAction", ", the class of 
+	    a finite matrix group action, is created with ",
+	    TO "finiteAction"},
+	    {TO "FiniteAbelianAction", ", the class of the diagonal
+	    action of a finite abelian group, is created with ",
+	    TO "finiteAbelianAction"},
+	    {TO "TorusAction", ", the class of a diagonal
+	    torus action, is created with ",
+	    TO "torusAction"},
+	    {TO "LinearlyReductiveAction", ", the class of a
+	    linearly reductive matrix group action,
+	    is created with ",
+	    TO "linearlyReductiveAction"}
+	    },
+	
+	PARA {
+	    "Each class implements different algorithms to
+	    compute invariants. Although mathematically speaking
+	    all the above group actions are linearly reductive
+	    (at least in the non modular case), the class ",
+	    TO "LinearlyReductiveAction", " should be used only
+	    when none of the other classes apply because it has fewer
+	    and possibly less efficient methods."
 	    },
 	
 	PARA {
