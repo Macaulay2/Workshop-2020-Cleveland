@@ -1420,39 +1420,69 @@ randLDPC(ZZ, ZZ, RR, ZZ) := (n, k, m, b) -> (
     matrix(R, pack(toList H, n))
     );
 
-
+-- Given a 0,1 valued list errorBinary, return a list of all the possible ways to replace the
+-- one values in errorBinary with a nonzero element of the finite field R. 
+enumerateError := (R, errorBinary) -> (
+    elts := for i from 1 to (R.order)-1 list( (first gens R)^i);
+    ones := positions(errorBinary, x -> x == 1);
+    prim := first gens R;
+    
+    if length ones == 0 then return {errorBinary};
+    
+    -- I would use fold here, but I can't figure out how to pass fold a function I don't
+    -- know how to write in prefix notation (instead of infix notation.)
+    -- (I.e., how do you use fold when you know the operator but not the identifier?)
+    ugly := set(elts);
+    for i from 1 to (length ones)-1 do(ugly = ugly ** set(elts));    
+    for i from 1 to (length ones)-1 do(ugly = ugly/splice);
+    ugly = apply(toList ugly, x -> toList x);
+    
+    -- ugly now contains lists of symbols we need to substitute in errorBinary.
+    current := new MutableList from errorBinary;
+    for i from 0 to (length ugly)-1 list(
+    	possibility := ugly#i;
+	
+	for j from 0 to (length ones)-1 do(
+	    current#(ones#j) = possibility#j;
+	    );	
+	toList current
+    	)
+    );
 
 syndromeDecode = method(TypicalValue => List)
-syndromeDecode(LinearCode, Vector, ZZ) := (C, v, minDist) -> (
+syndromeDecode(LinearCode, Matrix, ZZ) := (C, v, minDist) -> (
+    
     R := ring(v);
     if(minDist <= 0) then error "cannot have minimum distance less than 0.";
+    -- check ring(v) == ring(c)?
     
     H := C.ParityCheckMatrix;
     syndrome := H*v;
     
     if (C.cache#?("syndromeLUT")) then(
 	syndromeLUT := C.cache#"syndromeLUT";
-	return (entries v) + (syndromeLUT#(entries syndrome));
+	return v + (syndromeLUT#(syndrome));
 	);
     
     -- The idea is to associate all possible error vectors with their corresponding coset.
     numErrors := floor((minDist-1)/2);
     ground := toList(0..((length C)-1));
-    oneList := apply(ground, x -> 1);
+        
+    lookupTable := flatten for i from 0 to numErrors list(subsets(ground, i));    
     
-    lookupTable := flatten for i from 0 to numErrors list(subsets(ground, i));
     lookupTable = apply(lookupTable, x -> 
       	for i from 0 to (length C)-1 list(
-	    if member(i, x) then 1 else 0
+   	    if member(i, x) then 1 else 0
 	    )
 	);
-    
-    lookupTable = apply(lookupTable, x -> {entries (H*(vector x)),x});
+    lookupTable = flatten apply(lookupTable, x -> enumerateError(R, x));
+    lookupTable = apply(lookupTable, x -> transpose matrix(R, {x}));
+    lookupTable = apply(lookupTable, x -> {H*x,x});
     lookupHash := new HashTable from lookupTable;
     
     C.cache#"syndromeLUT" = lookupHash;
-    coset := lookupHash#(entries syndrome);
-    (entries v) + coset
+    coset := lookupHash#(syndrome);
+    v + coset
     );
 
 
@@ -1487,18 +1517,13 @@ G:={{1,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,1,1,1,0,0,0,1,1},
 G = matrix(R,G);
 C := linearCode G;
 for i from 1 to 50 do(
-    message := vector (for n from 1 to numgens target G list(random(R)));
+    message := transpose matrix {(for n from 1 to numgens target G list(random(R)))};
     codeword := (transpose G)*message;
-    errors := sum apply(take(random entries basis module codeword, 3), v -> vector(v));
+    errors := sum take(random entries basis target codeword, 3);
+    errors = transpose matrix({errors});
     recieved := codeword+errors;
     decoded := syndromeDecode(C, recieved, 8);
-
-    if(decoded != {}) then (
-	assert(decoded == entries codeword);
-	print(toString(i) |" (pass)");
-    	)else(
-    	error "SyndromeDecode should have been able to decode this.";
-	);
+    assert(decoded == codeword);
     );
 ///
 
@@ -1839,8 +1864,8 @@ document {
 	}
     }
 document {
-    Key => {syndromeDecode,(syndromeDecode, LinearCode, Vector, ZZ)},
-    Headline => "Performs syndrome decoding on a binary linear code.",
+    Key => {syndromeDecode,(syndromeDecode, LinearCode, Matrix, ZZ)},
+    Headline => "Performs syndrome decoding on a linear code.",
     Usage => "syndromeDecode(C,v,minDist)",
     "When this function runs, it checks the cache of the LinearCode C for an existing syndrome look-up table. If a look-up table ",
     "is not found, it automatically generates one. Because of this, the first time this function is called will take longer than subsequent",
@@ -1848,8 +1873,8 @@ document {
     "The minDist argument only effects the behavior of this function on the first call because it is only used when generating the syndrome",
     " look-up table.",
     Inputs => {
-	"C" => LinearCode => {"A linear code over GF(2)."},
-	"v" => Vector => {"The recieved vector. Must have entries in GF(2)."},
+	"C" => LinearCode => {"A linear code."},
+	"v" => Matrix => {"The recieved column vector."},
 	"minDist" => ZZ => {"The minimum distance of the code C."}
 	},
     Outputs => {
@@ -1860,9 +1885,8 @@ document {
 	"msg = matrix {{1,0,1,0}}",
 	"v = msg*(C.GeneratorMatrix)",
     	"err = matrix take(random entries basis source v, 1)",
-	"recieved = vector (transpose (v+err))",
+	"recieved = (transpose (v+err))",
 	"syndromeDecode(C, recieved, 3)"
-
 	}
     }
 
