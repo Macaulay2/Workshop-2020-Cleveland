@@ -2,7 +2,7 @@
 newPackage(
         "RandomRationalPoints",
     	Version => "1.2",
-    	Date => "May 19, 2020",
+    	Date => "May 21, 2020",
     	Authors => {
 	     {Name => "Sankhaneel Bisui", Email => "sbisu@tulane.edu", HomePage=>"https://sites.google.com/view/sankhaneelbisui/home"},
 	     {Name=> "Thai Nguyen", Email =>"tnguyen11@tulane.edu", HomePage=>"https://sites.google.com/view/thainguyenmath "},
@@ -44,9 +44,9 @@ export {
     "checkRandomPoint",
     "PointCheckAttempts",
     "extendingIdealByNonVanishingMinor",
-     "NumPoints", -- used in the multi-thread search function mtSearchPoints
-    "NumThreads", -- used in the multi-thread search function mtSearchPoints
-    "UsePregeneratedList" -- used in the multi-thread search function mtSearchPoints
+    "ReturnAllResults", -- used in the multi-thread search function mtSearchPoints
+    "NumTrials", -- used in the multi-thread search function mtSearchPoints
+    "NumThreadsToUse" -- used in the multi-thread search function mtSearchPoints
     }
 exportMutable {}
 
@@ -464,7 +464,7 @@ randomPoints(ZZ,Ideal):=opts->(n1,I1)->(
           return L;
 );
 
-extendingIdealByNonVanishingMinor = method(Options=>{})
+extendingIdealByNonVanishingMinor = method(Options=>optRandomPoints)
 extendingIdealByNonVanishingMinor(Ideal,Matrix, ZZ):= opts -> (I, M, n) -> (
     local P;
     local kk; 
@@ -474,7 +474,7 @@ extendingIdealByNonVanishingMinor(Ideal,Matrix, ZZ):= opts -> (I, M, n) -> (
     local J; local M2;
     R = ring I;
     kk = coefficientRing R;
-    P = randomPointViaLinearIntersection(I);
+    P = randomPoints(I);
     if (P == {}) 
     then error "No Point Found"
     else (
@@ -501,7 +501,7 @@ extendingIdealByNonVanishingMinor(Ideal,Matrix, ZZ):= opts -> (I, M, n) -> (
 
 
 
-mtSearchPoints = method(TypicalValue => List, Options => {NumPoints => 100, NumThreads => 4, UsePregeneratedList => false});
+mtSearchPoints = method(TypicalValue => List, Options => {NumThreadsToUse => 4, NumTrials => 2, PointCheckAttempts => 4000, ReturnAllResults => false}); -- UsePregeneratedList => false
 mtSearchPoints(Ideal) := List => opts -> (I) -> (
     genList := first entries gens I;
     R := ring I;
@@ -509,34 +509,48 @@ mtSearchPoints(Ideal) := List => opts -> (I) -> (
     n := #gens R;
     
     local taskList;
-    if (opts.UsePregeneratedList)
-    then (
-        randomPointsList := apply(
-            opts.NumPoints * opts.NumThreads, 
-            (i)->(return getAPoint(n, K);)
-            );
-        taskList = apply(
-            opts.NumThreads, 
-            (i)->(return createTask(
-                modifiedSearchPoints, 
-                (take(randomPointsList, {i * opts.NumPoints, (i + 1) * opts.NumPoints - 1}), R, genList)
-            );)
-        );
-    )
-    else (
-        taskList = apply(
-            opts.NumThreads, 
-            (i)->(return createTask(searchPoints, (opts.NumPoints, R, genList));)
-        );
-    );
+    local found;
+    local resultList;
+    
+--    if (opts.UsePregeneratedList)
+--    then (
+--        randomPointsList := apply(opts.NumPoints * opts.NumThreadsToUse, (i)->(return getAPoint(n, K);));
+--        taskList = apply(opts.NumThreadsToUse, (i)->(return createTask(modifiedSearchPoints, (take(randomPointsList, {i * opts.NumPoints, (i + 1) * opts.NumPoints - 1}), R, genList));));)
+--    else (
+--        taskList = apply(opts.NumThreadsToUse, (i)->(return createTask(searchPoints, (opts.NumPoints, R, genList));)););
+    local numPointsToCheck;
+    numPointsToCheck = floor(opts.PointCheckAttempts / opts.NumThreadsToUse); 
+    
+    local totalResultList;
+    totalResultList = new MutableList;
+    
+--    if opts.NumThreadsToUse > allowableThreads
+--    then error "mtSearch: Not enough allowed threads to use";
+    
+    for i from 1 to opts.NumTrials do
+     (
+    	 taskList := apply(opts.NumThreadsToUse, (i)->(return createTask(searchPoints, (numPointsToCheck, R, genList));));
      
-    apply(taskList, t -> schedule t);
-    while true do (
-        nanosleep 100000000;--this should be replaced by a usleep or nanosleep command.
-        if (all(taskList, t -> isReady(t))) then break;
-        );
-    myList := apply(taskList, t -> taskResult(t));
-    return myList;
+         apply(taskList, t -> schedule t);
+    	 while true do (
+             nanosleep 100000000;--this should be replaced by a usleep or nanosleep command.
+             if (all(taskList, t -> isReady(t))) then break;
+             );
+        resultList = apply(taskList, t -> taskResult(t));
+	if any(resultList, (l) -> (#l>0))
+	then if not opts.ReturnAllResults
+	     then (
+		 j := 0;
+		 while #(resultList#j) == 0 do j = j + 1;
+		 return resultList#j;
+		 )
+	     else (
+		 for item in resultList do
+		 if #item > 0
+		 then totalResultList = append(totalResultList, item);
+		 )
+    );
+    return (new List from totalResultList);
 );
 
 --some helper functions for mtSearchPoints
@@ -554,15 +568,15 @@ evalAtPoint = (R, genList, point) -> (
     return true;
     );
 
-modifiedSearchPoints = (pointsList, R, genList) -> (
-    K := coefficientRing R;
-    n := #gens R;
-    for point in pointsList do (
-	if evalAtPoint(R, genList, point)
-	then return point
-	);
-    return {};
-    );
+--modifiedSearchPoints = (pointsList, R, genList) -> (
+--    K := coefficientRing R;
+--    n := #gens R;
+--    for point in pointsList do (
+--	if evalAtPoint(R, genList, point)
+--	then return point
+--	);
+--    return {};
+--    );
 
 searchPoints = (nn, R, genList) -> (
     K := coefficientRing R;
@@ -792,10 +806,12 @@ doc ///
     Key
     	extendingIdealByNonVanishingMinor
 	(extendingIdealByNonVanishingMinor, Ideal, Matrix, ZZ)
+	[extendindIdealByNonVanishingMinor, Strategy]
     Headline
     	extends the ideal to aid finding singular locus
     Usage
-    	extendingIdealByNonVanishingMinor(I,M,n)
+    	extendingIdealByNonVanishingMinor(I,M,n, Strategy => GenericProjection)
+	extendingIdealByNonVanishingMinor(I,M,n, Strategy => LinearIntersection)
     Inputs
     	I: Ideal
 	    in a polynomial ring over QQ or ZZ/p for p prime 
@@ -804,6 +820,8 @@ doc ///
 	n: ZZ
 	    the size of the minors to look at to find
 	    one non-vanishing minor 
+    	Strategy => String
+            to specify whether to use method of Linear Intersection or of GenericProjection	    
     Outputs
     	:Ideal
 	    the original ideal extended by the determinant of 
@@ -821,7 +839,7 @@ doc ///
 	    R = ZZ/5[t_1..t_3];
             I = ideal(t_1,t_2+t_3);
 	    M = jacobian I;
-            extendingIdealByNonVanishingMinor(I,M,2)
+            extendingIdealByNonVanishingMinor(I,M,2, Strategy => LinearIntersection)
 ///	
 
 
@@ -836,18 +854,20 @@ doc ///
     Inputs
         I:Ideal
             an ideal in a polynomial Ring
-	NumPoints => ZZ
-	    default 100, can be changed
-        NumThreads => ZZ
-	    default 4
-        UsePregeneratedList => Boolean
-	    default false
+	PointCheckAttempts => ZZ
+	    points to search in total
+        NumThreadsToUse => ZZ
+	    number of threads to use
+	NumTrials => ZZ
+	    number of trails
+	ReturnAllResults => Boolean
+	    whether to search and return all found points
     Outputs
         :List
             a list of points in the variety $V(I)$.
     Description
         Text
-	    This function use \TT NumThreads threads to search for points in the variety.
+	    This function use NumThreadsToUse threads to search for points in the variety.
        	 
 	   
        Example
@@ -874,7 +894,7 @@ TEST///
 R = ZZ[t_1..t_3];
 I = ideal(t_1,t_2+t_3);
 M = jacobian I;           
-assert(extendingIdealByNonVanishingMinor(I,M,2) === (t_1,t_2+t_3,1))
+assert(extendingIdealByNonVanishingMinor(I,M,2,Strategy => LinearIntersection) === (t_1,t_2+t_3,1))
 
 
 ///

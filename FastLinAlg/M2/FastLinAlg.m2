@@ -257,6 +257,7 @@ chooseMinorLargestDegree(ZZ, Matrix) := o -> (n1, M1) -> (
     minorColList := bestDegree#1;
     return (M1^minorRowList)_minorColList;
 )
+
 chooseMinorLargestDegree(ZZ, MutableMatrix) := o -> (n1, M1) -> (
     return new Matrix from chooseMinorLargestDegree(n1, matrix(M1), o);
   );
