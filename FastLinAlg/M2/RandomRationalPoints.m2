@@ -29,7 +29,6 @@ export {
 	"extendingIdealByNonVanishingMinor",
 	"findANonZeroMinor",
 	"mtSearchPoints",
-    "extendingIdealByNonVanishingMinor",
 	"MyOption",
 	"NumPointsToCheck", 
 	"Codimension",
