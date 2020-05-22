@@ -421,8 +421,8 @@ minimumWeight LinearCode := Number => C -> (
         G := reduceMatrix(M_permutation);
         sameWeightWords := select(nonzeroWords, u -> weight(toList u) == w);
         specialCodewords := apply(sameWeightWords, u -> flatten entries ((matrix {toList u})*G));
-        dupper = min(join({dupper}, apply(specialCodewords, i->weight i)));
-        dlower = sum(apply(toList(0..j-1),i->max(0,w+1-k+r_i)))+sum(apply(toList(j..D-1),i->max(0,w-k+r_i)));
+        dupper = min(append(apply(specialCodewords, i->weight i),dupper));
+        dlower = sum(toList apply(1..j,i->max(0,w+1-k+r_(i-1))))+sum(toList apply(j+1..D,i->max(0,w-k+r_(i-1))));
         if dlower >= dupper
     	then return dlower
     	else (if j < D then j = j+1
