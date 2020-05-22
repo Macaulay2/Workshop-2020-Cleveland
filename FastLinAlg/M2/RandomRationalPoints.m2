@@ -43,7 +43,6 @@ export {
     "ExtendField", --used in GenericProjection and LinearIntersection strategy
     "PointCheckAttempts",
     "extendingIdealByNonVanishingMinor",
-    "ReturnAllResults",
     "NumTrials", -- used in the MultiThreads strategy
     "NumThreadsToUse" -- used in the MultiThreads strategy
     }
@@ -63,8 +62,7 @@ optRandomPoints := {
     ExtendField => false,
     PointCheckAttempts => 100,
     NumThreadsToUse => 4,
-    NumTrials => 1,
-    ReturnAllResults => false
+    NumTrials => 1
 };
 
 pointToIdeal = method(Options =>{Homogeneous => false});
@@ -401,7 +399,7 @@ randomPoints(Ideal) := List => opts -> (I) -> (
     R := ring I;
    
     if (opts.Strategy == BruteForce) 
-    then return searchPoints(opts.PointCheckAttempts, R, genList, opts.ReturnAllResults)
+    then return searchPoints(opts.PointCheckAttempts, R, genList)
     	
     else if (opts.Strategy == GenericProjection) 
     then return randomPointViaGenericProjection(I, opts)
@@ -475,7 +473,6 @@ randomPointViaMultiThreads(Ideal) := List => opts -> (I) -> (
     K := coefficientRing R;
     n := #gens R;
     
-    local taskList;
     local found;
     local resultList;
     
@@ -488,38 +485,29 @@ randomPointViaMultiThreads(Ideal) := List => opts -> (I) -> (
     local numPointsToCheck;
     numPointsToCheck = floor(opts.PointCheckAttempts / opts.NumThreadsToUse); 
     
-    local totalResultList;
-    totalResultList = new MutableList;
-    
 --    if opts.NumThreadsToUse > allowableThreads
 --    then error "mtSearch: Not enough allowed threads to use";
     
-    for i from 1 to opts.NumTrials do
-     (
-    	 taskList := apply(opts.NumThreadsToUse, (i)->(return createTask(searchPoints, (numPointsToCheck, R, genList, opts.ReturnAllResults));));
-     
-         apply(taskList, t -> schedule t);
-    	 while true do (
-             nanosleep 100000000;--this should be replaced by a usleep or nanosleep command.
-             if (all(taskList, t -> isReady(t))) then break;
-             );
-	if opts.ReturnAllResults
-	then resultList = flatten apply(taskList, t -> taskResult(t))
-	else resultList = apply(taskList, t -> taskResult(t));
-	if any(resultList, (l) -> (#l>0))
-	then if not opts.ReturnAllResults
-	     then (
-		 j := 0;
-		 while #(resultList#j) == 0 do j = j + 1;
-		 return resultList#j;
-		 )
-	     else (
-		 for item in resultList do
-		 if #item > 0
-		 then totalResultList = append(totalResultList, item);
-		 )
+    local flag;
+    flag = new MutableList from {false};
+    
+    taskList := apply(opts.NumThreadsToUse, (i)->(return createTask(mtSearchPoints, (numPointsToCheck, R, genList, flag));));
+    apply(taskList, t -> schedule t);
+    while true do (
+	nanosleep 100000000;--this should be replaced by a usleep or nanosleep command.
+        if (all(taskList, t -> isReady(t))) then break;
     );
-    return (new List from totalResultList);
+      
+    resultList = apply(taskList, t -> taskResult(t));
+    
+    if any(resultList, (l) -> (#l>0))
+    then (
+	 j := 0;
+	 while #(resultList#j) == 0 do j = j + 1;
+	 return resultList#j;
+    );
+
+    return {};
 );
 
 --some helper functions for randomPointViaMultiThreads
@@ -537,19 +525,33 @@ evalAtPoint = (R, genList, point) -> (
     return true;
     );
 
-searchPoints = (nn, R, genList, searchAll) -> (
+mtSearchPoints = (nn, R, genList, flag) -> (
     local point;
     K := coefficientRing R;
     n := #gens R;
-    resultList := new MutableList;
     for i from 1 to nn do (
 	point = getAPoint(n, K);
 	if evalAtPoint(R, genList, point)
-	then if searchAll
-	     then resultList = append(resultList, point)
-	     else return point;
+	then (
+	    flag#0 = true;
+	    return point;
+	    );
+	if flag#0
+	then return {};
 	);
-    return (new List from resultList);
+    return {};
+    );
+
+searchPoints = (nn, R, genList) -> (
+    local point;
+    K := coefficientRing R;
+    n := #gens R;
+    for i from 1 to nn do (
+	point = getAPoint(n, K);
+	if evalAtPoint(R, genList, point)
+	then return point;
+	);
+    return {};
     );
 
 ---
@@ -747,8 +749,6 @@ doc ///
 	    number of threads to use
 	NumTrials => ZZ
 	    number of trails
-	ReturnAllResults => Boolean
-	    whether to search and return all found points
         Homogeneous => Boolean
     Outputs
         :List
