@@ -625,19 +625,13 @@ evaluationCode(Ring,List,Matrix) := EvaluationCode => opts -> (F,P,M) -> (
 
 net EvaluationCode := c -> (
     c.LinearCode
+    )
     
 --input: A linear code C
 --output: The vector space dimension of the subspace given by the
 --span of the generators of C
 dim LinearCode := Number => C -> (
-    return rank C.Code;
-    )
-
---input: A linear code C
---output: The ratio (dim C)/(length C)
-informationRate = method(TypicalValue => Number)
-informationRate LinearCode := Number => C -> (
-    return (dim C)/(length C);
+    return rank (C.Code);
     )
 
 dualCode = method()
@@ -1280,20 +1274,10 @@ informationRate = method(TypicalValue => QQ)
 informationRate LinearCode := QQ => C -> (
     return (dim C)/(length C);
     )
-
 --input: A linear code C
 --output: the number of codewords in C
 size LinearCode := ZZ => C -> (
     return (dim C)^(C.BaseField.order)
-    )
-
-
-dualCode = method(TypicalValue => LinearCode)
-dualCode(LinearCode) := LinearCode => C -> (
-    -- creates dual code to code C
-    -- defn: the dual C^ is the code given by all c'
-    -- such that c'.c == 0 for all c in C.
-    linearCode(dual cokernel gens C.Code)
     )
 
 alphabet = method(TypicalValue => List)
