@@ -45,12 +45,11 @@ export {
     "IntersectionAttempts", --used in the LinearIntersection strategy
     "ExtendField", --used in GenericProjection and LinearIntersection strategy
     "PointCheckAttempts",
-    "extendingIdealByNonVanishingMinor",
     "NumTrials", -- used in the MultiThreads strategy
-    "NumThreadsToUse" -- used in the MultiThreads strategy
-    "ReturnAllResults", -- used in the multi-thread search function mtSearchPoints
-    "NumTrials", -- used in the multi-thread search function mtSearchPoints
-    "NumThreadsToUse" -- used in the multi-thread search function mtSearchPoints
+    "NumThreadsToUse", -- used in the MultiThreads strategy
+    "ReturnAllResults" -- used in the multi-thread search function mtSearchPoints
+    --"NumTrials", -- used in the multi-thread search function mtSearchPoints
+    --"NumThreadsToUse" -- used in the multi-thread search function mtSearchPoints
     }
 exportMutable {}
 
@@ -901,7 +900,7 @@ doc ///
 ///
 
 
-doc ///
+-*doc ///
     Key
         mtSearchPoints
         (mtSearchPoints, Ideal)
@@ -931,7 +930,7 @@ doc ///
             I = ideal "xy-z,x2-y+z-1";
             mtSearchPoints I
 ///
-
+*-
  ----- TESTS -----
 
 --this test tests ....
