@@ -1,3 +1,50 @@
+restart
+needsPackage "InvariantsDev"
+
+--presentation of invariant ring as polynomial ring modulo ideal
+--NOTE: presentation is a method without options so I do not know
+--how to pass an option for the variable base name
+presentation RingOfInvariants := Ring => S -> (
+    -- get ambient ring and generators of invariant ring
+    R := ambient S;
+    L := generators S;
+    -- get degrees of generators
+    gdegs := L / degree // flatten;
+    -- form a presentation of the invariant ring
+    T := QQ[Variables => #L,--number of variables
+	VariableBaseName => symbol t,--symbol
+	Degrees => gdegs];--degrees
+    phi := map(R,T,L);
+    I := ker phi;
+    T/I
+    )
+
+--hilbert Series of invariant ring
+hilbertSeries RingOfInvariants := Divide => op -> S -> (
+    hilbertSeries(presentation S,Order=>op.Order,Reduce=>op.Reduce)
+    )
+
+-- examples
+R = QQ[x_1..x_4]
+W = matrix{{0,1,-1,1},{1,0,-1,-1}}
+T = torusAction(W, R)
+S = R^T
+presentation S
+hilbertSeries S
+R = QQ[x_1..x_3]
+d = {3,3}
+W = matrix{{1,0,1},{0,1,1}}
+A = finiteAbelianAction(d, W, R)
+S = R^A
+presentation S
+hilbertSeries S
+hilbertSeries(S,Reduce=>true)
+hilbertSeries(S,Order=>5)
+
+----------------------------------------
+-- Fred's experiments
+----------------------------------------
+
 -- this method prints the equivariant hilbert series
 -- for a diagonal torus action on a polynomial ring
 -- INPUT: weight matrix for action of torus on variables
@@ -114,15 +161,3 @@ series=1+t^3+t^6+t^9
 assert(s === series)
 ///
 
-totalHilbertSeries = method()
-totalHilbertSeries (List) := Thing => (L) -> (
-    R:=ring first L;
-    l=#L;
-    gdegs:= L / degree // flatten;
-    z := getSymbol "z";
-    S:=QQ[z_1..z_l, Degrees => gdegs];
-    phi:=map(R,S,L);
-    I:=ker phi;
-    T:=S/I;
-    return reduceHilbert hilbertSeries T
-    )
