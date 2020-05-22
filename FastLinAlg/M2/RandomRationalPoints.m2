@@ -25,6 +25,8 @@ export {
     "randomPointViaLinearIntersection",
     "randomPointViaGenericProjection",
 	"randomPoints", 
+	"extendingIdealByNonVanishingMinor",
+	"findANonZeroMinor",
 	"mtSearchPoints",
 	"MyOption",
 	"NumPointsToCheck", 
@@ -43,7 +45,6 @@ export {
     "ExtendField", --used in GenericProjection and LinearIntersection strategy
     "checkRandomPoint",
     "PointCheckAttempts",
-    "extendingIdealByNonVanishingMinor",
     "ReturnAllResults", -- used in the multi-thread search function mtSearchPoints
     "NumTrials", -- used in the multi-thread search function mtSearchPoints
     "NumThreadsToUse" -- used in the multi-thread search function mtSearchPoints
@@ -464,14 +465,51 @@ randomPoints(ZZ,Ideal):=opts->(n1,I1)->(
           return L;
 );
 
-extendingIdealByNonVanishingMinor = method(Options=>optRandomPoints)
-extendingIdealByNonVanishingMinor(Ideal,Matrix, ZZ):= opts -> (I, M, n) -> (
+findANonZeroMinor = method(Options => optRandomPoints);
+
+findANonZeroMinor(ZZ, Matrix, Ideal) := opts -> (n,M,I)->(
     local P;
     local kk; 
     local R;
     local phi;
     local N; local N1; local N2; local N1new; local N2new;
-    local J; local M2;
+    local J; local Mcolumnextract; local Mrowextract;
+    R = ring I;
+    kk = coefficientRing R;
+    P = randomPoints(I, opts);
+    if (P == {}) then  error "Couldn't find a point. Try Changing Strategy.";
+    phi =  map(kk,R,sub(matrix{P},kk));
+    N = mutableMatrix phi(M);
+    rk := rank(N);
+    if (rk < n) then return "Please try again";
+    N1 = (columnRankProfile(N));
+    Mcolumnextract = M_N1;
+    M11 := mutableMatrix phi(Mcolumnextract);
+    N2 = (rowRankProfile(M11));
+    N1rand := random(N1);
+    N1new = {};
+    for i from  0 to n-1 do(
+	N1new = join(N1new, {N1rand#i});
+    );
+    M3 := mutableMatrix phi(M_N1new);
+    if (rank(M3)<n) then error "hoyni";
+    N2 = random(rowRankProfile(M3));
+    N2new = {};
+    for i from 0 to n-1 do(
+        N2new = join(N2new, {N2#i});
+    );
+    Mspecificrowextract := (M_N1new)^N2new;
+    return (P, N1, N2, Mspecificrowextract);	
+);
+
+extendingIdealByNonVanishingMinor = method(Options=>optRandomPoints)
+extendingIdealByNonVanishingMinor(ZZ,Matrix,Ideal):= opts -> (n, M, I) -> (
+ -*   local P;
+    local kk; 
+    local R;
+    local phi;
+    local N; local N1; local N2; local N1new; local N2new;
+    local J; local Mcolumnextract; local Mrowextract;
     R = ring I;
     kk = coefficientRing R;
     P = randomPoints(I);
@@ -482,21 +520,26 @@ extendingIdealByNonVanishingMinor(Ideal,Matrix, ZZ):= opts -> (I, M, n) -> (
         N = mutableMatrix phi(M);
         rk := rank(N);
         if (rk < n) then return I;
-        N1 = columnRankProfile(N);
-        N2 = rowRankProfile(N);
-        M1 := mutableMatrix M;
-	N1new = {};
-	N2new = {};
-	for i from  0 to n-1 do(
+        N1 = random(columnRankProfile(N));
+	    N1new = {};
+	    for i from  0 to n-1 do(
 	    N1new = join(N1new, {N1#i});
-	    N2new = join(N2new, {N2#i});
-	    );
-	M2 = M1_N1new^N2new;
-    	M3 := matrix M2;
-    	L1 := ideal (det(M3));
-    	Ifin := I + L1;
-    	return Ifin;
-    );	
+        );
+	    Mcolumnextract = M_N1new;
+        M3 := mutableMatrix phi(Mcolumnextract);
+        if (rank(M3)<n) then error "..";
+        N2 = random(rowRankProfile(M3);
+        N2new = {};
+        for i from 0 to n-1 do(
+            N2new = join(N2new, {N2#i});
+        );
+        Mrowextract = Mcolumnextract^N2new;
+ *-   
+    local O;  local Ifin;
+    O = findANonZeroMinor(n,M,I,opts); 
+    L1 := ideal (det(O#3));
+    Ifin = I + L1;
+    return Ifin;
 );
 
 
@@ -689,8 +732,8 @@ doc ///
 
 doc ///
     Key
-       projectionToHypersurface
-	(projectionToHypersurface, Ideal)
+        projectionToHypersurface
+        (projectionToHypersurface, Ideal)
     Headline
         Projection to a random hypersurface.
     Usage
@@ -709,18 +752,18 @@ doc ///
             defining ideal of the projection of V(I)  
     Description
         Text
-           Gives a projection to a random hypersurface.  
-       	 
-	   
-       Example
-         R=ZZ/5[x,y,z]
-         I = ideal(random(3,R)-2, random(2,R))
-         projectionToHypersurface(I)
+            Gives a projection to a random hypersurface.  
+        Example
+            R=ZZ/5[x,y,z]
+            I = ideal(random(3,R)-2, random(2,R))
+            projectionToHypersurface(I)
 ///
 
 doc ///
     Key
         [randomPoints, Strategy]
+        [findANonZeroMinor, Strategy]
+        [extendingIdealByNonVanishingMinor, Strategy]
         BruteForce
         GenericProjection
         LinearIntersection
@@ -769,7 +812,7 @@ doc ///
         R:Ring
             a polynomial ring
         Strategy => String
-            to specify whether to use method of Linear Intersection or of GenericProjection
+            to specify whether to use method of Linear Intersection, Generic Projection, HybridProjectionIntersection
         ProjectionAttempts => ZZ
             can be changed
         PointCheckAttempts => ZZ
@@ -788,7 +831,6 @@ doc ///
     Description
         Text  
            Gives at most $n$ many point in a variety $V(I)$. 
-
         Example
             R=ZZ/5[t_1..t_3];
             I = ideal(t_1,t_2+t_3);
@@ -798,42 +840,16 @@ doc ///
 ///
 
 doc ///
-    Key 
-    	randomPointViaGenericProjection
-	(randomPointViaGenericProjection, Ideal)
-    Headline
-    	
-    Usage
-    	randomPointViaGenericProjection(I)
-    Inputs
-    	I:Ideal
-    Outputs
-    	:List    	
-///
-
-doc ///
-    Key 
-    	randomPointViaLinearIntersection
-	(randomPointViaLinearIntersection, Ideal)
-    Headline
-    	
-    Usage
-    	randomPointViaLinearInteresection(I)
-    Inputs
-    	I:Ideal
-    Outputs
-    	:List    	
-///        
-
-doc ///
     Key
-        extendingIdealByNonVanishingMinor
-        (extendingIdealByNonVanishingMinor, Ideal, Matrix, ZZ)
+        findANonZeroMinor
+        (findANonZeroMinor, ZZ, Matrix, Ideal)
     Headline
-        extends the ideal to aid finding singular locus
+        finds a non-vanishing minor at some randomly chosen point 
     Usage
-        extendingIdealByNonVanishingMinor(I,M,n, Strategy => GenericProjection)
-        extendingIdealByNonVanishingMinor(I,M,n, Strategy => LinearIntersection)
+        findANonZeroMinor(n,M,I)
+        findANonZeroMinor(n,M,I, Strategy => GenericProjection)
+        findANonZeroMinor(n,M,I, Strategy => LinearIntersection)
+        findANonZeroMinor(n,M,I, Strategy => HybridProjectionIntersection)
     Inputs
         I: Ideal
             in a polynomial ring over QQ or ZZ/p for p prime 
@@ -843,59 +859,104 @@ doc ///
             the size of the minors to look at to find
             one non-vanishing minor 
         Strategy => String
-            to specify whether to use method of Linear Intersection or of GenericProjection	    
+            to specify whether to use method of Linear Intersection, GenericProjection or HybridProjectionIntersection
     Outputs
-    	:Ideal
-	    the original ideal extended by the determinant of 
-	    the non vanishing minor found
+        : Sequence
+            The functions outputs the following:
+            
+            1. randomly chosen point $P$ in $V(I)$, 
+            
+            2. the indexes of the columns of $M$ that stay linearly independent upon plugging $P$ into $M$, 
+
+            3. the indices of the linearly independent rows of the matrix extracted from $M$ using (2), 
+
+            4. a random $n\times n$ submatrix of $M$ that has full rank at $P$.
     Description
-    	Text
-	    Given an ideal, a matrix and an integer, this function uses the @TO 
-	    randomPointViaLinearIntersection@ function to find a point in 
-	    $V(I)$. Then it plugs the point in the matrix and tries to find
-	    a non-zero  minor of size equal to the given integer. 
-	    It then extracts the minor from the original given matrix corresponding
-	    to this non-vanishing minor, finds its determinant and
-	    adds it to the original ideal. 
-    	Example
-	    R = ZZ/5[t_1..t_3];
-            I = ideal(t_1,t_2+t_3);
-	    M = jacobian I;
-            extendingIdealByNonVanishingMinor(I,M,2, Strategy => LinearIntersection)
-///	
+        Text
+            Given an ideal, a matrix, an integer and a user defined Strategy, this function uses the 
+            {\tt randomPoints} function to find a point in 
+            $V(I)$. Then it plugs the point in the matrix and tries to find
+            a non-zero  minor of size equal to the given integer. It outputs the point and also one of the submatrices of interest
+            along with the column and row indices that were used sequentially. 
+        Example
+            R = ZZ/5[x,y,z];
+            I = ideal(random(3,R)-2, random(2,R));
+            M = jacobian(I);
+            findANonZeroMinor(2,M,I, Strategy => GenericProjection)
+    SeeAlso
+        randomPoints
+///
 
 
 doc ///
     Key
-       mtSearchPoints
-	(mtSearchPoints, Ideal)
+        extendingIdealByNonVanishingMinor
+        (extendingIdealByNonVanishingMinor, ZZ, Matrix, Ideal)
     Headline
-    	searching points in $V(I)$ using multiple threads
+        extends the ideal to aid finding singular locus
+    Usage
+        extendingIdealByNonvanishingMinor(n,M,I)
+        extendingIdealByNonVanishingMinor(n,M,I, Strategy => GenericProjection)
+        extendingIdealByNonVanishingMinor(n,M,I, Strategy => LinearIntersection)
+        enxtendingIdealByNonVanishingMinor(n,M,I, Strategy => HybridProjectionIntersection)
+    Inputs
+        I: Ideal
+            in a polynomial ring over QQ or ZZ/p for p prime 
+        M: Matrix
+            over the polynomial ring
+        n: ZZ
+            the size of the minors to look at to find
+            one non-vanishing minor 
+        Strategy => String
+            to specify whether to use method of Linear Intersection, GenericProjection or HybridProjectionIntersection
+    Outputs
+        : Ideal
+            the original ideal extended by the determinant of 
+            the non vanishing minor found
+    Description
+        Text
+            This function finds a submatrix of size $n\times n$ using {\tt findANonZeroMinor};  
+            it extracts the last entry of the output, finds its determinant and
+            adds it to the ideal $I$, thus extending $I$.
+        Example
+            R = ZZ/5[x,y,z];
+            I = ideal(random(3,R)-2, random(2,R));
+            M = jacobian(I);
+            extendingIdealByNonVanishingMinor(2,M,I, Strategy => LinearIntersection)
+    SeeAlso
+        findANonZeroMinor
+///
+
+
+doc ///
+    Key
+        mtSearchPoints
+        (mtSearchPoints, Ideal)
+    Headline
+        searching points in $V(I)$ using multiple threads
     Usage
         mtSearchPoints I   
     Inputs
         I:Ideal
             an ideal in a polynomial Ring
-	PointCheckAttempts => ZZ
-	    points to search in total
+        PointCheckAttempts => ZZ
+            points to search in total
         NumThreadsToUse => ZZ
-	    number of threads to use
-	NumTrials => ZZ
-	    number of trails
-	ReturnAllResults => Boolean
-	    whether to search and return all found points
+            number of threads to use
+        NumTrials => ZZ
+            number of trails
+        ReturnAllResults => Boolean
+            whether to search and return all found points
     Outputs
         :List
             a list of points in the variety $V(I)$.
     Description
         Text
-	    This function use NumThreadsToUse threads to search for points in the variety.
-       	 
-	   
-       Example
-         R=ZZ/101[x,y,z];
-         I = ideal "xy-z,x2-y+z-1";
-	 mtSearchPoints I
+            This function use NumThreadsToUse threads to search for points in the variety.
+        Example
+            R=ZZ/101[x,y,z];
+            I = ideal "xy-z,x2-y+z-1";
+            mtSearchPoints I
 ///
 
 
@@ -906,18 +967,26 @@ TEST///
 R=ZZ/5[x,y,z,w];
 I = ideal(x,y^2,w^3+x^2);
 genericProjection(2,I);
-assert(map)
+--assert(map)
 ///
 
 TEST///
- 
+---this tests findANonZeroMinor---
+R = ZZ/5[x,y,z];
+I = ideal(random(3,R)-2, random(2,R));
+M = jacobian(I);
+Output = findANonZeroMinor(2,M,I);
+phi = map(ZZ/5, R, sub(matrix{Output#0},ZZ/5));
+assert(det(phi(Output#3))!=0)
 ///
 
+
 TEST///
+---this tests extendingIdealByNonVanishingMinor---
 R = ZZ/7[t_1..t_3];
 I = ideal(t_1,t_2+t_3);
 M = jacobian I;           
-assert(dim extendingIdealByNonVanishingMinor(I,M,2,Strategy => LinearIntersection) < 1)
+assert(dim extendingIdealByNonVanishingMinor(2,M,I,Strategy => LinearIntersection) < 1)
 ///
 
 end
