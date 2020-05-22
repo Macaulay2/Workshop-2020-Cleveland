@@ -21,12 +21,6 @@ newPackage(
   PackageImports => {"Elimination","NumericalAlgebraicGeometry","Bertini"}
 )
 
------GOALS (5/15)
--- June 10 is the deadline for ISSAC Poster Submission: 
--- https://issac-conference.org/2020/calls/call-for-demo-posters.txt
--- Idea: Have the symbolic methods ready and call this package AlgebraicOptimizationDegree. 
--- If things go well, then we can do a JSAG submission called AlgebraicOptimization, which is an extended version that computes critical points 
-
 --------------------
 --Exports
 --------------------
@@ -38,7 +32,7 @@ export {
   "conormalIdeal",
   "multiDegreeEDDegree",
   "MLDegree",
-  "symboliclagrangeMultiplierEDDegree",
+  "symbolicLagrangeMultiplierEDDegree",
   -- Options
   "DualVariable",
   --Types and keys
@@ -47,11 +41,13 @@ export {
   "LagrangeVarietyWitness","LagrangeIdeal", "IsolatedCriticalPointSet",
   --Methods
   "isolatedRegularCriticalPointSet","criticalIdeal","lagrangeIdeal",
+  "gradient",
   --More Keys
   "LagrangeVariable","PrimalIdeal","JacobianConstraint","AmbientRing","LagrangeCoordinates","WitnessPrimalIdeal",
   "Data", "Gradient", "WitnessSuperSet", "SaveFileDirectory",
   -- Tolerances
   "MultiplicityTolerance","EvaluationTolerance", "ConditionNumberTolerance",
+  "updateMultiplicityTolerance","updateEvaluationTolerance","updateConditionNumberTolerance",
   "Coordinates", "Factors",
   "Numerators","Denominators"
 }
@@ -173,8 +169,8 @@ assert( MLDegree (F,u) == 3)
 --------------------
 --LagrangeMultiplierEDDegree
 --------------------
-symboliclagrangeMultiplierEDDegree = method(Options => {Data => null});
-symboliclagrangeMultiplierEDDegree Ideal := ZZ => opts -> I -> (
+symbolicLagrangeMultiplierEDDegree = method(Options => {Data => null});
+symbolicLagrangeMultiplierEDDegree Ideal := ZZ => opts -> I -> (
     aLI := lagrangeIdeal(I,I);
     X := gens ring I;
     g := if opts.Data==null then apply(X,i->random(1,1000) ) else opts.Data;
@@ -182,8 +178,9 @@ symboliclagrangeMultiplierEDDegree Ideal := ZZ => opts -> I -> (
     )
 
 TEST///
-symboliclagrangeMultiplierEDDegree(ideal(x^2+y^2-1))
-symboliclagrangeMultiplierEDDegree(ideal((x^2+y^2+x)^2-x^2-y^2))
+R=QQ[x,y]
+symbolicLagrangeMultiplierEDDegree(ideal(x^2+y^2-1))
+symbolicLagrangeMultiplierEDDegree(ideal((x^2+y^2+x)^2-x^2-y^2))
 ///
 
 ------------------------------
@@ -315,10 +312,6 @@ TEST///
     assert(6 == degree({0},LVW1)	)
     assert(39==degree LVW1)
 
-sub(x,aLI)
-sub({x},aLI)//first
-sub(ideal x, aLI)
-
 ///
 
 
@@ -444,8 +437,6 @@ ring aLI
 peek WCI
 assert(2==degree WCI)
 
-WCI = criticalIdeal({x-a,y-b},aLI,Data=>{2,19})
-assert(2==degree WCI)--ED degree of the circle
 ///
 
 
@@ -547,7 +538,6 @@ bertiniCriticalPointSet = (u,g,LVW,bic)->(
     if not fileExists dir then mkdir dir;
     arCoords := CI#LagrangeIdeal.ConormalRing.Coordinates;
     avg := AffVariableGroup=>{arCoords#0,arCoords#2};
-    print avg;
     bc := B'Constants => apply(gens coefficientRing ring LVW,u,(i,j)->i=>j);
     JC := CI.JacobianConstraint;
     WI := LVW.WitnessPrimalIdeal;
@@ -582,7 +572,6 @@ bertiniCriticalPointSet = (u,g,LVW,bic)->(
 	IsIrreducible => null,
     	CriticalIdeal => CI
 	};
-    print currentTime();
     updateEvaluationTolerance(evalTol,ICPS);
     updateMultiplicityTolerance(1,ICPS);
     updateConditionNumberTolerance(1e10,ICPS);    
@@ -597,7 +586,7 @@ ring LVW
 u ={7,99}
 g= {x-a,y-b}
 bic={}
-bertiniCriticalPointSet(u,g,LVW,bic)
+--bertiniCriticalPointSet(u,g,LVW,bic)
 ICPS = isolatedRegularCriticalPointSet (u,g,LVW)
 
 ICPS = isolatedRegularCriticalPointSet (u,g,LVW,Strategy=>1)
@@ -646,9 +635,8 @@ TEST///
 R=QQ[a,b][x,y]
 I=ideal(x^2+y^2-1)
 WI=I
-LVW = witnessLagrangeVariety(WI,I)
+LVW = lagrangeIdeal(WI,I)
 ring LVW
-needsPackage"Bertini"
 ///
 
 
