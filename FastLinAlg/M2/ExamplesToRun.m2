@@ -1,6 +1,7 @@
 uninstallPackage "RandomRationalPoints";
 loadPackage "RandomRationalPoints";
 installPackage "RandomRationalPoints";
+check RandomRationalPoints
 
 allowableThreads = 8;
 loadPackage "RandomRationalPoints";
