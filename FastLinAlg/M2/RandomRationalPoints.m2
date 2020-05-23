@@ -516,7 +516,7 @@ findANonZeroMinor(ZZ, Matrix, Ideal) := opts -> (n,M,I)->(
 	N1new = join(N1new, {N1rand#i});
     );
     M3 := mutableMatrix phi(M_N1new);
-    if (rank(M3)<n) then return ("All n*n minors vanish at the randomly chosen point "  P. "Please try running function again for different results.");
+    if (rank(M3)<n) then return ("All n*n minors vanish at the randomly chosen point .  Please try running function again for different results.");
     N2 = random(rowRankProfile(M3));
     N2new = {};
     for i from 0 to n-1 do(
