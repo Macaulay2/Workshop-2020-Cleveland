@@ -20,7 +20,7 @@ newPackage(
 -- must be placed in one of the following two lists
 export {
 	"genericProjection", --documented, tested
-	"projectionToHypersurface",
+	"projectionToHypersurface", --documented, tested
 	"randomCoordinateChange", --documented, tested
 	"randomPoints", 
 	"extendingIdealByNonVanishingMinor",
@@ -257,7 +257,16 @@ projectionToHypersurface(Ideal) := opts -> (I1) -> (
             c1 = codim I1;
         ) else (c1 = opts.Codimension);
         local curMap;
-        return genericProjection(c1-1, I1, Homogeneous => opts.Homogeneous, MaxCoordinatesToReplace => opts.MaxCoordinatesToReplace, Replacement => opts.Replacement);
+        return genericProjection(c1-1, I1, Homogeneous => opts.Homogeneous, MaxCoordinatesToReplace => opts.MaxCoordinatesToReplace, Replacement => opts.Replacement, Verbose=>opts.Verbose);
+);
+
+projectionToHypersurface(Ring) := opts -> (R1) -> (
+        local c1;
+        if (opts.Codimension === null) then (
+            c1 = codim R1;
+        ) else (c1 = opts.Codimension);
+        local curMap;
+        return genericProjection(c1-1, R1, Homogeneous => opts.Homogeneous, MaxCoordinatesToReplace => opts.MaxCoordinatesToReplace, Replacement => opts.Replacement, Verbose=>opts.Verbose);
 );
 
 -*
@@ -358,7 +367,23 @@ randomPointViaGenericProjection(Ideal) := opts -> (I1) -> (
     R1 := ring I1;  
     i := 0;
     while(flag) and (i < opts.ProjectionAttempts) do (
-        (phi, I0) = projectionToHypersurface(I1, Homogeneous=>opts.Homogeneous, MaxCoordinatesToReplace => opts.MaxCoordinatesToReplace, Codimension => opts.Codimension);
+        if (opts.Codimension === null) then (
+            c1 := codim I1;
+            if (c1 == 1) then ( --don't project, if we are already a hypersurface
+                phi = map(ring I1, ring I1);
+                I0 = I1;
+            )
+            else(
+                (phi, I0) = projectionToHypersurface(I1, Homogeneous=>opts.Homogeneous, MaxCoordinatesToReplace => opts.MaxCoordinatesToReplace, Codimension => c1, Verbose=>opts.Verbose);
+            );
+        )
+        else if (opts.Codimension == 1) then (
+            phi = map(ring I1, ring I1);
+            I0 = I1;
+        )
+        else(
+            (phi, I0) = projectionToHypersurface(I1, Homogeneous=>opts.Homogeneous, MaxCoordinatesToReplace => opts.MaxCoordinatesToReplace, Codimension => opts.Codimension, Verbose=>opts.Verbose);
+        );
         if (codim I0 == 1) then (
             if (opts.Strategy == GenericProjection) then (
                 pt = randomPoints(I0, switchStrategy(opts, BruteForce)))
@@ -721,6 +746,8 @@ doc ///
             whether coordinate replacements should be binomial (Binomial) or fully random (Full) 
         Homogeneous => Boolean
             whether coordinate replacements should be Homogeneous
+        Verbose => Boolean
+            set to true for verbose output
     Outputs
         :RingMap
             the coordinate change map.
@@ -762,29 +789,43 @@ doc ///
     Key
         projectionToHypersurface
         (projectionToHypersurface, Ideal)
+        (projectionToHypersurface, Ring)
+        [projectionToHypersurface, Codimension]
     Headline
-        Projection to a random hypersurface.
+        Generic projection to a hypersurface
     Usage
-        projectionToHypersurface I   
+        projectionToHypersurface I
+        projectionToHypersurface R 
     Inputs
         I:Ideal
-            an ideal in a polynomial Ring
-        MaxCoordinatesToReplace => ZZ
-            can be changed
+            an ideal in a polynomial ring
+        R:Ring
+            a quotient of a polynomial ring
         Codimension => ZZ
+            specified if you already know the codimension of your Ideal (or QuotientRing) in your ambient ring
+        MaxCoordinatesToReplace => ZZ
+            to be passed to randomCoordinateChange
+        Replacement => Symbol
+            to be passed to randomCoordinateChange
         Homogeneous => Boolean
+            to be passed to randomCoordinateChange
+        Verbose => Boolean
+            set to true for verbose output
     Outputs
         :RingMap
-            a Projection map.
-        :Ideal
-            defining ideal of the projection of V(I)  
+            a list with two entries, the generic projection map, and the ideal if I was provided, or the ring if R was provided
     Description
         Text
-            Gives a projection to a random hypersurface.  
+            This creates a projection to a hypersurface.  It essentially calls {\tt genericProjection(codim I - 1, I)}.  
         Example
-            R=ZZ/5[x,y,z]
-            I = ideal(random(3,R)-2, random(2,R))
+            R=ZZ/5[x,y,z];
+            I = ideal(random(3,R)-2, random(2,R));
             projectionToHypersurface(I)
+            projectionToHypersurface(R/I)
+        Text
+            If you already know the codimension is {\tt c}, you can set {\tt Codimension=>c} so the function does not compute it.
+    SeeAlso
+        genericProjection
 ///
 doc///
     Key
@@ -1169,6 +1210,17 @@ assert(dim source (L#0) == 2);
 assert(ker (L2#0) == 0)
 ///
 
+--testing projectionToHypersurface, for an ideal and a ring
+TEST///
+R = ZZ/11[x,y,z];
+I = ideal(random(2, R), random(3, R));
+L = projectionToHypersurface(I);
+assert(dim source(L#0) == 2); --we should drop one dimension
+assert(codim(L#1) == 1);
+L2 = projectionToHypersurface(R/I);
+assert(dim source(L2#0) == 1)
+assert(codim(L2#1) == 1)
+///
 
 TEST///
 ---this tests findANonZeroMinor---
