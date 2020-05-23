@@ -2419,7 +2419,7 @@ document {
    Headline => "Generates a list of random integers from a specified range with no repitions.",
    Usage => "randNoRepeats(n,k)",
    Inputs => {
-	"n" => Ideal => {"The maximum possible value in the random list."},
+	"n" => ZZ => {"The maximum possible value in the random list."},
 	"k" => ZZ => {"The number of random integers to generate."}
 	},
    Outputs => {
