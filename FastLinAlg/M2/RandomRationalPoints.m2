@@ -22,13 +22,9 @@ export {
 	"genericProjection", 
 	"projectionToHypersurface",
 	"randomCoordinateChange",
-    "randomPointViaLinearIntersection",
-    "randomPointViaGenericProjection",
 	"randomPoints", 
-	"randomPointViaMultiThreads",
 	"extendingIdealByNonVanishingMinor",
 	"findANonZeroMinor",
-	"mtSearchPoints",
 	"MyOption",
 	"NumPointsToCheck", 
 	"Codimension",
@@ -727,6 +723,44 @@ doc ///
             I = ideal(random(3,R)-2, random(2,R))
             projectionToHypersurface(I)
 ///
+doc///
+    Key
+        ProjectionAttempts
+        [randomPoints, ProjectionAttempts]
+    Headline
+         Number of projection trials using in the Strategy GenericProjection
+    Description
+        Text
+            When calling the Strategy {\tt GenericProjection}  it denotes the number of trials whose default value is 20.
+    SeeAlso
+        randomPoints
+///
+
+doc///
+    Key
+        IntersectionAttempts
+        [randomPoints, ProjectionAttempts]
+    Headline
+        Number of intersection trials using in the Strategy LinearIntersection
+    Description
+        Text
+            When calling the Strategy {\tt LinearIntersection}  it denotes the number of trials whose default value is 20.
+    SeeAlso
+        randomPoints
+///
+
+doc///
+    Key
+        MaxCoordinatesToReplace
+        [randomCoordinateChange, MaxCoordinatesToReplace]
+    Headline
+        The maximum number of co-ordinate change 
+    Description
+        Text
+           The maximum number of co-ordinate change while using {\tt randomCoordinateChange} 
+    SeeAlso
+        randomCoordinateChange
+///
 
 doc ///
     Key
@@ -737,7 +771,7 @@ doc ///
         GenericProjection
         LinearIntersection
         HybridProjectionIntersection
-	MultiThreads
+        MultiThreads
     Headline
         values for the option Strategy when calling randomPoints
     Description
@@ -747,10 +781,46 @@ doc ///
             {\tt GenericProjection} projects to a hypersurface, via {\tt projectionToHypersurface} and then uses a {\tt BruteForce} strategy.
             {\tt LinearIntersection} intersects with an appropriately random linear space.
             {\tt HybridProjectionIntersection} does a generic projection, followed by a linear intersection. Notice that speed, or success, varies depending on the strategy.
+            {\tt MultiThreads} follows  Bruteforce using multiple threads
     SeeAlso
         randomPoints
         randomKRationalPoint
         projectionToHypersurface
+///
+
+-*doc///
+    Key
+        Codimension
+        [randomPoints, Codimension]
+        [projectionToHypersurface, Codimension]
+    Headline
+        Checks the 
+    Description 
+        Text
+            
+    SeeAlso
+        randomPoints
+        projectionToHypersurface
+///
+*-
+doc///
+    Key 
+        PointCheckAttempts
+        [randomPoints, PointCheckAttempts]
+        [extendingIdealByNonVanishingMinor,PointCheckAttempts ]
+        [findANonZeroMinor, PointCheckAttempts]
+        [randomPointViaMultiThreads, PointCheckAttempts]
+    Headline
+        Number of times the the function will search for a point 
+    Description
+        Text
+            while calling {\tt randomPoints} it denotes the number of trials with default value 100.
+    SeeAlso
+        randomPoints
+        extendingIdealByNonVanishingMinor
+        findANonZeroMinor
+        randomPointViaMultiThreads
+
 ///
 
 doc ///
@@ -772,6 +842,9 @@ doc ///
         randomPoints(I)
         randomPoints(n, I, Strategy => GenericProjection)
         randomPoints(n, I, Strategy => LinearIntersection)
+        randomPoints(n,I, Strategy=> HybridProjectionIntersection)
+        randomPoints(n, I, Strategy => MultiThreads)
+
     Inputs
         n: ZZ
             an integer denoting the number of desired points.
@@ -780,14 +853,14 @@ doc ///
         R:Ring
             a polynomial ring
         Strategy => String
-            to specify whether to use method of Linear Intersection, Generic Projection, HybridProjectionIntersection
+            to specify whether to use method of Linear Intersection, Generic Projection, HybridProjectionIntersection and MultiThreads
         ProjectionAttempts => ZZ
             can be changed
         MaxCoordinatesToReplace => ZZ
             can be changed
         Codimension => ZZ
             can be changed
-        ExtendField =>Ring
+        ExtendField => Boolean
         IntersectionAttempts => ZZ
             can be changed
 	PointCheckAttempts => ZZ
