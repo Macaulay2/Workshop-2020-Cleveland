@@ -19,9 +19,9 @@ newPackage(
 -- Any symbols or functions that the user is to have access to
 -- must be placed in one of the following two lists
 export {
-	"genericProjection", 
+	"genericProjection", --documented, tested
 	"projectionToHypersurface",
-	"randomCoordinateChange",
+	"randomCoordinateChange", --documented, tested
 	"randomPoints", 
 	"extendingIdealByNonVanishingMinor",
 	"findANonZeroMinor",
@@ -30,22 +30,18 @@ export {
 	"Codimension",
 	"MaxCoordinatesToReplace",
     "Replacement",
-    "Simple",
     "Full", 
 	"BruteForce", --a valid value for [RandomPoint, Strategy], documented, 
     "GenericProjection",  --a valid value for [RandomPoint, Strategy]
     "HybridProjectionIntersection", --a valid value for [RandomPoint, Strategy]
     "LinearIntersection",  --a valid value for [RandomPoint, Strategy]
-    "MultiThreads",  --a valid value for [RandomPoint, Strategy]
+    --"MultiThreads",  --a valid value for [RandomPoint, Strategy]
 	"ProjectionAttempts", --used in the GenericProjection strategy
     "IntersectionAttempts", --used in the LinearIntersection strategy
     "ExtendField", --used in GenericProjection and LinearIntersection strategy
     "PointCheckAttempts",
-    "NumTrials", -- used in the MultiThreads strategy
     "NumThreadsToUse", -- used in the MultiThreads strategy
     "ReturnAllResults" -- used in the multi-thread search function mtSearchPoints
-    --"NumTrials", -- used in the multi-thread search function mtSearchPoints
-    --"NumThreadsToUse" -- used in the multi-thread search function mtSearchPoints
     }
 exportMutable {}
 
@@ -62,8 +58,23 @@ optRandomPoints := {
     ProjectionAttempts => 20,
     ExtendField => false,
     PointCheckAttempts => 100,
-    NumThreadsToUse => 4,
-    NumTrials => 1
+    NumThreadsToUse => min(allowableThreads, 3),
+    Verbose => false
+};
+
+optCoorindateChange := {
+    Verbose => false, 
+    Homogeneous=>true, 
+    Replacement=>Full, 
+    MaxCoordinatesToReplace => infinity
+};
+
+optProjectionToHypersurface := {
+    Codimension => null,
+    Verbose => false, 
+    Homogeneous=>true, 
+    Replacement=>Binomial, 
+    MaxCoordinatesToReplace => infinity
 };
 
 pointToIdeal = method(Options =>{Homogeneous => false});
@@ -128,10 +139,10 @@ createRandomPoints(Ideal):=List => opts->(I1) ->(
     return L )
 
 
-randomCoordinateChange = method(Options=>{Homogeneous=>true, Replacement=>Full, MaxCoordinatesToReplace => infinity});
+randomCoordinateChange = method(Options=>optCoorindateChange);
 
 randomCoordinateChange(Ring) := opts -> (R1) -> (
-    if (debugLevel > 0) then print "randomCoordinateChange: starting.";
+    if (debugLevel > 0) or (opts.Verbose) then print "randomCoordinateChange: starting.";
     local phi;
     if not class R1 === PolynomialRing then error "randomCoordinateChange: expected a polynomial ring";
     myMon := monoid R1;
@@ -139,7 +150,7 @@ randomCoordinateChange(Ring) := opts -> (R1) -> (
     genList := random gens R1;
     genCount := #(genList);
     local replacementFunction;
-    if (opts.Replacement == Simple) then (
+    if (opts.Replacement == Binomial) then (
         if opts.Homogeneous then (
             replacementFunction = trm -> (v2 := (random(0, R1))*trm + (random(0, R1))*(genList#(random(#genList))); if (v2 == 0) then trm else v2);) 
         else (
@@ -182,49 +193,71 @@ randomCoordinateChange(Ring) := opts -> (R1) -> (
     return phi;*-
 );
 
-genericProjection = method(Options =>{Homogeneous => true, Replacement=>Simple, MaxCoordinatesToReplace => infinity});
+genericProjection = method(Options=>optCoorindateChange);
 
 genericProjection(Ideal) := opts -> (I1) -> (
-        R1 := ring I1;
-        psi := randomCoordinateChange(R1, opts);
-        S1 := source psi;
-        I2 := psi^-1(I1);
-        kk:=coefficientRing R1;
-        local Re;
-        local Rs;
-        Re=kk(monoid[apply(dim S1,i->S1_i),MonomialOrder => Eliminate 1]);
-        rs:=(entries selectInSubring(1,vars Re))_0;
-        Rs=kk(monoid[rs]);
-        f:=ideal substitute(selectInSubring(1, generators gb substitute(I2,Re)),Rs);
-        phi := map(S1, Rs);
-        return(psi*phi, f);
+    return genericProjection(1, I1, opts);
+    -*if (debugLevel > 0) or (opts.Verbose) then print concatenate("genericProjection (dropping 1 dimension):  Starting, Replacement =>", toString(opts.Replacement), ", MaxCoordinatesToReplace => ", toString(opts.MaxCoordinatesToReplace));
+    R1 := ring I1;
+    psi := randomCoordinateChange(R1, opts);
+    S1 := source psi;
+    I2 := psi^-1(I1);
+    kk:=coefficientRing R1;
+    local Re;
+    local Rs;
+    Re=kk(monoid[apply(dim S1,i->S1_i),MonomialOrder => Eliminate 1]);
+    rs:=(entries selectInSubring(1,vars Re))_0;
+    Rs=kk(monoid[rs]);
+    f:=ideal substitute(selectInSubring(1, generators gb substitute(I2,Re)),Rs);
+    phi := map(S1, Rs);
+    return(psi*phi, f);*-
 );
 
 genericProjection(ZZ, Ideal) := opts -> (n1, I1) -> (
+        if (debugLevel > 0) or (opts.Verbose) then print concatenate("genericProjection (dropping ", toString(n1), " dimension):  Starting, Replacement =>", toString(opts.Replacement), ", MaxCoordinatesToReplace => ", toString(opts.MaxCoordinatesToReplace));
         R1 := ring I1;
         psi := randomCoordinateChange(R1, opts);
         S1 := source psi;
         I2 := psi^-1(I1);
+        if (n1 <= 0) then return(psi, I2); --if we don't actually want to project
         kk:=coefficientRing R1;
         local Re;
         local Rs;
         Re=kk(monoid[apply(dim S1,i->S1_i),MonomialOrder => Eliminate n1]);
-        rs:=(entries selectInSubring(1,vars Re))_0;
+        rs:=first (entries selectInSubring(1,vars Re));
         Rs=kk(monoid[rs]);
         f:=ideal substitute(selectInSubring(1, generators gb substitute(I2,Re)),Rs);
         phi := map(S1, Rs);
         return(psi*phi, f);
 );
 
-projectionToHypersurface = method(Options =>{Homogeneous => true, Replacement=>Simple, MaxCoordinatesToReplace => infinity, Codimension => null});
+genericProjection(ZZ, Ring) := opts -> (n1, R1) -> (
+    J1 := ideal R1;
+    l1 := genericProjection(n1, J1, opts);
+    if (class R1 === PolynomialRing) then (
+        return (l1#0, source (l1#0));
+    )
+    else (
+        J2 := l1#1;
+        S1 := source(l1#0);
+        newMap := map(R1, S1/J2, matrix(l1#0));
+        return (newMap, source newMap);
+    );
+);
+
+genericProjection(Ring) := opts -> (R1) -> (
+    return genericProjection(1, R1, opts);
+);
+
+projectionToHypersurface = method(Options => optProjectionToHypersurface);
 
 projectionToHypersurface(Ideal) := opts -> (I1) -> (
         local c1;
         if (opts.Codimension === null) then (
-        c1 = codim I1;
+            c1 = codim I1;
         ) else (c1 = opts.Codimension);
         local curMap;
-        return genericProjection(c1-1, I1, Homogeneous => opts.Homogeneous, MaxCoordinatesToReplace => opts.MaxCoordinatesToReplace);
+        return genericProjection(c1-1, I1, Homogeneous => opts.Homogeneous, MaxCoordinatesToReplace => opts.MaxCoordinatesToReplace, Replacement => opts.Replacement);
 );
 
 -*
@@ -283,7 +316,7 @@ randomPointViaLinearIntersection(Ideal) := opts -> (I1) -> (
                     return finalPoint;
                 )
                 else if (opts.ExtendField == true) then (
-                    if (debugLevel > 0) then print "randomPointViaLinearIntersection:  extending the field.";
+                    if (debugLevel > 0) or (opts.Verbose) then print "randomPointViaLinearIntersection:  extending the field.";
                     phi = (extendFieldByDegree(myDeg, R1))#1;
                     m2 = phi(ptList#j);
                     newPtList = random decompose(m2); --make sure we are picking points randomly from this decomposition
@@ -301,7 +334,7 @@ randomPointViaLinearIntersection(Ideal) := opts -> (I1) -> (
                 j = j+1;
             );
         );
-        if (debugLevel > 0) then print "randomPointViaLinearIntersection:  failed, looping and trying a new linear space.";
+        if (debugLevel > 0) or (opts.Verbose) then print "randomPointViaLinearIntersection:  failed, looping and trying a new linear space.";
         i = i+1;
     );
     return {};
@@ -350,7 +383,7 @@ randomPointViaGenericProjection(Ideal) := opts -> (I1) -> (
                             );
                         )                        
                         else if (opts.ExtendField == true) then (
-                            if (debugLevel > 0) then print "randomPointViaGenericProjection:  extending the field.";
+                            if (debugLevel > 0) or (opts.Verbose) then print "randomPointViaGenericProjection:  extending the field.";
                             phi = (extendFieldByDegree(myDeg, R1))#1;
                             m2 = phi(ptList#j);
                             newPtList = random decompose(m2);
@@ -364,7 +397,7 @@ randomPointViaGenericProjection(Ideal) := opts -> (I1) -> (
                 )
             );
         );
-        if (debugLevel >0) then print "randomPointViaGenericProjection: That didn't work, trying again...";
+        if (debugLevel > 0) or (opts.Verbose) then print "randomPointViaGenericProjection: That didn't work, trying again...";
         i = i+1;
     );
     return {};
@@ -400,8 +433,10 @@ randomPoints(Ideal) := List => opts -> (I) -> (
     R := ring I;
    
     if (opts.Strategy == BruteForce) 
-    then return searchPoints(opts.PointCheckAttempts, R, genList)
-    	
+    then (
+        if (opts.NumThreadsToUse > 1) then return randomPointViaMultiThreads(I, opts)
+        else return searchPoints(opts.PointCheckAttempts, R, genList);
+    )	
     else if (opts.Strategy == GenericProjection) 
     then return randomPointViaGenericProjection(I, opts)
 	
@@ -411,9 +446,8 @@ randomPoints(Ideal) := List => opts -> (I) -> (
     else if (opts.Strategy == HybridProjectionIntersection) 
     then return randomPointViaLinearIntersection(I, opts)
     
-    -- after multiple times, MultiThreads causes stack error [DEBUG]
-    else if (opts.Strategy == MultiThreads)
-    then return randomPointViaMultiThreads(I, opts)
+    --else if (opts.Strategy == MultiThreads)
+    --then return randomPointViaMultiThreads(I, opts)
     
     else error "randomPoints:  Not a valid Strategy";
 );
@@ -546,9 +580,9 @@ randomPointViaMultiThreads(Ideal) := List => opts -> (I) -> (
     
     if any(resultList, (l) -> (#l>0))
     then (
-	 j := 0;
-	 while #(resultList#j) == 0 do j = j + 1;
-	 return resultList#j;
+        j := 0;
+        while #(resultList#j) == 0 do j = j + 1;
+        return resultList#j;
     );
 
     return {};
@@ -610,49 +644,69 @@ document {
         Headline => "Give a random point in a variety",
         EM "RandomRationalPoints", "Give a random point inside a affine space that lies inside a variety ."
 }
+
 doc ///
     Key
         genericProjection
         (genericProjection, Ideal)
-        (genericProjection,ZZ,Ideal)
+        (genericProjection, Ring)
+        (genericProjection, ZZ, Ideal)
+        (genericProjection, ZZ, Ring)
         [genericProjection, Homogeneous]
-        [genericProjection, MaxCoordinatesToReplace]
     Headline
-       Finds a random generic projections of the ideal.
+       finds a random (somewhat) generic projection of the ring or ideal
     Usage
+        genericProjection(n, I)
+        genericProjection(n, R)
         genericProjection(I)
+        genericProjection(R)
     Inputs
         I:Ideal 
-            in a polynomial Ring
+            in a polynomial ring
+        R:Ring
+            a quotient of a polynomial ring
         n:ZZ
-            an integer specifying how many dimensions down to project
+            an integer specifying how many dimensions to drop
         MaxCoordinatesToReplace => ZZ
-            can be changed
+            to be passed to randomCoordinateChange
+        Replacement => Symbol
+            to be passed to randomCoordinateChange
         Homogeneous => Boolean
+            to be passed to randomCoordinateChange
     Outputs
-        :RingMap
-            a Projection map.
-        :Ideal
-            defining ideal of the projection of V(I)     
+        :List
+            a list with two entries, the generic projection map, and the ideal if I was provided, or the ring if R was provided
     Description
         Text
-            If no integer $n$ is provided, this gives the projection map from $\mathbb{A}^N \mapsto\mathbb{A}^{N-1}$ and the defining ideal of the projection of $V(I)$.
+            This gives the projection map from $\mathbb{A}^N \mapsto\mathbb{A}^{N-n}$ and the defining ideal of the projection of $V(I)$
         Example
-            R=ZZ/5[x,y,z]
-            I = ideal(x,y^2)
+            R=ZZ/5[x,y,z,w];
+            I = ideal(x,y^2,w^3+x^2);
+            genericProjection(2,I)
+        Text
+            If no integer $n$ is provided, then drops one dimension, in other words it treats $n = 1$.
+        Example
+            R=ZZ/5[x,y,z,w];
+            I = ideal(x,y^2);
             genericProjection(I)
         Text
-            More generally, this gives the projection map from $\mathbb{A}^N \mapsto\mathbb{A}^{N-n}$ and the defining ideal of the projection of $V(I)$
+            Alternately, instead of {\tt I}, you may pass it a quotient ring.  It will then return the inclusion of the generic projection ring into the given ring, followed by the source of that inclusion.  It is essentially the same functionality as calling {\tt genericProjection(n, ideal R)} although the format of the output is slightly different.
         Example
-            R=ZZ/5[x,y,z,w]
-            I = ideal(x,y^2,w^3+x^2)
-            genericProjection(2,I)
+            R = ZZ/13[x,y,z];
+            I = ideal(y^2*z-x*(x-z)*(x+z));
+            genericProjection(R/I)
+        Text
+            This method works by calling {\tt randomCoordinateChange} before dropping some variables.  It passes the options {\tt Replacement}, {\tt MaxCoordinatesToReplace}, {\tt Homogeneous} to that function.
+        Text
+            This function makes no attempt to verify that the projection is actually generic with respect to the ideal.  
+    SeeAlso
+        randomCoordinateChange
 ///
+
 doc ///
     Key
         randomCoordinateChange
         (randomCoordinateChange, Ring)
-        [randomCoordinateChange, Replacement]
         [randomCoordinateChange, Homogeneous]
     Headline
         produce linear automorphism of the ring
@@ -664,7 +718,7 @@ doc ///
         MaxCoordinatesToReplace => ZZ 
             how many coordinates should be replaced by linear functions
         Replacement => Symbol 
-            whether coordinate replacements should be binomial (Simple) or fully random (Full) 
+            whether coordinate replacements should be binomial (Binomial) or fully random (Full) 
         Homogeneous => Boolean
             whether coordinate replacements should be Homogeneous
     Outputs
@@ -677,18 +731,31 @@ doc ///
             R=ZZ/5[x,y,z]
             randomCoordinateChange(R)
         Text
-            In some applications, a full change of coordinates is not desired, as it might cause code to run slowly, and so a simpler change of coordinates might be preferred.  
-            These simpler changes of coordinates can be accomplished with the options {\tt Replacement} and {\tt MaxCoordinatesToReplace}.
-            {\tt Replacement} can take either {\tt Simple} or {\tt Full}.  If {\tt Simple} is specified, then only binomial changes of coordinates will be produced. 
+            In some applications, a full change of coordinates is not desired, as it might cause code to run slowly, and so a Binomialr change of coordinates might be preferred.  
+            These Binomialr changes of coordinates can be accomplished with the options {\tt Replacement} and {\tt MaxCoordinatesToReplace}.
+            {\tt Replacement} can take either {\tt Binomial} or {\tt Full}.  If {\tt Binomial} is specified, then only binomial changes of coordinates will be produced. 
         Example
             S = ZZ/11[a..e]
-            randomCoordinateChange(S, Replacement=>Simple)
+            randomCoordinateChange(S, Replacement=>Binomial)
         Text
             Finally, if {\tt Homogeneous} is set to {\tt false}, then our change of coordinates is not homogeneous (although it is still linear).
         Example 
             randomCoordinateChange(R, Homogeneous=>false)
         Text
             Note, this function already checks whether the function is an isomorphism by computing the Jacobian.
+///
+
+doc ///
+    Key
+        [genericProjection, Verbose]
+        [randomCoordinateChange, Verbose]
+        [randomPoints, Verbose]
+        [projectionToHypersurface, Verbose]
+    Headline
+        turns out Verbose (debugging) output
+    Description
+        Text
+            Set the option {\tt Verbose => true} to turn on verbose output.  This may be useful in debugging or in determining why an computation is running slowly. 
 ///
 
 doc ///
@@ -749,14 +816,46 @@ doc///
     Key
         MaxCoordinatesToReplace
         [randomCoordinateChange, MaxCoordinatesToReplace]
+        [randomPoints, MaxCoordinatesToReplace]
+        [genericProjection, MaxCoordinatesToReplace]
     Headline
-        The maximum number of co-ordinate change 
+        The maximum number of coordinates to turn into non-monomial functions when calling {\tt randomCoordinateChange}
     Description
         Text
-            When calling {\tt randomCoordinateChange}, the user can specify that only a specified number of coordinates should be non-monomial changes.  
+            When calling {\tt randomCoordinateChange}, the user can specify that only a specified number of coordinates should be non-monomial.  Sometimes, generic coordinate changes where all coordinates are modified, can be very slow.  This is a way to mitigate for that.
+            This option is passed to {\tt randomCoordinateChange} by other functions that call it.
         Example
             S = ZZ/11[a..e]
             randomCoordinateChange(S, MaxCoordinatesToReplace=>2)
+    SeeAlso
+        randomCoordinateChange
+///
+
+doc ///
+    Key
+        Replacement
+        [randomCoordinateChange, Replacement]
+        [genericProjection, Replacement]
+        [projectionToHypersurface, Replacement]
+        Full
+    Headline
+        When changing coordinates, whether to replace variables by general degre 1 forms or binomials
+    Usage
+        Replacement => Full
+        Replacement => Binomial
+    Description
+        Text
+            When calling {\tt randomCoordinateChange}, or functions that call it, setting {\tt Replacement => Full} will mean that coordinates are changed to a general degree 1 form.  If {\tt Replacement => Binomial}, the coordiates are only changed to bionomials, which can be much faster for certain applications.
+        Example
+            R = ZZ/11[a,b,c];
+            randomCoordinateChange(R, Replacement=>Full)
+            randomCoordinateChange(R, Replacement=>Binomial)
+        Text
+            If {\tt Homogeneous => false}, then there will be constant terms, and we view $mx + b$ as a binomial.
+        Example
+            S = ZZ/11[x,y];
+            randomCoordinateChange(S, Replacement => Full, Homogeneous => false)
+            randomCoordinateChange(S, Replacement => Binomial, Homogeneous => false)
     SeeAlso
         randomCoordinateChange
 ///
@@ -770,7 +869,6 @@ doc ///
         GenericProjection
         LinearIntersection
         HybridProjectionIntersection
-        MultiThreads
     Headline
         values for the option Strategy when calling randomPoints
     Description
@@ -780,7 +878,6 @@ doc ///
             {\tt GenericProjection} projects to a hypersurface, via {\tt projectionToHypersurface} and then uses a {\tt BruteForce} strategy.
             {\tt LinearIntersection} intersects with an appropriately random linear space.
             {\tt HybridProjectionIntersection} does a generic projection, followed by a linear intersection. Notice that speed, or success, varies depending on the strategy.
-            {\tt MultiThreads} follows  Bruteforce using multiple threads
     SeeAlso
         randomPoints
         randomKRationalPoint
@@ -808,7 +905,6 @@ doc///
         [randomPoints, PointCheckAttempts]
         [extendingIdealByNonVanishingMinor,PointCheckAttempts ]
         [findANonZeroMinor, PointCheckAttempts]
-        [randomPointViaMultiThreads, PointCheckAttempts]
     Headline
         Number of times the the function will search for a point 
     Description
@@ -823,7 +919,6 @@ doc///
         randomPoints
         extendingIdealByNonVanishingMinor
         findANonZeroMinor
-        randomPointViaMultiThreads
 ///
 
 doc ///
@@ -831,7 +926,6 @@ doc ///
         randomPoints
         (randomPoints,ZZ,Ideal)
         (randomPoints, Ideal)
-        [randomPoints, MaxCoordinatesToReplace]
         [randomPoints, Homogeneous]
         [randomPoints, ExtendField]
         [randomPoints, Codimension]
@@ -843,8 +937,6 @@ doc ///
         randomPoints(n, I, Strategy => GenericProjection)
         randomPoints(n, I, Strategy => LinearIntersection)
         randomPoints(n,I, Strategy=> HybridProjectionIntersection)
-        randomPoints(n, I, Strategy => MultiThreads)
-
     Inputs
         n: ZZ
             an integer denoting the number of desired points.
@@ -853,7 +945,7 @@ doc ///
         R:Ring
             a polynomial ring
         Strategy => String
-            to specify whether to use method of Linear Intersection, Generic Projection, HybridProjectionIntersection and MultiThreads
+            to specify which strategy to use, BruteForce, LinearIntersection, GenericProjection, HybridProjectionIntersection
         ProjectionAttempts => ZZ
             can be changed
         MaxCoordinatesToReplace => ZZ
@@ -867,9 +959,6 @@ doc ///
 	    points to search in total
         NumThreadsToUse => ZZ
 	    number of threads to use
-	NumTrials => ZZ
-	    number of trails
-        Homogeneous => Boolean
     Outputs
         :List
             a list of points in the variety with possible repetitions.
@@ -988,8 +1077,6 @@ doc ///
             points to search in total
         NumThreadsToUse => ZZ
             number of threads to use
-        NumTrials => ZZ
-            number of trails
         ReturnAllResults => Boolean
             whether to search and return all found points
     Outputs
@@ -1048,13 +1135,38 @@ S2 = set gens R;
 assert(isSubset(S1, S2) and isSubset(S2, S1));
 ///
 
---verifying Simple vs Full replacement
+--verifying Binomial vs Full replacement
 TEST ///
 R = ZZ/1031[a..h];
-phi = randomCoordinateChange(R, Replacement=>Simple);
+phi = randomCoordinateChange(R, Replacement=>Binomial);
 psi = randomCoordinateChange(R, Replacement=>Full);
 assert(all(apply(first entries matrix phi, v -> terms v), t -> #t <= 2));
 assert(any(apply(first entries matrix psi, v -> terms v), t -> #t >= 3)); --this could be false, and an asteroid could destroy Earth.
+///
+
+--testing genericProjection, on an ideal
+TEST///
+R = ZZ/101[a,b,c];
+I = ideal(a,b,c);
+L = genericProjection(2, I, Homogeneous => true);
+assert(dim source (L#0) == 1);
+assert(dim (L#1) == 0);  
+L2 = genericProjection(I, Homogeneous => true);
+assert(dim source (L2#0) == 2);
+assert(dim (L2#1) == 0);  
+L3 = genericProjection(2, I, Homogeneous => false)
+assert(dim (L3#1) == 0)
+///
+
+--testing genericProjection, on a ring
+TEST///
+R = ZZ/101[x,y,z]/ideal(y^2*z-x*(x-z)*(x+z));
+L = genericProjection(1, R, Homogeneous => true); --we are already a hypersurface, so this should turn into a polynomial ring
+assert(dim source (L#0) == 2);
+assert(ker (L#0) == 0)
+L2 = genericProjection(1, R, Homogeneous => false);
+assert(dim source (L#0) == 2);
+assert(ker (L2#0) == 0)
 ///
 
 
@@ -1076,6 +1188,7 @@ I = ideal(t_1,t_2+t_3);
 M = jacobian I;           
 assert(dim extendingIdealByNonVanishingMinor(2,M,I,Strategy => LinearIntersection) < 1)
 ///
+
 
 end
 

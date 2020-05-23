@@ -19,17 +19,6 @@ J = I + chooseGoodMinors(5, 4, M);
 
 extendingIdealByNonVanishingMinor(I, M, 4, Strategy=>GenericProjection)
 
- new OptionTable from {
-    Strategy=>BruteForce, 
-    Homogeneous => true, 
-    MaxChange => 0, 
-    Codimension => null,
-    IntersectionAttempts => 20,
-    ProjectionAttempts => 20,
-    ExtendField => false,
-    PointCheckAttempts => 100
-}
-
 R = ZZ/5[x,y]
 R = ZZ/11[x,y,z]
 I2 = intersect(ideal(x,y),ideal(x,z), ideal(y,z))
