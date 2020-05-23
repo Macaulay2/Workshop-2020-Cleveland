@@ -652,7 +652,6 @@ doc ///
     Key
         randomCoordinateChange
         (randomCoordinateChange, Ring)
-        [randomCoordinateChange, MaxCoordinatesToReplace]
         [randomCoordinateChange, Replacement]
         [randomCoordinateChange, Homogeneous]
     Headline
@@ -684,10 +683,6 @@ doc ///
         Example
             S = ZZ/11[a..e]
             randomCoordinateChange(S, Replacement=>Simple)
-        Text
-            On the other hand, the user can specify that only a specified number of coordinates should be non-monomial changes.
-        Example
-            randomCoordinateChange(S, MaxCoordinatesToReplace=>2)
         Text
             Finally, if {\tt Homogeneous} is set to {\tt false}, then our change of coordinates is not homogeneous (although it is still linear).
         Example 
@@ -732,7 +727,7 @@ doc///
          Number of projection trials using in the Strategy GenericProjection
     Description
         Text
-            When calling the Strategy {\tt GenericProjection}  it denotes the number of trials whose default value is 20.
+            When calling the Strategy {\tt GenericProjection} or {\tt HybridProjectionIntersection} from {\tt randomPoints}, this option denotes the number of trials before giving up.
     SeeAlso
         randomPoints
 ///
@@ -740,7 +735,7 @@ doc///
 doc///
     Key
         IntersectionAttempts
-        [randomPoints, ProjectionAttempts]
+        [randomPoints, IntersectionAttempts]
     Headline
         Number of intersection trials using in the Strategy LinearIntersection
     Description
@@ -758,7 +753,10 @@ doc///
         The maximum number of co-ordinate change 
     Description
         Text
-           The maximum number of co-ordinate change while using {\tt randomCoordinateChange} 
+            When calling {\tt randomCoordinateChange}, the user can specify that only a specified number of coordinates should be non-monomial changes.  
+        Example
+            S = ZZ/11[a..e]
+            randomCoordinateChange(S, MaxCoordinatesToReplace=>2)
     SeeAlso
         randomCoordinateChange
 ///
@@ -815,13 +813,17 @@ doc///
         Number of times the the function will search for a point 
     Description
         Text
-            while calling {\tt randomPoints} it denotes the number of trials with default value 100.
+            When calling {\tt randomPoints}, and functions that call it, with a {\tt BruteForce} strategy or {\tt GenericProjection} strategy, this denotes the number of trials for brute force point checking.
+        Example
+            R = ZZ/11[x,y,z];
+            I = ideal(x,y);
+            randomPoints(I, PointCheckAttempts=>1)
+            randomPoints(I, PointCheckAttempts=>1000)
     SeeAlso
         randomPoints
         extendingIdealByNonVanishingMinor
         findANonZeroMinor
         randomPointViaMultiThreads
-
 ///
 
 doc ///
@@ -829,10 +831,7 @@ doc ///
         randomPoints
         (randomPoints,ZZ,Ideal)
         (randomPoints, Ideal)
-        [randomPoints, ProjectionAttempts]
-        [randomPoints, PointCheckAttempts]
         [randomPoints, MaxCoordinatesToReplace]
-        [randomPoints, IntersectionAttempts]
         [randomPoints, Homogeneous]
         [randomPoints, ExtendField]
         [randomPoints, Codimension]
