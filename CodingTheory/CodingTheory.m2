@@ -1201,8 +1201,13 @@ r:=L#3;
 -- writing methods to convert between 
 -- different Types of codes
 
+-- Overloading the ring function to return the base field of a LinearCode.
+-- This will work even when AmbientModule and BaseField are not properly defined.
+ring LinearCode := Ring => C -> (
+    ring(C.GeneratorMatrix)
+    )
 
- 
+
 --input: A linear code C
 --output: The field C is a code over
 --description: Given a linear code, the function returns the field C is a code over
@@ -1218,6 +1223,11 @@ vectorSpace = method(TypicalValue => Module)
 vectorSpace LinearCode := Module => C -> (
     return C.Code
     )
+
+
+
+
+
 
 --input: A linear code C
 --output: The ambient vector space the code is a subspace of
@@ -2071,7 +2081,9 @@ document {
 	SUBSECTION "Modified Methods",
 	
 	UL {
-	    TO "random(GaloisField, ZZ, ZZ)" -- not sure how to cite this properly.
+	    TO "random(GaloisField, ZZ, ZZ)", -- not sure how to cite this properly.
+	    TO "ring(LinearCode)" -- not sure how to cite this properly.
+
 	}
     	
 	}
@@ -2363,6 +2375,24 @@ doc ///
        Example
        	   F = GF(2, 4)
 	   C = random ( F , 3, 5 )
+///
+doc ///
+   Key
+       (ring, LinearCode)
+   Headline
+       The ring that contains the entries of the generator matrix of C. 
+   Usage
+       ring(LinearCode)
+   Inputs
+        C:LinearCode
+	    the linear code $C$.
+   Outputs
+       :Ring
+            The ring that contains the entries of the generator matrix of C. 
+   Description
+       Example
+       	   C = HammingCode(2, 3)
+	   ring(C)
 ///
 
 doc ///
@@ -2793,7 +2823,8 @@ document {
          " g=x^3;",
          " LocallyRecoverableCode({13,9,4,2},A,g);"
  	}
-     }
+     } 
+ 
 
 end
 
