@@ -35,6 +35,7 @@ export {
     "GenericProjection",  --a valid value for [RandomPoint, Strategy]
     "HybridProjectionIntersection", --a valid value for [RandomPoint, Strategy]
     "LinearIntersection",  --a valid value for [RandomPoint, Strategy]
+    "LinearProjection", --a valid value for [RandomPoint, Strategy]
     --"MultiThreads",  --a valid value for [RandomPoint, Strategy]
 	"ProjectionAttempts", --used in the GenericProjection strategy
     "IntersectionAttempts", --used in the LinearIntersection strategy
@@ -53,12 +54,13 @@ optRandomPoints := {
     Strategy=>BruteForce, 
     Homogeneous => true,  
     MaxCoordinatesToReplace => 0, 
+    Replacement => Binomial,
     Codimension => null,
     IntersectionAttempts => 20,
     ProjectionAttempts => 20,
     ExtendField => false,
     PointCheckAttempts => 100,
-    NumThreadsToUse => min(allowableThreads, 3),
+    NumThreadsToUse => 1,
     Verbose => false
 };
 
@@ -212,7 +214,7 @@ genericProjection(Ideal) := opts -> (I1) -> (
     phi := map(S1, Rs);
     return(psi*phi, f);*-
 );
-
+--this code is based upon randomKRationalPoint
 genericProjection(ZZ, Ideal) := opts -> (n1, I1) -> (
         if (debugLevel > 0) or (opts.Verbose) then print concatenate("genericProjection (dropping ", toString(n1), " dimension):  Starting, Replacement =>", toString(opts.Replacement), ", MaxCoordinatesToReplace => ", toString(opts.MaxCoordinatesToReplace));
         R1 := ring I1;
@@ -229,6 +231,24 @@ genericProjection(ZZ, Ideal) := opts -> (n1, I1) -> (
         f:=ideal substitute(selectInSubring(1, generators gb substitute(I2,Re)),Rs);
         phi := map(S1, Rs);
         return(psi*phi, f);
+);
+
+genericProjectionByKernel = method(Options=>optCoorindateChange);
+
+genericProjectionByKernel(ZZ, Ideal) := opts -> (n1, I1) -> (
+    if (debugLevel > 0) or (opts.Verbose) then print concatenate("genericProjection (dropping ", toString(n1), " dimension):  Starting, Replacement =>", toString(opts.Replacement), ", MaxCoordinatesToReplace => ", toString(opts.MaxCoordinatesToReplace));
+    R1 := ring I1;
+    psi := randomCoordinateChange(R1, opts);
+    S1 := source psi;
+    I2 := psi^-1(I1);
+    if (n1 <= 0) then return(psi, I2); --if we don't actually want to project
+    kk:=coefficientRing R1;
+    myVars := drop(gens S1, n1);
+    Rs := kk(monoid[myVars]);
+    myMap := map(S1/I2, Rs);
+    K2 := ker(myMap, SubringLimit=>1);
+    phi := map(S1, Rs);
+    return(psi*phi, K2);
 );
 
 genericProjection(ZZ, Ring) := opts -> (n1, R1) -> (
@@ -294,6 +314,81 @@ switchStrategy := (opts, newStrat) -> (
     tempHashTable := new MutableHashTable from opts;
     tempHashTable#Strategy = newStrat;
     return new OptionTable from tempHashTable;
+);
+
+randomPointViaLinearProjection = method(Options => optRandomPoints);
+randomPointViaLinearProjection(Ideal) := opts -> (I1) -> (
+    flag := true;
+    local phi;
+    local I0;
+    local J0;
+    local pt;
+    local ptList;
+    local j;
+    local finalPoint;
+    local newPtList;
+    local phi;
+    local myDeg;
+    local m2;
+    R1 := ring I1;  
+    i := 0;
+    while(flag) and (i < opts.ProjectionAttempts) do (
+        if (opts.Codimension === null) then (
+            c1 := codim I1;
+            if (c1 == 0) then ( --don't project, if we are already a space
+                phi = map(ring I1, ring I1);
+                I0 = I1;
+            )
+            else(
+                (phi, I0) = genericProjection(c1, ideal(0_(ring I1)), Homogeneous=>opts.Homogeneous, MaxCoordinatesToReplace => opts.MaxCoordinatesToReplace, Replacement => opts.Replacement, Verbose=>opts.Verbose);
+            );
+        )
+        else if (opts.Codimension == 0) then (
+            phi = map(ring I1, ring I1);
+            I0 = I1;
+        )
+        else(
+            (phi, I0) = genericProjection(opts.Codimension, ideal(0_(ring I1)), Homogeneous=>opts.Homogeneous, MaxCoordinatesToReplace => opts.MaxCoordinatesToReplace, Replacement => opts.Replacement, Verbose=>opts.Verbose);
+        );
+        I0 = sub(I1, ring I0);
+        pt = searchPoints(1, source phi, {});
+        if (not pt === {}) then (
+            J0 = I1 + sub(ideal apply(dim source phi, i -> (first entries matrix phi)#i - pt#i), target phi); --lift the point to the original locus
+            if dim(J0) == 0 then( --hopefully the preimage is made of points
+                ptList = random decompose(J0);
+                j = 0;
+                while (j < #ptList) do (
+                    myDeg = degree (ptList#j);
+                    --print myDeg;
+                    if (myDeg == 1) then (
+                        finalPoint = apply(idealToPoint(ptList#j), s -> sub(s, coefficientRing ring I1));
+                        if (opts.Homogeneous) then( 
+                            if (any(finalPoint, t -> t != 0)) then return finalPoint;
+                        )
+                        else(
+                            return finalPoint;
+                        );
+                    )                        
+                    else if (opts.ExtendField == true) then (
+                        if (debugLevel > 0) or (opts.Verbose) then print "randomPointViaLinearProjection:  extending the field.";
+                        phi = (extendFieldByDegree(myDeg, R1))#1;
+                        m2 = phi(ptList#j);
+                        newPtList = random decompose(m2);
+                        if (#newPtList > 0) then ( 
+                            finalPoint =  apply(idealToPoint(newPtList#0), s -> sub(s, target phi));
+                            return finalPoint
+                        ); 
+                    );
+                    j = j+1;
+                );
+            )
+            else if (debugLevel > 0) or (opts.Verbose == true) then print "randomPointViaLinearProjection: dimension is wrong.";
+        );
+    
+        if (debugLevel > 0) or (opts.Verbose) then print "randomPointViaLinearProjection: That didn't work, trying again...";
+        i = i+1;
+    );
+    return {};
 );
 
 
@@ -374,7 +469,7 @@ randomPointViaGenericProjection(Ideal) := opts -> (I1) -> (
                 I0 = I1;
             )
             else(
-                (phi, I0) = projectionToHypersurface(I1, Homogeneous=>opts.Homogeneous, MaxCoordinatesToReplace => opts.MaxCoordinatesToReplace, Codimension => c1, Verbose=>opts.Verbose);
+                (phi, I0) = projectionToHypersurface(I1, Homogeneous=>opts.Homogeneous, Replacement => opts.Replacement, MaxCoordinatesToReplace => opts.MaxCoordinatesToReplace, Codimension => c1, Verbose=>opts.Verbose);
             );
         )
         else if (opts.Codimension == 1) then (
@@ -382,7 +477,7 @@ randomPointViaGenericProjection(Ideal) := opts -> (I1) -> (
             I0 = I1;
         )
         else(
-            (phi, I0) = projectionToHypersurface(I1, Homogeneous=>opts.Homogeneous, MaxCoordinatesToReplace => opts.MaxCoordinatesToReplace, Codimension => opts.Codimension, Verbose=>opts.Verbose);
+            (phi, I0) = projectionToHypersurface(I1, Homogeneous=>opts.Homogeneous, Replacement => opts.Replacement, MaxCoordinatesToReplace => opts.MaxCoordinatesToReplace, Codimension => opts.Codimension, Verbose=>opts.Verbose);
         );
         if (codim I0 == 1) then (
             if (opts.Strategy == GenericProjection) then (
@@ -471,6 +566,8 @@ randomPoints(Ideal) := List => opts -> (I) -> (
     else if (opts.Strategy == HybridProjectionIntersection) 
     then return randomPointViaLinearIntersection(I, opts)
     
+    else if (opts.Strategy == LinearProjection) 
+    then return randomPointViaLinearProjection(I, opts)
     --else if (opts.Strategy == MultiThreads)
     --then return randomPointViaMultiThreads(I, opts)
     
