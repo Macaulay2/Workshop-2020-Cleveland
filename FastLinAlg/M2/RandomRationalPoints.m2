@@ -32,7 +32,7 @@ export {
     "Replacement",
     "Simple",
     "Full", 
-	"BruteForce", --a valid value for [RandomPoint, Strategy]
+	"BruteForce", --a valid value for [RandomPoint, Strategy], documented, 
     "GenericProjection",  --a valid value for [RandomPoint, Strategy]
     "HybridProjectionIntersection", --a valid value for [RandomPoint, Strategy]
     "LinearIntersection",  --a valid value for [RandomPoint, Strategy]
@@ -133,7 +133,7 @@ randomCoordinateChange = method(Options=>{Homogeneous=>true, Replacement=>Full, 
 randomCoordinateChange(Ring) := opts -> (R1) -> (
     if (debugLevel > 0) then print "randomCoordinateChange: starting.";
     local phi;
-    if not class R1 === PolynomialRing then error "randomCoordinateChange: expected an ideal in a polynomial ring";
+    if not class R1 === PolynomialRing then error "randomCoordinateChange: expected a polynomial ring";
     myMon := monoid R1;
     S1 := (coefficientRing R1)(myMon);
     genList := random gens R1;
@@ -476,11 +476,12 @@ extendingIdealByNonVanishingMinor(ZZ,Matrix,Ideal):= opts -> (n, M, I) -> (
     local N; local N1; local N2; local N1new; local N2new;
     local J; local Mcolumnextract; local Mrowextract;
     R = ring I;
-    kk = coefficientRing R;
-    P = randomPoints(I);
-    if (P == {}) 
+    local kk;
+    P = randomPoints(I, opts);
+    if (#P == 0) 
     then error "No Point Found"
     else (
+        kk = ring {P#0};
         phi =  map(kk,R,sub(matrix{P},kk));
         N = mutableMatrix phi(M);
         rk := rank(N);
@@ -1013,6 +1014,50 @@ I = ideal(x,y^2,w^3+x^2);
 genericProjection(2,I);
 --assert(map)
 ///
+
+--testing randomCoordinateChange with Homogeneous => true
+TEST///
+R = QQ[x,y,z,w];
+phi = randomCoordinateChange(R, Homogeneous=>true);
+m = ideal(x,y,z,w);
+S = source phi;
+n = sub(m, S);
+assert(preimage(phi, m) == n);  --if we are homogeneous, this should be true
+assert(phi(n) == m);
+///
+
+--testing randomCoordinateChange with Homogeneous => false
+TEST ///
+R = ZZ/1031[x,y,z,u,v,w];
+phi = randomCoordinateChange(R, Homogeneous => false);
+m = ideal(x,y,z);
+S = source phi;
+n = sub(m, S);
+assert(dim phi(n) == dim m);
+assert(dim preimage(phi, m) == dim n);
+assert(preimage(phi, m) != n); --there is a theoretical chance this could happen, about 1 in 10^18.
+assert(phi(n) != m);
+///
+
+--testing randomCoordinateChange with MaxCoordinatesToReplace => 0
+TEST ///
+R = ZZ/11[x,y,z];
+phi = randomCoordinateChange(R, MaxCoordinatesToReplace => 0);
+M = matrix phi;
+S1 = set first entries M;
+S2 = set gens R;
+assert(isSubset(S1, S2) and isSubset(S2, S1));
+///
+
+--verifying Simple vs Full replacement
+TEST ///
+R = ZZ/1031[a..h];
+phi = randomCoordinateChange(R, Replacement=>Simple);
+psi = randomCoordinateChange(R, Replacement=>Full);
+assert(all(apply(first entries matrix phi, v -> terms v), t -> #t <= 2));
+assert(any(apply(first entries matrix psi, v -> terms v), t -> #t >= 3)); --this could be false, and an asteroid could destroy Earth.
+///
+
 
 TEST///
 ---this tests findANonZeroMinor---
