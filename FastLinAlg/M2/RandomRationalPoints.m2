@@ -54,6 +54,7 @@ optRandomPoints := {
     Strategy=>BruteForce, 
     Homogeneous => true,  
     MaxCoordinatesToReplace => 0, 
+    Replacement => Binomial,
     Codimension => null,
     IntersectionAttempts => 20,
     ProjectionAttempts => 20,
@@ -339,7 +340,7 @@ randomPointViaLinearProjection(Ideal) := opts -> (I1) -> (
                 I0 = I1;
             )
             else(
-                (phi, I0) = genericProjection(c1, ideal(0_(ring I1)), Homogeneous=>opts.Homogeneous, MaxCoordinatesToReplace => opts.MaxCoordinatesToReplace, Verbose=>opts.Verbose);
+                (phi, I0) = genericProjection(c1, ideal(0_(ring I1)), Homogeneous=>opts.Homogeneous, MaxCoordinatesToReplace => opts.MaxCoordinatesToReplace, Replacement => opts.Replacement, Verbose=>opts.Verbose);
             );
         )
         else if (opts.Codimension == 0) then (
@@ -347,7 +348,7 @@ randomPointViaLinearProjection(Ideal) := opts -> (I1) -> (
             I0 = I1;
         )
         else(
-            (phi, I0) = genericProjection(opts.Codimension, ideal(0_(ring I1)), Homogeneous=>opts.Homogeneous, MaxCoordinatesToReplace => opts.MaxCoordinatesToReplace, Verbose=>opts.Verbose);
+            (phi, I0) = genericProjection(opts.Codimension, ideal(0_(ring I1)), Homogeneous=>opts.Homogeneous, MaxCoordinatesToReplace => opts.MaxCoordinatesToReplace, Replacement => opts.Replacement, Verbose=>opts.Verbose);
         );
         I0 = sub(I1, ring I0);
         pt = searchPoints(1, source phi, {});
@@ -369,7 +370,7 @@ randomPointViaLinearProjection(Ideal) := opts -> (I1) -> (
                         );
                     )                        
                     else if (opts.ExtendField == true) then (
-                        if (debugLevel > 0) or (opts.Verbose) then print "randomPointViaGenericProjection:  extending the field.";
+                        if (debugLevel > 0) or (opts.Verbose) then print "randomPointViaLinearProjection:  extending the field.";
                         phi = (extendFieldByDegree(myDeg, R1))#1;
                         m2 = phi(ptList#j);
                         newPtList = random decompose(m2);
@@ -468,7 +469,7 @@ randomPointViaGenericProjection(Ideal) := opts -> (I1) -> (
                 I0 = I1;
             )
             else(
-                (phi, I0) = projectionToHypersurface(I1, Homogeneous=>opts.Homogeneous, MaxCoordinatesToReplace => opts.MaxCoordinatesToReplace, Codimension => c1, Verbose=>opts.Verbose);
+                (phi, I0) = projectionToHypersurface(I1, Homogeneous=>opts.Homogeneous, Replacement => opts.Replacement, MaxCoordinatesToReplace => opts.MaxCoordinatesToReplace, Codimension => c1, Verbose=>opts.Verbose);
             );
         )
         else if (opts.Codimension == 1) then (
@@ -476,7 +477,7 @@ randomPointViaGenericProjection(Ideal) := opts -> (I1) -> (
             I0 = I1;
         )
         else(
-            (phi, I0) = projectionToHypersurface(I1, Homogeneous=>opts.Homogeneous, MaxCoordinatesToReplace => opts.MaxCoordinatesToReplace, Codimension => opts.Codimension, Verbose=>opts.Verbose);
+            (phi, I0) = projectionToHypersurface(I1, Homogeneous=>opts.Homogeneous, Replacement => opts.Replacement, MaxCoordinatesToReplace => opts.MaxCoordinatesToReplace, Codimension => opts.Codimension, Verbose=>opts.Verbose);
         );
         if (codim I0 == 1) then (
             if (opts.Strategy == GenericProjection) then (
