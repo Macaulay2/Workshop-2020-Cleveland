@@ -476,7 +476,7 @@ findANonZeroMinor(ZZ, Matrix, Ideal) := opts -> (n,M,I)->(
     R = ring I;
     kk = coefficientRing R;
     P = randomPoints(I, opts);
-    if (P == {}) then  error "Couldn't find a point. Try Changing Strategy.";
+    if (#P == 0) then  error "Couldn't find a point. Try Changing Strategy.";
     phi =  map(kk,R,sub(matrix{P},kk));
     N = mutableMatrix phi(M);
     rk := rank(N);
@@ -491,7 +491,7 @@ findANonZeroMinor(ZZ, Matrix, Ideal) := opts -> (n,M,I)->(
 	N1new = join(N1new, {N1rand#i});
     );
     M3 := mutableMatrix phi(M_N1new);
-    if (rank(M3)<n) then error "hoyni";
+    if (rank(M3)<n) then return ("All n*n minors vanish at the randomly chosen point "  P. "Please try running function again for different results.");
     N2 = random(rowRankProfile(M3));
     N2new = {};
     for i from 0 to n-1 do(
