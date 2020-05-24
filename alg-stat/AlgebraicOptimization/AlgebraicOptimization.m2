@@ -147,6 +147,8 @@ TEST ///
 R = QQ[x,y]
 I = ideal"x2 + y2 - 1"
 assert(probabilisticEDDegree(I, Data => {1/3, 2/5}) == 2)
+J = ideal((x^2+y^2+x)^2 - x^2 - y^2)
+assert(probabilisticEDDegree(J, Data => {1,2}) == 3)
 R = QQ[x,y,z]
 I = ideal"x2 - y2 - z2"
 assert(probabilisticEDDegree(I, Data => {2/4,1/2,-1/2}, Projective => true) == 2)
@@ -895,11 +897,13 @@ Description
     points of the distance function from the variety to $u$. A random point will give the correct ED degree
     with probability 1.
 
-    In the example below, we see that the ED degree of a circle is 2
+    In the example below, we see that the ED degree of a circle is 2, and the ED degree of a cardioid is 3
   Example
     R = QQ[x,y]
     I = ideal(x^2 + y^2 - 1)
     probabilisticEDDegree I
+    J = ideal((x^2+y^2+x)^2 - x^2 - y^2)
+    probabilisticEDDegree J
 
   Text
     Instead of a random point, the user can specify their own point
@@ -914,21 +918,21 @@ Description
     and chooses an algorithm based on the result. The user can force the choice of algorithm by specifying 
     {\tt Projective => true} or {\tt Projective => false}.
   CannedExample
-    i5 : R = QQ[x_0..x_3];
+    i1 : R = QQ[x_0..x_3];
 
-    i6 : I = ideal(random(2,R), random(3,R));
+    i2 : I = ideal(random(2,R), random(3,R));
 
-    o6 : Ideal of R
+    o2 : Ideal of R
 
-    i7 : elapsedTime probabilisticEDDegree(I, Projective => true)
+    i3 : elapsedTime probabilisticEDDegree(I, Projective => true)
           1.55738 seconds elapsed
 
-    o7 = 24
+    o3 = 24
 
-    i8 : elapsedTime probabilisticEDDegree(I, Projective => false)
+    i4 : elapsedTime probabilisticEDDegree(I, Projective => false)
           108.958 seconds elapsed
 
-    o8 = 24
+    o4 = 24
 
 --  Code
 --  Pre
