@@ -30,6 +30,7 @@ export {
   "projectiveDual",
   "conormalRing",
   "conormalIdeal",
+  "probabilisticEDDegree",
   "multiDegreeEDDegree",
   "MLDegree",
   "symbolicLagrangeMultiplierEDDegree",
@@ -131,9 +132,25 @@ probabilisticEDDegree Ideal := ZZ => opts -> I -> (
   c := codim I;
   Ising := I + minors(c, jacI);
   u := if opts.Data === null then (gens R / (i -> random(coefficientRing R))) else opts.Data;
-  Ibar := I + minors(c+1, matrix{u} - vars R || jacI);
-  degree saturate(Ibar, Ising)
+  J := if not opts.Projective then (
+    Ibar := I + minors(c+1, matrix{u} - vars R || jacI);
+    saturate(Ibar, Ising)
+  ) else (
+    Ibar := I + minors(c+2, matrix{u} || vars R || jacI);
+    Q := gens R / (i -> i^2) // sum // ideal;
+    saturate(Ibar, Ising * Q)
+  );
+  degree J
 )
+TEST ///
+R = QQ[x,y]
+I = ideal"x2 + y2 - 1"
+assert(probabilisticEDDegree(I, Data => {1/3, 2/5}) == 2)
+R = QQ[x,y,z]
+I = ideal"x2 - y2 - z2"
+assert(probabilisticEDDegree(I, Data => {2/4,1/2,-1/2}, Projective => true) == 2)
+///
+
 
 
 --------------------
