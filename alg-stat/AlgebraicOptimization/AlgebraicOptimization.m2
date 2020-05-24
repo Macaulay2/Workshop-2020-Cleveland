@@ -124,7 +124,7 @@ assert( dualI == ideal(S_0^2 - S_1^2 - S_2^2))
 --------------------
 --probabilisticEDDegree
 --------------------
-probabilisticEDDegree = method(Options => {Projective => false, Data => null});
+probabilisticEDDegree = method(Options => {Projective => null, Data => null});
 
 probabilisticEDDegree Ideal := ZZ => opts -> I -> (
   R := ring I;
@@ -132,7 +132,8 @@ probabilisticEDDegree Ideal := ZZ => opts -> I -> (
   c := codim I;
   Ising := I + minors(c, jacI);
   u := if opts.Data === null then (gens R / (i -> random(coefficientRing R))) else opts.Data;
-  J := if not opts.Projective then (
+  proj := if opts.Projective === null then (if isHomogeneous I then true else false) else opts.Projective;
+  J := if not proj then (
     Ibar := I + minors(c+1, matrix{u} - vars R || jacI);
     saturate(Ibar, Ising)
   ) else (
