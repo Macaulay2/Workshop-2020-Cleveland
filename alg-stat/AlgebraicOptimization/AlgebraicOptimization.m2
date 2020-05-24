@@ -758,6 +758,25 @@ Key
 
 
 -- template for function documentation
+--doc ///
+--Key
+--Headline
+--Usage
+--Inputs
+--Outputs
+--Consequences
+--  Item
+--Description
+--  Text
+--  Code
+--  Pre
+--  Example
+--  CannedExample
+--Subnodes
+--Caveat
+--SeeAlso
+--///
+
 doc ///
 Key
   projectiveDual
@@ -841,6 +860,87 @@ Caveat
   The ring containing $I$ and $p$ must have primal variables in degree $\{1,0\}$ and dual variables in degree $\{0,1\}$.
   Such a ring can be obtained using @TO{conormalRing}@.
 ///
+
+doc ///
+Key
+  probabilisticEDDegree
+  (probabilisticEDDegree, Ideal)
+  [probabilisticEDDegree, Projective]
+  [probabilisticEDDegree, Data]
+Headline
+  compute ED-degree for a random point
+Usage
+  probabilisticEDDegree I
+  probabilisticEDDegree(I, Projective => true)
+  probabilisticEDDegree(I, Projective => false)
+  probabilisticEDDegree(I, Data => L)
+Inputs
+  I:
+    a prime @TO2{Ideal, "ideal"}@ corresponding to an irreductible variety.
+  Projective =>
+    specifies if the ideal is homogeneous or not. The default value @TO null@ chooses automatically.
+    The automatic choice can be overriden by specifying a @TO Boolean@ value.
+  Data => List
+    specifies coordinates of the point from which the ED degree is computed.
+    By default, this point is chosen at random from the coefficient ring using @TO (random,Type)@.
+Outputs
+  :ZZ
+    the ED-degree of $I$.
+--Consequences
+--  Item
+Description
+  Text
+    The function computes the Euclidean distance degree of an irreducible variety corresponding to
+    the prime ideal $I$. In other words, we choose a random point $u$ and output the number of critical
+    points of the distance function from the variety to $u$. A random point will give the correct ED degree
+    with probability 1.
+
+    In the example below, we see that the ED degree of a circle is 2
+  Example
+    R = QQ[x,y]
+    I = ideal(x^2 + y^2 - 1)
+    probabilisticEDDegree I
+
+  Text
+    Instead of a random point, the user can specify their own point
+  Example
+    probabilisticEDDegree(I, Data => {2,3})
+
+  Text
+    If the variety corresponding to $I$ is projective, the projective
+    ED degree is defined as the ED degree of the corresponding affine cone. Nonetheless, the algorithm
+    for computing the ED degree of a homogeneous ideal is slightly faster than for non-homogeneous ideals.
+    By default, the function checks whether or not the ideal is homogeneous
+    and chooses an algorithm based on the result. The user can force the choice of algorithm by specifying 
+    {\tt Projective => true} or {\tt Projective => false}.
+  CannedExample
+    i5 : R = QQ[x_0..x_3];
+
+    i6 : I = ideal(random(2,R), random(3,R));
+
+    o6 : Ideal of R
+
+    i7 : elapsedTime probabilisticEDDegree(I, Projective => true)
+          1.55738 seconds elapsed
+
+    o7 = 24
+
+    i8 : elapsedTime probabilisticEDDegree(I, Projective => false)
+          108.958 seconds elapsed
+
+    o8 = 24
+
+--  Code
+--  Pre
+--  Example
+--  CannedExample
+--Subnodes
+--Caveat
+--SeeAlso
+///
+
+
+
 
 doc ///
 Key
