@@ -21,6 +21,7 @@ newPackage(
 export {
 	"genericProjection", --documented, tested
 	"projectionToHypersurface", --documented, tested
+    "projectionToHypersurfaceV2", --documented, tested
 	"randomCoordinateChange", --documented, tested
 	"randomPoints", 
 	"extendingIdealByNonVanishingMinor",
@@ -195,6 +196,7 @@ randomCoordinateChange(Ring) := opts -> (R1) -> (
     return phi;*-
 );
 
+
 genericProjection = method(Options=>optCoorindateChange);
 
 genericProjection(Ideal) := opts -> (I1) -> (
@@ -276,7 +278,6 @@ projectionToHypersurface(Ideal) := opts -> (I1) -> (
         if (opts.Codimension === null) then (
             c1 = codim I1;
         ) else (c1 = opts.Codimension);
-        local curMap;
         return genericProjection(c1-1, I1, Homogeneous => opts.Homogeneous, MaxCoordinatesToReplace => opts.MaxCoordinatesToReplace, Replacement => opts.Replacement, Verbose=>opts.Verbose);
 );
 
@@ -285,9 +286,31 @@ projectionToHypersurface(Ring) := opts -> (R1) -> (
         if (opts.Codimension === null) then (
             c1 = codim R1;
         ) else (c1 = opts.Codimension);
-        local curMap;
         return genericProjection(c1-1, R1, Homogeneous => opts.Homogeneous, MaxCoordinatesToReplace => opts.MaxCoordinatesToReplace, Replacement => opts.Replacement, Verbose=>opts.Verbose);
 );
+
+projectionToHypersurfaceV2 = method(Options=>optProjectionToHypersurface);
+
+projectionToHypersurfaceV2(Ideal) := opts -> (I1) -> (
+    R1 := ring I1;
+    if (class R1 =!= PolynomialRing) then error "genericProjection:  expected an ideal in a polynomial ring.";
+    local c1;
+    if (opts.Codimension === null) then (
+        c1 = codim I1;
+    ) else (c1 = opts.Codimension);
+    if (c1 <= 1) then 1/0;
+    --print c1;
+    kk:=coefficientRing R1;
+    S1 := kk(monoid[drop(gens R1, c1-1)]);
+    --print dim S1;
+    --print dim R1;
+    local phi;
+    L1 := first entries matrix randomCoordinateChange(R1, Homogeneous => opts.Homogeneous, MaxCoordinatesToReplace => opts.MaxCoordinatesToReplace, Replacement => opts.Replacement, Verbose=>opts.Verbose);
+    phi = map(R1/I1, S1, drop(L1, c1-1));
+    J1 := ker(phi, SubringLimit=>1);
+    return (phi, J1);
+);
+
 
 -*
 projectionToHypersurface(Ideal) := opts -> (I1) -> (
