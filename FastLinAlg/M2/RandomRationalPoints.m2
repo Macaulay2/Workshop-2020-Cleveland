@@ -505,7 +505,7 @@ findANonZeroMinor(ZZ, Matrix, Ideal) := opts -> (n,M,I)->(
     phi =  map(kk,R,sub(matrix{P},kk));
     N = mutableMatrix phi(M);
     rk := rank(N);
-    if (rk < n) then return "Please try again";
+    if (rk < n) then return ("All minors of given size vanish at the randomly chosen point. Please try again.");
     N1 = (columnRankProfile(N));
     Mcolumnextract = M_N1;
     M11 := mutableMatrix phi(Mcolumnextract);
@@ -516,17 +516,17 @@ findANonZeroMinor(ZZ, Matrix, Ideal) := opts -> (n,M,I)->(
 	N1new = join(N1new, {N1rand#i});
     );
     M3 := mutableMatrix phi(M_N1new);
-    if (rank(M3)<n) then return ("All " n"x"n " minors vanish at the randomly chosen point " P". Please try running function again for different results.");
-    N2 = random(rowRankProfile(M3));
+    if (rank(M3)<n) then return (P,N1,N2,"Using the the second and third outputs failed to generate a random matrix of the given size, that has full rank when evaluated at the first output.");
+    N2rand := random(rowRankProfile(M3));
     N2new = {};
     for i from 0 to n-1 do(
-        N2new = join(N2new, {N2#i});
+        N2new = join(N2new, {N2rand#i});
     );
     Mspecificrowextract := (M_N1new)^N2new;
     return (P, N1, N2, Mspecificrowextract);	
 );
 
-extendingIdealByNonVanishingMinor = method(Options=>optRandomPoints)
+extendingIdealByNonVanishingMinor = method(Options=>optRandomPoints);
 extendingIdealByNonVanishingMinor(ZZ,Matrix,Ideal):= opts -> (n, M, I) -> (
  -*   local P;
     local kk; 
