@@ -119,6 +119,23 @@ S = ring dualI
 assert( dualI == ideal(S_0^2 - S_1^2 - S_2^2)) 
 ///
 
+
+--------------------
+--probabilisticEDDegree
+--------------------
+probabilisticEDDegree = method(Options => {Projective => false, Data => null});
+
+probabilisticEDDegree Ideal := ZZ => opts -> I -> (
+  R := ring I;
+  jacI := transpose jacobian I;
+  c := codim I;
+  Ising := I + minors(c, jacI);
+  u := if opts.Data === null then (gens R / (i -> random(coefficientRing R))) else opts.Data;
+  Ibar := I + minors(c+1, matrix{u} - vars R || jacI);
+  degree saturate(Ibar, Ising)
+)
+
+
 --------------------
 --multiDegreeEDDegree
 --------------------
