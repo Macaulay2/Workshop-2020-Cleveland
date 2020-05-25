@@ -51,14 +51,13 @@ hilbertSeries(S,Order=>5)
 -- COMMENT: this is the action on V^* because variables are
 -- coordinates of V
 equivariantHilbertSeries = method()
-equivariantHilbertSeries (Matrix) := Expression => W -> (
-    r := numRows W;
-    n := numColumns W;
-    z := getSymbol "z";
-    T := getSymbol "T";
-    R := ZZ[z_1..z_r,T, Inverses => true, MonomialOrder=>RevLex];
+equivariantHilbertSeries (TorusAction) := Divide => T -> (
+    r := rank T;
+    n := dim T;
+    W := weights T;
+    R := newRing(degreesRing(r+1),Variables=>apply(r,i->(symbol z)_i) | {symbol T});
     ms := apply(n, i -> R_(flatten entries W_{i}));
-    den := product apply(ms, m -> expression(1)-expression(m*T_R));
+    den := product apply(ms, m -> expression(1)-expression(m*(last gens R)));
     expression(1)/den
 )
 
@@ -69,19 +68,17 @@ equivariantHilbertSeries (Matrix) := Expression => W -> (
 -- OUTPUT: a Laurent polynomial which is the character of the
 -- degree d component of the polynomial ring wrt the torus action
 toricHilbertFunction = method()
-toricHilbertFunction (Matrix, ZZ) := Thing => (W, d) -> (
-    r := numRows W;
-    z := getSymbol "z";
-    T := getSymbol "T";
-    R := ZZ[z_1..z_r,T, Inverses => true, MonomialOrder=>RevLex];
-    -- the degree zero component has dimension 1
-    n := numColumns W;
+toricHilbertFunction (TorusAction, ZZ) := Thing => (T, d) -> (
+    r := rank T;
+    n := dim T;
+    W := weights T;
+    R := newRing(degreesRing(r+1),Variables=>apply(r,i->(symbol z)_i) | {symbol T});
     -- compute the denominator of the Hilbert series
     -- which is a polynomial in T of degree n
     ms := apply(n, i -> R_(flatten entries W_{i}));
-    D := product apply(ms, m -> 1_R-(m*T_R));
+    den := product apply(ms, m -> 1-m*(last gens R));
     -- extract its coefficients and degree
-    (M,C) := coefficients(D,Variables=>{T_R});
+    (M,C) := coefficients(den,Variables=>{last gens R});
     -- call the function that computes the value recursively
     -- and pass the ring so it's not recreated each time
     recHilb(d,n,C,R)
