@@ -110,7 +110,9 @@ export {
     "shortestPath",
     "minimumWeight",
     "matroidPartition",
-    "weight"
+    "weight",
+    "minDistEnumerate", -- temporary
+    "enumerateError"
     }
 
 exportMutable {}
@@ -508,10 +510,12 @@ matroidPartition List := List => mls -> (
 	V   := join({newVertex},constructed, Z);
     	M   := matrix for x in V list for y in V list arrow(x,y);
 	D   := digraph(V,M);
-	if any(1..r, i->isReachable(D,Z_(i-1),newVertex))
-	then repaint(shortestPath(D,newVertex,Z),Els)
-	--WOMP. No partition.
-	else return {};
+	if any(1..r, i->isReachable(D,Z_(i-1),newVertex)) then (
+	    repaint(shortestPath(D,newVertex,Z),Els)
+	    ) else (	
+	    --WOMP. No partition.
+	    return {};
+	    )
     );
     --We found a partition! Now sort it by length, largest to smallest
     return apply(rsort apply(new List from drop(Els,1),i->(#i,i)),i->i_1);
@@ -522,10 +526,28 @@ weight BasicList := Number => c -> (
     sum(new List from (apply(0..length c-1, i-> if c_i == 0 then 0 else 1)))
     )
 
+
+-- A temporary implementation of minimum distance.
+-- Useful for testing the performance of other implementations.
+minDistEnumerate = method(TypicalValue => Number)
+minDistEnumerate LinearCode := Number => C -> (
+    X := messages(C);
+    G := C.GeneratorMatrix;
+    words := apply(select(X, i -> (weight i) > 0), x -> transpose(G)*transpose(matrix({x})));
+    words = apply(words, i -> weight first entries(transpose i));
+    return min words;
+);
+
+subsetToList := (n, subset) -> (
+    for i from 0 to (n-1) list(
+	if member(i, subset) then 1 else 0
+       	)
+    ) 
+
+
 minimumWeight = method(TypicalValue => Number)
 minimumWeight LinearCode := Number => C -> (
     M := matrix C.Generators;
-    F := C.BaseField;
     k := length C.Generators; --Assumes generators are linearly independent?
     n := length C;
     l := ceiling(n/k);
@@ -535,31 +557,35 @@ minimumWeight LinearCode := Number => C -> (
     
     --Partition columns of LinearCode into information sets
     T := matroidPartition(apply(toList(1..l),i->matroid(M)));
-    
+
     r := {}; --list of relative ranks
     currentUnion := set();
     for i from 0 to length T-1 do (
 	r = append(r,#(T_i-currentUnion));
 	currentUnion = currentUnion + set(T_i);
 	);
-    nonzeroWords := delete(apply(1..k,i->0),messages(C));
     
     dupper := n-k+1; --Start with Singleton Bound
     dlower := 0;
     while(true) do (
         permutation := join(T_(j-1),toList(0..n-1)-set(T_(j-1)));
         G := reduceMatrix(M_permutation);
-        sameWeightWords := select(nonzeroWords, u -> weight(toList u) == w);
+    	
+	sameWeightWords := apply(subsets(k,w), x -> subsetToList(k,x));
+    	sameWeightWords = flatten apply(sameWeightWords, x -> enumerateError(ring(C), x));
+    	
         specialCodewords := apply(sameWeightWords, u -> flatten entries ((matrix {toList u})*G));
         dupper = min(append(apply(specialCodewords, i->weight i),dupper));
         dlower = sum(toList apply(1..j,i->max(0,w+1-k+r_(i-1))))+sum(toList apply(j+1..D,i->max(0,w-k+r_(i-1))));
-        if dlower >= dupper
+
+	if dlower >= dupper
     	then return dlower
-    	else (if j < D then j = j+1
-	    else w = w+1);
+    	else (
+	    if j < D then j = j+1 else w = w+1
+	    );
     	if w > k then error "No minimum weight found.";
+    	)
     )
-)
 
 
 -----------------------------------------------
@@ -1584,7 +1610,8 @@ randLDPC(ZZ, ZZ, RR, ZZ) := (n, k, m, b) -> (
 
 -- Given a 0,1 valued list errorBinary, return a list of all the possible ways to replace the
 -- one values in errorBinary with a nonzero element of the finite field R. 
-enumerateError := (R, errorBinary) -> (
+enumerateError = method(TypicalValue => List)
+enumerateError(Ring, List) := (R, errorBinary) -> (
     elts := for i from 1 to (R.order)-1 list( (first gens R)^i);
     ones := positions(errorBinary, x -> x == 1);
     prim := first gens R;
@@ -1607,7 +1634,7 @@ enumerateError := (R, errorBinary) -> (
 	for j from 0 to (length ones)-1 do(
 	    current#(ones#j) = possibility#j;
 	    );	
-	toList current
+	apply(toList current, x -> promote(x, R))
     	)
     );
 
@@ -2507,7 +2534,7 @@ document {
 
     
 document {
-   Key => {hYpFunction, (hYpFunction,ZZ,ZZ,Ideal)},
+  Key => {hYpFunction, (hYpFunction,ZZ,ZZ,Ideal)},
    Headline => "Gives the value of the hyp function of the ideal I at (d,r)",
    Usage => "hYpFunction(d,r,I)",
    Inputs => {
