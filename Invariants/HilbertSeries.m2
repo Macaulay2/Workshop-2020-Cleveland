@@ -44,23 +44,42 @@ hilbertSeries(S,Order=>5)
 ----------------------------------------
 -- Fred's experiments
 ----------------------------------------
+-- creates and stores the degrees ring for the toric hilbert series
+-- currently stores to cache
+-- later create this as part of the action and store one
+-- level above cache
+degreesRing TorusAction := PolynomialRing => t -> (
+    if t.cache.?degreesRing then t.cache.degreesRing
+    else (
+    	r := rank T;
+    	z := getSymbol "z";
+    	T := getSymbol "T";
+    	R := newRing(degreesRing(r+1),Variables=>apply(r,i->z_i) | {T});
+	t.cache.degreesRing = R;
+	return R;
+	)
+    )
+
 
 -- this method prints the equivariant hilbert series
 -- for a diagonal torus action on a polynomial ring
 -- INPUT: weight matrix for action of torus on variables
 -- COMMENT: this is the action on V^* because variables are
 -- coordinates of V
-equivariantHilbertSeries = method()
-equivariantHilbertSeries (TorusAction) := Divide => T -> (
-    r := rank T;
+toricHilbertSeries = method()
+toricHilbertSeries (TorusAction) := Divide => T -> (
     n := dim T;
     W := weights T;
-    R := newRing(degreesRing(r+1),Variables=>apply(r,i->(symbol z)_i) | {symbol T});
+    R := degreesRing T;
+    p := pairs tally entries transpose W;
     ms := apply(n, i -> R_(flatten entries W_{i}));
-    den := product apply(ms, m -> expression(1)-expression(m*(last gens R)));
-    expression(1)/den
+    den := Product apply(ms, m -> expression(1)-expression(m)*expression(last gens R));
+    Divide{1,den}
 )
+--Product apply(sort apply(pairs denom, (i,e) -> {1 - T_i,e}), t -> Power t)};
 
+
+    
 
 
 -- INPUT: W weight matrix for diagonal torus action on ring,
