@@ -11,12 +11,12 @@ presentation RingOfInvariants := Ring => S -> (
     -- get degrees of generators
     gdegs := L / degree // flatten;
     -- form a presentation of the invariant ring
-    T := QQ[Variables => #L,--number of variables
-	VariableBaseName => symbol t,--symbol
+    U := QQ[Variables => #L,--number of variables
+	VariableBaseName => symbol u,--symbol
 	Degrees => gdegs];--degrees
-    phi := map(R,T,L);
+    phi := map(R,U,L);
     I := ker phi;
-    T/I
+    U/I
     )
 
 --hilbert Series of invariant ring
@@ -48,15 +48,15 @@ hilbertSeries(S,Order=>5)
 -- currently stores to cache
 -- later create this as part of the action and store one
 -- level above cache
-degreesRing TorusAction := PolynomialRing => t -> (
-    if t.cache.?degreesRing then t.cache.degreesRing
+degreesRing TorusAction := PolynomialRing => T -> (
+    if T.cache.?degreesRing then T.cache.degreesRing
     else (
     	r := rank T;
     	z := getSymbol "z";
-    	T := getSymbol "T";
-    	R := newRing(degreesRing(r+1),Variables=>apply(r,i->z_i) | {T});
-	t.cache.degreesRing = R;
-	return R;
+    	Tvar := getSymbol "T";
+    	R := newRing(degreesRing(r+1),Variables=>apply(r,i->z_i) | {Tvar});
+	T.cache.degreesRing = R;
+	return T.cache.degreesRing;
 	)
     )
 
@@ -72,11 +72,12 @@ toricHilbertSeries (TorusAction) := Divide => T -> (
     W := weights T;
     R := degreesRing T;
     p := pairs tally entries transpose W;
-    ms := apply(n, i -> R_(flatten entries W_{i}));
-    den := Product apply(ms, m -> expression(1)-expression(m)*expression(last gens R));
+--    ms := apply(n, i -> R_(flatten entries W_{i}));
+--    den := Product apply(ms, m -> expression(1)-expression(m)*expression(last gens R));
+    den := Product apply(sort apply(p, (w,e) -> {1 - R_w * (last gens R),e}), t -> Power t);
     Divide{1,den}
 )
---Product apply(sort apply(pairs denom, (i,e) -> {1 - T_i,e}), t -> Power t)};
+--Product apply(sort apply(pairs p, (w,e) -> {1 - R_w * T_i,e}), t -> Power t);
 
 
     
