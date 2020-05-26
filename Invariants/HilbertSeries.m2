@@ -64,21 +64,16 @@ degreesRing TorusAction := PolynomialRing => T -> (
 -- this method prints the equivariant hilbert series
 -- for a diagonal torus action on a polynomial ring
 -- INPUT: weight matrix for action of torus on variables
--- COMMENT: this is the action on V^* because variables are
--- coordinates of V
+-- COMMENT: sometimes factor are not in the form 1 - z* T
 toricHilbertSeries = method()
 toricHilbertSeries (TorusAction) := Divide => T -> (
     n := dim T;
     W := weights T;
     R := degreesRing T;
     p := pairs tally entries transpose W;
---    ms := apply(n, i -> R_(flatten entries W_{i}));
---    den := Product apply(ms, m -> expression(1)-expression(m)*expression(last gens R));
     den := Product apply(sort apply(p, (w,e) -> {1 - R_w * (last gens R),e}), t -> Power t);
     Divide{1,den}
 )
---Product apply(sort apply(pairs p, (w,e) -> {1 - R_w * T_i,e}), t -> Power t);
-
 
     
 
