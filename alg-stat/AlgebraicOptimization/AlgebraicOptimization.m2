@@ -445,36 +445,34 @@ assert(2==degree WCI)
 ----------------------------------------
 -- Toric ML Degree Code
 ----------------------------------------
-toricMLIdeal = method(Options => {coeffRing => QQ});
+toricMLIdeal = method(Options => {coeffRing => QQ})
 toricMLIdeal(Matrix, List, List) := Ideal => opts -> (A, c, u) -> (
     t := symbol t;
     n := #c;
-    R := opts.coeffRing[t_1..t_(numgens target A)];
+    R := QQ[t_1..t_(numgens target A)];
     N := sum u;
     toricMapA := transpose matrix {for i from 0 to n-1 list c_i*R_(entries A_i)};
-    A = sub(A,R); 
     u = transpose matrix {u};
-    MLIdeal := ideal(A*(N*toricMapA - u));
+    A = sub(A,R); 
+    MLIdeal := ideal(A*(N*toricMapA - u));  -- N A*v = A*u
     MLIdeal
-    );
+    )
 
-toricMLDegree = method(Options => {coeffRing => QQ});
+toricMLDegree = method(Options => {coeffRing => QQ})
 toricMLDegree(Matrix, List) := Number => opts -> (A,c) -> (
-    t := symbol t;
-    R := opts.coeffRing[t_1..t_(numgens target A)];
     u := for i from 0 to #c-1 list random(1, 10^5);
     MLIdeal := toricMLIdeal(A, c, u);
-    MLdegree := saturate(MLIdeal, (product gens ring MLIdeal)); 
+    MLdegree := degree saturate(MLIdeal, (product gens ring MLIdeal)); 
     MLdegree
-    );
+    )
 
 TEST ///
 A = matrix {{1,1,1,0,0,0,0,0,0}, {0,0,0,1,1,1,0,0,0},{0,0,0,0,0,0,1,1,1},
     {1,0,0,1,0,0,1,0,0},{0,1,0,0,1,0,0,1,0},{0,0,1,0,0,1,0,0,1}};
 c = {1, 1, 1, 1, 1, 1, 1, 1, 1};
-assert(1 == toricMLDegree(A, c));
+assert(2 == toricMLDegree(A, c));
 c = {1,2,3,1,1,1,1,1,1};
-assert(3 == toricMLDegree(A,c));
+assert(6 == toricMLDegree(A,c));
 ///
 
 
