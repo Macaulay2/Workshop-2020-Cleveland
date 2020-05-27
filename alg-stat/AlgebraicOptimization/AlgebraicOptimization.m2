@@ -135,11 +135,12 @@ probabilisticEDDegree Ideal := ZZ => opts -> I -> (
   Ising := I + minors(c, jacI);
   u := if opts.Data === null then (gens R / (i -> random(coefficientRing R))) else opts.Data;
   proj := if opts.Projective === null then (if isHomogeneous I then true else false) else opts.Projective;
+  local Ibar;
   J := if not proj then (
-    Ibar := I + minors(c+1, matrix{u} - vars R || jacI);
+    Ibar = I + minors(c+1, matrix{u} - vars R || jacI);
     saturate(Ibar, Ising)
   ) else (
-    Ibar := I + minors(c+2, matrix{u} || vars R || jacI);
+    Ibar = I + minors(c+2, matrix{u} || vars R || jacI);
     Q := gens R / (i -> i^2) // sum // ideal;
     saturate(Ibar, Ising * Q)
   );
