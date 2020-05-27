@@ -34,7 +34,7 @@ export {
   "symbolicEDDegree",
   "multiDegreeEDDegree",
   "MLDegree",
-  "symbolicLagrangeMultiplierEDDegree",
+  "probabilisticLagrangeMultiplierEDDegree",
   "toricMLIdeal",
   "toricMLDegree",
   -- Options
@@ -257,22 +257,22 @@ assert( MLDegree (F,u) == 3)
 --LagrangeMultiplierEDDegree
 --------------------
 
-symbolicLagrangeMultiplierEDDegree = method(Options => {Data => null});
-symbolicLagrangeMultiplierEDDegree (Ideal,Ideal) := ZZ => opts -> (WI,I) -> (
+probabilisticLagrangeMultiplierEDDegree = method(Options => {Data => null});
+probabilisticLagrangeMultiplierEDDegree (Ideal,Ideal) := ZZ => opts -> (WI,I) -> (
     aLI := lagrangeIdeal(WI,I);
     X := gens ring I;
     g := if opts.Data===null then apply(X,i->random(1,1000) ) else opts.Data;
     degree criticalIdeal(X-g,aLI)
     )
---symbolicLagrangeMultiplierEDDegree Ideal := ZZ => opts -> I ->symbolicLagrangeMultiplierEDDegree(I,I)
+--probabilisticLagrangeMultiplierEDDegree Ideal := ZZ => opts -> I ->probabilisticLagrangeMultiplierEDDegree(I,I)
     
 
 TEST///
 R=QQ[x,y]
 I =WI =ideal(x^2+y^2-1)
-assert(2==symbolicLagrangeMultiplierEDDegree(WI,I))
+assert(2==probabilisticLagrangeMultiplierEDDegree(WI,I))
 I = WI = ideal ((x^2+y^2+x)^2-x^2-y^2)
-assert(3==symbolicLagrangeMultiplierEDDegree(WI,I))
+assert(3==probabilisticLagrangeMultiplierEDDegree(WI,I))
 ///
 
 ------------------------------
@@ -1305,23 +1305,22 @@ Description
     probabilisticLagrangeMultiplierOptimizationDegree(psi,WI,I)--this is ten
 
 SeeAlso
-  lagrangeIdeal
   probabilisticEDDegree
-  symbolicLagrangeMultiplierEDDegree
+  probabilisticLagrangeMultiplierEDDegree
 
 ///
 
 
 doc ///
 Key
-  symbolicLagrangeMultiplierEDDegree
-  (symbolicLagrangeMultiplierEDDegree, Ideal,Ideal)
-  [symbolicLagrangeMultiplierEDDegree, Data]
+  probabilisticLagrangeMultiplierEDDegree
+  (probabilisticLagrangeMultiplierEDDegree, Ideal,Ideal)
+  [probabilisticLagrangeMultiplierEDDegree, Data]
 Headline
   Compute EDDegree symbolically using Lagrange multipliers
 Usage
-  symbolicEDDegree (WI,I)
-  probabilisticEDDegree(WI,I, Data => L)
+  probabilisticLagrangeMultiplierEDDegree (WI,I)
+  probabilisticLagrangeMultiplierEDDegree(WI,I, Data => L)
 Inputs
   WI:
     an ideal with codim(I) generators such that V(WI) contains an each irreducible component V(I) as an irreducible component.
@@ -1343,7 +1342,7 @@ Description
     R = QQ[x0,x1,x2,x3]
     WI = ideal(x0*x2-x1^2 ,x1*x3-x2^2)
     I = WI + ideal(x0*x3-x1*x2)
-    symbolicLagrangeMultiplierEDDegree(WI, I)
+    probabilisticLagrangeMultiplierEDDegree(WI, I)
 
   Text
     This function is probabilistic.
@@ -1352,7 +1351,7 @@ Description
     R = QQ[x0,x1,x2,x3]
     WI = ideal(x0*x2-x1^2,x1*x3-x2^2)
     I = WI+ideal(x0*x3-x1*x2)
-    symbolicLagrangeMultiplierEDDegree(WI,I)
+    probabilisticLagrangeMultiplierEDDegree(WI,I)
 
   Text
     This function is probabilistic and chooses the data at random by default. 
@@ -1362,12 +1361,11 @@ Description
   Example
     R = QQ[x,y]
     WI = I = ideal((x^2+y^2+x)^2 - x^2 - y^2)
-    symbolicLagrangeMultiplierEDDegree(WI,I)
-    symbolicLagrangeMultiplierEDDegree(WI,I,Data=>{0,0})
+    probabilisticLagrangeMultiplierEDDegree(WI,I)
+    probabilisticLagrangeMultiplierEDDegree(WI,I,Data=>{0,0})
 
 SeeAlso
-  lagrangeIdeal
-  criticalIdeal
+  probabilisticLagrangeMultiplierOptimizationDegree
 ///
 
 
