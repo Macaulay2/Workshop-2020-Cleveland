@@ -46,6 +46,7 @@ export {
   --Methods
   "isolatedRegularCriticalPointSet","criticalIdeal","lagrangeIdeal",
   "gradient",
+  "probabilisticLagrangeMultiplierOptimizationDegree",
   --More Keys
   "LagrangeVariable","PrimalIdeal","JacobianConstraint","AmbientRing","LagrangeCoordinates","WitnessPrimalIdeal",
   "Data", "Gradient", "WitnessSuperSet", "SaveFileDirectory",
@@ -464,27 +465,27 @@ criticalIdeal (Gradient,LagrangeIdeal) := CriticalIdeal => opts  -> (g,aLI) ->(
 criticalIdeal (List,LagrangeIdeal) := CriticalIdeal => opts  -> (g,aLI) ->criticalIdeal(gradient g,aLI,opts)
 criticalIdeal (RingElement,LagrangeIdeal) := CriticalIdeal =>opts -> (psi,aLI) -> (
     g := apply(gens ring psi,x->diff(x,psi));
-    criticalIdeal(g,aLI,opts);
+    criticalIdeal(g,aLI,opts)
     )
 
 criticalIdeal (Gradient,Ideal) := CriticalIdeal =>opts -> (g,WI) -> (
     aLI := lagrangeIdeal WI;
-    criticalIdeal(g,aLI,opts);
+    criticalIdeal(g,aLI,opts)
     )
-criticalIdeal (List,Ideal) := CriticalIdeal =>opts -> (g,WI) ->criticalIdeal(gradient g,WI)
+criticalIdeal (List,Ideal) := CriticalIdeal =>opts -> (g,WI) ->criticalIdeal(gradient g,WI,opts)
 criticalIdeal (RingElement,Ideal) := CriticalIdeal =>opts -> (psi,WI) -> (
     g := apply(gens ring psi,x->diff(x,psi));
-    criticalIdeal(g,WI,opts);
+    criticalIdeal(g,WI,opts)
     )
 
 criticalIdeal (Gradient,Ideal,Ideal) := CriticalIdeal =>opts -> (g,WI,I) -> (
     aLI := lagrangeIdeal(WI,I);
-    criticalIdeal(g,aLI,opts);
+    criticalIdeal(g,aLI,opts)
     )
-criticalIdeal (List,Ideal,Ideal) := CriticalIdeal =>opts -> (g,WI,I) ->criticalIdeal(gradient g,WI,I)
+criticalIdeal (List,Ideal,Ideal) := CriticalIdeal =>opts -> (g,WI,I) ->criticalIdeal(gradient g,WI,I,opts)
 criticalIdeal (RingElement,Ideal,Ideal) := CriticalIdeal =>opts -> (psi,WI,I) -> (
     g := apply(gens ring psi,x->diff(x,psi));
-    criticalIdeal(g,WI,I,opts);
+    criticalIdeal(g,WI,I,opts)
     )
 
 degree (CriticalIdeal) :=  CI -> (
@@ -494,7 +495,10 @@ degree (CriticalIdeal) :=  CI -> (
     else error"CriticalIdeal#LagrangeIdeal#?PrimalIdeal is false. ";
     u := gens coefficientRing ring (CI#LagrangeIdeal);
     dataSub := if CI.Data===null then {} else apply(u,CI.Data,(i,j)->i=>j);
-    degree sub(w,dataSub)
+    sCI := sub(w,dataSub);
+    g := sub(CI#Gradient,CI#LagrangeIdeal);    
+    scan( g.Denominators , d -> sCI = saturate(sCI, d) );
+    degree sCI
     )    
 
 
@@ -527,6 +531,7 @@ peek WCI
 assert(2==degree WCI)
 
 ///
+
 
 
 ----------------------------------------
@@ -811,14 +816,35 @@ newRingFromSymbol = (n,s,kk)->(
     kk[s_0..s_(n - 1)]
     )
 
--*
-optimizationDegree = method(Options => options makeLagrangeRing);
-optimizationDegree (List,List,LagrangeVarietyWitness) := ZZ => opts  -> (v,g,LVW) ->(
-    CI:=witnessCriticalIdeal(v,g,LVW);
-    CI = CI+LVW#PrimalIdeal;
-    scan(g,i->if ring g ==frac ring CI then CI:=saturate(CI,denominator g))
+
+probabilisticLagrangeMultiplierOptimizationDegree = method(Options => {Data => null});
+probabilisticLagrangeMultiplierOptimizationDegree (List,Ideal,Ideal) := ZZ => opts -> (g,WI,I) -> (
+    aLI := lagrangeIdeal(WI,I);
+    degree criticalIdeal(g,aLI,opts)
     )
-*-
+probabilisticLagrangeMultiplierOptimizationDegree (RingElement,Ideal,Ideal) := ZZ => opts -> (psi,WI,I) -> (
+    aLI := lagrangeIdeal(WI,I);
+    degree criticalIdeal(psi,aLI,opts)
+    )
+    
+
+TEST///
+
+R=QQ[x,y]
+WI = I = ideal((x^2+y^2+x)^2-x^2-y^2)
+psi =(x-3)^2+(y-2)^2
+probabilisticLagrangeMultiplierOptimizationDegree(psi,WI,I)
+assert(3==probabilisticLagrangeMultiplierOptimizationDegree(psi,WI,I))
+
+R=QQ[u,v][x,y]
+WI = I = ideal((x^2+y^2+x)^2-x^2-y^2)
+psi =(x-u)^2+(y-v)^2
+assert(10==probabilisticLagrangeMultiplierOptimizationDegree(psi,WI,I))
+assert(3==probabilisticLagrangeMultiplierOptimizationDegree(psi,WI,I,Data=>{2,3}))
+
+--
+///
+
 
 -- Documentation below
 
@@ -1212,7 +1238,7 @@ Description
 ///
 
 
-doc /// --EDIT
+doc ///
 Key
   symbolicLagrangeMultiplierEDDegree
   (symbolicLagrangeMultiplierEDDegree, Ideal,Ideal)
@@ -1269,6 +1295,8 @@ SeeAlso
   lagrangeIdeal
   criticalIdeal
 ///
+
+
 
 
 
