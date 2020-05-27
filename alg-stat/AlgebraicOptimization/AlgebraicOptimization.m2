@@ -1036,6 +1036,53 @@ Usage
   symbolicEDDegree I
   symbolicEDDegree(I, Projective => true)
   symbolicEDDegree(I, Projective => false)
+Inputs
+  I:
+    a prime @TO2{Ideal, "ideal"}@ corresponding to an irreductible variety.
+  Projective =>
+    specifies if the ideal is homogeneous or not. The default value @TO null@ chooses automatically.
+    The automatic choice can be overriden by specifying a @TO Boolean@ value.
+Outputs
+  :ZZ
+    the ED-degree of $I$.
+Description
+  Text
+    The function computes the Euclidean distance degree of an irreducible variety corresponding to
+    the prime ideal $I$. If $I \subseteq \mathbb{K}[x_1,\dots,x_n]$ is the prime ideal corresponding
+    to the variety $X$, the function computes the number of critical points of the distance function from
+    $X$ to a generic point $(u_1,\dots,u_n)$. The algorithms used are the same as in @TO probabilisticEDDegree@,
+    except that computations are done over the field of fractions of $\mathbb{K}[u_1,\dots,u_n]$.
+
+    We can confirm that the ED-degree of the circle is 2.
+  Example
+    R = QQ[x,y]
+    I = ideal"x2 + y2 - 1"
+    symbolicEDDegree I
+
+  Text
+    As opposed to @TO probabilisticEDDegree@, this function is deterministic, however
+    it is usually much slower.
+  CannedExample
+    i4 : I = ideal((x^2+y^2+x)^2 - x^2 - y^2)
+
+                4     2 2    4     3       2    2
+    o4 = ideal(x  + 2x y  + y  + 2x  + 2x*y  - y )
+
+    o4 : Ideal of R
+
+    i5 : elapsedTime symbolicEDDegree I
+          3.24044 seconds elapsed
+
+    o5 = 3
+
+    i6 : elapsedTime probabilisticEDDegree I
+          0.0097821 seconds elapsed
+
+    o6 = 3
+
+
+SeeAlso
+  probabilisticEDDegree
 ///
 
 
