@@ -53,10 +53,13 @@ degreesRing TorusAction := PolynomialRing => T -> (
     else (
     	r := rank T;
     	z := getSymbol "z";
-    	Tvar := getSymbol "T";
-    	R := newRing(degreesRing(r+1),Variables=>apply(r,i->z_i) | {Tvar});
-	T.cache.degreesRing = R;
-	return T.cache.degreesRing;
+--    	Tvar := getSymbol "T";
+	C := ZZ[Variables=>r,VariableBaseName=>z,
+	    MonomialOrder=>GroupLex=>r,Inverses=>true];
+--	R := C[Tvar,MonomialOrder=>RevLex,Global=>false];
+    	R := C monoid degreesRing ring T;
+--    	R := newRing(degreesRing(r+1),Variables=>apply(r,i->z_i) | {Tvar});
+	T.cache.degreesRing = R
 	)
     )
 
@@ -70,12 +73,32 @@ toricHilbertSeries (TorusAction) := Divide => T -> (
     n := dim T;
     W := weights T;
     R := degreesRing T;
+    C := coefficientRing R;
     p := pairs tally entries transpose W;
-    den := Product apply(sort apply(p, (w,e) -> {1 - R_w * (last gens R),e}), t -> Power t);
+    den := Product apply(sort apply(p, (w,e) -> {1 - C_w * R_0,e}), t -> Power t);
+--    den := Product apply(sort apply(p, (w,e) -> {1 - R_w * (last gens R),e}), t -> Power t);
     Divide{1,den}
 )
 
-    
+-- original is below
+toricHilbertFunction = (T, d) -> (
+    if not T.cache.?toricHilbert then (
+	T.cache.toricHilbert = 1_(degreesRing T);
+	);
+    currentDeg := first degree T.cache.toricHilbert;
+    (M,C) := coefficients T.cache.toricHilbert;
+    if (d > currentDeg) then (
+	R := degreesRing T;
+    	den := value denominator toricHilbertSeries T;
+    	denDeg := first degree den;
+	B := last coefficients den;
+	for i from currentDeg+1 to d do (
+	    M = M | matrix{{R_0^i}};
+	    C = C || matrix{{-sum(1..min(i,denDeg),k -> C_(i-k,0)*B_(k,0) )}};
+	    );
+	);
+    first flatten entries (M_{0..d}*C^{0..d})
+    )
 
 
 -- INPUT: W weight matrix for diagonal torus action on ring,
