@@ -940,6 +940,12 @@ projDim(Module) := opts -> (N1) -> (
     return i;
 );
 
+isGBDone := (myGB) -> (
+    --a temporary function for finding out if a gb computation is done.
+    myStr := status myGB;
+    if (0 < #select("status: done", myStr)) then return true else return false;
+);
+
 
 
 isCodimAtLeast = method(Options => optIsCodimAtLeast);
@@ -986,6 +992,7 @@ isCodimAtLeast(ZZ, Ideal) := opts -> (n1, I1) -> (
             if (opts.Verbose or debugLevel > 0) then print concatenate("isCodimAtLeast: computed gb, now computing codim ");
             if (codim monIdeal - dAmb >= n1) then return true;
         );
+        if (isGBDone(myGB)) then i = opts.MaxSteps;
         i = i + 1;
     );
     return null;

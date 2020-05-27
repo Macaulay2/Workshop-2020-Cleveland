@@ -3,58 +3,42 @@ newPackage(
     	Version => "1.0", 
     	Date => "October, 2018",
     	Authors => {
-	     {Name => "Kisun Lee", Email => "klee669@gatech.edu"}
+	     {Name => "Kisun Lee", Email => "klee669@gatech.edu"},
+	     {Name => "Thomas Yahl", Email => "thomasjyahl@math.tamu.edu"},
+     	     {Name => "Special thanks: Michael Burr, Anton Leykin"}
 	     },
     	HomePage => "http://people.math.gatech.edu/~klee669",
     	Headline => "numerical certification",
 	PackageExports => {"NumericalAlgebraicGeometry"},
 	Configuration => {"ALPHACERTIFIEDexec" => "alphaCertified"},
-    	--DebuggingMode => true		 -- set to true only during development
-    	DebuggingMode => false,
+    	DebuggingMode => true,		 -- set to true only during development
+    	--DebuggingMode => false,
 	AuxiliaryFiles => true
     	)
 
 -- Any symbols or functions that the user is to have access to
 -- must be placed in one of the following two lists
 
-export {"pointNorm", 
-    "ALPHACERTIFIEDexec",
-    "polyNorm", 
-    "polySysNorm", 
-    "newtonOper",
+export {
     "computeConstants", 
-    "certifySolution", 
-    "certifyDistinctSoln", 
-    "certifyRealSoln",
-    "certifyCount",
+    "certifyRegularSolution", 
+    "certifyDistinctSolutions", 
+    "certifyRealSolution",
+    "alphaTheoryCertification",
+    "certifySolutions",
     "Interval", 
     "interval", 
-    "mInterval", 
-    "intervalNorm", 
     "intervalMatrix", 
     "IntervalMatrix", 
-    "wInterval", 
-    "intervalMatrixNorm",
     "krawczykOper", 
     "InvertibleMatrix",
     "krawczykMethod",
     "krawczykMethodOptions",
-    "identityIntMat", 
     "intervalOption",
     "IntervalOption",
-    "subOnMonomial",
     "intervalOptionList", 
     "IntervalOptionList",
-    "ingredientsForKoper",
-    "inverseMat",
-    "intervalJacMat",
-    "sqabsForGaussianRational",
-    "conjugateGaussian",
-    "conjugateGaussianRationalMatrix",
-    "degCoeff",
     "toACertifiedPoly",
-    "pointBlock",
-    "toACertifiedPoint",
     "alphaCertified",
     "ALGORITHM",
     "ARITHMETICTYPE",
@@ -67,12 +51,8 @@ export {"pointNorm",
     "NUMITERATIONS",
     "REALITYCHECK",
     "REALITYTEST",
-    "Hessian",--                                                                                                                      
-    "computeOrthoBasis",--                                                                                                            
-    "Aoperator",--these are added                                                                                                     
-    "Hoperator",--these are added                                                                                                     
-    "gammaKBound",--these are added                                                                                                   
-    "certifyRootMultiplicityBound"--these are added  
+    "Aoperator",--these are added
+    "certifyCluster"--these are added
     }
 exportMutable {}
 
@@ -240,21 +220,24 @@ computeConstants(PolySystem, Point) := (f, x) -> (
     )
 
 
-certifySolution = method() -- returns null if not successful, (alpha,beta,gamma) if alpha-certified 
-certifySolution(PolySystem, Matrix) := (f, x) -> (
+certifyRegularSolution = method() -- returns null if not successful, (alpha,beta,gamma) if alpha-certified 
+certifyRegularSolution(PolySystem, Matrix) := (f, x) -> (
     computeConstants(f, point x)
     )
-certifySolution(PolySystem, Point) := (f, x) -> (
+certifyRegularSolution(PolySystem, Point) := (f, x) -> (
     alpha := first computeConstants(f,x);
     -- check: alpha < (13-3*sqrt(17))/4
     if 16*alpha < 169 and (322-16*alpha)^2 > 78*78*17 then true else false
     )
-
-certifyDistinctSoln = method()
-certifyDistinctSoln(PolySystem, Matrix, Matrix) := (f, x1, x2) -> (
-    certifyDistinctSoln(f, point x1, point x2)
+certifyRegularSolution(PolySystem, List) := (f, L) -> (
+    apply(L, i -> certifyRegularSolution(f, i))
     )
-certifyDistinctSoln(PolySystem, Point, Point) := (f, x1, x2) -> (
+
+certifyDistinctSolutions = method()
+certifyDistinctSolutions(PolySystem, Matrix, Matrix) := (f, x1, x2) -> (
+    certifyDistinctSolutions(f, point x1, point x2)
+    )
+certifyDistinctSolutions(PolySystem, Point, Point) := (f, x1, x2) -> (
     R := coefficientRing ring f;
     if precision R =!= infinity then (
 	R = R;
@@ -267,7 +250,12 @@ certifyDistinctSoln(PolySystem, Point, Point) := (f, x1, x2) -> (
 	); 
     Consts1 := computeConstants(f,x1);
     Consts2 := computeConstants(f,x2);
-    normOfDist := sum apply((point{(coordinates x1)-(coordinates x2)})#Coordinates, c->sub(c^2,R));
+    if precision R =!= infinity then (
+    	normOfDist := (norm(2,point{(coordinates x1)-(coordinates x2)}))^2;
+	)
+    else (
+    	normOfDist = sum apply((point{(coordinates x1)-(coordinates x2)})#Coordinates, c->sub(c^2,R));
+	);
     if Consts1 #0 >= ((13-3*sqrt(17))/4)^2 or Consts2 #0 >= ((13-3*sqrt(17))/4)^2 then (
 	false
 	)
@@ -283,11 +271,11 @@ certifyDistinctSoln(PolySystem, Point, Point) := (f, x1, x2) -> (
     )
 
 
-certifyRealSoln = method()
-certifyRealSoln(PolySystem, Matrix) := (f, x) -> (
-    computeConstants(f, point x)
+certifyRealSolution = method()
+certifyRealSolution(PolySystem, Matrix) := (f, x) -> (
+    certifyRealSolution(f, point x)
     )
-certifyRealSoln(PolySystem, Point) := (f, x) -> (
+certifyRealSolution(PolySystem, Point) := (f, x) -> (
     (alpha, beta, gamma) := computeConstants(f,x);
     R := coefficientRing ring f;
     if precision R =!= infinity then (
@@ -319,8 +307,8 @@ certifyRealSoln(PolySystem, Point) := (f, x) -> (
     )
     )
 
-certifyCount = method()
-certifyCount(PolySystem, List) := (f, X) -> (
+alphaTheoryCertification = method()
+alphaTheoryCertification(PolySystem, List) := (f, X) -> (
     R := coefficientRing ring f;
     if precision R =!= infinity then (
 	R = R;
@@ -331,7 +319,7 @@ certifyCount(PolySystem, List) := (f, X) -> (
     else (
  	R = R;
 	); 
-    Y := select(X, i->certifySolution(f,i)=!=false); 
+    Y := select(X, i->certifyRegularSolution(f,i)=!=false); 
     C := apply(X, i-> first computeConstants(f,i)); -- Can we have this without using function twice?
     S := new MutableList from Y;
     for i from 0 to length(Y) - 1 do S#i = true;
@@ -339,14 +327,127 @@ certifyCount(PolySystem, List) := (f, X) -> (
 	S#i == true and S#j == true
 	)
     then (
-	S#j = certifyDistinctSoln(f,Y#i, Y#j);
+	S#j = certifyDistinctSolutions(f,Y#i, Y#j);
 	);
     D := {};
     for i from 0 to length(Y) - 1 do if S#i == true then D = append(D, Y#i);
     Real := {};
-    if R =!= CC then for i from 0 to length(D) - 1 do if certifyRealSoln(f,D#i) == true then Real = append(Real,D#i);
+    if R =!= CC then for i from 0 to length(D) - 1 do if certifyRealSolution(f,D#i) == true then Real = append(Real,D#i);
     new HashTable from {"certifiedSolutions" => Y, "alphaValues" => C, "certifiedDistinct" =>D, "certifiedReal" => Real}
     )
+
+
+
+
+
+
+
+
+
+
+-- a function converting a polynomial into alphaCertified input format.
+-- input : polynomial
+-- output : the first line is the number of terms of an input.
+--    	    the second to last lines represent terms of an input polynomial in a way that
+--    	    the first (variable-many) numbers are  degrees of each variable in the monomial and 
+--          the last two numbers are real and imaginary parts of its coefficient
+degCoeff = method()
+degCoeff(RingElement) := f -> (
+    variables := gens ring f;
+    R := coefficientRing ring f;
+    if precision R == infinity then (
+	print "error! Use a polynomial ring with coefficients CC or RR"; break
+	);
+    (E, C) := coefficients f;
+    E = flatten entries E;
+    C = flatten entries C;
+    strList := apply(length E, i -> 
+        replace("[{,},,]", "", toString(apply(variables, j -> 
+	    degree(j, E#i)) | {lift(realPart sub(C#i,CC), QQ), lift(imaginaryPart sub(C#i,CC), QQ)}))
+	);
+    prepend(length E, strList)
+    )
+    
+    
+    
+
+
+-- a function converting a polynomial system into alphaCertified input format.
+-- input : polynomial system
+-- output : a directory to a temporary file which can be used as an input for alphaCertified.
+--          the first line consists of the number of variables and the number of polynomials.
+--    	    each block represents information about each polynomial in the system.
+toACertifiedPoly = method()
+toACertifiedPoly(PolySystem) := P -> (
+    fn := temporaryFileName();
+    (numOfVars, numOfPolys) := (P.NumberOfVariables, P.NumberOfPolys);
+    fn << toString numOfVars | " " | toString numOfPolys << endl;
+    fn << "" << endl;
+    polyList := flatten entries P.PolyMap;
+    strList := apply(polyList, i -> 
+	degCoeff i);
+    apply(flatten strList, i -> fn << i << endl);
+    fn << close;
+    fn
+    )
+
+
+
+-- a function converting a point into a block of digits for alphaCertified input.
+-- input : Matrix representing a coordinate of a point or Point
+-- output : a list of coordinates of a given point.
+pointBlock = method()
+pointBlock(Point) := P -> (
+    pointBlock matrix P
+    )
+pointBlock(Matrix) := M -> (
+    strList := apply(flatten entries M, i -> 
+        replace("[{,},,]", "", toString({lift((realPart i)_QQ,QQ), lift((imaginaryPart i)_QQ,QQ)}))
+	);
+    strList = append(strList, "")    
+    )
+    
+    
+
+toACertifiedPoint = method()
+toACertifiedPoint(List) := L -> (
+    fn := temporaryFileName();
+    n := length L;
+    fn << toString n << endl;
+    fn << "" << endl;
+    apply(L, i -> 
+	apply(pointBlock i, j -> 
+	    fn << j << endl)
+	);
+    fn << close;
+    fn
+    )
+    
+alphaCertified = method(Options => {
+	ALGORITHM => 2,
+	ARITHMETICTYPE => 0,
+	PRECISION => 96,
+	REFINEDIGITS => 0,
+	NUMRANDOMSYSTEMS => 2,
+	RANDOMDIGITS => 10,
+	RANDOMSEED => random 10000,
+	NEWTONONLY => 0,
+	NUMITERATIONS => 2,
+	REALITYCHECK => 1,
+	REALITYTEST => 0
+	}
+	)
+alphaCertified(PolySystem, List) := o -> (P, L) -> (
+    fin1 := toACertifiedPoly P;
+    fin2 := toACertifiedPoint L;
+    fin3 := temporaryFileName();
+    apply(# o, i -> fin3 << toString(keys o)#i | ": "|toString(values o)#i|";" << endl);
+    fin3 << close;
+    run("cd " | ALPHACERTIFIEDexe |"; ./alphaCertified " | fin1 |" "| fin2 |" " | fin3);
+    )
+    
+    
+    
 
 
 
@@ -357,9 +458,6 @@ certifyCount(PolySystem, List) := (f, X) -> (
 --------------------------------
 --Start Multiple Roots Section--
 --------------------------------
---make everything work with exact arithmetic.
-
-
 Hessian = method(TypicalValue => Matrix)
 Hessian(PolySystem) := f->(
     return(jacobian jacobian f)
@@ -369,62 +467,36 @@ Hessian(PolySystem,Point) := (f,x0)->(
     return(evaluate(Hessian(f),x0))
     )
 
-rationalUnitaryMatrix = method(TypicalValue => Matrix)
-rationalUnitaryMatrix(ZZ) := n->(
-    M := random(QQ^n,QQ^n,UpperTriangular=>true);
-    S := M-transpose(M);
-    I := id_(QQ^n);
-    A := inverse(S-I)*(S+I);
-    return(A)
-    )
-
---this probably needs a better name
---this is currently non-deterministic. 
 computeOrthoBasis = method(TypicalValue => Matrix)
 computeOrthoBasis(PolySystem,Point) := (F,x0)->(
     n := F#NumberOfPolys;
-    J := evaluate(jacobian F,x0);
-    (singularValues,P,Q) := SVD sub(J,CC);
-    kappa := number(singularValues,sigma->abs sigma < 1e-8);
-    --V := submatrix(inverse(Q),n-kappa..n-1);
-    V := submatrix(rationalUnitaryMatrix(n),0..kappa-1);
+    J := sub(evaluate(jacobian F,x0),CC);
+    kappa := n-numericalRank J;
+    Q := last SVD J;
+    V := submatrix(inverse Q,n-kappa..n-1);
     return(V)
     )
 
 Aoperator = method(TypicalValue => Matrix)
-Aoperator(PolySystem,Point,Matrix) := (F,x0,V)->(
+Aoperator(PolySystem,Point) := (F,x0)->(
     n := F#NumberOfPolys;
     eqs := equations F;
     J := evaluate(jacobian F,x0);
     --is there a way to get individual equations as polySystems?
     HessianList := apply(eqs,f->Hessian(polySystem matrix{{f}},x0));
+    V := computeOrthoBasis(F,x0);
     kappa := numcols V;
     --this is bad, find a better way of writing this.
     A := J + 1/2*sum(kappa,i->fold(apply(n,j->transpose(V_{i})*HessianList#j*V_{i}*transpose(V_{i})),(A,B)->A||B));
     return(A)
     )
 
--- Aoperator code that Kisun used    
-Aoper2 = method()
-Aoper2(PolySystem, Point, Matrix) := (I, P, V) -> (
-    baseRing := ring I;
-    J := jacobian I;
-    n := numcols J;
-    Jeval := evaluate(J, P);
-    r := numericalRank sub(Jeval,CC);
-    k := n - r;
-    orthVecs := toList apply(k, i -> sub(matrix V_i, baseRing));
-    secondTerm := apply(orthVecs, j -> transpose jacobian transpose(J*j));
-    secondTerm = sum apply(length orthVecs, i -> 
-	secondTerm#i * orthVecs#i * (1/2)* transpose orthVecs#i);
-    Jeval + evaluate(secondTerm, P)
-    )
-
 
 
 Hoperator = method(TypicalValue => Matrix)
-Hoperator(PolySystem,Point,Matrix) := (F,x0,V)->(
+Hoperator(PolySystem,Point) := (F,x0)->(
     J := evaluate(jacobian F,x0);
+    V := computeOrthoBasis(F,x0);
     H := J*V*(transpose V);
     return(H)
     )
@@ -432,16 +504,13 @@ Hoperator(PolySystem,Point,Matrix) := (F,x0,V)->(
 gammaKBound = method(TypicalValue => Number)
 gammaKBound(PolySystem,Point) := (F,x0)->(
     eqs := equations F;
-    pointNormx := pointNorm x0;
-    --this seems like it can be simplified.
+    pointNormx := sqrt(pointNorm x0);
     degs := select(flatten apply(eqs, i -> degree i), i -> i =!= 0);
-    deltaF := diagonalMatrix flatten apply(degs, i -> sqrt(i * (pointNormx)^(i-1))); 
     V := computeOrthoBasis(F,x0);
-    A := Aoperator(F,x0,V);
-    H := Hoperator(F,x0,V);
-    --where does the square come from?
---    mu := max {1, polySysNorm(F) * (norm(2,inverse(A-H) * deltaF))^2};
-    mu := max {1, polySysNorm(F) * norm(2,inverse(A-H) * deltaF)};
+    A := Aoperator(F,x0);
+    H := Hoperator(F,x0);
+    deltaF := diagonalMatrix flatten apply(degs, i -> sqrt(i * (pointNormx)^(i-1))); 
+    mu := max {1, sqrt(polySysNorm(F)) * norm(2,inverse(A-H) * deltaF)};
     gammaK := mu*(max degs)^(3/2)/(2*pointNormx);
     return(gammaK)
     )
@@ -456,28 +525,22 @@ computeD(Number) := k -> (
 	    if (imaginaryPart i) == 0 and (realPart i) > 0 then i))
     )
 
---needs better name and output
---needs to be checked a bit
-certifyRootMultiplicityBound = method(TypicalValue => ZZ)
-certifyRootMultiplicityBound(PolySystem,Point) := (F,x0)->(
+--needs better output
+certifyCluster = method(TypicalValue => ZZ)
+certifyCluster(PolySystem,Point) := (F,x0)->(
     eqs := equations F;
-    pointNormx := pointNorm x0;
-    V := computeOrthoBasis(F,x0);
-    A := Aoperator(F,x0,V);
-    H := Hoperator(F,x0,V);
-    kappa := numcols computeOrthoBasis(F,x0);
-    --this seems like it can be simplified. (repeat from gammaKBound)
     degs := select(flatten apply(eqs, i -> degree i), i -> i =!= 0);
-    deltaF := diagonalMatrix flatten apply(degs, i -> sqrt(i * (pointNormx)^(i-1))); 
-    mu := max {1, polySysNorm(F) * (norm(2,inverse(A-H) * deltaF))^2};
-    --I think d is the min real sol of #### not max degs?
-    --used d<.3
-    d := computeD kappa;
---    lhs := norm(2,evaluate(F,x0)) + (.3)/4*norm(2,H);
-    lhs := norm(2,evaluate(F,x0)) + (d)*norm(2,H)/(4*(gammaKBound(F,x0))^2);
---    rhs := pointNormx^4/(2*mu^4*(.3)^5*norm(2,inverse(A-H)));
-    rhs := (d)^3/(32*(gammaKBound(F,x0))^4*norm(2,inverse(A-H)));
-    return(lhs < rhs,2^kappa)
+    pointNormx := sqrt(pointNorm x0);
+    V := computeOrthoBasis(F,x0);
+    A := Aoperator(F,x0);
+    H := Hoperator(F,x0);
+    kappa := numcols V;
+    d := realPart computeD kappa;
+    deltaF := diagonalMatrix flatten apply(degs, i -> sqrt(i * (pointNormx)^(i-1)));
+    
+    lhs := norm(2,evaluate(F,x0))*(gammaKBound(F,x0))^2 + d*norm(2,H)/4;
+    rhs := d/(32*(gammaKBound(F,x0))^2*norm(2,inverse(A-H)));
+    return(lhs < rhs, 2^kappa,d/(4*(gammaKBound(F,x0))^2))
     )
 
 
@@ -485,6 +548,16 @@ certifyRootMultiplicityBound(PolySystem,Point) := (F,x0)->(
 --End Multiple Roots Section--
 ------------------------------
 
+
+
+certifySolutions = method()
+certifySolutions(PolySystem, List) := (P, L) -> (
+    regSolutions := delete( ,apply(L, i -> if certifyRegularSolution(P, i) then i));
+    apply(regSolutions, i -> L = delete(i, L));
+    multSolutions := delete( ,apply(L, i -> if first certifyCluster(P,i) then i));
+    new HashTable from {"certifiedRegularSolutions" => alphaTheoryCertification(P, regSolutions),
+	 "certifiedMultipleSolutions" => multSolutions}
+    )
 
 
 
@@ -960,119 +1033,6 @@ krawczykMethod(PolySystem, IntervalOptionList) := o -> (polySys, option) -> (
 		)
 	    )
 
-
-
-
-
-
-
--- a function converting a polynomial into alphaCertified input format.
--- input : polynomial
--- output : the first line is the number of terms of an input.
---    	    the second to last lines represent terms of an input polynomial in a way that
---    	    the first (variable-many) numbers are  degrees of each variable in the monomial and 
---          the last two numbers are real and imaginary parts of its coefficient
-degCoeff = method()
-degCoeff(RingElement) := f -> (
-    variables := gens ring f;
-    R := coefficientRing ring f;
-    if precision R == infinity then (
-	print "error! Use a polynomial ring with coefficients CC or RR"; break
-	);
-    (E, C) := coefficients f;
-    E = flatten entries E;
-    C = flatten entries C;
-    strList := apply(length E, i -> 
-        replace("[{,},,]", "", toString(apply(variables, j -> 
-	    degree(j, E#i)) | {lift(realPart sub(C#i,CC), QQ), lift(imaginaryPart sub(C#i,CC), QQ)}))
-	);
-    prepend(length E, strList)
-    )
-    
-    
-    
-
-
--- a function converting a polynomial system into alphaCertified input format.
--- input : polynomial system
--- output : a directory to a temporary file which can be used as an input for alphaCertified.
---          the first line consists of the number of variables and the number of polynomials.
---    	    each block represents information about each polynomial in the system.
-toACertifiedPoly = method()
-toACertifiedPoly(PolySystem) := P -> (
-    fn := temporaryFileName();
-    (numOfVars, numOfPolys) := (P.NumberOfVariables, P.NumberOfPolys);
-    fn << toString numOfVars | " " | toString numOfPolys << endl;
-    fn << "" << endl;
-    polyList := flatten entries P.PolyMap;
-    strList := apply(polyList, i -> 
-	degCoeff i);
-    apply(flatten strList, i -> fn << i << endl);
-    fn << close;
-    fn
-    )
-
-
-
--- a function converting a point into a block of digits for alphaCertified input.
--- input : Matrix representing a coordinate of a point or Point
--- output : a list of coordinates of a given point.
-pointBlock = method()
-pointBlock(Point) := P -> (
-    pointBlock matrix P
-    )
-pointBlock(Matrix) := M -> (
-    strList := apply(flatten entries M, i -> 
-        replace("[{,},,]", "", toString({lift((realPart i)_QQ,QQ), lift((imaginaryPart i)_QQ,QQ)}))
-	);
-    strList = append(strList, "")    
-    )
-    
-    
-
-toACertifiedPoint = method()
-toACertifiedPoint(List) := L -> (
-    fn := temporaryFileName();
-    n := length L;
-    fn << toString n << endl;
-    fn << "" << endl;
-    apply(L, i -> 
-	apply(pointBlock i, j -> 
-	    fn << j << endl)
-	);
-    fn << close;
-    fn
-    )
-    
-alphaCertified = method(Options => {
-	ALGORITHM => 2,
-	ARITHMETICTYPE => 0,
-	PRECISION => 96,
-	REFINEDIGITS => 0,
-	NUMRANDOMSYSTEMS => 2,
-	RANDOMDIGITS => 10,
-	RANDOMSEED => random 10000,
-	NEWTONONLY => 0,
-	NUMITERATIONS => 2,
-	REALITYCHECK => 1,
-	REALITYTEST => 0
-	}
-	)
-alphaCertified(PolySystem, List) := o -> (P, L) -> (
-    fin1 := toACertifiedPoly P;
-    fin2 := toACertifiedPoint L;
-    fin3 := temporaryFileName();
-    apply(# o, i -> fin3 << toString(keys o)#i | ": "|toString(values o)#i|";" << endl);
-    fin3 << close;
-    run("cd " | ALPHACERTIFIEDexe |"; ./alphaCertified " | fin1 |" "| fin2 |" " | fin3);
-    )
-    
-    
-    
-
-
-
-
 TEST ///
 R = RR[x1,x2,y1,y2]
 f = polySystem {3*y1 + 2*y2 -1, 3*x1 + 2*x2 -3.5,x1^2 + y1^2 -1, x2^2 + y2^2 - 1}
@@ -1088,7 +1048,7 @@ krawczykMethod(f,o)
 
 
 beginDocumentation()
-load ("./NumericalCertification/doc.m2")
+load ("./NumericalCertification/Documents/DocNumericalCertification.m2")
 end
 
 

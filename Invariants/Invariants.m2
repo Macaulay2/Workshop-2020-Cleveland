@@ -6,10 +6,15 @@ newPackage(
         Authors => {
              {Name => "Luigi Ferraro", Email => "ferrarl@wfu.edu", HomePage => "http://users.wfu.edu/ferrarl/"},
              {Name => "Federico Galetto", Email => "f.galetto@csuohio.edu", HomePage => "https://math.galetto.org"},
+<<<<<<< HEAD
              {Name => "Francesca Gandini", Email => "fra.gandi.phd@gmail.com", HomePage => "https://sites.google.com/a/umich.edu/gandini/home"},
 	     {Name => "Hang Huang", Email => "hhuang235@tamu.edu", HomePage => "https://math.tamu.edu/~hhuang"},
 	     {Name => "Matthew Mastroeni", Email => "mmastro@okstate.edu", HomePage => "https://mnmastro.github.io/"},
              {Name => "Xianglong Ni", Email => "xlni@berkeley.edu", HomePage => "https://math.berkeley.edu/~xlni/"}
+=======
+             {Name => "Xianglong Ni", Email => "xlni@berkeley.edu", HomePage => "https://math.berkeley.edu/~xlni/"},
+	     {Name => "Hang Huang", Email => "hhuang235@tamu.edu", HomePage => "https://math.tamu.edu/~hhuang"}
+>>>>>>> d16bfad0cb6eb0ff5c9dee2c48531736d012b20a
              },
         Headline => "Computing Invariants for Tori and Abelian Groups",
         DebuggingMode => true,
@@ -28,6 +33,7 @@ export {
     "torusAction",
     "weights",
     "abelianInvariants",
+    "linearlyReductiveAction",
     "hilbertIdeal",
     "generatorsFromHilbertIdeal",
     "linearInvariants",
@@ -43,6 +49,8 @@ protect Generators
 protect RepDimension
 protect TorusRank
 protect WeightMatrix
+protect GroupIdeal
+protect ActionMatrix
 
 needsPackage("Polyhedra", Reload => true)
 needsPackage("Elimination", Reload => true)
@@ -51,6 +59,7 @@ needsPackage("Elimination", Reload => true)
 GroupAction = new Type of MutableHashTable
 FiniteGroupAction = new Type of GroupAction
 TorusAction = new Type of GroupAction
+LinearlyReductiveAction = new Type of GroupAction
 RingOfInvariants = new Type of Ring    	       -- For some reason, InvariantRing already seems to be a protected symbol.
 
 
@@ -110,7 +119,27 @@ weights = method()
 
 weights TorusAction := Matrix => T -> T.WeightMatrix 
 
+-------------------------------------------
+--- LinearlyReductiveAction methods -------
+-------------------------------------------
 
+linearlyReductiveAction = method()
+
+linearlyReductiveAction (Ideal,Matrix) := LinearlyReductiveAction => (A,M) -> (
+    new LinearlyReductiveAction from {GroupIdeal => A, ActionMatrix => M, RepDimension => numColumns M}
+    )
+
+net LinearlyReductiveAction := V -> net (ring V.GroupIdeal)|"/"|net V.GroupIdeal|" via "|net V.ActionMatrix
+
+dim LinearlyReductiveAction := ZZ => V -> V.RepDimension
+
+actionMatrix = method()
+
+actionMatrix LinearlyReductiveAction := Matrix => V -> V.ActionMatrix
+
+groupIdeal = method()
+
+groupIdeal LinearlyReductiveAction := Ideal => V -> V.GroupIdeal
 
 -------------------------------------------
 --- RingOfInvariants methods --------------
@@ -125,11 +154,12 @@ net RingOfInvariants := B -> (
 
 invariantRing = method()
 
-invariantRing (TorusAction, PolynomialRing) := RingOfInvariants => (T, R) -> (
-    new RingOfInvariants from {AmbientRing => R, Action => T }
+invariantRing (GroupAction, PolynomialRing) := RingOfInvariants => (G, R) -> (
+    new RingOfInvariants from {AmbientRing => R, Action => G }
     )
 
-PolynomialRing^TorusAction := RingOfInvariants => (R, T) -> invariantRing(T, R)
+PolynomialRing^TorusAction := RingOfInvariants => (R, G) -> invariantRing(G, R)
+PolynomialRing^LinearlyReductiveAction := RingOfInvariants => (R, V) -> invariantRing(V, R)
 
 action = method()
 
@@ -144,12 +174,13 @@ invariants = method()
 invariants RingOfInvariants := B -> invariants(action B, ambient B)
 
 invariants (TorusAction, PolynomialRing) := List => (T, R) -> (
-    r := rank T;
-    n := dim R;
+    r := rank T; -- r is the dimension of the torus
+    n := dim R; -- n is the dimension of the ring R
+    if (n =!= rank source vars R) then (error "invariants: Dimension of the polynomial ring does not match size of the weight matrix");
     W := weights T;
     local C;
     if r == 1 then C = convexHull W else C = convexHull( 2*r*W|(-2*r*W) );
-    C = (latticePoints C)/vector;
+    C = (latticePoints C)/vector; -- C is a list of weights we are testing
     S := new MutableHashTable from apply(C, w -> w => {});
     scan(n, i -> S#(W_i) = {R_i});
     U := new MutableHashTable from S;
@@ -194,7 +225,7 @@ abelianInvariants (Matrix, PolynomialRing, List) := List => (W, R, L) -> (
     n := numColumns W;
     t := 1; -- t is the size of abelian group
     --sanity check 
-    if #L =!= r then print "Size of the group does not match the weight";
+    if #L =!= r then error "Size of the group does not match the weight matrix";
     scan(L,i->t = t*i);
     local C; -- C is a list of all possible weights
     for i from 0 to #L-1 do(
@@ -235,7 +266,9 @@ abelianInvariants (Matrix, PolynomialRing, List) := List => (W, R, L) -> (
 )
 
 hilbertIdeal = method()
-hilbertIdeal (Ideal, Matrix, PolynomialRing) := Ideal => (A, M, R) -> (
+hilbertIdeal (LinearlyReductiveAction, PolynomialRing) := Ideal => (V, R) -> (
+    A := groupIdeal V;
+    M := actionMatrix V;
     if (numColumns M =!= numRows M) or (numRows M =!= #(gens R)) then print "Matrix size does not match polynomial ring";
     -- first, some information about the inputs:
     n := #(gens R);
@@ -244,7 +277,7 @@ hilbertIdeal (Ideal, Matrix, PolynomialRing) := Ideal => (A, M, R) -> (
     
     -- now make the enlarged polynomial ring we'll work in, and convert inputs to that ring
     x := local x, y := local y, z := local z;
-    S := K[x_1..x_n, y_1..y_n, z_1..z_l]; -- this results in an error.. trying to fix
+    S := K[x_1..x_n, y_1..y_n, z_1..z_l];
     M' := sub(M, apply(l, i -> (ring M)_i => z_(i+1)));
     A' := sub(A, apply(l, i -> (ring M)_i => z_(i+1)));
     
@@ -258,8 +291,10 @@ hilbertIdeal (Ideal, Matrix, PolynomialRing) := Ideal => (A, M, R) -> (
     return trim(sub(II, join(apply(n, i -> x_(i+1) => R_i),apply(n, i -> y_(i+1) => 0), apply(l, i -> z_(i+1) => 0))))
 )
 
-generatorsFromHilbertIdeal = method(TypicalValue => List)
-generatorsFromHilbertIdeal (Ideal, Matrix, Ideal) := List => (A, M, I) -> (
+generatorsFromHilbertIdeal = method()
+generatorsFromHilbertIdeal (LinearlyReductiveAction, Ideal) := List => (V, I) -> (
+    A := groupIdeal V;
+    M := actionMatrix V;
     R := ring(I);
     if (numColumns M =!= numRows M) or (numRows M =!= #(gens R)) then print "Matrix size does not match polynomial ring";
     x := local x, z := local z;
@@ -285,7 +320,7 @@ generatorsFromHilbertIdeal (Ideal, Matrix, Ideal) := List => (A, M, I) -> (
 	alreadyInv := true;
 	j := 0;
 	while alreadyInv and Id#?j do(
-	    if not isInvariant(A,M,Id#j) then alreadyInv = false;
+	    if not isInvariant(V,Id#j) then alreadyInv = false;
 	    j = j+1
 	);
     	if not alreadyInv then (
@@ -317,13 +352,14 @@ manualTrim (List) := List => L -> (
     return drop(L',1)
 )
 
-linearInvariants = method(TypicalValue => List)
-linearInvariants (Ideal, Matrix, PolynomialRing) := List => (A,M,R) -> (
-    return manualTrim generatorsFromHilbertIdeal(A,M,hilbertIdeal(A,M,R))
+invariants (LinearlyReductiveAction, PolynomialRing) := List => (V,R) -> (
+    return manualTrim generatorsFromHilbertIdeal(V,hilbertIdeal(V,R))
 )
 
 isInvariant = method(TypicalValue => Boolean)
-isInvariant (Ideal, Matrix, Thing) := Boolean => (A, M, f) -> (
+isInvariant (LinearlyReductiveAction, Thing) := Boolean => (V, f) -> (
+    A := groupIdeal V;
+    M := actionMatrix V;
     R := ring(f);
     if (numColumns M =!= numRows M) or (numRows M =!= #(gens R)) then print "Matrix size does not match polynomial ring";
     x := local x, z := local z;
@@ -338,8 +374,8 @@ isInvariant (Ideal, Matrix, Thing) := Boolean => (A, M, f) -> (
     Gf' := sub(f, apply(n, i -> (ring(f))_i => sum(n, j -> M'_(j,i) * x_(j+1))));
     return ( (Gf' - f') % A' == 0 )
 )
-isInvariant (Matrix, Thing) := Boolean => (W,f) -> (
-    return W * transpose(matrix(exponents(f))) == 0
+isInvariant (TorusAction, Thing) := Boolean => (T,f) -> (
+    return (weights T) * transpose(matrix(exponents(f))) == 0
 )
 isInvariant (Matrix, List, Thing) := Boolean => (W,L,f) -> (
     V := W * transpose(matrix(exponents(f)));
@@ -454,6 +490,7 @@ document {
 	    "abelianInvariants(W,R,{3,3})"
 		}
 	}
+-*
 document {
 	Key => {hilbertIdeal, (hilbertIdeal,Ideal,Matrix,PolynomialRing)},
 	Headline => "Computes generators (possibly non-invariant) for the invariant ideal",
@@ -478,6 +515,152 @@ document {
 	    {"Derksen, H. & Kemper, G. (2015).", EM "Computational Invariant Theory", 
 	   ". Heidelberg: Springer. pp 159-164"}
         }
+}
+*-
+
+document {
+	Key => {action, (action,RingOfInvariants)},
+	Headline => "Group action that produced a certain ring of invariants",
+	Usage => "action(R)",
+	Inputs => {
+	    	"R" => RingOfInvariants => {"of the group action being returned"},
+		},
+	Outputs => {
+		GroupAction => {"the action that produced the ring of invariants in the input"}
+		},
+	"This function is provided by the package ", TO Invariants,".",
+	PARA {
+	    "This example shows how to recover the action of a
+	    torus that produced a certain ring of invariants.
+	    Note other action types are possible and may produce
+	    a different looking output."
+	    },
+    	
+	EXAMPLE {
+		"R=QQ[x_1..x_4]",
+		"T=torusAction matrix{{0,1,-1,1},{1,0,-1,-1}}",
+		"S=R^T",
+		"action S"
+		},
+}
+
+document {
+	Key => {finiteAction, (finiteAction,List)},
+	Headline => "Group action generated by a list of matrices",
+	Usage => "finiteAction(L)",
+	Inputs => {
+	    	"L" => List => {"of matrices representing elements of a finite group"},
+		},
+	Outputs => {
+		GroupAction => {"the action of the (finite) matrix group generated by the input list"}
+		},
+	"This function is provided by the package ", TO Invariants,".",
+	PARA {
+	    "The following example defines the permutation action of
+	    a symmetric group on three elements."
+	    },
+	
+	EXAMPLE {
+		"L={matrix{{0,1,0},{1,0,0},{0,0,1}},matrix{{0,0,1},{0,1,0},{1,0,0}}}",
+		"finiteAction L"
+		},
+}
+
+document {
+	Key => {torusAction, (torusAction,Matrix)},
+	Headline => "Torus action from a weight matrix",
+	Usage => "torusAction(M)",
+	Inputs => {
+	    	"M" => Matrix => {"of weights of a torus action"},
+		},
+	Outputs => {
+		GroupAction => {"the (diagonal) torus action with given weight matrix"}
+		},
+	"This function is provided by the package ", TO Invariants,". ",
+	    PARA {
+	"The following example defines an action of a 
+	two-dimensional torus on a four-dimensional vector space
+	with a basis of weight vectors whose weights are
+	the columns of the input matrix."
+	},
+    	
+	EXAMPLE {
+		"T = torusAction matrix{{0,1,-1,1},{1,0,-1,-1}}"
+		},
+}
+
+document {
+	Key => {invariantRing, (invariantRing,GroupAction,PolynomialRing)},
+	Headline => "The ring of invariants of a group action",
+	Usage => "invariantRing(G,R)\nR^G",
+	Inputs => {
+	    	"G" => GroupAction => {""},
+	    	"R" => PolynomialRing => {""},
+		},
+	Outputs => {
+		RingOfInvariants => {"of the given group action"}
+		},
+	"This function is provided by the package ", TO Invariants,". ",
+	PARA {
+	"The following example defines an action of a 
+	two-dimensional torus on a four-dimensional vector space
+	with a basis of weight vectors whose weights are
+	the columns of the input matrix."
+	},
+    	
+	EXAMPLE {
+		"R=QQ[x_1..x_4]",
+		"T=torusAction matrix{{0,1,-1,1},{1,0,-1,-1}}",
+		"S=invariantRing(T,R)",
+		},
+	PARA {
+	"Note that this function sets up the ring of invariants
+	but does not perform any computations. To obtain
+	generators for the ring of invariants use ",
+	TO invariants,". Here is a shortcut for this method."
+	},
+    	
+	EXAMPLE {
+		"S=R^T",
+		},
+}
+
+document {
+	Key => {invariants, (invariants,RingOfInvariants)},
+	Headline => "Compute generators for a ring of invariants",
+	Usage => "invariants(S)",
+	Inputs => {
+	    	"S" => RingOfInvariants => {""},
+		},
+	Outputs => {
+		List => {"of generators for the ring of invariants"}
+		},
+	"This function is provided by the package ", TO Invariants,". ",
+	PARA {
+	    "This method computes generators for a ring of
+	    invariants as an algebra over the field of coefficients
+	    of the ambient polynomial ring.
+	    The algorithm used depends on the group action."
+	    },
+	PARA {
+	"The following example computes generators for the ring of
+	invariants of a finite group action."
+	},
+    	
+	EXAMPLE {
+		"null",
+		},
+	PARA {
+	"The next example computes generators for the ring of
+	invariants of a torus action."
+	},
+    	
+	EXAMPLE {
+		"R=QQ[x_1..x_4]",
+		"T=torusAction matrix{{0,1,-1,1},{1,0,-1,-1}}",
+		"S=invariantRing(T,R)",
+		"invariants(S)",
+		},
 }
 
 TEST ///
@@ -515,6 +698,6 @@ S = QQ[z]
 A = ideal(z^2 - 1)
 M = matrix{{(1+z)/2, (1-z)/2},{(1-z)/2, (1+z)/2}}
 R = QQ[a,b]
-I = hilbertIdeal(A,M,R)
-generatorsFromHilbertIdeal(A,M,I)
-linearInvariants(A,M,R)
+G = linearlyReductiveAction(A,M)
+X = R^G
+invariants X

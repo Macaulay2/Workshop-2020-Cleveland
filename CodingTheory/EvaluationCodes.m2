@@ -1,5 +1,9 @@
 needsPackage "SRdeformations"
 needsPackage "Polyhedra"
+needsPackage "CodingTheory"
+needsPackage  "Graphs"
+needsPackage  "NAGtypes"
+needsPackage "RationalPoints"
 
 EvaluationCode = new Type of HashTable
 
@@ -8,27 +12,19 @@ evaluationCode = method(Options => {})
 evaluationCode(Ring,List,List) := EvaluationCode => opts -> (F,P,S) -> (
     -- constructor for the evaluation code
     -- input: a field, a list of points, a set of polynomials.
-    -- outputs: a monomial code over the list of points.
-    
-    -- We should check if all the points lives in the same F-vector space.
-    -- Should we check if all the monomials lives in the same ring?
+    -- outputs: The list of points, the list of polynomials, the vanishing ideal and the linear code.
     
     R := ring S#0;
 
     I := intersect apply(P,i->ideal apply(numgens R,j->R_j-i#j)); -- Vanishing ideal of the set of points.
 
-    S = toList apply(apply(S,i->promote(i,R/I)),j->lift(j,R))-set{0*S#0}; -- Drop the elements in S that was already in I.
-
-    G := matrix apply(P,i->flatten entries sub(matrix(R,{S}),matrix(F,{i}))); -- Evaluate the elements in S over the elements on P.
+    G := transpose matrix apply(P,i->flatten entries sub(matrix(R,{S}),matrix(F,{i}))); -- Evaluate the elements in S over the elements on P.
     
-    G = (transpose G)//(groebnerBasis transpose G);
-    
-    new EvaluationCode from{
-	symbol Points => P,
+    return new EvaluationCode from{
 	symbol VanishingIdeal => I,
-	symbol PolynomialSet => S,
-	symbol GeneratingMatrix => G,
-	symbol LinearCode => linearCode(G)
+	symbol Points => P,
+	symbol Polynomials => S,
+	symbol LinearCode => linearCode G
 	}
     )
 
@@ -41,33 +37,27 @@ evaluationCode(Ring,List,Matrix) := EvaluationCode => opts -> (F,P,M) -> (
 
     m := numgens image M; -- number of monomials.
 
-    R := F[t_1..t_m];
+    R := F[t_0..t_(m-1)];
 
-    I := intersect apply(P,i->ideal apply(m,j->R_j-i#(j))); -- Vanishing ideal of P.
-
-    G := transpose matrix apply(entries M,i->toList apply(P,j->product apply(m,k->(j#k)^(i#k))));    
-
-    G := transpose((transpose G)//(groebnerBasis transpose G));
+    S := apply(entries M, i -> vectorToMonomial(vector i,R));
     
-    new EvaluationCode from{,
-	symbol Points => P,
-	symbol VanishingIdeal => I,
-	symbol ExponentsMatrix => M,
-	symbol GeneratingMatrix => G,
-	symbol LinearCode => linearCode(G)
-	}
+    evaluationCode(F,P,S)
     )
 
+net EvaluationCode := c -> (
+    c.LinearCode
+    )
    
-ToricCode = method(Options => {})
+toricCode = method(Options => {})
 
-ToricCode(ZZ,Matrix) := EvaluationCode => opts -> (q,M) -> (
+toricCode(Ring,Matrix) := EvaluationCode => opts -> (F,M) -> (
     -- Constructor for a toric code.
-    -- inputs: size of a field, an integer matrix 
+    -- inputs: a Galois field, an integer matrix 
     -- outputs: the evaluation code defined by evaluating all monomials corresponding to integer 
     ---         points in the convex hull (lattice polytope) of the columns of M at the points of the algebraic torus (F*)^n
     
-    F:=GF(q, Variable=>z);  --- finite field of q elements
+    z:=F_0;  --- define the primitive element of the field
+    q:=F.order; --- define the size of the field
     s:=set apply(q-1,i->z^i); -- set of non-zero elements in the field
     m:=numgens target M; --- the length of the exponent vectors, i.e. number of variables for monomials, i.e.the dim of the ambient space containing the polytope
     ss:=s; 
@@ -84,102 +74,232 @@ ToricCode(ZZ,Matrix) := EvaluationCode => opts -> (q,M) -> (
     I := ideal apply(m,j->R_j^(q-1)-1); --  the vanishing ideal of (F*)^m
     
     new EvaluationCode from{
-	symbol AmbientSpace => F^(#P),
-
-	symbol ExponentsMatrix => transpose LL, -- the matrix of exponents, exponent vectors are columns
-	symbol LinearCode => linearCode(transpose G), -- the code 
-	symbol Points => P,  --- the points of (F*)^m
-	symbol Dimension => rank image G, -- dimension of the code
-	symbol Length => (q-1)^m,  -- length of the code
-	symbol VanishingIdeal => I --the vanishing ideal of (F*)^m
-
+	symbol Points => P, --- the points of (F*)^m
+	symbol VanishingIdeal => I, --the vanishing ideal of (F*)^m
+	symbol ExponentsMatrix => LL, -- the matrix of exponents, exponent vectors are rows
+	symbol LinearCode => linearCode(G) -- the liner code
 	}
 )   
     
 ----------------- Example of ToricCode method ----
 
 M=matrix{{1,2,10},{4,5,6}} -- martrix of exponent vectors definind the polytope P, exponents vectors are columns
-T=ToricCode(4,M) --- a toric code over F_4 with polytope P
-T.Code
+T=toricCode(GF 4,M) --- a toric code over F_4 with polytope P
+T.LinearCode
 T.ExponentsMatrix
 
 M=matrix{{1,2,10,1},{4,5,6,1},{2,1,0,1}}
-T=ToricCode(4,M)
+T=toricCode(GF 4,M)
 
-------------------    
+M=matrix{{1,0,0,1},{0,1,0,1},{0,0,1,1}}
+T=toricCode(GF 4,M)
+
+------------------       
+
+
+
+----------Reed–Muller-type code of degree d over a graph using our the algorithm of evaluationCode
+
+
+evCodeGraph  = method(Options => {});
+
+evCodeGraph (Ring,Matrix,List) := evCodeGraph  => opts -> (F,M,S) -> (
+    -- input: a field, Incidence matrix of the graph , a set of polynomials.
+    -- outputs: a monomial code over the list of points.
+    
+    -- We should check if all the points lives in the same F-vector space.
+    -- Should we check if all the monomials lives in the same ring?
+    
+    P := entries transpose M;
+ 
+    R := ring S#0;
+
+    I := intersect apply(P,i->ideal apply(numgens R-1,j->R_j-i#j)); -- Vanishing ideal of the set of points.
+
+    S = toList apply(apply(S,i->promote(i,R/I)),j->lift(j,R))-set{0*S#0}; -- Drop the elements in S that was already in I.
+
+    G := matrix apply(P,i->flatten entries sub(matrix(R,{S}),matrix(F,{i}))); -- Evaluate the elements in S over the elements on P.
+    
+    )
+
+
+
+TEST ///
+ -- Reed-Muller-type code over a graph 
+   G = graph({1,2,3,4}, {{1,2},{2,3},{3,4},{4,3}})
+   B=incidenceMatrix G
+   S=ZZ/2[t_(0)..t_(#vertexSet G-1)]
+   Y=evCodeGraph(coefficientRing S,B,flatten entries basis(1,S))
+   assert(((Y_(0,0)==1)==(Y_(0,0)==Y_(0,1)))==((Y_(1,2)==1)==(Y_(1,2)==Y_(1,1)))==((Y_(2,2)==1)==(Y_(2,2)==Y_(2,3))))
+   assert(((Y_(0,2)==0)==(Y_(0,2)==Y_(0,3)))==((Y_(1,0)==0)==(Y_(1,0)==Y_(1,3)))==((Y_(2,0)==0)==(Y_(2,0)==Y_(2,1))))
+///
+    
+    
+    
+    document {
+    Key => {evCodeGraph, (evCodeGraph,Ring,Matrix,List)},
+    Headline => "Generates the Reed-Muller code over a graph.",
+    Usage => "evCodeGraph(F,M,S)",
+    Inputs => {
+	"F" => Ring => {"A base Field."},
+	"M" => Matrix => {"Incidence matrix of the graph G."},
+	"S" => List => {"A set of polynomials."}
+	},
+    Outputs => {
+	"G" => Matrix => {"Reed-Muller-type code over the graph G."}
+	},
+    "Returns the Reed-Muller-type code over the graph G.",
+    EXAMPLE {
+   "G = graph({1,2,3,4}, {{1,2},{2,3},{3,4},{4,3}});",
+   "B=incidenceMatrix G;",
+   "S=ZZ/2[t_(0)..t_(#vertexSet G-1)];",
+   "Y=evCodeGraph(coefficientRing S,B,flatten entries basis(1,S))"
+	}
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     
        
-------------This an example of an evaluation code----------------------------------------
 
-needsPackage "NormalToricVarieties"
-needsPackage "NAGtypes"
+-------Reed–Muller-type code of degree d over a graph using the function evaluate from package "NAGtypes"---------------
 
-d=2
-q=2
-S=3
-F_2=GF 2-- Galois fiel
----------------------Defining  points in the Fano plane-----
-A=affineSpace(S, CoefficientRing => F_2, Variable => y)
-aff=rays A
-matrix aff
---------------Points in Fano plane------------------
-LL=apply(apply(toList (set(0..q-1))^**(S)-(set{0})^**(3),toList),x -> (matrix aff)*vector deepSplice x)
-X=apply(LL,x->flatten entries x)
-------------------Defining the ring and the vector space of  homogeneous polynomials with degree 2----------------------------------
-R=F_2[vars(0..2)]
-LE=apply(apply(toList (set(0..q-1))^**(hilbertFunction(2,R))-(set{0})^**(hilbertFunction(2,R)),toList),x -> basis(2,R)*vector deepSplice x)
-Poly=apply(LE,x-> entries x)
------------------------for each point p_k in Fano plane exists a polynomial f_i s.t f_i(p_k)not=0 ---------------------------------------
-f={b^2,c^2,a^2,a^2,b^2,a^2,a^2}
-----------------------------Using the package  numerial algebraic geometry----------------------------------
-Polynum=apply(0..length LE-1, x->polySystem{LE#x#0})
-PolyDem=apply(f,x->polySystem{x})
-XX=apply(X,x->point{x})
----------------------Reed-Muller-type code of order 2------------------------------------------
-C_d=apply(Polynum,y->apply(0..length f -1,x->(flatten entries evaluate(y,XX#x))#0/(flatten entries evaluate(PolyDem#x,XX#x))#0))
-   
-    
-------------------------------------------------------------------------------------------------------------------------------
 
+codeGraph  = method(TypicalValue => Module);
+
+
+codeGraph (Matrix,ZZ,ZZ) := (M,d,p)->(
+K:=ZZ/p;
+tMatInc:=transpose M;
+X:=entries tMatInc;
+R:=K[t_(0)..t_(numgens target M-1)];
+SetPoly:=flatten entries basis(d,R);
+SetPolySys:=apply(0..length SetPoly-1, x->polySystem{SetPoly#x});
+XX:=apply(X,x->point{x});
+C:=apply(apply(SetPolySys,y->apply(0..length XX -1,x->(flatten entries evaluate(y,XX#x))#0)),toList);
+G:=transpose matrix{C};
+image G
+)
+
+
+
+
+TEST ///
+ -- Reed-Muller-type code over a graph 
+   G = graph({1,2,3,4}, {{1,2},{2,3},{3,4},{4,3}})
+   B=incidenceMatrix G
+   codeGraph(B,1,2)
+   Y=generators codeGraph(B,1,2)
+   assert(((Y_(0,0)==1)==(Y_(0,0)==Y_(0,1)))==((Y_(1,2)==1)==(Y_(1,2)==Y_(1,1)))==((Y_(2,2)==1)==(Y_(2,2)==Y_(2,3))))
+   assert(((Y_(0,2)==0)==(Y_(0,2)==Y_(0,3)))==((Y_(1,0)==0)==(Y_(1,0)==Y_(1,3)))==((Y_(2,0)==0)==(Y_(2,0)==Y_(2,1))))
+///
+
+
+
+document {
+    Key => {codeGraph, (codeGraph,Matrix,ZZ,ZZ)},
+    Headline => "Generates the Reed-Muller code over a graph.",
+    Usage => "codeGraph(M,d,p)",
+    Inputs => {
+	"M" => Matrix => {"Incidence matrix of the graph G."},
+	"d" => ZZ => {"Degree of the code."},
+	"p" => ZZ => {"Characteristic of the field."}
+	},
+    Outputs => {
+	"F" => Module => {"Free module."}
+	},
+    "Returns the Reed-Muller-type code over the graph G.",
+    EXAMPLE {
+   "G = graph({1,2,3,4}, {{1,2},{2,3},{3,4},{4,3}});",
+   "B=incidenceMatrix G;",
+   "codeGraph(B,1,2);",
+   "Y=generators codeGraph(B,1,2)"
+	}
+    }
 
 
 ----------The incidence matrix code of a Graph G-------
-needsPackage  "Graphs"
-needsPackage  "NAGtypes"
-
---These are two procedure for obtain an incidence matrix code of a Graph G
+-- Recall that types of codes are Reed-Muller-type code of degree d=1 over a graph. 
+--This a procedure for obtain an incidence matrix code of a Graph G
 -- be sure that p is a prime number 
 
 
---1-- this procedure computes the generatrix matrix of the code---
--- M is the incidence matrix of the Graph G
+--this procedure computes the generatrix matrix of the code---
 
-codeGrahpIncM = method(TypicalValue => Module);
-codeGrahpIncM (Matrix,ZZ):= (M,p)->(
+
+codeGraphInc = method(TypicalValue => Module);
+-- M is the incidence matrix of the Graph G
+--inputs: The incidence matrix of a Graph G, a prime number  
+-- outputs: K-module
+
+codeGraphInc (Matrix,ZZ):= (M,p)->(
+K:=ZZ/p;
 tInc:=transpose M;
 X:=entries tInc;
-R:=ZZ/p[t_(0)..t_(numgens target M-1)];
+R:=K[t_(0)..t_(numgens target M-1)];
 SetPol:=flatten entries basis(1,R);
 SetPolSys:=apply(0..length SetPol-1, x->polySystem{SetPol#x});
 XX:=apply(X,x->point{x});
 C:=apply(apply(SetPolSys,y->apply(0..length XX -1,x->(flatten entries evaluate(y,XX#x))#0)),toList);
-image transpose matrix{C}
+G:=transpose matrix{C};
+image G
 )
 
 
---2-- this an alternative process. It computes all the points in the code. It computes all the linear forms. 
 
-codeGrahpInc = method(TypicalValue => Sequence);
-codeGrahpInc (Graph,ZZ):= (G,p)->(
-tInc:=transpose incidenceMatrix G;
-X:=entries tInc;
-R:=ZZ/p[t_(0)..t_(lentgh vertexSet G-1)];
-Poly1:=apply(apply(toList (set(0..p-1))^**(hilbertFunction(1,R))-(set{0})^**(hilbertFunction(1,R)),toList),x -> basis(1,R)*vector deepSplice x); 
-Polynums1:=apply(0..length Poly1-1, x->polySystem{Poly1#x#0});
-XX:=apply(X,x->point{x});
-apply(Polynums1,y->apply(0..length XX -1,x->(flatten entries evaluate(y,XX#x))#0))
-)
+
+
+
+
+
+TEST ///
+ --This an example of a incidence matrix code---------
+--Petersen graph 
+G=graph({1,2,3,4,5,6,7,8,9,10}, {{1,2},{1,3},{1,4},{1,5},{1,6},{2,3},{2,4},{2,5},{2,7},{3,4},{3,5},{3,6},{3,8},{4,5},{4,9},{5,10},{6,7},{6,10},{7,8},{8,9},{9,10}})
+M=incidenceMatrix G
+codeGraphInc(M,3)
+   assert(codeGraphInc(M,3)==codeGraph(M,1,3))
+   
+///
+
+
+document {
+    Key => {codeGraphInc, (codeGraphInc,ZZ,ZZ)},
+    Headline => "Generates The incidence matrix code of a graph G.",
+    Usage => "codeGraphInc(M,p)",
+    Inputs => {
+	"M" => Matrix => {"Incidence matrix of the graph G."},
+	"p" => ZZ => {"Characteristic of the field."}	
+	},
+    Outputs => {
+	"C" => Module => {"The incidence matrix code."}
+	},
+    "Returns The incidence matrix code of a graph G.",
+    EXAMPLE {
+   "--Petersen graph;", 
+   "G=graph({1,2,3,4,5,6,7,8,9,10}, {{1,2},{1,3},{1,4},{1,5},{1,6},{2,3},{2,4},{2,5},{2,7},{3,4},{3,5},{3,6},{3,8},{4,5},{4,9},{5,10},{6,7},{6,10},{7,8},{8,9},{9,10}});",
+   "M=incidenceMatrix G;",
+   "codeGraphInc(M,3)"
+	}
+    }
+
+
+
+
+
+
+
+
+
+---------------------------------------------
+
 
 
 
@@ -198,15 +318,12 @@ cartesianCode(Ring,List,List) := EvaluationCode => opts -> (F,S,M) -> (
     P := set S#0;
     for i from 1 to m-1 do P=P**set S#i;
     P = apply(toList(P/deepSplice),i->toList i);
-    Mm := toList apply(apply(M,i->promote(i,R/I)),j->lift(j,R))-set{0*M#0};
-    G := matrix apply(P,i->flatten entries sub(matrix(R,{Mm}),matrix(F,{i})));
-    G = (transpose G)//(groebnerBasis transpose G);
+    G := transpose matrix apply(P,i->flatten entries sub(matrix(R,{M}),matrix(F,{i})));
     
     new EvaluationCode from{
 	symbol Sets => S,
 	symbol VanishingIdeal => I,
-	symbol PolynomialSet => Mm,
-	symbol GeneratingMatrix => G,
+	symbol PolynomialSet => M,
 	symbol LinearCode => linearCode(G)
 	}
     )
@@ -231,19 +348,9 @@ cartesianCode(Ring,List,Matrix) := EvaluationCode => opts -> (F,S,M) -> (
     
     m := #S;
     R := F[t_0..t_(m-1)];
-    I := ideal apply(m,i->product apply(S#i,j->R_i-j));
-    P := set S#0;
-    for i from 1 to m-1 do P=P**set S#i;
-    P = apply(toList(P/deepSplice),i->toList i);
-    G := transpose matrix apply(entries M,i->toList apply(P,j->product apply(m,k->(j#k)^(i#k))));
-    G := ((transpose G)//(groebnerBasis transpose G));
+    T := apply(entries M,i->vectorToMonomial(vector i,R));
     
-    new EvaluationCode from{
-	symbol VanishingIdeal => I,
-	symbol ExponentsMatrix => M,
-	symbol GeneratingMatrix => G,
-	symbol LinearCode => linearCode(G)
-	}
+    cartesianCode(F,S,T)
     )
 
 

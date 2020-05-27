@@ -8,12 +8,18 @@ newPackage(
 	     {Name => "Sarasij Maitra", Email => "sm3vg@virginia.edu", HomePage => "https://people.virginia.edu/~sm3vg"}
 	     },
     	Headline => "Switch Base Fields and Obtain Natural Maps",
+        Reload=>true,
+        DebuggingMode => true,
 	AuxiliaryFiles => false -- set to true if package comes with auxiliary files
     	)
 
 -- Any symbols or functions that the user is to have access to
 -- must be placed in one of the following two lists
-export {"fieldExtension", "fieldBaseChange", "switchFieldMap"}
+export {
+    "fieldExtension", 
+    "fieldBaseChange", 
+    "switchFieldMap", 
+    "extendFieldByDegree"}
 exportMutable {}
 
 fieldExtension = method(TypicalValue => RingMap, Options => {})
@@ -40,39 +46,64 @@ fieldExtension(GaloisField, GaloisField) := RingMap => opts -> (l1, k1) -> (
     return tempH * tempF * tempG
 )
 
+fieldExtension(GaloisField, QuotientRing) := RingMap => opts -> (l1, k1) -> (--if the user wants a map from Z/p to GF(p^e)
+    if (not isField k1) then error "fieldExtension: the second argument is not a field.";
+    if char l1 != char k1  then error "fieldExtension: there is no field extension between fields of different positive characteristics";
+    if (not ambient k1 === ZZ) then error "fieldExtension: the second argument is not a GaloisField or a quotient of ZZ.";
+    return map(l1, k1)
+)
+
 fieldBaseChange = method(TypicalValue => Sequence, Options => {})
-fieldBaseChange(Ring, GaloisField) := (Ring, RingMap) => opts -> (r1, k1) -> (
-    if char r1 != char k1 
+fieldBaseChange(Ring, GaloisField) := (Ring, RingMap) => opts -> (r1, l1) -> (
+    if char r1 != char l1 
     then error "fieldBaseChange: there is no field extension between fields of different positive characteristics";
     
     -- r1 = s1 / i1  = l1 [ s1.gens ] / i1
     s1 := ambient r1; 
-    l1 := coefficientRing s1;
+    k1 := coefficientRing s1;
     i1 := ideal r1;
-    
-    try fieldExtension(k1, l1) 
-    then f1 := fieldExtension(k1, l1)
-    else error "fieldBaseChange: the base field of R is not a subfield of K";
-    
-    s2 := k1(monoid s1);
-    f2 := map(s2, s1, append(s2.gens, f1(l1_0)));
-    
+    f1 := null;
+
+    try f1 = fieldExtension(l1, k1) 
+--    then f1 := fieldExtension(k1, l1)
+    else error "fieldBaseChange: the base field of R is not a subfield of K (is the source coefficientRing a prime field or a GaloisField)";
+    s2 := l1(monoid s1);
+    local f2;
+    if (class k1 === GaloisField) then(--if the source is a GaloisField 
+        f2 = map(s2, s1, append(s2.gens, f1(k1_0)));
+    )
+    else ( -- if it's a prime field
+        f2 = map(s2, s1, s2.gens);
+    );
     t1 := s2 / f2(i1);
-    
-    return (t1, map(t1, r1, append(t1.gens, f1(l1_0))))
-)
+    if (class k1 === GaloisField) then(--if the source is a GaloisField 
+        return (t1, map(t1, r1, append(t1.gens, f1(k1_0))));
+    ) else (
+        return (t1, map(t1, r1, t1.gens));
+    );
+);
 
    
 -- A function with an optional argument
-switchFieldMap = method(TypicalValue => RingMap, Options => {})
+switchFieldMap = method(TypicalValue => RingMap, Options => {});
 switchFieldMap(Ring, Ring, List) := RingMap => opts -> (r1, r2, k1) ->(
     (T1,f1) := fieldBaseChange(r2, coefficientRing r1);
          g1 := map(r1,T1,k1);
 	 g2 := g1*f1;
 	 return g2;
 	 )
-    
 
+--given a ring, this returns a map 
+extendFieldByDegree = method(TypicalValue => RingMap, Options => {});
+extendFieldByDegree(ZZ, Ring) := RingMap => opts -> (n1, R1) -> (
+    kk := coefficientRing R1;
+    p1 := char kk;
+    if (p1 === 0) then return "extendFieldByDegree:  expected a ring over a field of characteristic p";
+    getDeg := k -> (if (class k === GaloisField) then (degree (ideal ambient k)_0)#0 else 1);    
+    d1 := getDeg kk;
+    kk2 := GF(p1^(d1*n1));
+    return fieldBaseChange(R1, kk2);
+);
 
 beginDocumentation()
 document { 
@@ -218,11 +249,13 @@ assert(coefficientRing T === K)
 ///
 
 TEST ///
-R = GF(8)[x,y,z]/(x*y-z^2); 
-S = GF(64)[u,v]/(v^2);
-f = switchFieldMap(S, R, {u, 0, v})
+K = GF(8);
+L = GF(64);
+R = K[x,y,z]/(x*y-z^2); 
+S = L[u,v]/(v^2);
+f = switchFieldMap(S, R, {u, 0, v});
 t = (coefficientRing R)_0;
-assert(f(t)^3+f(t)+1 === 0)
+assert(f(t)^3+f(t)+1 == 0)
 ///
    
 end
