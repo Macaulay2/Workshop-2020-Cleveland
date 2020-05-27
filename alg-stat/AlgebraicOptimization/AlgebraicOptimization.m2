@@ -31,6 +31,7 @@ export {
   "conormalRing",
   "conormalIdeal",
   "probabilisticEDDegree",
+  "symbolicEDDegree",
   "multiDegreeEDDegree",
   "MLDegree",
   "symbolicLagrangeMultiplierEDDegree",
@@ -155,7 +156,52 @@ assert(probabilisticEDDegree(J, Data => {1,2}) == 3)
 R = QQ[x,y,z]
 I = ideal"x2 - y2 - z2"
 assert(probabilisticEDDegree(I, Data => {2/4,1/2,-1/2}, Projective => true) == 2)
+assert(probabilisticEDDegree(I, Data => {2/4,1/2,-1/2}, Projective => false) == 2)
 ///
+
+
+--------------------
+--symbolicEDDegree
+--------------------
+symbolicEDDegree = method(Options => {Projective => null});
+
+symbolicEDDegree Ideal := ZZ => opts -> I -> (
+  R := ring I;
+  u := symbol u;
+  paramRing := ((coefficientRing R)[u_0..u_(numgens R - 1)]);
+  S :=  (frac paramRing) monoid R;
+  IS := sub(I,S);
+  jacIS := transpose jacobian IS;
+  c := codim I;
+  ISsing := IS + minors(c, jacIS);
+  proj := if opts.Projective === null then (if isHomogeneous I then true else false) else opts.Projective;
+  uMatrix := matrix {gens paramRing / (i->sub(i,S))};
+  local ISbar;
+  J := if not proj then (
+    ISbar = IS + minors(c+1, uMatrix - vars S || jacIS);
+    saturate(ISbar, ISsing)
+  ) else (
+    ISbar = IS + minors(c+2, uMatrix || vars S || jacIS);
+    Q := gens S / (i -> i^2) // sum // ideal;
+    saturate(ISbar, ISsing * Q)
+  );
+  degree J
+)
+TEST ///
+R = QQ[x,y]
+I = ideal"x2 + y2 - 1"
+assert(symbolicEDDegree(I) == 2)
+-- this test is slow, maybe should be removed
+J = ideal((x^2+y^2+x)^2 - x^2 - y^2)
+assert(symbolicEDDegree(J) == 3)
+---------------------------------------------
+R = QQ[x,y,z]
+I = ideal"x2 - y2 - z2"
+assert(symbolicEDDegree(I, Projective => true) == 2)
+assert(symbolicEDDegree(I, Projective => false) == 2)
+///
+
+
 
 
 
@@ -979,6 +1025,19 @@ Description
 --Caveat
 --SeeAlso
 ///
+
+doc ///
+Key
+  symbolicEDDegree
+  (symbolicEDDegree, Ideal)
+Headline
+  Compute EDDegree symbolically
+Usage
+  symbolicEDDegree I
+  symbolicEDDegree(I, Projective => true)
+  symbolicEDDegree(I, Projective => false)
+///
+
 
 
 
