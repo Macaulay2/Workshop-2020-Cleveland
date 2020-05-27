@@ -44,15 +44,15 @@ export {
   --More Types
   "LagrangeVarietyWitness","LagrangeIdeal", "IsolatedCriticalPointSet",
   --Methods
-  "isolatedRegularCriticalPointSet","criticalIdeal","lagrangeIdeal",
-  "gradient",
+  --"isolatedRegularCriticalPointSet","criticalIdeal","lagrangeIdeal",
+  --"gradient",
   "probabilisticLagrangeMultiplierOptimizationDegree",
   --More Keys
   "LagrangeVariable","PrimalIdeal","JacobianConstraint","AmbientRing","LagrangeCoordinates","WitnessPrimalIdeal",
   "Data", "Gradient", "WitnessSuperSet", "SaveFileDirectory",
   -- Tolerances
   "MultiplicityTolerance","EvaluationTolerance", "ConditionNumberTolerance",
-  "updateMultiplicityTolerance","updateEvaluationTolerance","updateConditionNumberTolerance",
+  --"updateMultiplicityTolerance","updateEvaluationTolerance","updateConditionNumberTolerance",
   "Coordinates", "Factors",
   "Numerators","Denominators"
 }
@@ -320,7 +320,7 @@ lagrangeIdeal (Ideal,Ideal) := LagrangeIdeal => opts -> (WI,I) -> (
     aLI
     )
 
-
+-* Depracated test because lagrangeIdeal is no longer exported
 TEST ///
    R=QQ[x]; WI=ideal(x)
    lagrangeIdeal(WI)
@@ -335,7 +335,7 @@ I=ideal(x^2+y^2-1)
 aLI = lagrangeIdeal(I)
 assert(4==degree aLI.Ideal)
 ///
-
+*-
 
 --------------------
 --methods LagrangeIdeal code
@@ -368,7 +368,8 @@ sub(RingElement, LagrangeIdeal) := (f,aLI) -> sub(f,ring aLI)
 sub(List, LagrangeIdeal) := (L,aLI) -> L/(f -> sub(f,ring aLI))
 sub(Ideal, LagrangeIdeal) := (I,aLI) -> sub(I,ring aLI)
 
-
+-* 
+--lagrangeIdeal no longer expoerted 
 TEST///
     R = QQ[u][x,y,z,w]
     I=minors(2,matrix{{x,y,z},{y,z,w}})
@@ -405,7 +406,7 @@ TEST///
     assert(39==degree LVW1)
 
 ///
-
+*-
 
 
 --------------------
@@ -427,11 +428,15 @@ sub(Gradient,LagrangeIdeal) :=  (g,aLI) -> (
     d := apply(g.Denominators,i->sub(i,aLI));
     gradient(n,d)    
     )    
+--gradient no longer exported
+-*
 TEST///
 R=QQ[x,y]
 assert(2==#keys gradient({x}))
 assert(2 == # keys gradient({x},{y}))
 ///
+*-
+
 --------------------
 --CriticalIdeal code
 --------------------
@@ -504,6 +509,8 @@ degree (CriticalIdeal) :=  CI -> (
     )    
 
 
+--lagrangeIdeal no longer exported
+-*
 TEST/// 
 R=QQ[a,b][x,y]
 I=ideal(x^2+y^2-1)
@@ -518,9 +525,11 @@ assert(4==degree WCI)
 WCI = criticalIdeal({x-a,y-b},aLI,Data=>{2,19})
 assert(2==degree WCI)--ED degree of the circle
 ///
+*-
 
 
-
+--lagrangeIdeal and criticalIdeal no longer exported
+-*
 TEST/// 
 R=QQ[x,y]
 I=ideal(x^2+y^2-1)
@@ -533,7 +542,7 @@ peek WCI
 assert(2==degree WCI)
 
 ///
-
+*-
 
 
 ----------------------------------------
@@ -708,6 +717,8 @@ bertiniCriticalPointSet = (u,g,LVW,bic)->(
     ICPS
     )
  
+ --test for the numerical version
+ -*
 TEST/// 
 R=QQ[a,b][x,y] 
 I=ideal(x^2+1*y^2-1)
@@ -728,8 +739,8 @@ isolatedRegularCriticalPointSet(u,g,LVW)
 isolatedRegularCriticalPointSet(u,g,LVW,Strategy=>1)
 peek oo
 
-
 ///
+*-
 ------------------------------
 --Index the stategies  code
 ------------------------------
@@ -760,14 +771,6 @@ bezoutBertiniIsolatedRegularCriticalPointSet = (u,g,LVW)->(
 
 --TODO : bertiniSolve
 --TODO : monodromySolve
-
-TEST///
-R=QQ[a,b][x,y]
-I=ideal(x^2+y^2-1)
-WI=I
-LVW = lagrangeIdeal(WI,I)
-ring LVW
-///
 
 
 --------------------
@@ -830,7 +833,7 @@ probabilisticLagrangeMultiplierOptimizationDegree (RingElement,Ideal,Ideal) := Z
     )
     
 
-TEST/// --EDIT
+TEST///
 
 R=QQ[x,y]
 WI = I = ideal((x^2+y^2+x)^2-x^2-y^2)
@@ -844,7 +847,6 @@ psi =(x-u)^2+(y-v)^2
 assert(10==probabilisticLagrangeMultiplierOptimizationDegree(psi,WI,I))
 assert(3==probabilisticLagrangeMultiplierOptimizationDegree(psi,WI,I,Data=>{2,3}))
 
---
 ///
 
 
@@ -1247,7 +1249,7 @@ Key
   probabilisticLagrangeMultiplierOptimizationDegree
   (probabilisticLagrangeMultiplierOptimizationDegree, RingElement, Ideal, Ideal)
   (probabilisticLagrangeMultiplierOptimizationDegree, List, Ideal, Ideal)
-  [probabilisticEDDegree, Data]
+  [probabilisticLagrangeMultiplierOptimizationDegree, Data]
 Headline
   compute ED-degree for a random point
 Usage
