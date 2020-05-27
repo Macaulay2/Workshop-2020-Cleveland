@@ -263,7 +263,7 @@ symbolicLagrangeMultiplierEDDegree (Ideal,Ideal) := ZZ => opts -> (WI,I) -> (
     g := if opts.Data==null then apply(X,i->random(1,1000) ) else opts.Data;
     degree criticalIdeal(X-g,aLI)
     )
-symbolicLagrangeMultiplierEDDegree Ideal := ZZ => opts -> I ->symbolicLagrangeMultiplierEDDegree(I,I)
+--symbolicLagrangeMultiplierEDDegree Ideal := ZZ => opts -> I ->symbolicLagrangeMultiplierEDDegree(I,I)
     
 
 TEST///
@@ -1215,17 +1215,21 @@ Description
 doc /// --EDIT
 Key
   symbolicLagrangeMultiplierEDDegree
-  (symbolicLagrangeMultiplierEDDegree, Ideal)
   (symbolicLagrangeMultiplierEDDegree, Ideal,Ideal)
+  [symbolicLagrangeMultiplierEDDegree, Data]
 Headline
   Compute EDDegree symbolically using Lagrange multipliers
 Usage
   symbolicEDDegree (WI,I)
+  probabilisticEDDegree(WI,I, Data => L)
 Inputs
   WI:
     an ideal with codim(I) generators such that V(WI) contains an each irreducible component V(I) as an irreducible component.
   I:
     an @TO2{Ideal, "ideal"}@ corresponding to an equidimensional variety.
+  Data => List
+    specifies coordinates of the point from which the ED degree is computed.
+    By default, this point is chosen at random from the coefficient ring using @TO (random,Type)@.
 Outputs
   :ZZ
     the ED-degree of $I$.
@@ -1236,31 +1240,30 @@ Description
 
     We can confirm that the ED-degree of the affine cone of the twisted cubic is 
   Example
-    R=QQ[x0,x1,x2,x3]
-    WI=ideal(x0*x2-x1^2,x1*x3-x2^2)
-    I= WI+ideal(x0*x3-x1*x2)
-    symbolicLagrangeMultiplierEDDegree(WI,I)
+    R = QQ[x0,x1,x2,x3]
+    WI = ideal(x0*x2-x1^2 ,x1*x3-x2^2)
+    I = WI + ideal(x0*x3-x1*x2)
+    symbolicLagrangeMultiplierEDDegree(WI, I)
 
   Text
     This function is probabilistic.
-  CannedExample --TODO
-    i4 : I = ideal((x^2+y^2+x)^2 - x^2 - y^2)
 
-                4     2 2    4     3       2    2
-    o4 = ideal(x  + 2x y  + y  + 2x  + 2x*y  - y )
+  Example
+    R = QQ[x0,x1,x2,x3]
+    WI = ideal(x0*x2-x1^2,x1*x3-x2^2)
+    I = WI+ideal(x0*x3-x1*x2)
+    symbolicLagrangeMultiplierEDDegree(WI,I)
 
-    o4 : Ideal of R
-
-    i5 : elapsedTime symbolicEDDegree I
-          3.24044 seconds elapsed
-
-    o5 = 3
-
-    i6 : elapsedTime probabilisticEDDegree I
-          0.0097821 seconds elapsed
-
-    o6 = 3
-
+  Text
+    This function is probabilistic and chooses the data at random by default. 
+    A user may specify the data they want to use. 
+    
+    In the example below, the ED degree of a cardioid is 3 but the non-generic data choice does not recover this result
+  Example
+    R = QQ[x,y]
+    WI = I = ideal((x^2+y^2+x)^2 - x^2 - y^2)
+    symbolicLagrangeMultiplierEDDegree(WI,I)
+    symbolicLagrangeMultiplierEDDegree(WI,I,Data=>{0,0})
 
 SeeAlso
   lagrangeIdeal
