@@ -261,7 +261,7 @@ symbolicLagrangeMultiplierEDDegree = method(Options => {Data => null});
 symbolicLagrangeMultiplierEDDegree (Ideal,Ideal) := ZZ => opts -> (WI,I) -> (
     aLI := lagrangeIdeal(WI,I);
     X := gens ring I;
-    g := if opts.Data==null then apply(X,i->random(1,1000) ) else opts.Data;
+    g := if opts.Data===null then apply(X,i->random(1,1000) ) else opts.Data;
     degree criticalIdeal(X-g,aLI)
     )
 --symbolicLagrangeMultiplierEDDegree Ideal := ZZ => opts -> I ->symbolicLagrangeMultiplierEDDegree(I,I)
@@ -269,8 +269,10 @@ symbolicLagrangeMultiplierEDDegree (Ideal,Ideal) := ZZ => opts -> (WI,I) -> (
 
 TEST///
 R=QQ[x,y]
-symbolicLagrangeMultiplierEDDegree(ideal(x^2+y^2-1))
-symbolicLagrangeMultiplierEDDegree(ideal((x^2+y^2+x)^2-x^2-y^2))
+I =WI =ideal(x^2+y^2-1)
+assert(2==symbolicLagrangeMultiplierEDDegree(WI,I))
+I = WI = ideal ((x^2+y^2+x)^2-x^2-y^2)
+assert(3==symbolicLagrangeMultiplierEDDegree(WI,I))
 ///
 
 ------------------------------
@@ -828,7 +830,7 @@ probabilisticLagrangeMultiplierOptimizationDegree (RingElement,Ideal,Ideal) := Z
     )
     
 
-TEST///
+TEST/// --EDIT
 
 R=QQ[x,y]
 WI = I = ideal((x^2+y^2+x)^2-x^2-y^2)
@@ -1235,6 +1237,76 @@ Description
 --  todo
 --SeeAlso
 --  
+///
+
+
+
+
+doc /// --EDIT
+Key
+  probabilisticLagrangeMultiplierOptimizationDegree
+  (probabilisticLagrangeMultiplierOptimizationDegree, RingElement, Ideal, Ideal)
+  (probabilisticLagrangeMultiplierOptimizationDegree, List, Ideal, Ideal)
+  [probabilisticEDDegree, Data]
+Headline
+  compute ED-degree for a random point
+Usage
+  probabilisticLagrangeMultiplierOptimizationDegree(psi,WI, I)
+  probabilisticLagrangeMultiplierOptimizationDegree(psi,WI,I, Data => L)
+  probabilisticLagrangeMultiplierOptimizationDegree(g,WI, I)
+  probabilisticLagrangeMultiplierOptimizationDegree(g,WI,I, Data => L)
+Inputs
+  WI:
+    an ideal with codim(I) generators such that V(WI) contains an each irreducible component V(I) as an irreducible component.
+  I:
+    an @TO2{Ideal, "ideal"}@ corresponding to an equidimensional variety.
+  g:
+    a List that gives the gradient of an objective function psi.
+  psi:
+    an objective function such as squared Euclidean distance.
+  Data => List
+    specifies parameters.
+Outputs
+  :ZZ
+    the optimization degree of $I$ with respect to an objective function psi with parameters evaluated at Data when specified and gradient g.
+Description
+  Text
+    The function computes the optimization degree of an equidimensional variety corresponding to
+    the ideal $I$.
+
+    We can confirm that the optimization-degree for Euclidean distance for the cardioid curve is 3.  
+  Example
+    R=QQ[x,y]
+    WI = I = ideal((x^2+y^2+x)^2-x^2-y^2)
+    psi =(x-3)^2+(y-2)^2
+    probabilisticLagrangeMultiplierOptimizationDegree(psi,WI,I)
+
+  Text
+    The function can handle polynomial objective functions psi or objective functions with rational functions as derivatives. 
+
+  Example
+    R=QQ[x,y]
+    WI = I = ideal((x^2+y^2+x)^2-x^2-y^2)
+    psi =x^2+2*x*y+3*y
+    probabilisticLagrangeMultiplierOptimizationDegree(psi,WI,I)
+    g ={3*x^2,3/y}--psi = x^3+ + 3*ln y
+    probabilisticLagrangeMultiplierOptimizationDegree(g,WI,I)
+
+  Text
+    The function works with parameters as well when the Data option is specified otherwise the total degree of the critical ideal with parameters as indeterminants is returned.  
+
+  Example
+    R=QQ[u,v][x,y]
+    WI = I = ideal((x^2+y^2+x)^2-x^2-y^2)
+    psi =(x-u)^2+(y-v)^2
+    probabilisticLagrangeMultiplierOptimizationDegree(psi,WI,I,Data=>{2,3})--this is three
+    probabilisticLagrangeMultiplierOptimizationDegree(psi,WI,I)--this is ten
+
+SeeAlso
+  lagrangeIdeal
+  probabilisticEDDegree
+  symbolicLagrangeMultiplierEDDegree
+
 ///
 
 
