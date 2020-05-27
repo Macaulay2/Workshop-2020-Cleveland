@@ -64,8 +64,6 @@ export {
     "evaluationCode",
     "toricCode",
     "evCodeGraph",
-    "codeGraph",
-    "codeGraphInc",
     "cartesianCode",
     "RMCode",
     "orderCode",
@@ -727,57 +725,6 @@ evCodeGraph (Ring,Matrix,List) := evCodeGraph  => opts -> (F,M,S) -> (
 
 
 -------Reed–Muller-type code of degree d over a graph using the function evaluate from package "NAGtypes"---------------
-
-
-codeGraph  = method(TypicalValue => Module);
-
-codeGraph (Matrix,ZZ,ZZ) := (M,d,p)->(
-    K:=ZZ/p;
-    tMatInc:=transpose M;
-    X:=entries tMatInc;    
-    t := getSymbol "t";
-    R:=K[t_(0)..t_(numgens target M-1)];    
-    SetPoly:=flatten entries basis(d,R);
-    SetPolySys:=apply(0..length SetPoly-1, x->polySystem{SetPoly#x});
-    XX:=apply(X,x->point{x});
-    C:=apply(apply(SetPolySys,y->apply(0..length XX -1,x->(flatten entries evaluate(y,XX#x))#0)),toList);
-    G:=transpose matrix{C};
-    
-    new EvaluationCode from{
-	symbol AmbientModule => K^(#X),
-	symbol IncidenceMatrix => M,
-	symbol LinearCode => linearCode(G),
-	symbol cache => new CacheTable
-	}
-    
-)
-
-
-codeGraphInc = method(TypicalValue => Module);
--- M is the incidence matrix of the Graph G
---inputs: The incidence matrix of a Graph G, a prime number  
--- outputs: K-module
-
-codeGraphInc (Matrix,ZZ):= (M,p)->(
-    K:=ZZ/p;
-    tInc:=transpose M;
-    X:=entries tInc;    
-    t := getSymbol "t";
-    R:=K[t_(0)..t_(numgens target M-1)];    
-    SetPol:=flatten entries basis(1,R);
-    SetPolSys:=apply(0..length SetPol-1, x->polySystem{SetPol#x});
-    XX:=apply(X,x->point{x});
-    C:=apply(apply(SetPolSys,y->apply(0..length XX -1,x->(flatten entries evaluate(y,XX#x))#0)),toList);
-    G:=transpose matrix{C};
-
-    new EvaluationCode from{
-	symbol AmbientModule => K^(#X),
-	symbol IncidenceMatrix => M,
-	symbol LinearCode => linearCode(G),
-	symbol cache => new CacheTable
-	}
-)
-
 
 cartesianCode = method(Options => {})
 
@@ -1964,8 +1911,60 @@ C=cyclicCode(GF(7),(x+3)*(x-1)*(x^3-2),9)
 assert( length C == 9)
 ///
 
+TEST ///
+-- alphabet
+F=GF 4
+C=linearCode(random(F^3,F^5))
+A={sub(0,F)}|apply(3,i->F_0^i)
+assert(set alphabet C == set A)
+///
 
+TEST ///
+-- ambient space
+F=GF(4)
+C=linearCode(random(F^3,F^5))
+assert(ambientSpace C == F^5)
+///
 
+TEST ///
+-- codewords
+F=GF(4,Variable=>a)
+C=linearCode(matrix{{1,a,0},{0,1,a}})
+cwt={{0,0,0},{0,1,a},{0,a,a+1},{0,a+1,1},{1,a,0},{1,a+1,a},{1,0,a+1},{1,1,1},{a,a+1,0},{a,1,a+1},{a,0,1},{a,a,a},{a+1,1,0},{a+1,a,1},{a+1,0,a},{a+1,a+1,a+1}}
+cwt=apply(cwt,i->apply(i,j->sub(j,F)))
+assert(set cwt == set codewords C)
+///
+
+TEST ///
+-- cyclic matrix
+F=GF(3)
+v={0,1,0,2}
+M=matrix{{0,1,0,2},{2,0,1,0},{0,2,0,1},{1,0,2,0}}
+M=sub(M,F)
+assert( M == cyclicMatrix(F,v))
+///
+
+TEST ///
+-- dual Code.
+F=GF(4)
+C=linearCode(matrix{{1,0,1,a,a},{0,1,a,a+1,1}})
+D=linearCode(matrix{{1,a,1,0,0},{a,a+1,0,1,0},{a,1,0,0,1}})
+assert( dualCode(C)==D)
+///
+
+TEST ///
+-- field
+F=GF(4)
+C=linearCode(random(F^3,F^5))
+assert(field C===F)
+///
+
+TEST ///
+-- genericCode
+F=GF(4)
+C=linearCode(random(F^3,F^5))
+assert(genericCode(C)==linearCode(F^5))
+///
 
 -----------------------------------------------
 -----------------------------------------------
@@ -2076,6 +2075,16 @@ assert( dim C.LinearCode==7)
  assert( #evaluations_1==r )
  ///
 
+
+TEST ///
+ -- Evaluation code over a graph 
+   G = graph({1,2,3,4}, {{1,2},{2,3},{3,4},{4,3}})
+   B=incidenceMatrix G
+   S=ZZ/2[t_(0)..t_(#vertexSet G-1)]
+   C=evCodeGraph(coefficientRing S,B,flatten entries basis(1,S))
+   assert(length C.LinearCode==4)
+   assert( dim C.LinearCode==3)
+///
 ------------------------------------------
 ------------------------------------------
 -- Documentation
@@ -2602,6 +2611,167 @@ document {
  }
 
 
+
+document {
+    
+    Key => {alphabet, (alphabet, LinearCode)},
+    
+    Headline => "Recover all the elements of the base ring.",
+    
+    Usage => "alphabet(C)",
+    
+    Inputs => {
+    "C" => LinearCode => {"The code over the ring which forms the alphabet."}
+    },
+    
+    Outputs => {
+    List => {"A list of the base ring elements."}
+    },
+    "Check if the base ring is ZZ/p and then computes the elements of the ring additively, otherwise computes them by taking a generator of the multiplicative group.",
+    
+    EXAMPLE {
+    "F=GF(4, Variable=>a);",
+    "C=linearCode(matrix{{1,a,0},{0,1,a}});",
+    "alphabet(C)"
+    }
+    }
+document {
+    Key => {ambientSpace, (ambientSpace, LinearCode)},
+    
+    Headline => "Recover the ambient module the code is subspace of.",
+    
+    Usage => "ambientSpace C",
+    
+    Inputs => {
+    "C" => LinearCode => {"The code, a subspace of the ambient space."}
+    },
+    Outputs => {
+    Module => {"The space of the code"}
+    },
+    
+    "Extract the key AmbientModule of the hash table LinearCode.",
+    
+    EXAMPLE {
+    "F=GF(4,Variable=>a)",
+    "C=linearCode(matrix{{1,a,0},{0,1,a}})",
+    "ambientSpace C"
+    }
+    }
+document {
+    Key => {codewords, (codewords, LinearCode)},
+    
+    Headline => "Compute all the codewords of the code.",
+    
+    Usage => "codewords(C)",
+    
+    Inputs => {
+    "C" => LinearCode => {"The linear code to extract the codewords of."}
+    },
+    
+    Outputs =>{
+    List => {"The list of the codewords in C"}
+    },
+    
+    "Obtain the codewords by multiplying all the elements of the ambient space (obtained with the function messages) by the generator matrix of the code C",
+    
+    EXAMPLE {
+    "F=GF(4,Variable=>a)",
+    "C=linearCode(matrix{{1,a,0},{0,1,a}})",
+    "codewords(C)"
+    }
+    }
+document {
+    Key => {cyclicMatrix, (cyclicMatrix,List),(cyclicMatrix, GaloisField,List)},
+    
+    Headline => "The cyclic matrix generated by a vector.",
+    
+    Usage => "M=cyclicMatrix(v)\n M=cyclicMatrix(F,v)",
+    
+    Inputs => {
+    "v" => List => {"A tuple of elements with works as the first row of the cyclic matrix."},
+    "F" => GaloisField => {"The field where the matrix will have its entries."}
+    },
+    
+    Outputs => {
+    Matrix => {"A cyclic matrix generated by v"}
+    },
+    
+    "A cyclic matrix (also known as circulant matrix) is a matrix generated by the cyclic permutations of the first row of it. This function computes the matrix by taking as the i-th row the entries of v list from -i to n-i module n",
+    
+    EXAMPLE {
+    "F=GF(4,Variable=>a)",
+    "v={0,1,a}",
+    "M=cyclicMatrix(F,v)"
+    }
+    }
+document {
+    Key => {dualCode, (dualCode,LinearCode)},
+    
+    Headline => "Compute the dual of a given code.",
+    
+    Usage => "D=dualCode(C)",
+    
+    Inputs => {
+    "C" => LinearCode => {"A linear code of dimension k and length n"}
+    },
+    
+    Outputs => {
+    LinearCode => {"The dual of C, a code of dimension n-k"}
+    },
+    
+    "The dual of a code C of length n over the field F are the elements v in F^n such that for any c in C, sum of the pointwise product is zero. These are the functionals whose image are zero over the code, this is the dual module of F^n/C.",
+    
+    EXAMPLE {
+    "F=GF(4,Variable=>a)",
+    "C=linearCode(matrix{{1,a,0},{0,1,a}})",
+    "D=dualCode(C)"
+    }
+    }
+ 
+document {
+    
+    Key => {field,(field,LinearCode)},
+    
+    Headline => "",
+    
+    Usage => "field C",
+    
+    Inputs => {
+    "C" => LinearCode => {}
+    },
+    
+    Outputs => {
+    Ring => {"The base field of the code"}
+    },
+    
+    "Return the base field of the code",  
+    
+    EXAMPLE {
+    "F=GF(4,Variable=>a)",
+    "C=linearCode(matrix{{1,a,0},{0,1,a}})",
+    "field C"
+    }
+    }
+document {
+    
+    Key => {genericCode, (genericCode, LinearCode)},
+    Headline => "Given a code, computes its ambient space as a code",
+    Usage => "genericCode(C)",
+    Inputs => {
+    "C" => LinearCode => {}
+    },
+    Outputs => {
+    LinearCode => {"The linear code generated by the identity matrix"}
+    },
+    "Given a R-code $C$ of length $n$, return the code $R^n$.",
+    
+    EXAMPLE {
+    "F=GF(4,Variable=>a)",
+    "C=linearCode(matrix{{1,a,0},{0,1,a}})",
+    "genericCode(C)"
+    }
+    }
+
 -----------------------------------------------
 -----------------------------------------------
 -- Use this section for Evaluation Code documentation:
@@ -2850,7 +3020,60 @@ document {
          " g=x^3;",
          " LocallyRecoverableCode({13,9,4,2},A,g);"
  	}
-     } 
+     }
+
+
+document {
+    Key => {evCodeGraph, (evCodeGraph,Ring,Matrix,List)},
+    Headline => "Constructs a Reed–Muller-type code over a graph.",
+    Usage => "evCodeGraph(F,M,S)",
+    Inputs => {
+        "F" => Ring => {"Field."},
+	"M" => Matrix => {"The incidence matrix of the connected graph G."},
+	"S" => List => {"A set of polynomials over F."}
+    },
+    Outputs => {
+        "C" => EvaluationCode => {"Evaluation code over a graph."}
+    },
+    "Given a field F of prime characteristic, a incidence matrix M of a connected graph G, and an ordered list of polynomials over F.",
+    "this method produces an evaluation code generated by the incidence matrix of the graph G by evaluating the given polynomials at the columns of the incidence matrix. ",
+    EXAMPLE {
+   "G = graph({1,2,3,4}, {{1,2},{2,3},{3,4},{4,3}});",
+   "B=incidenceMatrix G;",
+   "S=ZZ/2[t_(0)..t_(#vertexSet G-1)];",
+   "Y=evCodeGraph(coefficientRing S,B,flatten entries basis(1,S))"
+	}
+    }
+
+
+document {
+    Key => ExponentsMatrix,
+    Headline => "Specifies the matrix of exponents. Exponent vectors are rows.",
+    TT "ExponentsMatrix", " -- Specifies the matrix of exponents.",
+    PARA{"This symbol is provided by the package ", TO CodingTheory, "."}
+    }
+--------------- Documentation PolynomialSet-----------------
+document {
+    Key => PolynomialSet,
+    Headline => "Specifies a set of polynomials.",
+    TT "PolynomialSet", " -- Specifies polynomial set.",
+    PARA{"This symbol is provided by the package ", TO CodingTheory, "."}
+    }
+--------------- Documentation Sets-----------------
+document {
+    Key => Sets,
+    Headline => "Gives the collection of subsets used for constracting a Cartesian code.",
+    TT "Sets", " -- Specifies sets.",
+    PARA{"This symbol is provided by the package ", TO CodingTheory, "."}
+    }
+--------------- Documentation VanishingIdeal-----------------
+document {
+    Key => VanishingIdeal,
+    Headline => "Gives the vanishing ideal of polynomials in m variables.",
+    TT "VanishingIdeal", " -- Specifies vanishing ideal",
+    PARA{"This symbol is provided by the package ", TO CodingTheory, "."}
+    }
+
  
 
 end
