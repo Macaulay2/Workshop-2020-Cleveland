@@ -255,13 +255,16 @@ assert( MLDegree (F,u) == 3)
 --------------------
 --LagrangeMultiplierEDDegree
 --------------------
+
 symbolicLagrangeMultiplierEDDegree = method(Options => {Data => null});
-symbolicLagrangeMultiplierEDDegree Ideal := ZZ => opts -> I -> (
-    aLI := lagrangeIdeal(I,I);
+symbolicLagrangeMultiplierEDDegree (Ideal,Ideal) := ZZ => opts -> (WI,I) -> (
+    aLI := lagrangeIdeal(WI,I);
     X := gens ring I;
     g := if opts.Data==null then apply(X,i->random(1,1000) ) else opts.Data;
     degree criticalIdeal(X-g,aLI)
     )
+symbolicLagrangeMultiplierEDDegree Ideal := ZZ => opts -> I ->symbolicLagrangeMultiplierEDDegree(I,I)
+    
 
 TEST///
 R=QQ[x,y]
@@ -1207,6 +1210,63 @@ Description
 --SeeAlso
 --  
 ///
+
+
+doc /// --EDIT
+Key
+  symbolicLagrangeMultiplierEDDegree
+  (symbolicLagrangeMultiplierEDDegree, Ideal)
+  (symbolicLagrangeMultiplierEDDegree, Ideal,Ideal)
+Headline
+  Compute EDDegree symbolically using Lagrange multipliers
+Usage
+  symbolicEDDegree (WI,I)
+Inputs
+  WI:
+    an ideal with codim(I) generators such that V(WI) contains an each irreducible component V(I) as an irreducible component.
+  I:
+    an @TO2{Ideal, "ideal"}@ corresponding to an equidimensional variety.
+Outputs
+  :ZZ
+    the ED-degree of $I$.
+Description
+  Text
+    The function computes the Euclidean distance degree of an equidimensional variety corresponding to
+    the ideal $I$.
+
+    We can confirm that the ED-degree of the affine cone of the twisted cubic is 
+  Example
+    R=QQ[x0,x1,x2,x3]
+    WI=ideal(x0*x2-x1^2,x1*x3-x2^2)
+    I= WI+ideal(x0*x3-x1*x2)
+    symbolicLagrangeMultiplierEDDegree(WI,I)
+
+  Text
+    This function is probabilistic.
+  CannedExample --TODO
+    i4 : I = ideal((x^2+y^2+x)^2 - x^2 - y^2)
+
+                4     2 2    4     3       2    2
+    o4 = ideal(x  + 2x y  + y  + 2x  + 2x*y  - y )
+
+    o4 : Ideal of R
+
+    i5 : elapsedTime symbolicEDDegree I
+          3.24044 seconds elapsed
+
+    o5 = 3
+
+    i6 : elapsedTime probabilisticEDDegree I
+          0.0097821 seconds elapsed
+
+    o6 = 3
+
+
+SeeAlso
+  lagrangeIdeal
+  criticalIdeal
+///
+
 
 
 TEST ///
