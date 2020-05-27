@@ -80,7 +80,7 @@ toricHilbertSeries (TorusAction) := Divide => T -> (
     Divide{1,den}
 )
 
--- original is below
+-- original is below but this is much faster
 toricHilbertFunction = (T, d) -> (
     if not T.cache.?toricHilbert then (
 	T.cache.toricHilbert = 1_(degreesRing T);
