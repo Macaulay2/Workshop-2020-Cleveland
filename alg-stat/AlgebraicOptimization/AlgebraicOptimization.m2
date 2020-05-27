@@ -34,8 +34,10 @@ export {
   "multiDegreeEDDegree",
   "MLDegree",
   "symbolicLagrangeMultiplierEDDegree",
+  "toricMLIdeal",
+  "toricMLDegree",
   -- Options
-  "DualVariable",
+  "DualVariable", "coeffRing",
   --Types and keys
   "ConormalRing","CNRing","PrimalRing","DualRing","PrimalCoordinates","DualCoordinates",
   --More Types
@@ -474,6 +476,40 @@ ring aLI
 peek WCI
 assert(2==degree WCI)
 
+///
+
+
+----------------------------------------
+-- Toric ML Degree Code
+----------------------------------------
+toricMLIdeal = method(Options => {coeffRing => QQ})
+toricMLIdeal(Matrix, List, List) := Ideal => opts -> (A, c, u) -> (
+    t := symbol t;
+    n := #c;
+    R := QQ[t_1..t_(numgens target A)];
+    N := sum u;
+    toricMapA := transpose matrix {for i from 0 to n-1 list c_i*R_(entries A_i)};
+    u = transpose matrix {u};
+    A = sub(A,R); 
+    MLIdeal := ideal(A*(N*toricMapA - u));  -- N A*v = A*u
+    MLIdeal
+    )
+
+toricMLDegree = method(Options => {coeffRing => QQ})
+toricMLDegree(Matrix, List) := Number => opts -> (A,c) -> (
+    u := for i from 0 to #c-1 list random(1, 10^5);
+    MLIdeal := toricMLIdeal(A, c, u);
+    MLdegree := degree saturate(MLIdeal, (product gens ring MLIdeal)); 
+    MLdegree
+    )
+
+TEST ///
+A = matrix {{1,1,1,0,0,0,0,0,0}, {0,0,0,1,1,1,0,0,0},{0,0,0,0,0,0,1,1,1},
+    {1,0,0,1,0,0,1,0,0},{0,1,0,0,1,0,0,1,0},{0,0,1,0,0,1,0,0,1}};
+c = {1, 1, 1, 1, 1, 1, 1, 1, 1};
+assert(2 == toricMLDegree(A, c));
+c = {1,2,3,1,1,1,1,1,1};
+assert(6 == toricMLDegree(A,c));
 ///
 
 
@@ -997,6 +1033,68 @@ Description
     u = {2,3,5,7}
     F = {s^3*(-t^3-t^2-t+1),s^2*t,s*t^2,t^3}
     MLDegree (F,u)
+--Caveat
+--  todo
+--SeeAlso
+--  
+///
+
+
+doc ///
+Key
+   toricMLIdeal
+   (toricMLIdeal,Matrix,List,List) 
+Usage
+  toricMLIdeal(A, c, u)
+Inputs
+  A:
+    the matrix of exponents defining the monomial map that parameterizes the toric variety
+  c: 
+    list of numbers used to create the scaled toric variety
+  u:
+    list of numerical data
+Outputs
+  :Ideal
+    the critical ideal of likelihood equations for the corresponding scaled toric variety 
+    as described in Birch's theorem.
+Description
+  Text
+    Computes the critical ideal of a scaled toric variety using the equations 
+    defined in Birch's theorem for given data $u$.
+  Example
+    A = matrix {{1,1,1,0,0,0,0,0,0}, {0,0,0,1,1,1,0,0,0},{0,0,0,0,0,0,1,1,1},{1,0,0,1,0,0,1,0,0},{0,1,0,0,1,0,0,1,0},{0,0,1,0,0,1,0,0,1}}
+    c = {1,2,3,1,1,1,1,1,1}
+    u = {15556, 84368, 98575, 27994, 61386, 84123, 62510, 37430, 34727};
+    toricMLIdeal(A, c, u)
+--Caveat
+--  todo
+--SeeAlso
+--  
+///
+
+
+doc ///
+Key
+   toricMLDegree
+   (toricMLDegree,Matrix,List) 
+Usage
+  toricMLDegree(A, c)
+Inputs
+  A:
+    the matrix of exponents defining the monomial map that parameterizes the toric variety
+  c: 
+    list of numbers used to create the scaled toric variety
+Outputs
+  :Number
+    the ML-degree of the corresponding toric variety
+Description
+  Text
+    Computes the maximum likelihood degree of a toric variety using the equations 
+    defined in Birch's theorem and randomly generated data
+  Example
+    A = matrix {{1,1,1,0,0,0,0,0,0}, {0,0,0,1,1,1,0,0,0},{0,0,0,0,0,0,1,1,1},{1,0,0,1,0,0,1,0,0},{0,1,0,0,1,0,0,1,0},{0,0,1,0,0,1,0,0,1}}
+    c = {1,2,3,1,1,1,1,1,1}
+    toricMLDegree(A,c)
 --Caveat
 --  todo
 --SeeAlso
