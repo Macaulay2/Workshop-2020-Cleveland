@@ -100,8 +100,10 @@ toricHilbertPartial = (T, d) -> (
 	    C = C || matrix{{-sum(1..min(i,denDeg),k -> C_(i-k,0)*B_(k,0) )}};
 	    );
 	);
-    -- return a polynomial up to desired degree
-    first flatten entries (M_{0..d}*C^{0..d})
+    -- compute expansion up to desired degree
+    p := first flatten entries (M_{0..d}*C^{0..d});
+    -- store and return
+    T.cache.toricHilbert = p
     )
 
 
