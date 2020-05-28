@@ -21,13 +21,16 @@ newPackage(
 	    "Polyhedra",
 	    "Graphs",
 	    "NAGtypes",
-	    "RationalPoints" },
+	    "RationalPoints", 
+	    "Matroids"
+	    },
         PackageExports => {
 	    "SRdeformations",
 	    "Polyhedra",
 	    "Graphs",
 	    "NAGtypes",
-	    "RationalPoints" 
+	    "RationalPoints",
+	    "Matroids"
 	    }
 	)
 
@@ -116,8 +119,6 @@ export {
     }
 
 exportMutable {}
-needsPackage "Graphs";
-needsPackage "Matroids";
 
 ------------------------------------------
 ------------------------------------------
@@ -464,7 +465,6 @@ matroidPartition List := List => mls -> (
     assert(all(0..r-1, i-> instance(mls_i,Matroid)));
     E   := (mls_0).groundSet;
     assert(all(0..r-1, i->((mls_i).groundSet)===E));
-    
     --set up initial values: special symbols z and list of lists that'll hopefully become our partition
     local z;
     Z   := apply(new List from 1..r, i-> symbol z_i);
@@ -502,7 +502,6 @@ matroidPartition List := List => mls -> (
 	Els#j1 = delete(P_l,Els#j1);
 	Els#((baseName P_(l+1))#1) = append(Els#((baseName P_(l+1))#1),P_l);
 	);
-    
     --unless we've exhausted elements, try to make a partition!
     while not (Els#0) == {} do (
 	newVertex   := first first Els;
@@ -533,10 +532,10 @@ minDistEnumerate = method(TypicalValue => Number)
 minDistEnumerate LinearCode := Number => C -> (
     X := messages(C);
     G := C.GeneratorMatrix;
-    words := apply(select(X, i -> (weight i) > 0), x -> transpose(G)*transpose(matrix({x})));
-    words = apply(words, i -> weight first entries(transpose i));
+    words := apply(select(X, i -> (weight i) > 0), x -> (matrix({x}))*G);
+    words = apply(words, i -> weight first entries i);
     return min words;
-);
+    );
 
 subsetToList := (n, subset) -> (
     for i from 0 to (n-1) list(
@@ -556,7 +555,26 @@ minimumWeight LinearCode := Number => C -> (
     j := 1;
     
     --Partition columns of LinearCode into information sets
-    T := matroidPartition(apply(toList(1..l),i->matroid(M)));
+
+    -- Estimate whether brute force or the smart algorithm is faster.    
+    -- The number of matrix multiplications it would need to do using the
+    -- brute force algorithm.
+    R := ring(C);
+    numCodewords := (R.order)^k;
+    -- The number of  (k x k) matrices it will need to compute the rank of.
+    -- This computation takes place in the matroid constructor, matroid(Matrix). 
+    numMatrices := binomial(numcols M, k);
+    
+    if numMatrices > numCodewords then(
+	return (minDistEnumerate C);
+	);
+        
+    cMatroid := matroid(M);
+    cMatroids := apply(toList(1..l),i->cMatroid);
+    T := matroidPartition(cMatroids);
+
+    --Partition columns of LinearCode into information sets
+    --T := matroidPartition(apply(toList(1..l),i->matroid(M)));
 
     r := {}; --list of relative ranks
     currentUnion := set();
