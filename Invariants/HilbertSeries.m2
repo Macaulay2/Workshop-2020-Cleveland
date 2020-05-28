@@ -2,6 +2,7 @@ restart
 needsPackage "InvariantsDev"
 
 --presentation of invariant ring as polynomial ring modulo ideal
+--implement as a hook so kernel is not recomputed each time
 --NOTE: presentation is a method without options so I do not know
 --how to pass an option for the variable base name
 presentation RingOfInvariants := Ring => S -> (
@@ -24,33 +25,6 @@ hilbertSeries RingOfInvariants := Divide => op -> S -> (
     hilbertSeries(presentation S,Order=>op.Order,Reduce=>op.Reduce)
     )
 
--- examples
--- torus
-R = QQ[x_1..x_4]
-W = matrix{{0,1,-1,1},{1,0,-1,-1}}
-T = torusAction(W, R)
-S = R^T
-presentation S
-hilbertSeries S
--- torus with repeated weights
-R = QQ[x_1..x_4]
-W = matrix{{0,1,-1,-1},{1,0,-1,-1},{0,-1,1,1}}
-T = torusAction(W, R)
-S = R^T
--- finite abelian
-R = QQ[x_1..x_3]
-d = {3,3}
-W = matrix{{1,0,1},{0,1,1}}
-A = finiteAbelianAction(d, W, R)
-S = R^A
-presentation S
-hilbertSeries S
-hilbertSeries(S,Reduce=>true)
-hilbertSeries(S,Order=>5)
-
-----------------------------------------
--- Fred's experiments
-----------------------------------------
 -- creates and stores the degrees ring for the toric hilbert series
 -- currently stores to cache
 -- later create this as part of the action and store one
@@ -131,6 +105,31 @@ toricHilbertPartial = (T, d) -> (
     )
 
 
+-- examples
+-- finite abelian
+R = QQ[x_1..x_3]
+d = {3,3}
+W = matrix{{1,0,1},{0,1,1}}
+A = finiteAbelianAction(d, W, R)
+S = R^A
+presentation S
+hilbertSeries S
+hilbertSeries(S,Reduce=>true)
+hilbertSeries(S,Order=>5)
+-- torus
+R = QQ[x_1..x_4]
+W = matrix{{0,1,-1,1},{1,0,-1,-1}}
+T = torusAction(W, R)
+S = R^T
+toricHilbertSeries T
+h = toricHilbertSeries(T,Order=>8)
+phi = map(degreesRing R, degreesRing T)
+phi h
+hilbertSeries(S,Order=>8)
+
+----------------------------------------
+-- Fred's experiments
+----------------------------------------
 
 -- for testing only
 -- can be removed eventually
