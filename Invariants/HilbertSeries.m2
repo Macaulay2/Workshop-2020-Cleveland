@@ -71,10 +71,26 @@ degreesRing TorusAction := PolynomialRing => T -> (
     )
 
 
--- this method prints the equivariant hilbert series
+-- this method returns the equivariant hilbert series
 -- for a diagonal torus action on a polynomial ring
-toricHilbertSeries = method()
-toricHilbertSeries (TorusAction) := Divide => T -> (
+-- NOTE: torus must act diagonally on single graded polynomial ring
+-- by default, the series is returned as a rational function
+-- if the option Order=>d is used, the expansion of the series
+-- up to degree d-1 is returned
+toricHilbertSeries = method(Options => {Order => infinity})
+toricHilbertSeries (TorusAction) := Divide => op -> T -> (
+    ord := op.Order;
+    if ord === infinity then (
+	toricHilbertRational(T)
+	)
+    else (
+	toricHilbertPartial(T,ord-1)
+	)
+    )
+
+-- toric Hilbert series as a rational function
+-- do not export
+toricHilbertRational = T -> (
     n := dim T;
     W := weights T;
     R := degreesRing T;
@@ -88,9 +104,9 @@ toricHilbertSeries (TorusAction) := Divide => T -> (
     Divide{1,den}
 )
 
--- this computes the expansion of the toric Hilbert series for
--- a torus action on a single graded polynomial ring up to order d
-toricHilbertFunction = (T, d) -> (
+-- computes expansion of toric Hilbert series up to order d
+-- do not export
+toricHilbertPartial = (T, d) -> (
     -- if not existing, create in the cache
     if not T.cache.?toricHilbert then (
 	T.cache.toricHilbert = 1_(degreesRing T);
