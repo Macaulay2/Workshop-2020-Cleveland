@@ -51,8 +51,8 @@ degreesRing TorusAction := PolynomialRing => T -> (
 -- by default, the series is returned as a rational function
 -- if the option Order=>d is used, the expansion of the series
 -- up to degree d-1 is returned
-toricHilbertSeries = method(Options => {Order => infinity})
-toricHilbertSeries (TorusAction) := Thing => op -> T -> (
+toricHilbertSeries = method(Options => {Order => infinity}, TypicalValue => Divide)
+toricHilbertSeries (TorusAction) := op -> T -> (
     ord := op.Order;
     if ord === infinity then (
 	toricHilbertRational(T)
