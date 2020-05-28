@@ -25,12 +25,19 @@ hilbertSeries RingOfInvariants := Divide => op -> S -> (
     )
 
 -- examples
+-- torus
 R = QQ[x_1..x_4]
 W = matrix{{0,1,-1,1},{1,0,-1,-1}}
 T = torusAction(W, R)
 S = R^T
 presentation S
 hilbertSeries S
+-- torus with repeated weights
+R = QQ[x_1..x_4]
+W = matrix{{0,1,-1,-1},{1,0,-1,-1},{0,-1,1,1}}
+T = torusAction(W, R)
+S = R^T
+-- finite abelian
 R = QQ[x_1..x_3]
 d = {3,3}
 W = matrix{{1,0,1},{0,1,1}}
