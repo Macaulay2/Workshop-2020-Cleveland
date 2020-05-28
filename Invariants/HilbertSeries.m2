@@ -60,12 +60,12 @@ degreesRing TorusAction := PolynomialRing => T -> (
     else (
     	r := rank T;
     	z := getSymbol "z";
---    	Tvar := getSymbol "T";
+    	-- coefficient ring for torus characters
 	C := ZZ[Variables=>r,VariableBaseName=>z,
 	    MonomialOrder=>GroupLex=>r,Inverses=>true];
---	R := C[Tvar,MonomialOrder=>RevLex,Global=>false];
+    	-- ring for the toric Hilbert series
     	R := C monoid degreesRing ring T;
---    	R := newRing(degreesRing(r+1),Variables=>apply(r,i->z_i) | {Tvar});
+    	-- store and return
 	T.cache.degreesRing = R
 	)
     )
@@ -73,27 +73,33 @@ degreesRing TorusAction := PolynomialRing => T -> (
 
 -- this method prints the equivariant hilbert series
 -- for a diagonal torus action on a polynomial ring
--- INPUT: weight matrix for action of torus on variables
--- COMMENT: sometimes factor are not in the form 1 - z* T
 toricHilbertSeries = method()
 toricHilbertSeries (TorusAction) := Divide => T -> (
     n := dim T;
     W := weights T;
     R := degreesRing T;
     C := coefficientRing R;
+    -- tally the weights of the action
     p := pairs tally entries transpose W;
+    -- for each weight form the 1-zT factor with the right powr
+    -- then multiply them into a product expression
     den := Product apply(sort apply(p, (w,e) -> {1 - C_w * R_0,e}), t -> Power t);
---    den := Product apply(sort apply(p, (w,e) -> {1 - R_w * (last gens R),e}), t -> Power t);
+    -- return the rational function as an expression
     Divide{1,den}
 )
 
--- original is below but this is much faster
+-- this computes the expansion of the toric Hilbert series for
+-- a torus action on a single graded polynomial ring up to order d
 toricHilbertFunction = (T, d) -> (
+    -- if not existing, create in the cache
     if not T.cache.?toricHilbert then (
 	T.cache.toricHilbert = 1_(degreesRing T);
 	);
+    -- how far was it previously computed?
+    -- get degree and coefficients
     currentDeg := first degree T.cache.toricHilbert;
     (M,C) := coefficients T.cache.toricHilbert;
+    -- compute higher degrees recursively
     if (d > currentDeg) then (
 	R := degreesRing T;
     	den := value denominator toricHilbertSeries T;
@@ -104,6 +110,7 @@ toricHilbertFunction = (T, d) -> (
 	    C = C || matrix{{-sum(1..min(i,denDeg),k -> C_(i-k,0)*B_(k,0) )}};
 	    );
 	);
+    -- return a polynomial up to desired degree
     first flatten entries (M_{0..d}*C^{0..d})
     )
 
