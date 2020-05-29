@@ -17,12 +17,12 @@ presentation RingOfInvariants := Ring => S -> (
 	Degrees => gdegs];--degrees
     phi := map(R,U,L);
     I := ker phi;
-    U/I
+    presentation(U/I)
     )
 
 --hilbert Series of invariant ring
 hilbertSeries RingOfInvariants := Divide => op -> S -> (
-    hilbertSeries(presentation S,Order=>op.Order,Reduce=>op.Reduce)
+    hilbertSeries(coker presentation S,Order=>op.Order,Reduce=>op.Reduce)
     )
 
 -- creates and stores the degrees ring for the toric hilbert series

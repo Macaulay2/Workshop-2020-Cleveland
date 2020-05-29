@@ -61,7 +61,7 @@ export {
 -- generators	     	     	-- overloaded, documented
 -- numgens    	      	      	-- overloaded, documented
 -- ring	       	       	        -- overloaded, documented
-
+-- presentation	       	       	-- overloaded
 
 
 --Protect Option/hashtable symbols
@@ -205,6 +205,23 @@ addHook(LinearlyReductiveAction, symbol hilbertIdeal, V -> break (
     trim(sub(II, join(apply(n, i -> x_(i+1) => R_i),apply(n, i -> y_(i+1) => 0), apply(l, i -> z_(i+1) => 0))))
     ))
 
+--presentation of invariant ring as polynomial ring modulo ideal
+addHook(RingOfInvariants, symbol presentation, S -> break (
+    	-- get ambient ring and generators of invariant ring
+    	R := ambient S;
+    	L := generators S;
+    	-- get degrees of generators
+    	gdegs := L / degree // flatten;
+    	-- form a presentation of the invariant ring
+    	U := QQ[Variables => #L,--number of variables
+-- if next line is uncommented, M2 complains u is unexported
+--	    VariableBaseName => symbol u,--symbol
+	    Degrees => gdegs];--degrees
+    	phi := map(R,U,L);
+    	I := ker phi;
+    	presentation(U/I)	
+	))
+  
 
 -------------------------------------------
 --- GroupAction methods -------------------
@@ -753,7 +770,8 @@ isInvariant (RingElement, LinearlyReductiveAction) := Boolean => (f, V) -> (
 -------------------------------------------
 
 -- TO DO: 1. Add hilbertSeries or molienSeries as functions on RingOfInvariants.
-
+--    	  2. Errors, docs, examples, tests for presentation
+--    	  3. Can we pass a symbol as an option for presentation to use as variable base name?
 
 invariantRing = method()
 
@@ -774,6 +792,10 @@ PolynomialRing^GroupAction := RingOfInvariants => (R, G) -> (
     if ring G =!= R then (error "Expected the first argument to be the polynomial ring on which the actions acts.");
     invariantRing G
     )
+
+
+--presentation of invariant ring as polynomial ring modulo ideal
+presentation RingOfInvariants := { } >> opts -> (cacheValue (symbol presentation)) (S -> runHooks(RingOfInvariants, symbol presentation, S) )
 
 -------------------------------------------
 
