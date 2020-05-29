@@ -1,6 +1,83 @@
 restart
 needsPackage "InvariantsDev"
 
+-- examples
+-- finite abelian
+R = QQ[x_1..x_3]
+d = {3,3}
+W = matrix{{1,0,1},{0,1,1}}
+A = finiteAbelianAction(d, W, R)
+S = R^A
+presentation S
+hilbertSeries S
+hilbertSeries(S,Reduce=>true)
+hilbertSeries(S,Order=>5)
+-- torus
+R = QQ[x_1..x_4]
+W = matrix{{0,1,-1,1},{1,0,-1,-1}}
+T = torusAction(W, R)
+S = R^T
+toricHilbertSeries T
+h = toricHilbertSeries(T,Order=>8)
+phi = map(degreesRing R, degreesRing T)
+phi h
+hilbertSeries(S,Order=>8)
+
+----------------------------------------
+-- Fred's experiments
+----------------------------------------
+
+-- for testing only
+-- can be removed eventually
+testHilbertFunction = method()
+testHilbertFunction (Matrix, ZZ) := Thing => (W, d) -> (
+    r := numRows W;
+    z := getSymbol "z";
+    T := getSymbol "T";
+    R := ZZ[z_1..z_r,T, Inverses => true, MonomialOrder=>RevLex];
+    -- the degree zero component has dimension 1
+    n := numColumns W;
+    -- compute the denominator of the Hilbert series
+    -- which is a polynomial in T of degree n
+    ms := apply(n, i -> R_(flatten entries W_{i}));
+    fs := apply(n, i -> sum apply(d+1, j -> (ms#i*(T_R))^j));
+    g := product fs;
+    (M,C) := coefficients(g,Variables=>{T_R});
+    C_(d,0)
+    )
+
+
+
+------------------------------
+-- Luigi's code --------------
+------------------------------
+partialToricHilbertSeries = method()
+partialToricHilbertSeries (Matrix, ZZ) := Thing => (W, d) -> (
+    r := numRows W;
+    n := numColumns W;
+    W=-W;
+    z := getSymbol "z";
+    t := getSymbol "t";
+    R := QQ[z_1..z_r,t, Inverses => true, MonomialOrder=>Lex];
+    ms := apply(n, i -> R_(flatten entries W_{i}));
+    fs := apply(n, i -> sum apply(d, j -> (ms#i*(t_R))^j));
+    g := product fs;
+    L := sum select(terms g, term -> (isSubset(support(term),{t_R}) and first degree term <= d));
+    L
+)
+
+TEST ///
+W=-matrix {{-1,0,1},{0,-1,1}};
+d=9;
+s=partialToricHilbertSeries(W,d)
+R= ring s;
+series=1+t^3+t^6+t^9
+assert(s === series)
+///
+
+
+-*
+
 --presentation of invariant ring as polynomial ring modulo ideal
 --implement as a hook so kernel is not recomputed each time
 --NOTE: presentation is a method without options so I do not know
@@ -105,79 +182,4 @@ toricHilbertPartial = (T, d) -> (
     -- store and return
     T.cache.toricHilbert = p
     )
-
-
--- examples
--- finite abelian
-R = QQ[x_1..x_3]
-d = {3,3}
-W = matrix{{1,0,1},{0,1,1}}
-A = finiteAbelianAction(d, W, R)
-S = R^A
-presentation S
-hilbertSeries S
-hilbertSeries(S,Reduce=>true)
-hilbertSeries(S,Order=>5)
--- torus
-R = QQ[x_1..x_4]
-W = matrix{{0,1,-1,1},{1,0,-1,-1}}
-T = torusAction(W, R)
-S = R^T
-toricHilbertSeries T
-h = toricHilbertSeries(T,Order=>8)
-phi = map(degreesRing R, degreesRing T)
-phi h
-hilbertSeries(S,Order=>8)
-
-----------------------------------------
--- Fred's experiments
-----------------------------------------
-
--- for testing only
--- can be removed eventually
-testHilbertFunction = method()
-testHilbertFunction (Matrix, ZZ) := Thing => (W, d) -> (
-    r := numRows W;
-    z := getSymbol "z";
-    T := getSymbol "T";
-    R := ZZ[z_1..z_r,T, Inverses => true, MonomialOrder=>RevLex];
-    -- the degree zero component has dimension 1
-    n := numColumns W;
-    -- compute the denominator of the Hilbert series
-    -- which is a polynomial in T of degree n
-    ms := apply(n, i -> R_(flatten entries W_{i}));
-    fs := apply(n, i -> sum apply(d+1, j -> (ms#i*(T_R))^j));
-    g := product fs;
-    (M,C) := coefficients(g,Variables=>{T_R});
-    C_(d,0)
-    )
-
-
-
-------------------------------
--- Luigi's code --------------
-------------------------------
-partialToricHilbertSeries = method()
-partialToricHilbertSeries (Matrix, ZZ) := Thing => (W, d) -> (
-    r := numRows W;
-    n := numColumns W;
-    W=-W;
-    z := getSymbol "z";
-    t := getSymbol "t";
-    R := QQ[z_1..z_r,t, Inverses => true, MonomialOrder=>Lex];
-    ms := apply(n, i -> R_(flatten entries W_{i}));
-    fs := apply(n, i -> sum apply(d, j -> (ms#i*(t_R))^j));
-    g := product fs;
-    L := sum select(terms g, term -> (isSubset(support(term),{t_R}) and first degree term <= d));
-    L
-)
-
-TEST ///
-W=-matrix {{-1,0,1},{0,-1,1}};
-d=9;
-s=partialToricHilbertSeries(W,d)
-R= ring s;
-series=1+t^3+t^6+t^9
-assert(s === series)
-///
-
+*-
