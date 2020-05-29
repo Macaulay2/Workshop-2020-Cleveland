@@ -1142,8 +1142,8 @@ Description
     MLDegree (F,u)
 --Caveat
 --  todo
---SeeAlso
---  
+SeeAlso
+  toricMLDegree 
 ///
 
 
@@ -1175,8 +1175,8 @@ Description
     toricMLIdeal(A, c, u)
 --Caveat
 --  todo
---SeeAlso
---  
+SeeAlso
+  toricMLDegree
 ///
 
 
@@ -1204,8 +1204,9 @@ Description
     toricMLDegree(A,c)
 --Caveat
 --  todo
---SeeAlso
---  
+SeeAlso
+  toricMLIdeal
+  MLDegree 
 ///
 
 
