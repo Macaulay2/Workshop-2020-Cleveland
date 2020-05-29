@@ -63,7 +63,7 @@ export {
 -- ring	       	       	        -- overloaded, documented
 -- presentation	       	       	-- overloaded
 -- hilbertSeries    	    	-- overloaded
-
+-- degreesRing	      	      	-- overloaded
 
 --Protect Option/hashtable symbols
 protect Abelian	       -- Strategy option for isInvariant
@@ -426,11 +426,16 @@ torusAction (Matrix, PolynomialRing) := TorusAction => (W, R) -> (
     if not isField coefficientRing R then (error "finiteAction: Expected the second argument to be a polynomial ring over a field.");
     if ring W =!= ZZ then (error "torusAction: Expected the first argument to be a matrix of integer weights.");
     if numColumns W =!= dim R then (error "torusAction: Expected the number of columns of the matrix to equal the dimension of the polynomial ring."); 
+    r := numRows W;
+    -- coefficient ring for torus characters
+    z := getSymbol "z";
+    C := ZZ[Variables=>r,VariableBaseName=>z,MonomialOrder=>GroupLex=>r,Inverses=>true];
     new TorusAction from {
 	cache => new CacheTable,
 	(symbol actionMatrix) => W,
+	(symbol degreesRing) => C monoid degreesRing R,
 	(symbol ring) => R, 
-	(symbol rank) => numRows W
+	(symbol rank) => r
 	}
     )
 
@@ -446,6 +451,7 @@ weights = method()
 
 weights TorusAction := Matrix => T -> T.actionMatrix 
 
+degreesRing TorusAction := PolynomialRing => T -> T.degreesRing
 
 -------------------------------------------
 --- FiniteAbelianAction methods -----------
