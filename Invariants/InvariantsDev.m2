@@ -62,6 +62,7 @@ export {
 -- numgens    	      	      	-- overloaded, documented
 -- ring	       	       	        -- overloaded, documented
 -- presentation	       	       	-- overloaded
+-- hilbertSeries    	    	-- overloaded
 
 
 --Protect Option/hashtable symbols
@@ -796,6 +797,11 @@ PolynomialRing^GroupAction := RingOfInvariants => (R, G) -> (
 
 --presentation of invariant ring as polynomial ring modulo ideal
 presentation RingOfInvariants := { } >> opts -> (cacheValue (symbol presentation)) (S -> runHooks(RingOfInvariants, symbol presentation, S) )
+
+--hilbert Series of invariant ring
+hilbertSeries RingOfInvariants := Divide => op -> S -> (
+    hilbertSeries(coker presentation S,Order=>op.Order,Reduce=>op.Reduce)
+    )
 
 -------------------------------------------
 
