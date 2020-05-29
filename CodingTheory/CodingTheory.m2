@@ -114,7 +114,6 @@ export {
     "minimumWeight",
     "matroidPartition",
     "weight",
-    "minDistEnumerate", -- temporary
     "enumerateError"
     }
 
@@ -511,7 +510,7 @@ matroidPartition List := List => mls -> (
 	D   := digraph(V,M);
 	if any(1..r, i->isReachable(D,Z_(i-1),newVertex)) then (
 	    repaint(shortestPath(D,newVertex,Z),Els)
-	    ) else (	
+	    ) else (
 	    --WOMP. No partition.
 	    return {};
 	    )
@@ -526,8 +525,9 @@ weight BasicList := Number => c -> (
     )
 
 
--- A temporary implementation of minimum distance.
--- Useful for testing the performance of other implementations.
+-- A brute force implementation of minimum distance.
+-- This should not be exported because the function minimumWeight automatically
+-- decides whether this or the other algorithm is faster. 
 minDistEnumerate = method(TypicalValue => Number)
 minDistEnumerate LinearCode := Number => C -> (
     X := messages(C);
@@ -541,8 +541,7 @@ subsetToList := (n, subset) -> (
     for i from 0 to (n-1) list(
 	if member(i, subset) then 1 else 0
        	)
-    ) 
-
+    );
 
 minimumWeight = method(TypicalValue => Number)
 minimumWeight LinearCode := Number => C -> (
@@ -554,28 +553,38 @@ minimumWeight LinearCode := Number => C -> (
     w := 1;
     j := 1;
     
-    --Partition columns of LinearCode into information sets
-
-    -- Estimate whether brute force or the smart algorithm is faster.    
+    if C.cache#?("minWeight") then(
+	return C.cache#"minWeight";
+	);
+        
     -- The number of matrix multiplications it would need to do using the
     -- brute force algorithm.
     R := ring(C);
     numCodewords := (R.order)^k;
+    
     -- The number of  (k x k) matrices it will need to compute the rank of.
     -- This computation takes place in the matroid constructor, matroid(Matrix). 
     numMatrices := binomial(numcols M, k);
     
+    -- This estimation is such that the only way that it can choose to use the
+    -- brute force algorithm when it should have used the matroid partition 
+    -- algorithm is if the code in the Matroids package changes. (This assumes that
+    -- a call to "rank" on a (k x k) matrix and a message encoding of C take about the 
+    -- same amount of time. Also, it assumes that this function actually does call "matroid" 
+    -- on the generator matrix of C.)
+
     if numMatrices > numCodewords then(
-	return (minDistEnumerate C);
+	x := (minDistEnumerate C);
+	C.cache#"minWeight" = x;
+	return x;
 	);
-        
+    
+    
+    
+    --Partition columns of LinearCode into information sets
     cMatroid := matroid(M);
     cMatroids := apply(toList(1..l),i->cMatroid);
     T := matroidPartition(cMatroids);
-
-    --Partition columns of LinearCode into information sets
-    --T := matroidPartition(apply(toList(1..l),i->matroid(M)));
-
     r := {}; --list of relative ranks
     currentUnion := set();
     for i from 0 to length T-1 do (
@@ -593,12 +602,14 @@ minimumWeight LinearCode := Number => C -> (
     	sameWeightWords = flatten apply(sameWeightWords, x -> enumerateError(ring(C), x));
     	
         specialCodewords := apply(sameWeightWords, u -> flatten entries ((matrix {toList u})*G));
+    		
         dupper = min(append(apply(specialCodewords, i->weight i),dupper));
         dlower = sum(toList apply(1..j,i->max(0,w+1-k+r_(i-1))))+sum(toList apply(j+1..D,i->max(0,w-k+r_(i-1))));
 
-	if dlower >= dupper
-    	then return dlower
-    	else (
+	if dlower >= dupper then (
+	    C.cache#"minWeight" = dlower;
+	    return dlower;
+    	    ) else (
 	    if j < D then j = j+1 else w = w+1
 	    );
     	if w > k then error "No minimum weight found.";
@@ -1070,7 +1081,6 @@ quasiCyclicCode(List) := LinearCode => V -> (
     )
 
 HammingCode = method(TypicalValue => LinearCode)
-
 HammingCode(ZZ,ZZ) := LinearCode => (q,r) -> (
         
     -- produce Hamming code
@@ -1083,11 +1093,15 @@ HammingCode(ZZ,ZZ) := LinearCode => (q,r) -> (
     -- projective space P(r-1,q)
     j := 1;
     C := matrix(apply(toList(1..q^(r-j)), i -> apply(toList(1..1),j -> 1))) | matrix apply(toList(toList setK^**(r-j)/deepSplice),i->toList i);
-    for j from 2 to r do C=C|| matrix(apply(toList(1..q^(r-j)), i -> apply(toList(1..(j-1)),j -> 0))) | matrix(apply(toList(1..q^(r-j)), i -> apply(toList(1..1),j -> 1))) | matrix apply(toList(toList setK^**(r-j)/deepSplice),i->toList i);
+    for j from 2 to r do (
+	C = C || (matrix(apply(toList(1..q^(r-j)), i -> apply(toList(1..(j-1)),j -> 0)))) 
+	| (matrix(apply(toList(1..q^(r-j)), i -> apply(toList(1..1),j -> 1))))
+	| (matrix apply(toList(toList setK^**(r-j)/deepSplice),i->toList i));
+	);
 	
     -- The Hamming code is defined by its parity check matrix
     linearCode(transpose C, ParityCheck => true)
-    )
+    );
 
 -*
 Example:
