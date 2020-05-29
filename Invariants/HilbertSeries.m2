@@ -50,7 +50,7 @@ degreesRing TorusAction := PolynomialRing => T -> (
 -- NOTE: torus must act diagonally on single graded polynomial ring
 -- by default, the series is returned as a rational function
 -- if the option Order=>d is used, the expansion of the series
--- up to degree d-1 is returned
+-- up to degree d-1 is returned (as for hilbertSeries)
 toricHilbertSeries = method(Options => {Order => infinity}, TypicalValue => Divide)
 toricHilbertSeries (TorusAction) := op -> T -> (
     ord := op.Order;
