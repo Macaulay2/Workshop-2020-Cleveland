@@ -46,6 +46,8 @@ export {
     "permutationMatrix",
     "RingOfInvariants",	       	  -- exported type name
     "schreierGraph",
+    "toricHilbert",    	       	  -- cache table key
+    "toricHilbertSeries",
     "torusAction",    	      	  -- documented
     "TorusAction",    	      	  -- exported type name
     "weights",	      	      	  -- documented
@@ -452,6 +454,72 @@ weights = method()
 weights TorusAction := Matrix => T -> T.actionMatrix 
 
 degreesRing TorusAction := PolynomialRing => T -> T.degreesRing
+
+-------------------------------------------
+-- toric Hilbert series code
+
+-- this method returns the equivariant hilbert series
+-- for a diagonal torus action on a polynomial ring
+-- NOTE: torus must act diagonally on single graded polynomial ring
+-- by default, the series is returned as a rational function
+-- if the option Order=>d is used, the expansion of the series
+-- up to degree d-1 is returned (as for hilbertSeries)
+toricHilbertSeries = method(Options => {Order => infinity}, TypicalValue => Divide)
+toricHilbertSeries (TorusAction) := op -> T -> (
+    ord := op.Order;
+    if ord === infinity then (
+	toricHilbertRational(T)
+	)
+    else (
+	toricHilbertPartial(T,ord-1)
+	)
+    )
+
+-- toric Hilbert series as a rational function
+-- do not export
+toricHilbertRational = T -> (
+    n := dim T;
+    W := weights T;
+    R := degreesRing T;
+    C := coefficientRing R;
+    -- tally the weights of the action
+    p := pairs tally entries transpose W;
+    -- for each weight form the 1-zT factor with the right powr
+    -- then multiply them into a product expression
+    den := Product apply(sort apply(p, (w,e) -> {1 - C_w * R_0,e}), t -> Power t);
+    -- return the rational function as an expression
+    Divide{1,den}
+)
+
+-- computes expansion of toric Hilbert series up to order d
+-- do not export
+toricHilbertPartial = (T, d) -> (
+    -- if not existing, create in the cache
+    if not T.cache.?toricHilbert then (
+	T.cache.toricHilbert = 1_(degreesRing T);
+	);
+    -- how far was it previously computed?
+    -- get degree and coefficients
+    currentDeg := first degree T.cache.toricHilbert;
+    (M,C) := coefficients T.cache.toricHilbert;
+    -- compute higher degrees recursively
+    if (d > currentDeg) then (
+	R := degreesRing T;
+    	den := value denominator toricHilbertSeries T;
+    	denDeg := first degree den;
+	B := last coefficients den;
+	for i from currentDeg+1 to d do (
+	    M = M | matrix{{R_0^i}};
+	    C = C || matrix{{-sum(1..min(i,denDeg),k -> C_(i-k,0)*B_(k,0) )}};
+	    );
+	);
+    -- compute expansion up to desired degree
+    p := first flatten entries (M_{0..d}*C^{0..d});
+    -- store and return
+    T.cache.toricHilbert = p
+    )
+
+
 
 -------------------------------------------
 --- FiniteAbelianAction methods -----------
