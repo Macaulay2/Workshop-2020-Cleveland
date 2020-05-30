@@ -78,6 +78,7 @@ conormalRing Ring := ConormalRing => opts -> R -> (
     Coordinates => {gens R, gens dualR}
   }
 )
+conormalRing Ideal := ConormalRing => opts -> I -> conormalRing(ring I, opts)
 
 
 conormalIdeal = method(Options => options conormalRing);
@@ -92,6 +93,7 @@ conormalIdeal (Ideal, ConormalRing) := Ideal => opts -> (I,C) -> (
   J := saturate(J', minors(c, jacI));
   J
 )
+conormalIdeal Ideal := Ideal => opts -> I -> conormalIdeal(I, conormalRing(I), opts)
 TEST ///
 
 ///
