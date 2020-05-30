@@ -206,6 +206,24 @@ assert(symbolicEDDegree(I, Projective => false) == 2)
 
 
 
+--------------------
+-- checkProjective -
+--------------------
+-- Checks if the conormal variety intersects the diagonal
+-- This checks a sufficient condition
+-- Needs more testing
+checkProjective = method();
+checkProjective Ideal := Boolean => I -> (
+  R := ring I;
+  Q := gens R / (i -> i^2) // sum // ideal;
+  InQ := I + Q;
+  c := codim I;
+  cc := codim InQ;
+  Ising := minors(c, jacobian I);
+  InQsing := minors(cc, jacobian InQ) + InQ;
+  if saturate(InQsing, ideal gens R) == R and saturate(InQ + Ising, ideal gens R) == R then true else false
+)
+
 
 
 --------------------
