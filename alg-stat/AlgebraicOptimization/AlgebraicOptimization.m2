@@ -224,6 +224,21 @@ checkProjective Ideal := Boolean => I -> (
   if saturate(InQsing, ideal gens R) == R and saturate(InQ + Ising, ideal gens R) == R then true else false
 )
 
+--------------------
+-- randomProjection-
+--------------------
+randomProjection = method();
+randomProjection Ideal := Ideal => I -> (
+  if codim I <= 1 then error "expected codimension >= 1";
+  R := ring I;
+  n := numgens R;
+  L := symbol L;
+  S := coefficientRing R[L_0..L_(n-2)];
+  M := random(R^n, R^(n-1));
+  f := map(R,S, vars R * M);
+  preimage(f,I)
+)
+
 
 
 --------------------
