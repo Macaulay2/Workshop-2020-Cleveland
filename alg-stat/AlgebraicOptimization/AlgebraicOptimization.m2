@@ -32,6 +32,7 @@ export {
   "conormalIdeal",
   "probabilisticEDDegree",
   "symbolicEDDegree",
+  "sectionEDDegree",
   "multiDegreeEDDegree",
   "MLDegree",
   "probabilisticLagrangeMultiplierEDDegree",
@@ -54,7 +55,9 @@ export {
   "MultiplicityTolerance","EvaluationTolerance", "ConditionNumberTolerance",
   --"updateMultiplicityTolerance","updateEvaluationTolerance","updateConditionNumberTolerance",
   "Coordinates", "Factors",
-  "Numerators","Denominators"
+  "Numerators","Denominators",
+  -- Strategies
+  "Probabilistic", "Symbolic"
 }
 
 
@@ -237,6 +240,20 @@ randomProjection Ideal := Ideal => I -> (
   M := random(R^n, R^(n-1));
   f := map(R,S, vars R * M);
   preimage(f,I)
+)
+
+
+-------------------
+-- sectionEDDegree-
+-------------------
+sectionEDDegree = method(Options => {Strategy => Probabilistic});
+sectionEDDegree Ideal := ZZ => opts -> I -> (
+  c := codim I;
+  J := I;
+  scan(c-1, i -> J = randomProjection J);
+  if opts.Strategy == Probabilistic then probabilisticEDDegree J
+  else if opts.Strategy == Symbolic then symbolicEDDegree J
+  else error "invalid Strategy"
 )
 
 
