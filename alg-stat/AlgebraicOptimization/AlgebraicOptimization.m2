@@ -232,12 +232,13 @@ checkProjective Ideal := Boolean => I -> (
 --------------------
 randomProjection = method();
 randomProjection Ideal := Ideal => I -> (
-  if codim I <= 1 then error "expected codimension >= 1";
+  c := codim I;
+  if c <= 1 then error "expected codimension >= 1";
   R := ring I;
   n := numgens R;
   L := symbol L;
-  S := coefficientRing R[L_0..L_(n-2)];
-  M := random(R^n, R^(n-1));
+  S := coefficientRing R[L_0..L_(n-c)];
+  M := random(R^n, R^(n-(c-1)));
   f := map(R,S, vars R * M);
   preimage(f,I)
 )
@@ -249,12 +250,21 @@ randomProjection Ideal := Ideal => I -> (
 sectionEDDegree = method(Options => {Strategy => Probabilistic});
 sectionEDDegree Ideal := ZZ => opts -> I -> (
   c := codim I;
-  J := I;
-  scan(c-1, i -> J = randomProjection J);
+  J := randomProjection I;
   if opts.Strategy == Probabilistic then probabilisticEDDegree J
   else if opts.Strategy == Symbolic then symbolicEDDegree J
   else error "invalid Strategy"
 )
+TEST ///
+R = QQ[x_0..x_6]
+I = ideal(apply(2, i-> random(1,R)))
+assert(sectionEDDegree I == 1)
+-- TODO this test may be too slow -- 
+S = QQ[y_0..y_3,z]
+J = ideal det(matrix{{y_0, y_1, y_2}, {y_1, y_0, y_3}, {y_2, y_3, y_0}})
+assert(probabilisticEDDegree (J+z) == 13)
+-------------------------------------
+///
 
 
 
