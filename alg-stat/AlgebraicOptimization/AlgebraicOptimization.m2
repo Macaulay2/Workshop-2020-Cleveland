@@ -1181,6 +1181,49 @@ SeeAlso
 ///
 
 
+doc ///
+Key
+  sectionEDDegree
+  (sectionEDDegree, Ideal)
+Headline
+  ED-degree via random linear sections
+Description
+  Text
+    Let $X$ be a projective variety in $\mathbb{P}^n$ of codimension $\geq 2$, and let $\pi : \mathbb P^n \to \mathbb P^{n-1}$
+    be a rational map induced by a general linear map $\mathbb C^{n+1} \to \mathbb C^n$. 
+    Under some regularity assumptions (see Caveat), the ED-degree of $\pi(X)$ is equal to the ED-degree
+    of $X$ [1, Cor. 6.1.].
+
+    This function repeatedly such a map $\pi$ until the image becomes a hyperlane.
+    Then, the function calls @TO probabilisticEDDegree@ or @TO symbolicEDDegree@, depending on the optional argument @TO [sectionEDDegree,Strategy]@.
+    This may provide significant computational speedups compared to @TO probabilisticEDDegree@, @TO symbolicEDDegree@ or @TO multiDegreeEDDegree@,
+    especially the codimension of $X$ is large.
+  CannedExample
+    i4 : R = QQ[x_0..x_5]
+
+    o4 = R
+
+    o4 : PolynomialRing
+
+    i5 : I = ideal(apply(3, i-> random(1,R)));
+
+    o5 : Ideal of R
+
+    i6 : elapsedTime symbolicEDDegree I
+          1.84153 seconds elapsed
+
+    o6 = 1
+
+    i7 : elapsedTime sectionEDDegree I
+          0.0341013 seconds elapsed
+
+    o7 = 1
+
+  Text
+    References: [1] Draisma, J., Horobeţ, E., Ottaviani, G., Sturmfels, B., & Thomas, R. R. (2016). The Euclidean distance degree of an algebraic variety. {\em Foundations of computational mathematics}, 16(1), 99-149.
+///
+
+
 
 
 
