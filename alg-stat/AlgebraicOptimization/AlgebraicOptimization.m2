@@ -1243,7 +1243,7 @@ Description
     Computes the ED degree symbolically by taking the sum of multidegrees of the conormal ideal. 
     See theorem 5.4 in Draisma et. al. The Euclidean Distance Degree of an Algebraic Variety https://arxiv.org/abs/1309.0049 
 
-    As an example, we see that the ED-degree of Caylay's cubic surface is 13
+    As an example, we see that the ED-degree of Cayley's cubic surface is 13
   Example
     R = QQ[x_0..x_3]
     J = ideal det(matrix{{x_0, x_1, x_2}, {x_1, x_0, x_3}, {x_2, x_3, x_0}})
