@@ -32,7 +32,7 @@ export {
   "conormalIdeal",
   "probabilisticEDDegree",
   "symbolicEDDegree",
-  "sectionEDDegree",
+  "projectionEDDegree",
   "multiDegreeEDDegree",
   "MLDegree",
   "probabilisticLagrangeMultiplierEDDegree",
@@ -245,10 +245,10 @@ randomProjection Ideal := Ideal => I -> (
 
 
 -------------------
--- sectionEDDegree-
+-- projectionEDDegree-
 -------------------
-sectionEDDegree = method(Options => {Strategy => Probabilistic});
-sectionEDDegree Ideal := ZZ => opts -> I -> (
+projectionEDDegree = method(Options => {Strategy => Probabilistic});
+projectionEDDegree Ideal := ZZ => opts -> I -> (
   c := codim I;
   J := randomProjection I;
   if opts.Strategy == Probabilistic then probabilisticEDDegree J
@@ -258,7 +258,7 @@ sectionEDDegree Ideal := ZZ => opts -> I -> (
 TEST ///
 R = QQ[x_0..x_6]
 I = ideal(apply(2, i-> random(1,R)))
-assert(sectionEDDegree I == 1)
+assert(projectionEDDegree I == 1)
 -- TODO this test may be too slow -- 
 S = QQ[y_0..y_3,z]
 J = ideal det(matrix{{y_0, y_1, y_2}, {y_1, y_0, y_3}, {y_2, y_3, y_0}})
@@ -1183,10 +1183,10 @@ SeeAlso
 
 doc ///
 Key
-  sectionEDDegree
-  (sectionEDDegree, Ideal)
+  projectionEDDegree
+  (projectionEDDegree, Ideal)
 Headline
-  ED-degree via random linear sections
+  ED-degree via random linear projections
 Description
   Text
     Let $X$ be a projective variety in $\mathbb{P}^n$ of codimension $\geq 2$, and let $\pi : \mathbb P^n \to \mathbb P^{n-1}$
@@ -1194,8 +1194,8 @@ Description
     Under some regularity assumptions (see Caveat), the ED-degree of $\pi(X)$ is equal to the ED-degree
     of $X$ [1, Cor. 6.1.].
 
-    This function repeatedly such a map $\pi$ until the image becomes a hyperlane.
-    Then, the function calls @TO probabilisticEDDegree@ or @TO symbolicEDDegree@, depending on the optional argument @TO [sectionEDDegree,Strategy]@.
+    This function repeatedly applies such a map $\pi$ until the image becomes a hyperlane, and then
+    calls @TO probabilisticEDDegree@ or @TO symbolicEDDegree@, depending on the optional argument @TO [projectionEDDegree,Strategy]@.
     This may provide significant computational speedups compared to @TO probabilisticEDDegree@, @TO symbolicEDDegree@ or @TO multiDegreeEDDegree@,
     especially the codimension of $X$ is large.
   CannedExample
@@ -1214,7 +1214,7 @@ Description
 
     o6 = 1
 
-    i7 : elapsedTime sectionEDDegree I
+    i7 : elapsedTime projectionEDDegree I
           0.0341013 seconds elapsed
 
     o7 = 1
