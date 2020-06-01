@@ -277,6 +277,29 @@ assert(probabilisticEDDegree (J+z) == 13)
 ///
 
 
+-------------------
+-- randomSection --
+-------------------
+randomSection = method();
+randomSection Ideal := Ideal => I -> (
+  R := ring I;
+  I + ideal random(1,R)
+)
+
+---------------------
+-- sectionEDDegree --
+---------------------
+sectionEDDegree = method(Options => {Strategy => Probabilistic});
+sectionEDDegree Ideal := ZZ => opts -> I -> (
+  Idual := projectiveDual I;
+  sections := {I} | accumulate((J, j) -> randomSection J, I, toList(1..(dim I - 1)));
+  intermediateSections := drop(sections, -1);
+  degs := intermediateSections / (I -> (Istar := projectiveDual(I); if codim Istar == 1 then degree Istar else 0));
+  edDegreeStrategies(last sections, opts.Strategy) + sum degs
+)
+
+
+
 
 --------------------
 --multiDegreeEDDegree
