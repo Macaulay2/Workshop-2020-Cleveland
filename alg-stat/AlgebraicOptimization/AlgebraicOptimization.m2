@@ -208,6 +208,18 @@ assert(symbolicEDDegree(I, Projective => false) == 2)
 ///
 
 
+------------------------
+-- edDegreeStrategies --
+------------------------
+-- Takes a symbol and an ideal,
+-- outputs ED-degree computed using
+-- the corresponding strategy
+edDegreeStrategies = (I,strat) -> (
+  if strat == Probabilistic then probabilisticEDDegree I
+  else if strat == Symbolic then symbolicEDDegree I
+  else error "invalid Strategy"
+)
+
 
 --------------------
 -- checkProjective -
@@ -251,9 +263,7 @@ projectionEDDegree = method(Options => {Strategy => Probabilistic});
 projectionEDDegree Ideal := ZZ => opts -> I -> (
   c := codim I;
   J := randomProjection I;
-  if opts.Strategy == Probabilistic then probabilisticEDDegree J
-  else if opts.Strategy == Symbolic then symbolicEDDegree J
-  else error "invalid Strategy"
+  edDegreeStrategies(J,opts.Strategy)
 )
 TEST ///
 R = QQ[x_0..x_6]
