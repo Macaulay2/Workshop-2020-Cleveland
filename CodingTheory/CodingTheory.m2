@@ -10,6 +10,7 @@ newPackage(
 	     {Name => "Nathan Nichols", Email => "nathannichols454@gmail.com"},	     
 	     {Name => "German Vera", Email => "gveram1100@gmail.com"},
 	     {Name => "Gwyn Whieldon", Email => "gwyn.whieldon@gmail.com"}
+	     {Name => "Delio Jaramillo-Velez", Email => "djaramillo@math.cinvestav.mx"}
 	     },
     	HomePage => "https://academic.csuohio.edu/h_lopez/",
     	Headline => "a package for coding theory in M2",
@@ -1410,13 +1411,22 @@ random (QuotientRing, ZZ, ZZ) := LinearCode => opts -> (R, n, k) -> (
    
  -----------------------------------------------------------
  --****************** Footprint Function ********************
- footPrint = method(TypicalValue => ZZ);
+footPrint = method(TypicalValue => ZZ);
  footPrint (ZZ,ZZ,Ideal) := (d,r,I) ->(
- mD:=max apply(apply(apply(subsets(flatten entries basis(d,coker gens gb I),r),toSequence),ideal),x->if not quotient(ideal(leadTerm gens gb I),x)==ideal(leadTerm gens gb I) then 
-    degree coker gens gb ideal(ideal(leadTerm gens gb I),x) 
- else 0 );
- degree coker gens gb I - mD
- )
+     
+var1:=subsets(flatten entries basis(d,coker gens gb I),r); 
+  
+var2:=apply(var1,toSequence);  
+   
+var3:=apply(var2,ideal);
+
+var4:=apply(var3,x->if not quotient(ideal(leadTerm gens gb I),x)==ideal(leadTerm gens gb I) then 
+    degree coker gens gb ideal(ideal(leadTerm gens gb I),x)
+    else 0 );
+
+degree coker gens gb I - max var4
+)
+
  
  
 -----------------------------------------------------------
@@ -1424,21 +1434,36 @@ random (QuotientRing, ZZ, ZZ) := LinearCode => opts -> (R, n, k) -> (
  
  --------------------------------------------------------
  --=====================hyp function======================
- hYpFunction = method(TypicalValue => ZZ);
+hYpFunction = method(TypicalValue => ZZ);
  hYpFunction (ZZ,ZZ,Ideal) := (d,r,I) ->(
- max apply(apply(subsets(apply(apply(apply(toList (set(0..char ring I-1))^**(hilbertFunction(d,coker gens gb I))-(set{0})^**(hilbertFunction(d,coker gens gb I)),toList),x -> basis(d,coker gens gb I)*vector deepSplice x),z->ideal(flatten entries z)),r)
-,ideal),
- x -> if #set flatten entries mingens ideal(leadTerm gens x)==r and not quotient(I,x)==I
+     
+     
+var1:=apply(toList (set(0..char ring I-1))^**(hilbertFunction(d,coker gens gb I))
+    -(set{0})^**(hilbertFunction(d,coker gens gb I)),toList);
+
+var2:=apply(var1,x -> basis(d,coker gens gb I)*vector deepSplice x);
+
+var3:=apply(var2,z->ideal(flatten entries z));
+
+var4:=subsets(var3,r);
+
+var5:=apply(var4,ideal);
+
+var6:=apply(var5,x -> if #set flatten entries mingens ideal(leadTerm gens x)==r and not quotient(I,x)==I
          then degree(I+x)
-      else 0
-)
- )
+      else 0);
+
+max var6
+  
+) 
   
  ------------------------GMD Function--------------------------------
  
  gMdFunction = method(TypicalValue => ZZ);
  gMdFunction (ZZ,ZZ,Ideal) := (d,r,I) ->(
+     
  degree(coker gens gb I)-hYpFunction(d,r,I)
+ 
  )
 
  
@@ -1447,14 +1472,27 @@ random (QuotientRing, ZZ, ZZ) := LinearCode => opts -> (R, n, k) -> (
  --===================== Vasconcelos Function ================
  
  
- vasFunction = method(TypicalValue => ZZ);
- vasFunction (ZZ,ZZ,Ideal) := (d,r,I) ->(
- min apply(apply(subsets(apply(apply(apply(toList (set(0..char ring I-1))^**(hilbertFunction(d,coker gens gb I))-(set{0})^**(hilbertFunction(d,coker gens gb I)),toList),x -> basis(d,coker gens gb I)*vector deepSplice x),z->ideal(flatten entries z)),r)
-,ideal),
- x -> if #set flatten entries mingens ideal(leadTerm gens x)==r and not quotient(I,x)==I
-         then degree(coker gens gb quotient(I,x))
-      else degree(coker gens gb I)
-      )
+vasFunction = method(TypicalValue => ZZ);
+vasFunction (ZZ,ZZ,Ideal) := (d,r,I) ->(
+     
+var1:=apply(toList (set(0..char ring I-1))^**(hilbertFunction(d,coker gens gb I))
+	    -(set{0})^**(hilbertFunction(d,coker gens gb I)),toList);
+	
+var2:=apply(var1,x -> basis(d,coker gens gb I)*vector deepSplice x); 
+
+var3:=apply(var2,z->ideal(flatten entries z));
+
+var4:=subsets(var3,r);
+
+var5:=apply(var4,ideal);
+
+var6:=apply(var5, x -> if #set flatten entries mingens ideal(leadTerm gens x)==r and not quotient(I,x)==I
+                          then degree(coker gens gb quotient(I,x))
+                       else degree(coker gens gb I)
+      );
+  
+min var6
+
 )
 
  
