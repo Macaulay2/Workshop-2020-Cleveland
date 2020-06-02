@@ -1232,6 +1232,14 @@ Key
   (projectionEDDegree, Ideal)
 Headline
   ED-degree via random linear projections
+Usage
+  projectionEDDegree I
+Inputs
+  I:
+    a projective @TO2{Ideal, "ideal"}@
+Outputs
+  :ZZ
+    the projective ED-degree
 Description
   Text
     Let $X$ be a projective variety in $\mathbb{P}^n$ of codimension $\geq 2$, and let $\pi : \mathbb P^n \to \mathbb P^{n-1}$
