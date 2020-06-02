@@ -37,6 +37,7 @@ export {
   "probabilisticLagrangeMultiplierEDDegree",
   "toricMLIdeal",
   "toricMLDegree",
+  "probabilisticConormalVarietyOptimizationDegree",
   -- Options
   "DualVariable", "coeffRing",
   --Types and keys
@@ -428,6 +429,8 @@ sub(Gradient,LagrangeIdeal) :=  (g,aLI) -> (
     d := apply(g.Denominators,i->sub(i,aLI));
     gradient(n,d)    
     )    
+
+
 --gradient no longer exported
 -*
 TEST///
@@ -848,6 +851,48 @@ assert(10==probabilisticLagrangeMultiplierOptimizationDegree(psi,WI,I))
 assert(3==probabilisticLagrangeMultiplierOptimizationDegree(psi,WI,I,Data=>{2,3}))
 
 ///
+
+ 
+
+probabilisticConormalVarietyOptimizationDegree = method(Options => {Data => null});
+probabilisticConormalVarietyOptimizationDegree (List,Ideal) := ZZ => opts -> (g,I) -> (
+  --n are numerators; d are denominators
+  (n,d) := toSequence transpose apply(g,i-> if instance(ring i,FractionField) then {numerator i, denominator i} else {i,1});
+  R := ring I;
+  kk := ultimate(coefficientRing,R);
+  v := if opts.Data ===null then apply(gens coefficientRing R,i->random kk ) else opts.Data;
+  c := codim I;
+  jacI := diff(matrix{gens ring I}, transpose gens I);  
+  jacBar := matrix{n} || (jacI*diagonalMatrix (d));  
+  jacBar = sub(jacBar,apply(gens coefficientRing R,v,(i,j)-> i=>j));
+  J' := I + minors(c+1, jacBar);
+  J := saturate(J', minors(c, jacI));
+  scan(d, h -> J = saturate(J,sub(h,R)));  
+  degree J
+  )
+probabilisticConormalVarietyOptimizationDegree (RingElement,Ideal) := ZZ => opts -> (psi,I) -> (
+    g := apply(gens ring I,i->diff(i,psi));
+    probabilisticConormalVarietyOptimizationDegree(g,I,opts)--Don't forget to pass along the opts
+    )
+
+TEST///
+
+R=QQ[x,y]
+I = ideal((x^2+y^2+x)^2-x^2-y^2)
+psi =(x-3)^2+(y-2)^2
+probabilisticConormalVarietyOptimizationDegree(psi,I)
+assert(3==probabilisticConormalVarietyOptimizationDegree(psi,I))
+
+R=QQ[u,v][x,y]
+I = ideal((x^2+y^2+x)^2-x^2-y^2)
+psi =(x-u)^2+(y-v)^2--TODO make a consistent choice for what to do when Data=>null.
+assert(3==probabilisticConormalVarietyOptimizationDegree(psi,I))
+assert(3==probabilisticConormalVarietyOptimizationDegree(psi,I,Data=>{2,3}))
+assert(1==probabilisticConormalVarietyOptimizationDegree(psi,I,Data=>{0,0}))
+
+///
+
+ 
 
 
 -- Documentation below
