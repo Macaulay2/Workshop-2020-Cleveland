@@ -40,6 +40,7 @@ export {
   "probabilisticLagrangeMultiplierEDDegree",
   "toricMLIdeal",
   "toricMLDegree",
+  "probabilisticConormalVarietyOptimizationDegree",
   -- Options
   "DualVariable", "coeffRing",
   --Types and keys
@@ -535,6 +536,8 @@ sub(Gradient,LagrangeIdeal) :=  (g,aLI) -> (
     d := apply(g.Denominators,i->sub(i,aLI));
     gradient(n,d)    
     )    
+
+
 --gradient no longer exported
 -*
 TEST///
@@ -612,7 +615,7 @@ degree (CriticalIdeal) :=  CI -> (
     sCI := sub(w,dataSub);
     g := sub(CI#Gradient,CI#LagrangeIdeal);    
     scan( g.Denominators , d -> sCI = saturate(sCI, d) );
-    degree sCI
+    degree sCI--TODO: Need a warning to catch if not zero dimensional
     )    
 
 
@@ -932,11 +935,13 @@ newRingFromSymbol = (n,s,kk)->(
 probabilisticLagrangeMultiplierOptimizationDegree = method(Options => {Data => null});
 probabilisticLagrangeMultiplierOptimizationDegree (List,Ideal,Ideal) := ZZ => opts -> (g,WI,I) -> (
     aLI := lagrangeIdeal(WI,I);
-    degree criticalIdeal(g,aLI,opts)
+    CI := criticalIdeal(g,aLI,opts);
+    degree CI
     )
 probabilisticLagrangeMultiplierOptimizationDegree (RingElement,Ideal,Ideal) := ZZ => opts -> (psi,WI,I) -> (
     aLI := lagrangeIdeal(WI,I);
-    degree criticalIdeal(psi,aLI,opts)
+    CI := criticalIdeal(psi,aLI,opts);
+    degree CI
     )
     
 
@@ -955,6 +960,48 @@ assert(10==probabilisticLagrangeMultiplierOptimizationDegree(psi,WI,I))
 assert(3==probabilisticLagrangeMultiplierOptimizationDegree(psi,WI,I,Data=>{2,3}))
 
 ///
+
+ 
+
+probabilisticConormalVarietyOptimizationDegree = method(Options => {Data => null});
+probabilisticConormalVarietyOptimizationDegree (List,Ideal) := ZZ => opts -> (g,I) -> (
+  --n are numerators; d are denominators
+  (n,d) := toSequence transpose apply(g,i-> if instance(ring i,FractionField) then {numerator i, denominator i} else {i,1});
+  R := ring I;
+  kk := ultimate(coefficientRing,R);
+  v := if opts.Data ===null then apply(gens coefficientRing R,i->random kk ) else opts.Data;
+  c := codim I;
+  jacI := diff(matrix{gens ring I}, transpose gens I);  
+  jacBar := matrix{n} || (jacI*diagonalMatrix (d));  
+  jacBar = sub(jacBar,apply(gens coefficientRing R,v,(i,j)-> i=>j));
+  J' := I + minors(c+1, jacBar);
+  J := saturate(J', minors(c, jacI));
+  scan(d, h -> J = saturate(J,sub(h,R)));  
+  degree J
+  )
+probabilisticConormalVarietyOptimizationDegree (RingElement,Ideal) := ZZ => opts -> (psi,I) -> (
+    g := apply(gens ring I,i->diff(i,psi));
+    probabilisticConormalVarietyOptimizationDegree(g,I,opts)--Don't forget to pass along the opts
+    )
+
+TEST///
+
+R=QQ[x,y]
+I = ideal((x^2+y^2+x)^2-x^2-y^2)
+psi =(x-3)^2+(y-2)^2
+probabilisticConormalVarietyOptimizationDegree(psi,I)
+assert(3==probabilisticConormalVarietyOptimizationDegree(psi,I))
+
+R=QQ[u,v][x,y]
+I = ideal((x^2+y^2+x)^2-x^2-y^2)
+psi =(x-u)^2+(y-v)^2--TODO make a consistent choice for what to do when Data=>null.
+assert(3==probabilisticConormalVarietyOptimizationDegree(psi,I))
+assert(3==probabilisticConormalVarietyOptimizationDegree(psi,I,Data=>{2,3}))
+assert(1==probabilisticConormalVarietyOptimizationDegree(psi,I,Data=>{0,0}))
+
+///
+
+ 
 
 
 -- Documentation below
@@ -1475,10 +1522,73 @@ Description
 --  
 ///
 
+doc /// 
+Key
+  probabilisticConormalVarietyOptimizationDegree
+  (probabilisticConormalVarietyOptimizationDegree, RingElement, Ideal)
+  (probabilisticConormalVarietyOptimizationDegree, List, Ideal)
+  [probabilisticConormalVarietyOptimizationDegree, Data]
+Headline
+  compute ED-degree for a random point
+Usage
+  probabilisticConormalVarietyOptimizationDegree(psi, I)
+  probabilisticConormalVarietyOptimizationDegree(psi, I, Data => L)
+  probabilisticConormalVarietyOptimizationDegree(g, I)
+  probabilisticConormalVarietyOptimizationDegree(g, I, Data => L)
+Inputs
+  I:
+    an @TO2{Ideal, "ideal"}@ corresponding to an equidimensional variety.
+  g:
+    a List that gives the gradient of an objective function psi.
+  psi:
+    an objective function such as squared Euclidean distance.
+  Data => List
+    specifies parameters.
+Outputs
+  :ZZ
+    the optimization degree of $I$ with respect to an objective function psi with parameters evaluated at Data when specified and gradient g.
+Description
+  Text
+    The function computes the optimization degree of an equidimensional variety corresponding to
+    the ideal $I$.
+
+    We can confirm that the optimization-degree for Euclidean distance for the cardioid curve is 3.  
+  Example
+    R=QQ[x,y]
+    I = ideal((x^2+y^2+x)^2-x^2-y^2)
+    psi =(x-3)^2+(y-2)^2
+    probabilisticConormalVarietyOptimizationDegree(psi,I)
+
+  Text
+    The function can handle polynomial objective functions psi or objective functions with rational functions as derivatives. 
+
+  Example
+    R=QQ[x,y]
+    I = ideal((x^2+y^2+x)^2-x^2-y^2)
+    psi =x^2+2*x*y+3*y
+    probabilisticConormalVarietyOptimizationDegree(psi,I)--6
+    g ={3*x^2,3/y}--psi = x^3+ + 3*ln y
+    probabilisticConormalVarietyOptimizationDegree(g,I)--14 TODO: does not agree with probabilisticLagrangeMultiplierOptimizationDegree
+
+  Text
+    The function works with parameters as well when the Data option is specified otherwise the total degree of the critical ideal with parameters as indeterminants is returned.  --TODO: decide what to do here. 
+
+  Example
+    R=QQ[u,v][x,y]
+    I = ideal((x^2+y^2+x)^2-x^2-y^2)
+    psi =(x-u)^2+(y-v)^2
+    probabilisticConormalVarietyOptimizationDegree(psi,I,Data=>{2,3})--this is three
+    probabilisticConormalVarietyOptimizationDegree(psi,I)--TODO: decide what to do here. 
+
+SeeAlso
+  probabilisticEDDegree
+  probabilisticLagrangeMultiplierEDDegree
+  probabilisticLagrangeMultiplierOptimizationDegree
+
+///
 
 
-
-doc /// --EDIT
+doc /// 
 Key
   probabilisticLagrangeMultiplierOptimizationDegree
   (probabilisticLagrangeMultiplierOptimizationDegree, RingElement, Ideal, Ideal)
@@ -1524,9 +1634,9 @@ Description
     R=QQ[x,y]
     WI = I = ideal((x^2+y^2+x)^2-x^2-y^2)
     psi =x^2+2*x*y+3*y
-    probabilisticLagrangeMultiplierOptimizationDegree(psi,WI,I)
+    probabilisticLagrangeMultiplierOptimizationDegree(psi,WI,I)--6
     g ={3*x^2,3/y}--psi = x^3+ + 3*ln y
-    probabilisticLagrangeMultiplierOptimizationDegree(g,WI,I)
+    probabilisticLagrangeMultiplierOptimizationDegree(g,WI,I)--2
 
   Text
     The function works with parameters as well when the Data option is specified otherwise the total degree of the critical ideal with parameters as indeterminants is returned.  
