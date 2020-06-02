@@ -508,7 +508,7 @@ degree (CriticalIdeal) :=  CI -> (
     sCI := sub(w,dataSub);
     g := sub(CI#Gradient,CI#LagrangeIdeal);    
     scan( g.Denominators , d -> sCI = saturate(sCI, d) );
-    degree sCI
+    degree sCI--TODO: Need a warning to catch if not zero dimensional
     )    
 
 
@@ -828,11 +828,13 @@ newRingFromSymbol = (n,s,kk)->(
 probabilisticLagrangeMultiplierOptimizationDegree = method(Options => {Data => null});
 probabilisticLagrangeMultiplierOptimizationDegree (List,Ideal,Ideal) := ZZ => opts -> (g,WI,I) -> (
     aLI := lagrangeIdeal(WI,I);
-    degree criticalIdeal(g,aLI,opts)
+    CI := criticalIdeal(g,aLI,opts);
+    degree CI
     )
 probabilisticLagrangeMultiplierOptimizationDegree (RingElement,Ideal,Ideal) := ZZ => opts -> (psi,WI,I) -> (
     aLI := lagrangeIdeal(WI,I);
-    degree criticalIdeal(psi,aLI,opts)
+    CI := criticalIdeal(psi,aLI,opts);
+    degree CI
     )
     
 
