@@ -1286,10 +1286,73 @@ Description
 --  
 ///
 
+doc /// 
+Key
+  probabilisticConormalVarietyOptimizationDegree
+  (probabilisticConormalVarietyOptimizationDegree, RingElement, Ideal)
+  (probabilisticConormalVarietyOptimizationDegree, List, Ideal)
+  [probabilisticConormalVarietyOptimizationDegree, Data]
+Headline
+  compute ED-degree for a random point
+Usage
+  probabilisticConormalVarietyOptimizationDegree(psi, I)
+  probabilisticConormalVarietyOptimizationDegree(psi, I, Data => L)
+  probabilisticConormalVarietyOptimizationDegree(g, I)
+  probabilisticConormalVarietyOptimizationDegree(g, I, Data => L)
+Inputs
+  I:
+    an @TO2{Ideal, "ideal"}@ corresponding to an equidimensional variety.
+  g:
+    a List that gives the gradient of an objective function psi.
+  psi:
+    an objective function such as squared Euclidean distance.
+  Data => List
+    specifies parameters.
+Outputs
+  :ZZ
+    the optimization degree of $I$ with respect to an objective function psi with parameters evaluated at Data when specified and gradient g.
+Description
+  Text
+    The function computes the optimization degree of an equidimensional variety corresponding to
+    the ideal $I$.
+
+    We can confirm that the optimization-degree for Euclidean distance for the cardioid curve is 3.  
+  Example
+    R=QQ[x,y]
+    I = ideal((x^2+y^2+x)^2-x^2-y^2)
+    psi =(x-3)^2+(y-2)^2
+    probabilisticConormalVarietyOptimizationDegree(psi,I)
+
+  Text
+    The function can handle polynomial objective functions psi or objective functions with rational functions as derivatives. 
+
+  Example
+    R=QQ[x,y]
+    I = ideal((x^2+y^2+x)^2-x^2-y^2)
+    psi =x^2+2*x*y+3*y
+    probabilisticConormalVarietyOptimizationDegree(psi,I)--6
+    g ={3*x^2,3/y}--psi = x^3+ + 3*ln y
+    probabilisticConormalVarietyOptimizationDegree(g,I)--14 TODO: does not agree with probabilisticLagrangeMultiplierOptimizationDegree
+
+  Text
+    The function works with parameters as well when the Data option is specified otherwise the total degree of the critical ideal with parameters as indeterminants is returned.  --TODO: decide what to do here. 
+
+  Example
+    R=QQ[u,v][x,y]
+    I = ideal((x^2+y^2+x)^2-x^2-y^2)
+    psi =(x-u)^2+(y-v)^2
+    probabilisticConormalVarietyOptimizationDegree(psi,I,Data=>{2,3})--this is three
+    probabilisticConormalVarietyOptimizationDegree(psi,I)--TODO: decide what to do here. 
+
+SeeAlso
+  probabilisticEDDegree
+  probabilisticLagrangeMultiplierEDDegree
+  probabilisticLagrangeMultiplierOptimizationDegree
+
+///
 
 
-
-doc /// --EDIT
+doc /// 
 Key
   probabilisticLagrangeMultiplierOptimizationDegree
   (probabilisticLagrangeMultiplierOptimizationDegree, RingElement, Ideal, Ideal)
@@ -1335,9 +1398,9 @@ Description
     R=QQ[x,y]
     WI = I = ideal((x^2+y^2+x)^2-x^2-y^2)
     psi =x^2+2*x*y+3*y
-    probabilisticLagrangeMultiplierOptimizationDegree(psi,WI,I)
+    probabilisticLagrangeMultiplierOptimizationDegree(psi,WI,I)--6
     g ={3*x^2,3/y}--psi = x^3+ + 3*ln y
-    probabilisticLagrangeMultiplierOptimizationDegree(g,WI,I)
+    probabilisticLagrangeMultiplierOptimizationDegree(g,WI,I)--2
 
   Text
     The function works with parameters as well when the Data option is specified otherwise the total degree of the critical ideal with parameters as indeterminants is returned.  
