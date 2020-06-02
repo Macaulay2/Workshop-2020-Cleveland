@@ -448,7 +448,6 @@ assert(2 == # keys gradient({x},{y}))
 CriticalIdeal = new Type of MutableHashTable
 criticalIdeal = method(Options => {Data=>null});--Evaluate data option. 
 criticalIdeal (Gradient,LagrangeIdeal) := CriticalIdeal => opts  -> (g,aLI) ->(
-    if degreeLength  ring aLI<=4 then(
 	u := gens coefficientRing ring (aLI);
 	dataSub := if opts.Data===null then {} else apply(u,opts.Data,(i,j) -> i => j);
     	gCN := sub(g,aLI);
@@ -468,8 +467,6 @@ criticalIdeal (Gradient,LagrangeIdeal) := CriticalIdeal => opts  -> (g,aLI) ->(
 	    JacobianConstraint => sub(newJC,dataSub)
 	    };
 	return CI
-	)
-    else error"degreeLength is not 4."--Should be able to handle any degree length
     )
 
 criticalIdeal (List,LagrangeIdeal) := CriticalIdeal => opts  -> (g,aLI) ->criticalIdeal(gradient g,aLI,opts)
@@ -508,7 +505,9 @@ degree (CriticalIdeal) :=  CI -> (
     sCI := sub(w,dataSub);
     g := sub(CI#Gradient,CI#LagrangeIdeal);    
     scan( g.Denominators , d -> sCI = saturate(sCI, d) );
-    degree sCI--TODO: Need a warning to catch if not zero dimensional
+    if codim sCI =!= #gens ring(CI#LagrangeIdeal#WitnessPrimalIdeal)+ #gens(CI#LagrangeIdeal.ConormalRing#Factors#2) 
+    then 0 
+    else degree sCI
     )    
 
 
