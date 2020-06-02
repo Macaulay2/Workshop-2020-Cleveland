@@ -1373,6 +1373,46 @@ Description
 --  
 ///
 
+doc ///
+Key
+  checkProjective
+Headline
+  checks if projective variety is in general coordinates
+Usage
+  checkProjective I
+Inputs
+  I:
+    a projective @TO2(Ideal,"ideal")@
+Outputs
+  :Boolean
+Description
+  Text
+    Let $X \subseteq \mathbb P^n$ be the variety corresponding to $I$ and let $N \subseteq \mathbb P^n \times \mathbb P^n$.
+    We say that $X$ is in general coordinates if $N$ does not intersect the diagonal of $\mathbb P^n \times \mathbb P^n$.
+    In other words, there is no point $x \in \mathbb P^n$ such that $x \in X$ and $x \in X^*$, where $X^*$ is the dual of $X$.
+
+    Let $Q = \{x = [x_0 : x_1 : \dots : x_n] \in \mathbb P^n : x_0^2 + x_1^2 + \dots + x_n = 0\}$ be the variety corresponding to
+    the isotropic quadric. This funciton checks a sufficient condition: 
+    $X$ is in general coordinates if $X \cap Q$ is smooth and disjoint from the singular locus of $X$.
+
+    The assumption that $X$ is in general coordinates is required for @TO multiDegreeEDDegree@, @TO sectionEDDegree@ and @TO projectionEDDegree@.
+  Example
+    R = QQ[x_0..x_3]
+    M = matrix{{x_0,x_1,x_2},{x_1,x_0,x_3},{x_2,x_3,x_0}}
+    I = ideal det M
+    checkProjective I
+    multiDegreeEDDegree I == probabilisticEDDegree I
+  Text
+    If @TO checkProjective@ returns {\tt false}, the behavior of these functions is undefined.
+  Example
+    S = QQ[y_0..y_2]
+    J = ideal(y_1^2 + y_2^2 - y_0^2)
+    checkProjective J
+    sectionEDDegree J == probabilisticEDDegree J
+///
+
+
+
 
 doc ///
 Key
