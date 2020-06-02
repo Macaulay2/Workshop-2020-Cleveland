@@ -32,7 +32,9 @@ export {
   "conormalIdeal",
   "probabilisticEDDegree",
   "symbolicEDDegree",
+  "checkProjective",
   "projectionEDDegree",
+  "sectionEDDegree",
   "multiDegreeEDDegree",
   "MLDegree",
   "probabilisticLagrangeMultiplierEDDegree",
@@ -297,7 +299,17 @@ sectionEDDegree Ideal := ZZ => opts -> I -> (
   degs := intermediateSections / (I -> (Istar := projectiveDual(I); if codim Istar == 1 then degree Istar else 0));
   edDegreeStrategies(last sections, opts.Strategy) + sum degs
 )
-
+TEST ///
+R = QQ[x_0..x_6]
+I = ideal(apply(2, i-> random(1,R)))
+assert(sectionEDDegree I == 1)
+-- TODO this test may be too slow
+R = QQ[x_0,x_1,x_2,x_3]
+M = matrix{{x_0,x_1,x_2},{x_1,x_0,x_3},{x_2,x_3,x_0}}
+I = ideal det M
+assert(sectionEDDegree I == 13)
+--
+///
 
 
 
@@ -1254,7 +1266,43 @@ Description
 
   Text
     References: [1] Draisma, J., Horobeţ, E., Ottaviani, G., Sturmfels, B., & Thomas, R. R. (2016). The Euclidean distance degree of an algebraic variety. {\em Foundations of computational mathematics}, 16(1), 99-149.
+Caveat
+  TODO
 ///
+
+doc ///
+Key
+  sectionEDDegree
+  (sectionEDDegree, Ideal)
+Headline
+  ED-degree via random linear sections
+Usage
+  sectionEDDegree I
+Inputs
+  I:
+    a projective @TO2{Ideal, "ideal"}@
+Outputs
+  :ZZ
+    the projective ED-degree
+Description
+  Text
+    TODO
+    --Let $X$ be a projective variety in $\mathbb{P}^n$ of codimension $\geq 2$, and let $\pi : \mathbb P^n \to \mathbb P^{n-1}$
+    --be a rational map induced by a general linear map $\mathbb C^{n+1} \to \mathbb C^n$. 
+    --Under some regularity assumptions (see Caveat), the ED-degree of $\pi(X)$ is equal to the ED-degree
+    --of $X$ [1, Cor. 6.1.].
+
+    --This function repeatedly applies such a map $\pi$ until the image becomes a hyperlane, and then
+    --calls @TO probabilisticEDDegree@ or @TO symbolicEDDegree@, depending on the optional argument @TO [projectionEDDegree,Strategy]@.
+    --This may provide significant computational speedups compared to @TO probabilisticEDDegree@, @TO symbolicEDDegree@ or @TO multiDegreeEDDegree@,
+    --especially the codimension of $X$ is large.
+  Text
+    References: [1] Draisma, J., Horobeţ, E., Ottaviani, G., Sturmfels, B., & Thomas, R. R. (2016). The Euclidean distance degree of an algebraic variety. {\em Foundations of computational mathematics}, 16(1), 99-149.
+Caveat
+  TODO
+///
+
+
 
 
 
