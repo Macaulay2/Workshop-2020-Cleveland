@@ -1,21 +1,33 @@
+
 restart
 
 --Change your FileName to wherever your copy of the package lives:
-installPackage("CodingTheory", FileName => "/Users/gwynethwhieldon/M2develop/Workshop-2020-Cleveland/CodingTheory/CodingTheory.m2")
+installPackage("CodingTheory", FileName => "/home/grrman/Workshop-2020-Cleveland/CodingTheory/CodingTheory.m2")
 check CodingTheory
 
 -- viewHelp("CodingTheory")
+
+
+--------------------------------
+--- quasiCyclicCodes 
+--------------
+
 
 
 
 -----------------------------------------------------
 -- Codes from Generator Matrices (as lists):
 -----------------------------------------------------
-F = GF(4)
-n = 7
-k = 3
-L = apply(toList(1..k),j-> apply(toList(1..n),i-> random(F)))
+F = GF(5)
+L = apply(toList(1..2),j-> apply(toList(1..4),i-> random(F)))
+
+C=quasiCyclicCode(L)
+
+m=matrix(L)
+quasiCyclicCode
+reduceMatrix(m)
 C = linearCode(matrix(L))
+messages(C)
 peek C
 
 
@@ -63,9 +75,14 @@ codeLen = 7
 codeDim = 3
 L = apply(toList(1..codeDim),j-> apply(toList(1..codeLen),i-> random(F)))
 C = linearCode(matrix(L))
-
+length(C)
 L
 
+ 	  F=GF(5)
+ 	   R=F[x]
+ 	   G=x-1
+ 	   C1=cyclicCode(F,G,8)
+	   length(C1)
 peek C
 -- check that dimension and length are correct:
 dim C
@@ -78,6 +95,7 @@ C.GeneratorMatrix * (transpose C.ParityCheckMatrix)
 F = GF(2)
 L = {{1,0,1,0,0,0,1,1,0,0},{0,1,0,1,0,0,0,1,1,0},{0,0,1,0,1,0,0,0,1,1},{1,0,0,1,0,1,0,0,0,1},{0,1,0,0,1,1,1,0,0,0}}
 C = linearCode(F,L,ParityCheck => true)
+generatingMatrix(C)
 peek C
 
 
