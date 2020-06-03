@@ -36,7 +36,10 @@ export {
   "projectionEDDegree",
   "sectionEDDegree",
   "multiDegreeEDDegree",
-  "MLDegree",
+  "MLequationsIdeal",
+  "MLequationsDegree",
+  "parametricMLIdeal",
+  "parametricMLDegree",
   "probabilisticLagrangeMultiplierEDDegree",
   "toricMLIdeal",
   "toricMLDegree",
@@ -333,12 +336,59 @@ J = ideal det(matrix{{x_0, x_1, x_2}, {x_1, x_0, x_3}, {x_2, x_3, x_0}})
 assert(multiDegreeEDDegree(J) == 13)
 ///
 
+--------------------
+--MLequationsDegree
+--------------------
+MLequationsIdeal = method()
+MLequationsIdeal (Ideal,List) := (I,u)-> (
+    P := (gens I)_(0,0); -- must find better command.
+    if not (isHomogeneous I) then error("The Ideal isn't Homogeneous");
+    if not (isPrime I) then error("The Ideal isn't Prime"); 
+    
+    c := codim I;
+    jacI := transpose jacobian I;
+    Q := minors(c, jacI); 
+    
+    R := ring I;
+    numVars := #gens R;
+    i1 := for i from 1 to numVars list 1;
+    J := matrix {i1} || jacI;
+    diagM := diagonalMatrix gens R;
+    J' := J * diagM; 
+    dmp := for i from 1 to numRows J' list P;
+    I' := diagonalMatrix matrix{dmp};  
+    M := kernel( inducedMap(coker I', target I') * J' );
+    
+    g := generators M;
+    g' := matrix drop(entries g,-numrows g+#u);
+    Iu' := ideal (matrix {u} * g');
+    
+    MLIdeal := saturate(saturate(saturate(Iu', Q), sum gens R), product gens R); 
+    MLIdeal  
+)
+
+MLequationsDegree = method()
+MLequationsDegree (Ideal) := (I)-> (
+    R := ring I;
+    numVars := #gens R;
+    u := for i from 0 to numVars-1 list random(1, 10^5);
+    MLIdeal := MLequationsIdeal(I,u);
+    MLdegree := degree MLIdeal;
+    MLdegree
+)
+  
+TEST ///
+R = QQ[p0, p1, p2, p12]
+I = ideal (2*p0*p1*p2 + p1^2*p2 + p1*p2^2 - p0^2*p12 + p1*p2*p12)
+u= {4,2, 11, 15} 
+assert( MLequationsDegree (I) == 3)
+///
 
 --------------------
---MLDegree
+--parametricMLDegree
 --------------------
-MLDegree = method(); 
-MLDegree (List,List) := (F,u)-> (
+parametricMLIdeal = method(); 
+parametricMLIdeal (List,List) := (F,u)-> (
     if not (sum F ==1) then error("The sum of functions is not equal to one.");
     m1 := diagonalMatrix F;
     m2 := for i in F list transpose jacobian ideal(i);
@@ -348,9 +398,16 @@ MLDegree (List,List) := (F,u)-> (
     g := generators ker M;
     g' := matrix drop(entries g,-numrows g+#u);
     Ju' := ideal (matrix {u} * g');
-    Ju := saturate(Ju');
-    
-    degree Ju
+    MLIdeal := saturate(Ju');
+    MLIdeal
+)
+
+parametricMLDegree = method(); 
+parametricMLDegree (List) := (F)-> (
+    u := for i from 0 to #F-1 list random(1, 10^5);
+    MLIdeal := parametricMLIdeal(F,u);
+    MLdegree := degree MLIdeal;
+    MLdegree
 )
 
 TEST ///
@@ -358,7 +415,7 @@ R = QQ[t]
 s=1
 u = {2,3,5,7}
 F = {s^3*(-t^3-t^2-t+1),s^2*t,s*t^2,t^3}
-assert( MLDegree (F,u) == 3) 
+assert( parametricMLDegree (F) == 3) 
 ///
 
 --------------------
@@ -1392,33 +1449,124 @@ Caveat
 
 doc ///
 Key
-   MLDegree
-   (MLDegree,List,List) 
+    MLequationsIdeal
+   ( MLequationsIdeal,Ideal,List) 
 Usage
-  MLDegree (F,u)
+  MLequationsIdeal (I,u)
+Inputs
+  I:
+    ideal
+  u:
+    list of numerical data
+Outputs
+  :Ideal
+    the ML-equations of $F$
+Description
+  Text
+    Computes the maximum likelihood equations by taking Ideal and List of numerical data when the ideal is homogeneous and prime.
+    See algorithm 6. Solving the Likelihood Equations https://arxiv.org/pdf/math/0408270
+  Example
+    R = QQ[p0, p1, p2, p12]
+    I = ideal (2*p0*p1*p2 + p1^2*p2 + p1*p2^2 - p0^2*p12 + p1*p2*p12)
+    u= {4,2, 11, 15} 
+    MLequationsIdeal (I,u)
+--Caveat
+--  todo
+SeeAlso
+  MLequationsDegree
+  parametricMLIdeal
+  toricMLIdeal  
+///
+
+doc ///
+Key
+    MLequationsDegree
+   ( MLequationsDegree,Ideal) 
+Usage
+  MLequationsDegree (I)
+Inputs
+  I:
+    ideal
+Outputs
+  :Number
+    the ML-degree of $F$
+Description
+  Text
+    Computes the maximum likelihood equations by taking Ideal when the ideal is homogeneous and prime.
+    See algorithm 6. Solving the Likelihood Equations https://arxiv.org/pdf/math/0408270
+  Example
+    R = QQ[p0, p1, p2, p12]
+    I = ideal (2*p0*p1*p2 + p1^2*p2 + p1*p2^2 - p0^2*p12 + p1*p2*p12)
+    MLequationsDegree (I)
+--Caveat
+--  todo
+SeeAlso
+  MLequationsIdeal 
+  parametricMLDegree 
+  toricMLDegree
+///
+
+doc ///
+Key
+   parametricMLIdeal
+   (parametricMLIdeal,List,List) 
+Usage
+  parametricMLMLIdeal (F,u)
 Inputs
   F:
     list of function
   u:
     list of numerical data
 Outputs
-  :Number
-    the ML-degree of $F$
+  :Ideal
+    the ML-equations of $F$
 Description
   Text
-    Computes the maximum likelihood degree by taking List of function and List of numerical data when summation F equal to 1.
+    the critical ideal of likelihood equations by taking List of function and List of numerical data when summation F equal to 1.
     See algorithm 18. Solving the Likelihood Equations https://arxiv.org/pdf/math/0408270
   Example
     R = QQ[t]
     s=1
     u = {2,3,5,7}
     F = {s^3*(-t^3-t^2-t+1),s^2*t,s*t^2,t^3}
-    MLDegree (F,u)
+    parametricMLIdeal (F,u)
 --Caveat
 --  todo
---SeeAlso
---  
+SeeAlso
+  parametricMLDegree
+  MLequationsIdeal
+  toricMLIdeal 
 ///
+
+doc ///
+Key
+   parametricMLDegree
+   (parametricMLDegree,List) 
+Usage
+  parametricMLDegree (F)
+Inputs
+  F:
+    list of function
+Outputs
+  :Number
+    the ML-degree of $F$
+Description
+  Text
+    Computes the maximum likelihood degree by taking List of function when summation F equal to 1.
+    See algorithm 18. Solving the Likelihood Equations https://arxiv.org/pdf/math/0408270
+  Example
+    R = QQ[t]
+    s=1
+    F = {s^3*(-t^3-t^2-t+1),s^2*t,s*t^2,t^3}
+    parametricMLDegree (F)
+--Caveat
+--  todo
+SeeAlso
+  parametricMLIdeal
+  MLequationsDegree
+  toricMLDegree
+///
+
 
 doc ///
 Key
@@ -1817,6 +1965,7 @@ end
 --Example
 restart
 path={"/Users/jo/Documents/GoodGit/M2020/Workshop-2020-Cleveland/alg-stat/AlgebraicOptimization"}|path  
+path={"/home/fatemeh/w/Workshop-2020-Cleveland/alg-stat/AlgebraicOptimization"}|path  
 loadPackage("AlgebraicOptimization",Reload=>true)
 debug AlgebraicOptimization
 
