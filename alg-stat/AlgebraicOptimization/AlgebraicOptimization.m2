@@ -36,6 +36,8 @@ export {
   "projectionEDDegree",
   "sectionEDDegree",
   "multiDegreeEDDegree",
+  "MLequationsIdeal",
+  "MLequationsDegree",
   "parametricMLIdeal",
   "parametricMLDegree",
   "probabilisticLagrangeMultiplierEDDegree",
@@ -334,6 +336,53 @@ J = ideal det(matrix{{x_0, x_1, x_2}, {x_1, x_0, x_3}, {x_2, x_3, x_0}})
 assert(multiDegreeEDDegree(J) == 13)
 ///
 
+--------------------
+--MLequationsDegree
+--------------------
+MLequationsIdeal = method()
+MLequationsIdeal (Ideal,List) := (I,u)-> (
+    P := (gens I)_(0,0); -- must find better command.
+    if not (isHomogeneous I) then error("The Ideal isn't Homogeneous");
+    if not (isPrime I) then error("The Ideal isn't Prime"); 
+    
+    c := codim I;
+    jacI := transpose jacobian I;
+    Q := minors(c, jacI); 
+    
+    R := ring I;
+    numVars := #gens R;
+    i1 := for i from 1 to numVars list 1;
+    J := matrix {i1} || jacI;
+    diagM := diagonalMatrix gens R;
+    J' := J * diagM; 
+    dmp := for i from 1 to numRows J' list P;
+    I' := diagonalMatrix matrix{dmp};  
+    M := kernel( inducedMap(coker I', target I') * J' );
+    
+    g := generators M;
+    g' := matrix drop(entries g,-numrows g+#u);
+    Iu' := ideal (matrix {u} * g');
+    
+    MLIdeal := saturate(saturate(saturate(Iu', Q), sum gens R), product gens R); 
+    MLIdeal  
+)
+
+MLequationsDegree = method()
+MLequationsDegree (Ideal) := (I)-> (
+    R := ring I;
+    numVars := #gens R;
+    u := for i from 0 to numVars-1 list random(1, 10^5);
+    MLIdeal := MLequationsIdeal(I,u);
+    MLdegree := degree MLIdeal;
+    MLdegree
+)
+  
+TEST ///
+R = QQ[p0, p1, p2, p12]
+I = ideal (2*p0*p1*p2 + p1^2*p2 + p1*p2^2 - p0^2*p12 + p1*p2*p12)
+u= {4,2, 11, 15} 
+assert( MLequationsDegree (I) == 3)
+///
 
 --------------------
 --parametricMLDegree
@@ -1398,6 +1447,64 @@ Caveat
   At the moment this is not checked.
 ///
 
+doc ///
+Key
+    MLequationsIdeal
+   ( MLequationsIdeal,Ideal,List) 
+Usage
+  MLequationsIdeal (I,u)
+Inputs
+  I:
+    ideal
+  u:
+    list of numerical data
+Outputs
+  :Ideal
+    the ML-equations of $F$
+Description
+  Text
+    Computes the maximum likelihood equations by taking Ideal and List of numerical data when the ideal is homogeneous and prime.
+    See algorithm 6. Solving the Likelihood Equations https://arxiv.org/pdf/math/0408270
+  Example
+    R = QQ[p0, p1, p2, p12]
+    I = ideal (2*p0*p1*p2 + p1^2*p2 + p1*p2^2 - p0^2*p12 + p1*p2*p12)
+    u= {4,2, 11, 15} 
+    MLequationsIdeal (I,u)
+--Caveat
+--  todo
+SeeAlso
+  MLequationsDegree
+  parametricMLIdeal
+  toricMLIdeal  
+///
+
+doc ///
+Key
+    MLequationsDegree
+   ( MLequationsDegree,Ideal) 
+Usage
+  MLequationsDegree (I)
+Inputs
+  I:
+    ideal
+Outputs
+  :Number
+    the ML-degree of $F$
+Description
+  Text
+    Computes the maximum likelihood equations by taking Ideal when the ideal is homogeneous and prime.
+    See algorithm 6. Solving the Likelihood Equations https://arxiv.org/pdf/math/0408270
+  Example
+    R = QQ[p0, p1, p2, p12]
+    I = ideal (2*p0*p1*p2 + p1^2*p2 + p1*p2^2 - p0^2*p12 + p1*p2*p12)
+    MLequationsDegree (I)
+--Caveat
+--  todo
+SeeAlso
+  MLequationsIdeal 
+  parametricMLDegree 
+  toricMLDegree
+///
 
 doc ///
 Key
@@ -1411,8 +1518,8 @@ Inputs
   u:
     list of numerical data
 Outputs
-  :Number
-    the ML- of $F$
+  :Ideal
+    the ML-equations of $F$
 Description
   Text
     the critical ideal of likelihood equations by taking List of function and List of numerical data when summation F equal to 1.
@@ -1427,6 +1534,8 @@ Description
 --  todo
 SeeAlso
   parametricMLDegree
+  MLequationsIdeal
+  toricMLIdeal 
 ///
 
 doc ///
@@ -1454,6 +1563,8 @@ Description
 --  todo
 SeeAlso
   parametricMLIdeal
+  MLequationsDegree
+  toricMLDegree
 ///
 
 
