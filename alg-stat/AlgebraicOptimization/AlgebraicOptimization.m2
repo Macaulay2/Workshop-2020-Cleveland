@@ -2,7 +2,7 @@ newPackage(
   "AlgebraicOptimization",
   Version => "0.1", 
   Date => "May 12, 2020",
-  Authors => {
+  Authors => { 
     {Name => "Marc Harkonen", 
     Email => "harkonen@gatech.edu", 
     HomePage => "https://people.math.gatech.edu/~mharkonen3/"},
@@ -18,7 +18,7 @@ newPackage(
   },
   Headline => "A package for algebraic optimization",
   DebuggingMode => true,
-  PackageImports => {"Elimination","NumericalAlgebraicGeometry","Bertini"}
+  PackageImports => {"Elimination","NumericalAlgebraicGeometry","Bertini","PrimaryDecomposition"}
 )
 
 --------------------
@@ -263,7 +263,7 @@ probabilisticLagrangeMultiplierEDDegree (Ideal,Ideal) := ZZ => opts -> (WI,I) ->
     aLI := lagrangeIdeal(WI,I);
     X := gens ring I;
     g := if opts.Data===null then apply(X,i->random(1,1000) ) else opts.Data;
-    degree criticalIdeal(X-g,aLI)
+    degree criticalIdeal(gradient(X-g),aLI)
     )
 --probabilisticLagrangeMultiplierEDDegree Ideal := ZZ => opts -> I ->probabilisticLagrangeMultiplierEDDegree(I,I)
     
@@ -422,7 +422,10 @@ gradient (List,List) := Gradient => opts  -> (n,d) ->(
 	Numerators => n,
 	Denominators => d
 	})
-gradient (List) := Gradient => opts  -> (n) ->gradient(n,apply(n,i->1_(ring i)))
+gradient (List) := Gradient => opts  -> (g) ->(
+    n := apply(g,i-> if instance(ring i,FractionField) then numerator i else i);
+    d := apply(g,i-> if instance(ring i,FractionField) then denominator i else 1_(ring(i)));
+    gradient(n,d))
 
 sub(Gradient,LagrangeIdeal) :=  (g,aLI) -> (
     n := apply(g.Numerators,i->sub(i,aLI));
@@ -469,9 +472,9 @@ criticalIdeal (Gradient,LagrangeIdeal) := CriticalIdeal => opts  -> (g,aLI) ->(
 	return CI
     )
 
-criticalIdeal (List,LagrangeIdeal) := CriticalIdeal => opts  -> (g,aLI) ->criticalIdeal(gradient g,aLI,opts)
+--criticalIdeal (List,LagrangeIdeal) := CriticalIdeal => opts  -> (g,aLI) ->criticalIdeal(gradient g,aLI,opts)
 criticalIdeal (RingElement,LagrangeIdeal) := CriticalIdeal =>opts -> (psi,aLI) -> (
-    g := apply(gens ring psi,x->diff(x,psi));
+    g := gradient apply(gens ring psi,x->diff(x,psi));
     criticalIdeal(g,aLI,opts)
     )
 
@@ -479,9 +482,9 @@ criticalIdeal (Gradient,Ideal) := CriticalIdeal =>opts -> (g,WI) -> (
     aLI := lagrangeIdeal WI;
     criticalIdeal(g,aLI,opts)
     )
-criticalIdeal (List,Ideal) := CriticalIdeal =>opts -> (g,WI) ->criticalIdeal(gradient g,WI,opts)
+--criticalIdeal (List,Ideal) := CriticalIdeal =>opts -> (g,WI) ->criticalIdeal(gradient g,WI,opts)
 criticalIdeal (RingElement,Ideal) := CriticalIdeal =>opts -> (psi,WI) -> (
-    g := apply(gens ring psi,x->diff(x,psi));
+    g := gradient apply(gens ring psi,x->diff(x,psi));
     criticalIdeal(g,WI,opts)
     )
 
@@ -489,25 +492,27 @@ criticalIdeal (Gradient,Ideal,Ideal) := CriticalIdeal =>opts -> (g,WI,I) -> (
     aLI := lagrangeIdeal(WI,I);
     criticalIdeal(g,aLI,opts)
     )
-criticalIdeal (List,Ideal,Ideal) := CriticalIdeal =>opts -> (g,WI,I) ->criticalIdeal(gradient g,WI,I,opts)
+--criticalIdeal (List,Ideal,Ideal) := CriticalIdeal =>opts -> (g,WI,I) ->criticalIdeal(gradient g,WI,I,opts)
 criticalIdeal (RingElement,Ideal,Ideal) := CriticalIdeal =>opts -> (psi,WI,I) -> (
-    g := apply(gens ring psi,x->diff(x,psi));
+    g := gradient apply(gens ring psi,x->diff(x,psi));
     criticalIdeal(g,WI,I,opts)
     )
-
-degree (CriticalIdeal) :=  CI -> (
+ 
+degree (CriticalIdeal) :=  CI -> ( 
+    if not(CI#LagrangeIdeal#?PrimalIdeal) then error"CriticalIdeal#LagrangeIdeal#?PrimalIdeal is false. ";
     w := CI#JacobianConstraint;
-    if CI#LagrangeIdeal#?PrimalIdeal 
-    then w= w+sub(CI#LagrangeIdeal#PrimalIdeal,CI#LagrangeIdeal)
-    else error"CriticalIdeal#LagrangeIdeal#?PrimalIdeal is false. ";
+    w = w+sub(CI#LagrangeIdeal#PrimalIdeal,CI#LagrangeIdeal);    
     u := gens coefficientRing ring (CI#LagrangeIdeal);
     dataSub := if CI.Data===null then {} else apply(u,CI.Data,(i,j)->i=>j);
     sCI := sub(w,dataSub);
-    g := sub(CI#Gradient,CI#LagrangeIdeal);    
+    g := sub(CI#Gradient,CI#LagrangeIdeal);
+    print (peek g);    
     scan( g.Denominators , d -> sCI = saturate(sCI, d) );
-    if codim sCI =!= #gens ring(CI#LagrangeIdeal#WitnessPrimalIdeal)+ #gens(CI#LagrangeIdeal.ConormalRing#Factors#2) 
-    then 0 
-    else degree sCI
+    print(toString sCI);
+    targetCodim := #gens ring(CI#LagrangeIdeal#WitnessPrimalIdeal)+ #gens(CI#LagrangeIdeal.ConormalRing#Factors#2);
+    if codim sCI =!= targetCodim 
+    then sum \\ degree \ select(primaryDecomposition sCI, i-> codim i ==targetCodim)
+    else (sCI,degree sCI)
     )    
 
 
@@ -827,13 +832,13 @@ newRingFromSymbol = (n,s,kk)->(
 probabilisticLagrangeMultiplierOptimizationDegree = method(Options => {Data => null});
 probabilisticLagrangeMultiplierOptimizationDegree (List,Ideal,Ideal) := ZZ => opts -> (g,WI,I) -> (
     aLI := lagrangeIdeal(WI,I);
-    CI := criticalIdeal(g,aLI,opts);
-    degree CI
+    CI := criticalIdeal(gradient g,aLI,opts);
+    (CI,degree CI)
     )
 probabilisticLagrangeMultiplierOptimizationDegree (RingElement,Ideal,Ideal) := ZZ => opts -> (psi,WI,I) -> (
     aLI := lagrangeIdeal(WI,I);
     CI := criticalIdeal(psi,aLI,opts);
-    degree CI
+    (CI,degree CI)
     )
     
 
@@ -861,7 +866,8 @@ probabilisticConormalVarietyOptimizationDegree (List,Ideal) := ZZ => opts -> (g,
   (n,d) := toSequence transpose apply(g,i-> if instance(ring i,FractionField) then {numerator i, denominator i} else {i,1});
   R := ring I;
   kk := ultimate(coefficientRing,R);
-  v := if opts.Data ===null then apply(gens coefficientRing R,i->random kk ) else opts.Data;
+  --v := if opts.Data ===null then apply(gens coefficientRing R,i->random kk ) else opts.Data;
+  v := if opts.Data ===null then gens coefficientRing R else opts.Data;
   c := codim I;
   jacI := diff(matrix{gens ring I}, transpose gens I);  
   jacBar := matrix{n} || (jacI*diagonalMatrix (d));  
@@ -869,7 +875,9 @@ probabilisticConormalVarietyOptimizationDegree (List,Ideal) := ZZ => opts -> (g,
   J' := I + minors(c+1, jacBar);
   J := saturate(J', minors(c, jacI));
   scan(d, h -> J = saturate(J,sub(h,R)));  
-  degree J
+  if codim J =!= #gens R
+  then 0 
+  else degree J
   )
 probabilisticConormalVarietyOptimizationDegree (RingElement,Ideal) := ZZ => opts -> (psi,I) -> (
     g := apply(gens ring I,i->diff(i,psi));
@@ -1063,14 +1071,14 @@ Description
   Example
     R = QQ[x,y]
     I = ideal(x^2 + y^2 - 1)
-    probabilisticEDDegree I
+    probabilisticEDDegree I--2
     J = ideal((x^2+y^2+x)^2 - x^2 - y^2)
-    probabilisticEDDegree J
+    probabilisticEDDegree J--3
 
   Text
     Instead of a random point, the user can specify their own point
   Example
-    probabilisticEDDegree(I, Data => {2,3})
+    probabilisticEDDegree(I, Data => {2,3})--2
 
   Text
     If the variety corresponding to $I$ is projective, the projective
@@ -1333,7 +1341,7 @@ Description
     psi =x^2+2*x*y+3*y
     probabilisticConormalVarietyOptimizationDegree(psi,I)--6
     g ={3*x^2,3/y}--psi = x^3+ + 3*ln y
-    probabilisticConormalVarietyOptimizationDegree(g,I)--14 TODO: does not agree with probabilisticLagrangeMultiplierOptimizationDegree
+    probabilisticConormalVarietyOptimizationDegree(g,I)--14
 
   Text
     The function works with parameters as well when the Data option is specified otherwise the total degree of the critical ideal with parameters as indeterminants is returned.  --TODO: decide what to do here. 
@@ -1390,7 +1398,7 @@ Description
     R=QQ[x,y]
     WI = I = ideal((x^2+y^2+x)^2-x^2-y^2)
     psi =(x-3)^2+(y-2)^2
-    probabilisticLagrangeMultiplierOptimizationDegree(psi,WI,I)
+    probabilisticLagrangeMultiplierOptimizationDegree(psi,WI,I)--3
 
   Text
     The function can handle polynomial objective functions psi or objective functions with rational functions as derivatives. 
@@ -1401,7 +1409,7 @@ Description
     psi =x^2+2*x*y+3*y
     probabilisticLagrangeMultiplierOptimizationDegree(psi,WI,I)--6
     g ={3*x^2,3/y}--psi = x^3+ + 3*ln y
-    probabilisticLagrangeMultiplierOptimizationDegree(g,WI,I)--2
+    probabilisticLagrangeMultiplierOptimizationDegree(g,WI,I)--14
 
   Text
     The function works with parameters as well when the Data option is specified otherwise the total degree of the critical ideal with parameters as indeterminants is returned.  
@@ -1451,7 +1459,7 @@ Description
     R = QQ[x0,x1,x2,x3]
     WI = ideal(x0*x2-x1^2 ,x1*x3-x2^2)
     I = WI + ideal(x0*x3-x1*x2)
-    probabilisticLagrangeMultiplierEDDegree(WI, I)
+    probabilisticLagrangeMultiplierEDDegree(WI, I)--7
 
   Text
     This function is probabilistic.
@@ -1460,7 +1468,7 @@ Description
     R = QQ[x0,x1,x2,x3]
     WI = ideal(x0*x2-x1^2,x1*x3-x2^2)
     I = WI+ideal(x0*x3-x1*x2)
-    probabilisticLagrangeMultiplierEDDegree(WI,I)
+    probabilisticLagrangeMultiplierEDDegree(WI,I)--7
 
   Text
     This function is probabilistic and chooses the data at random by default. 
@@ -1470,8 +1478,8 @@ Description
   Example
     R = QQ[x,y]
     WI = I = ideal((x^2+y^2+x)^2 - x^2 - y^2)
-    probabilisticLagrangeMultiplierEDDegree(WI,I)
-    probabilisticLagrangeMultiplierEDDegree(WI,I,Data=>{0,0})
+    probabilisticLagrangeMultiplierEDDegree(WI,I)--3
+    probabilisticLagrangeMultiplierEDDegree(WI,I,Data=>{0,0})--3
 
 SeeAlso
   probabilisticLagrangeMultiplierOptimizationDegree
