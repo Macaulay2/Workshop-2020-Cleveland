@@ -114,10 +114,9 @@ TEST ///
 projectiveDual = method(Options => options conormalRing);
 -- (Alg. 5.1 in SIAM book)
 -- Takes homogeneous ideal as input, returns ideal of dual of the projective variety
-projectiveDual Ideal := Ideal => opts -> I -> (
+projectiveDual (Ideal, ConormalRing) := Ideal => opts -> (I,S) -> (
   if not isHomogeneous I then error("Ideal has to be homogeneous");
   R := ring I;
-  S := conormalRing(R, opts);
 
   primalCoordinates := S.Coordinates_0 / (i->sub(i,S.AmbientRing));
   dualCoordinates := S.Coordinates_1 / (i->sub(i,S.AmbientRing));
@@ -126,6 +125,7 @@ projectiveDual Ideal := Ideal => opts -> I -> (
 
   sub(eliminate(primalCoordinates, J), S.Factors_1)
 )
+projectiveDual Ideal := Ideal => opts -> I -> projectiveDual(I, conormalRing(I, opts))
 
 TEST ///
 S = QQ[x_0..x_2]
@@ -1153,6 +1153,43 @@ Description
 --SeeAlso
 --  todo
 ///
+
+doc ///
+Key
+  (projectiveDual, Ideal, ConormalRing)
+Headline
+  Compute projective dual
+Usage
+  projectiveDual(I, C)
+Inputs
+  I:
+    a homogeneous @TO2{Ideal, "ideal"}@
+  C:ConormalRing
+Outputs
+  :Ideal
+    the projective dual of {\tt I} as an ideal of the second factor of the @TO ConormalRing@ $C$.
+--Consequences
+--  asd
+Description
+  Text
+    Compute the projective dual of a homogeneous ideal in the specified @TO ConormalRing@.
+
+  Example
+    S = QQ[x_0..x_2]
+    C = conormalRing(S, DualVariable => symbol y)
+    I = ideal(x_2^2-x_0^2+x_1^2)
+    I' = projectiveDual(I,C)
+    ring I' === C.Factors_1
+--  Code
+--    todo
+--  Pre
+--    todo
+Caveat
+  The optional input @TO DualVariable@ is not used.
+SeeAlso
+  projectiveDual
+///
+
 
 doc ///
 Key
