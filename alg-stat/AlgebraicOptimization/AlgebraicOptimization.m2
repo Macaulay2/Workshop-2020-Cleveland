@@ -512,7 +512,7 @@ degree (CriticalIdeal) :=  CI -> (
     targetCodim := #gens ring(CI#LagrangeIdeal#WitnessPrimalIdeal)+ #gens(CI#LagrangeIdeal.ConormalRing#Factors#2);
     if codim sCI =!= targetCodim 
     then sum \\ degree \ select(primaryDecomposition sCI, i-> codim i ==targetCodim)
-    else (sCI,degree sCI)
+    else degree sCI
     )    
 
 
@@ -833,12 +833,12 @@ probabilisticLagrangeMultiplierOptimizationDegree = method(Options => {Data => n
 probabilisticLagrangeMultiplierOptimizationDegree (List,Ideal,Ideal) := ZZ => opts -> (g,WI,I) -> (
     aLI := lagrangeIdeal(WI,I);
     CI := criticalIdeal(gradient g,aLI,opts);
-    (CI,degree CI)
+    degree CI
     )
 probabilisticLagrangeMultiplierOptimizationDegree (RingElement,Ideal,Ideal) := ZZ => opts -> (psi,WI,I) -> (
     aLI := lagrangeIdeal(WI,I);
     CI := criticalIdeal(psi,aLI,opts);
-    (CI,degree CI)
+    degree CI
     )
     
 
