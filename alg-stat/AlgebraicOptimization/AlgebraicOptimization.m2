@@ -36,7 +36,8 @@ export {
   "projectionEDDegree",
   "sectionEDDegree",
   "multiDegreeEDDegree",
-  "MLDegree",
+  "parametricMLIdeal",
+  "parametricMLDegree",
   "probabilisticLagrangeMultiplierEDDegree",
   "toricMLIdeal",
   "toricMLDegree",
@@ -335,10 +336,10 @@ assert(multiDegreeEDDegree(J) == 13)
 
 
 --------------------
---MLDegree
+--parametricMLDegree
 --------------------
-MLDegree = method(); 
-MLDegree (List,List) := (F,u)-> (
+parametricMLIdeal = method(); 
+parametricMLIdeal (List,List) := (F,u)-> (
     if not (sum F ==1) then error("The sum of functions is not equal to one.");
     m1 := diagonalMatrix F;
     m2 := for i in F list transpose jacobian ideal(i);
@@ -348,9 +349,16 @@ MLDegree (List,List) := (F,u)-> (
     g := generators ker M;
     g' := matrix drop(entries g,-numrows g+#u);
     Ju' := ideal (matrix {u} * g');
-    Ju := saturate(Ju');
-    
-    degree Ju
+    MLIdeal := saturate(Ju');
+    MLIdeal
+)
+
+parametricMLDegree = method(); 
+parametricMLDegree (List) := (F)-> (
+    u := for i from 0 to #F-1 list random(1, 10^5);
+    MLIdeal := parametricMLIdeal(F,u);
+    MLdegree := degree MLIdeal;
+    MLdegree
 )
 
 TEST ///
@@ -358,7 +366,7 @@ R = QQ[t]
 s=1
 u = {2,3,5,7}
 F = {s^3*(-t^3-t^2-t+1),s^2*t,s*t^2,t^3}
-assert( MLDegree (F,u) == 3) 
+assert( parametricMLDegree (F) == 3) 
 ///
 
 --------------------
@@ -1390,12 +1398,13 @@ Caveat
   At the moment this is not checked.
 ///
 
+
 doc ///
 Key
-   MLDegree
-   (MLDegree,List,List) 
+   parametricMLIdeal
+   (parametricMLIdeal,List,List) 
 Usage
-  MLDegree (F,u)
+  parametricMLMLIdeal (F,u)
 Inputs
   F:
     list of function
@@ -1403,22 +1412,50 @@ Inputs
     list of numerical data
 Outputs
   :Number
-    the ML-degree of $F$
+    the ML- of $F$
 Description
   Text
-    Computes the maximum likelihood degree by taking List of function and List of numerical data when summation F equal to 1.
+    the critical ideal of likelihood equations by taking List of function and List of numerical data when summation F equal to 1.
     See algorithm 18. Solving the Likelihood Equations https://arxiv.org/pdf/math/0408270
   Example
     R = QQ[t]
     s=1
     u = {2,3,5,7}
     F = {s^3*(-t^3-t^2-t+1),s^2*t,s*t^2,t^3}
-    MLDegree (F,u)
+    parametricMLIdeal (F,u)
 --Caveat
 --  todo
---SeeAlso
---  
+SeeAlso
+  parametricMLDegree
 ///
+
+doc ///
+Key
+   parametricMLDegree
+   (parametricMLDegree,List) 
+Usage
+  parametricMLDegree (F)
+Inputs
+  F:
+    list of function
+Outputs
+  :Number
+    the ML-degree of $F$
+Description
+  Text
+    Computes the maximum likelihood degree by taking List of function when summation F equal to 1.
+    See algorithm 18. Solving the Likelihood Equations https://arxiv.org/pdf/math/0408270
+  Example
+    R = QQ[t]
+    s=1
+    F = {s^3*(-t^3-t^2-t+1),s^2*t,s*t^2,t^3}
+    parametricMLDegree (F)
+--Caveat
+--  todo
+SeeAlso
+  parametricMLIdeal
+///
+
 
 doc ///
 Key
@@ -1817,6 +1854,7 @@ end
 --Example
 restart
 path={"/Users/jo/Documents/GoodGit/M2020/Workshop-2020-Cleveland/alg-stat/AlgebraicOptimization"}|path  
+path={"/home/fatemeh/w/Workshop-2020-Cleveland/alg-stat/AlgebraicOptimization"}|path  
 loadPackage("AlgebraicOptimization",Reload=>true)
 debug AlgebraicOptimization
 
