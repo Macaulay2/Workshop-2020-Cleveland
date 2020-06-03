@@ -12,6 +12,7 @@ presentation S
 hilbertSeries S
 hilbertSeries(S,Reduce=>true)
 hilbertSeries(S,Order=>5)
+degreesRing A
 -- torus
 R = QQ[x_1..x_4]
 W = matrix{{0,1,-1,1},{1,0,-1,-1}}

@@ -531,13 +531,20 @@ finiteAbelianAction (List, Matrix, PolynomialRing) := FiniteAbelianAction => (L,
     if not isField coefficientRing R then (error "finiteAbelianAction: Expected the third argument to be a polynomial ring over a field.");
     if ring W =!= ZZ then (error "finiteAbelianAction: Expected the second argument to be a matrix of integer weights.");
     if numColumns W =!= dim R then (error "finiteAbelianAction: Expected the number of columns of the matrix to equal the dimension of the polynomial ring.");
-    if numRows W =!= #L then (error "finiteAbelianAction: Expected the number of rows of the matrix to equal the size of the list."); 
+    r := numRows W;
+    if r =!= #L then (error "finiteAbelianAction: Expected the number of rows of the matrix to equal the size of the list."); 
+    -- coefficient ring for group characters
+    z := getSymbol "z";
+    C := ZZ[Variables=>r,VariableBaseName=>z,MonomialOrder=>Lex];
+    C = C / ideal apply(gens C,L,(x,i)->x^i-1);
+    D := newRing(degreesRing R,MonomialOrder=>RevLex,Inverses=>false);
     new FiniteAbelianAction from {
 	cache => new CacheTable,
 	(symbol actionMatrix) => W,
 	(symbol size) => L,
 	(symbol ring) => R,
 	(symbol numgens) => #L, 
+	(symbol degreesRing) => C monoid D
 	}
     )
 
@@ -559,6 +566,7 @@ size FiniteAbelianAction := List => G -> G.size
 
 weights FiniteAbelianAction := Matrix => G -> G.actionMatrix
 
+degreesRing FiniteAbelianAction := QuotientRing => G -> G.degreesRing
 
 -------------------------------------------
 --- LinearlyReductiveAction methods -------
