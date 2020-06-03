@@ -676,7 +676,7 @@ degree (CriticalIdeal) :=  CI -> (
     targetCodim := #gens ring(CI#LagrangeIdeal#WitnessPrimalIdeal)+ #gens(CI#LagrangeIdeal.ConormalRing#Factors#2);
     if codim sCI =!= targetCodim 
     then sum \\ degree \ select(primaryDecomposition sCI, i-> codim i ==targetCodim)
-    else (sCI,degree sCI)
+    else degree sCI
     )    
 
 
@@ -997,12 +997,12 @@ probabilisticLagrangeMultiplierOptimizationDegree = method(Options => {Data => n
 probabilisticLagrangeMultiplierOptimizationDegree (List,Ideal,Ideal) := ZZ => opts -> (g,WI,I) -> (
     aLI := lagrangeIdeal(WI,I);
     CI := criticalIdeal(gradient g,aLI,opts);
-    (CI,degree CI)
+    degree CI
     )
 probabilisticLagrangeMultiplierOptimizationDegree (RingElement,Ideal,Ideal) := ZZ => opts -> (psi,WI,I) -> (
     aLI := lagrangeIdeal(WI,I);
     CI := criticalIdeal(psi,aLI,opts);
-    (CI,degree CI)
+    degree CI
     )
     
 
@@ -1059,7 +1059,7 @@ assert(3==probabilisticConormalVarietyOptimizationDegree(psi,I))
 R=QQ[u,v][x,y]
 I = ideal((x^2+y^2+x)^2-x^2-y^2)
 psi =(x-u)^2+(y-v)^2--TODO make a consistent choice for what to do when Data=>null.
-assert(3==probabilisticConormalVarietyOptimizationDegree(psi,I))
+assert(7==probabilisticConormalVarietyOptimizationDegree(psi,I))
 assert(3==probabilisticConormalVarietyOptimizationDegree(psi,I,Data=>{2,3}))
 assert(1==probabilisticConormalVarietyOptimizationDegree(psi,I,Data=>{0,0}))
 
