@@ -54,7 +54,7 @@ export {
   -- Tolerances
   "MultiplicityTolerance","EvaluationTolerance", "ConditionNumberTolerance",
   --"updateMultiplicityTolerance","updateEvaluationTolerance","updateConditionNumberTolerance",
-  "Coordinates", "Factors",
+  "Coordinates", "Factors"
   "Numerators","Denominators"
 }
 
@@ -875,8 +875,9 @@ probabilisticConormalVarietyOptimizationDegree (List,Ideal) := ZZ => opts -> (g,
   J' := I + minors(c+1, jacBar);
   J := saturate(J', minors(c, jacI));
   scan(d, h -> J = saturate(J,sub(h,R)));  
-  if codim J =!= #gens R
-  then 0 
+  targetCodim := #gens R;
+  if codim J =!= targetCodim 
+  then sum \\ degree \ select(primaryDecomposition J, i-> codim i ==targetCodim)
   else degree J
   )
 probabilisticConormalVarietyOptimizationDegree (RingElement,Ideal) := ZZ => opts -> (psi,I) -> (
