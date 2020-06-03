@@ -1,58 +1,6 @@
 restart
 needsPackage "InvariantsDev"
 
-equivariantHilbertSeries = method(Options => {Order => infinity}, TypicalValue => Divide)
-equivariantHilbertSeries (FiniteAbelianAction) :=
-equivariantHilbertSeries (TorusAction) := op -> T -> (
-    ord := op.Order;
-    if ord === infinity then (
-	equivariantHilbertRational(T)
-	)
-    else (
-	equivariantHilbertPartial(T,ord-1)
-	)
-    )
-
-equivariantHilbertRational = T -> (
-    n := dim T;
-    W := weights T;
-    R := degreesRing T;
-    C := coefficientRing R;
-    -- tally the weights of the action
-    p := pairs tally entries transpose W;
-    -- for each weight form the 1-zT factor with the right powr
-    -- then multiply them into a product expression
-    den := Product apply(sort apply(p, (w,e) -> {1 - C_w * R_0,e}), t -> Power t);
-    -- return the rational function as an expression
-    Divide{1,den}
-)
-
-equivariantHilbertPartial = (T, d) -> (
-    -- if not existing, create in the cache
-    if not T.cache.?equivariantHilbert then (
-	T.cache.equivariantHilbert = 1_(degreesRing T);
-	);
-    -- how far was it previously computed?
-    -- get degree and coefficients
-    currentDeg := first degree T.cache.equivariantHilbert;
-    (M,C) := coefficients T.cache.equivariantHilbert;
-    -- compute higher degrees recursively
-    if (d > currentDeg) then (
-	R := degreesRing T;
-    	den := value denominator equivariantHilbertSeries T;
-    	denDeg := first degree den;
-	B := last coefficients den;
-	for i from currentDeg+1 to d do (
-	    M = M | matrix{{R_0^i}};
-	    C = C || matrix{{-sum(1..min(i,denDeg),k -> C_(i-k,0)*B_(k,0) )}};
-	    );
-	);
-    -- compute expansion up to desired degree
-    p := first flatten entries (M_{0..d}*C^{0..d});
-    -- store and return
-    T.cache.equivariantHilbert = p
-    )
-
 -- examples
 -- finite abelian
 R = QQ[x_1..x_3]
@@ -65,9 +13,9 @@ hilbertSeries S
 hilbertSeries(S,Reduce=>true)
 hilbertSeries(S,Order=>5)
 degreesRing A
-equivariantHilbertRational A
-equivariantHilbertPartial(A,10)
-hilbertSeries(S,Order=>11)
+equivariantHilbertSeries A
+equivariantHilbertSeries(A,Order=>6)
+hilbertSeries(S,Order=>6)
 
 -- torus
 R = QQ[x_1..x_4]

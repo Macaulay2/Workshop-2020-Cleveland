@@ -46,8 +46,8 @@ export {
     "permutationMatrix",
     "RingOfInvariants",	       	  -- exported type name
     "schreierGraph",
-    "toricHilbert",    	       	  -- cache table key
-    "toricHilbertSeries",
+    "equivariantHilbert",    	       	  -- cache table key
+    "equivariantHilbertSeries",
     "torusAction",    	      	  -- documented
     "TorusAction",    	      	  -- exported type name
     "weights",	      	      	  -- documented
@@ -456,28 +456,32 @@ weights TorusAction := Matrix => T -> T.actionMatrix
 degreesRing TorusAction := PolynomialRing => T -> T.degreesRing
 
 -------------------------------------------
--- toric Hilbert series code
+-- equivariant Hilbert series code
+-- for tori and finite abelian groups
+-- was written for tori first (hence the letter T)
+-- but same code works for finite abelian case
 
 -- this method returns the equivariant hilbert series
--- for a diagonal torus action on a polynomial ring
--- NOTE: torus must act diagonally on single graded polynomial ring
+-- for a diagonal torus/finite abelian action on a polynomial ring
+-- NOTE: group must act diagonally on single graded polynomial ring
 -- by default, the series is returned as a rational function
 -- if the option Order=>d is used, the expansion of the series
 -- up to degree d-1 is returned (as for hilbertSeries)
-toricHilbertSeries = method(Options => {Order => infinity}, TypicalValue => Divide)
-toricHilbertSeries (TorusAction) := op -> T -> (
+equivariantHilbertSeries = method(Options => {Order => infinity}, TypicalValue => Divide)
+equivariantHilbertSeries (FiniteAbelianAction) :=
+equivariantHilbertSeries (TorusAction) := op -> T -> (
     ord := op.Order;
     if ord === infinity then (
-	toricHilbertRational(T)
+	equivariantHilbertRational(T)
 	)
     else (
-	toricHilbertPartial(T,ord-1)
+	equivariantHilbertPartial(T,ord-1)
 	)
     )
 
 -- toric Hilbert series as a rational function
 -- do not export
-toricHilbertRational = T -> (
+equivariantHilbertRational = T -> (
     n := dim T;
     W := weights T;
     R := degreesRing T;
@@ -493,19 +497,19 @@ toricHilbertRational = T -> (
 
 -- computes expansion of toric Hilbert series up to order d
 -- do not export
-toricHilbertPartial = (T, d) -> (
+equivariantHilbertPartial = (T, d) -> (
     -- if not existing, create in the cache
-    if not T.cache.?toricHilbert then (
-	T.cache.toricHilbert = 1_(degreesRing T);
+    if not T.cache.?equivariantHilbert then (
+	T.cache.equivariantHilbert = 1_(degreesRing T);
 	);
     -- how far was it previously computed?
     -- get degree and coefficients
-    currentDeg := first degree T.cache.toricHilbert;
-    (M,C) := coefficients T.cache.toricHilbert;
+    currentDeg := first degree T.cache.equivariantHilbert;
+    (M,C) := coefficients T.cache.equivariantHilbert;
     -- compute higher degrees recursively
     if (d > currentDeg) then (
 	R := degreesRing T;
-    	den := value denominator toricHilbertSeries T;
+    	den := value denominator equivariantHilbertSeries T;
     	denDeg := first degree den;
 	B := last coefficients den;
 	for i from currentDeg+1 to d do (
@@ -516,7 +520,7 @@ toricHilbertPartial = (T, d) -> (
     -- compute expansion up to desired degree
     p := first flatten entries (M_{0..d}*C^{0..d});
     -- store and return
-    T.cache.toricHilbert = p
+    T.cache.equivariantHilbert = p
     )
 
 
