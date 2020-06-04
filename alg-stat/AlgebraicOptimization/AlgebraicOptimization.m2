@@ -732,9 +732,11 @@ toricMLIdeal(Matrix, List, List) := Ideal => opts -> (A, c, u) -> (
     MLIdeal
     )
 
+-- add option to specify data vector
+-- correct for index of lattice
 toricMLDegree = method(Options => {coeffRing => QQ})
 toricMLDegree(Matrix, List) := Number => opts -> (A,c) -> (
-    u := for i from 0 to #c-1 list random(1, 10^5);
+    u := for i from 0 to #c-1 list random(1, 10^5); 
     MLIdeal := toricMLIdeal(A, c, u);
     MLdegree := degree saturate(MLIdeal, (product gens ring MLIdeal)); 
     MLdegree
