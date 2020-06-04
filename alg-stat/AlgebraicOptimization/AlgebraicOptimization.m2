@@ -367,11 +367,11 @@ MLequationsIdeal (Ideal,List) := (I,u)-> (
     MLIdeal  
 )
 
-MLequationsDegree = method()
-MLequationsDegree (Ideal) := (I)-> (
+MLequationsDegree = method(Options => {Data => null})
+MLequationsDegree (Ideal) := ZZ => opts -> (I) -> (
     R := ring I;
     numVars := #gens R;
-    u := for i from 0 to numVars-1 list random(1, 10^5);
+    u := if opts.Data ===null then  for i from 0 to numVars-1 list random(1, 10^5) else opts.Data;
     MLIdeal := MLequationsIdeal(I,u);
     MLdegree := degree MLIdeal;
     MLdegree
@@ -380,8 +380,9 @@ MLequationsDegree (Ideal) := (I)-> (
 TEST ///
 R = QQ[p0, p1, p2, p12]
 I = ideal (2*p0*p1*p2 + p1^2*p2 + p1*p2^2 - p0^2*p12 + p1*p2*p12)
-u= {4,2, 11, 15} 
+u= {4,2, 11, 15}
 assert( MLequationsDegree (I) == 3)
+assert( MLequationsDegree (I ,  Data => u) == 3)
 ///
 
 --------------------
@@ -402,9 +403,9 @@ parametricMLIdeal (List,List) := (F,u)-> (
     MLIdeal
 )
 
-parametricMLDegree = method(); 
-parametricMLDegree (List) := (F)-> (
-    u := for i from 0 to #F-1 list random(1, 10^5);
+parametricMLDegree = method(Options => {Data => null}); 
+parametricMLDegree (List) := ZZ => opts -> (F)-> (
+    u := if opts.Data ===null then  for i from 0 to #F-1 list random(1, 10^5) else opts.Data;
     MLIdeal := parametricMLIdeal(F,u);
     MLdegree := degree MLIdeal;
     MLdegree
@@ -416,6 +417,7 @@ s=1
 u = {2,3,5,7}
 F = {s^3*(-t^3-t^2-t+1),s^2*t,s*t^2,t^3}
 assert( parametricMLDegree (F) == 3) 
+assert( parametricMLDegree (F ,  Data => u) == 3) 
 ///
 
 --------------------
@@ -1080,7 +1082,13 @@ Headline
   Package for algebraic optimization
 Description
   Text
-    Todo
+    References: \break
+    [1] Seth Sullivant, 
+    Algebraic Statistics, American Mathematical Soc. \break
+    [2]  Jan Draisma, Emil Horobeţ, Giorgio Ottaviani, Bernd Sturmfels, and Rekha R. Thomas, 
+    The Euclidean distance degree of an algebraic variety, Found. Comput. Math. 16 (2016), no. 1, 99–149. MR 3451425. \break
+    [3] Serkan Hoşten, Amit Khetan,and Bernd Sturmfels, 
+    Solving the likelihood equations, Found. Comput. Math. 5 (2005), no. 4, 389–407. \break 
   Example
     todo
 Caveat
@@ -1393,7 +1401,7 @@ Description
     Let $X$ be a projective variety in $\mathbb{P}^n$ of codimension $\geq 2$, and let $\pi : \mathbb P^n \to \mathbb P^{n-1}$
     be a rational map induced by a general linear map $\mathbb C^{n+1} \to \mathbb C^n$. 
     Under some regularity assumptions (see Caveat), the ED-degree of $\pi(X)$ is equal to the ED-degree
-    of $X$ [1, Cor. 6.1.].
+    of $X$ @TO2{AlgebraicOptimization,"[2, Cor. 6.1.]"}@.
 
     This function repeatedly applies such a map $\pi$ until the image becomes a hyperlane, and then
     calls @TO probabilisticEDDegree@ or @TO symbolicEDDegree@, depending on the optional argument @TO [projectionEDDegree,Strategy]@.
@@ -1420,8 +1428,6 @@ Description
 
     o7 = 1
 
-  Text
-    References: [1] Draisma, J., Horobeţ, E., Ottaviani, G., Sturmfels, B., & Thomas, R. R. (2016). The Euclidean distance degree of an algebraic variety. {\em Foundations of computational mathematics}, 16(1), 99-149.
 Caveat
   TODO
 ///
@@ -1478,7 +1484,7 @@ Usage
 Description
   Text
     Computes the ED degree symbolically by taking the sum of multidegrees of the conormal ideal. 
-    See theorem 5.4 in Draisma et. al. The Euclidean Distance Degree of an Algebraic Variety https://arxiv.org/abs/1309.0049 
+    @TO2{AlgebraicOptimization,"[2, Th. 5.4]"}@ 
 
     As an example, we see that the ED-degree of Cayley's cubic surface is 13
   Example
@@ -1495,20 +1501,21 @@ doc ///
 Key
     MLequationsIdeal
    ( MLequationsIdeal,Ideal,List) 
+Headline
+  compute ML-ideal for Homogeneous prime ideal
 Usage
   MLequationsIdeal (I,u)
 Inputs
   I:
-    ideal
+    an @TO2{Ideal, "ideal"}@, Homogeneous prime ideal.
   u:
-    list of numerical data
+    a @TO2{List, "list"}@ of natural number as data.
 Outputs
   :Ideal
-    the ML-equations of $F$
+    the likelihoood ideal of $I$
 Description
   Text
-    Computes the maximum likelihood equations by taking Ideal and List of numerical data when the ideal is homogeneous and prime.
-    See algorithm 6. Solving the Likelihood Equations https://arxiv.org/pdf/math/0408270
+    Computes the likelihood ideal by taking an Ideal and List of numerical data when the ideal is homogeneous and prime. @TO2{AlgebraicOptimization,"[1, Alg. 7.2.4][3, Alg. 6]"}@ 
   Example
     R = QQ[p0, p1, p2, p12]
     I = ideal (2*p0*p1*p2 + p1^2*p2 + p1*p2^2 - p0^2*p12 + p1*p2*p12)
@@ -1525,23 +1532,38 @@ SeeAlso
 doc ///
 Key
     MLequationsDegree
-   ( MLequationsDegree,Ideal) 
+   ( MLequationsDegree, Ideal) 
+   [ MLequationsDegree, Data]
+Headline
+  compute ML-degree for Homogeneous prime ideal
 Usage
   MLequationsDegree (I)
+  MLequationsDegree (I, Data => u)
 Inputs
   I:
-    ideal
+    an @TO2{Ideal, "ideal"}@, Homogeneous prime ideal.
+  Data => List
+    a @TO2{List, "list"}@, default value null, By default, this data is chosen at random from natural number. 
 Outputs
   :Number
-    the ML-degree of $F$
+    the ML-degree of $I$
 Description
   Text
-    Computes the maximum likelihood equations by taking Ideal when the ideal is homogeneous and prime.
-    See algorithm 6. Solving the Likelihood Equations https://arxiv.org/pdf/math/0408270
+    Computes the maximum likelihood degree of homogeneous prime ideal. 
+    In other words, we choose a random data u and output is 
+    the number of complex critical points of the likelihood equations
+     for random data u. @TO2{AlgebraicOptimization,"[1, Alg. 7.2.4][3, Alg. 6]"}@
   Example
     R = QQ[p0, p1, p2, p12]
     I = ideal (2*p0*p1*p2 + p1^2*p2 + p1*p2^2 - p0^2*p12 + p1*p2*p12)
     MLequationsDegree (I)
+  Text
+    another example with specific data.
+  Example
+    R = QQ[p_111,p_112,p_121,p_122,p_211,p_212,p_221,p_222]
+    I = ideal (p_111^2*p_222^2+p_121^2*p_212^2+p_122^2*p_211^2+p_112^2*p_221^2-2*p_121*p_122*p_211*p_212-2*p_112*p_122*p_211*p_221-2*p_112*p_121*p_212*p_221-2*p_111*p_122*p_211*p_222-2*p_111*p_121*p_212*p_222-2*p_111*p_112*p_221*p_222+4*p_111*p_122*p_212*p_221+4*p_112*p_121*p_211*p_222)
+    u = {2,3,5,7,11,13,17,19}
+    MLequationsDegree (I, Data => u)
 --Caveat
 --  todo
 SeeAlso
@@ -1554,20 +1576,22 @@ doc ///
 Key
    parametricMLIdeal
    (parametricMLIdeal,List,List) 
+Headline
+  compute parametric ML-ideal for List of Polynomials
 Usage
   parametricMLMLIdeal (F,u)
 Inputs
   F:
-    list of function
+    a @TO2{List, "list"}@ of Polynomials, the summation of polynomials is equal to one.
   u:
-    list of numerical data
+    a @TO2{List, "list"}@ of natural number as data.
 Outputs
   :Ideal
-    the ML-equations of $F$
+    the parametric ML-ideal of $F$
 Description
   Text
-    the critical ideal of likelihood equations by taking List of function and List of numerical data when summation F equal to 1.
-    See algorithm 18. Solving the Likelihood Equations https://arxiv.org/pdf/math/0408270
+    Computes the parametric likelihood ideal by taking List of function and 
+    List of numerical data when summation F equal to 1. @TO2{AlgebraicOptimization,"[3, Alg. 18]"}@
   Example
     R = QQ[t]
     s=1
@@ -1586,23 +1610,33 @@ doc ///
 Key
    parametricMLDegree
    (parametricMLDegree,List) 
+Headline
+  compute parametric ML-degree for List of Polynomials
 Usage
   parametricMLDegree (F)
 Inputs
   F:
-    list of function
+    a @TO2{List, "list"}@ of Polynomials, the summation of polynomials is equal to one.
+  Data => List
+    a @TO2{List, "list"}@, default value null, By default, this data is chosen at random from natural number. 
 Outputs
   :Number
     the ML-degree of $F$
 Description
   Text
-    Computes the maximum likelihood degree by taking List of function when summation F equal to 1.
-    See algorithm 18. Solving the Likelihood Equations https://arxiv.org/pdf/math/0408270
+    Computes the maximum likelihood degree by taking List of Polynomials 
+    when summation of polynomials is equal to one. In other words, 
+    we choose a random data u and output is the number of complex critical points 
+    of the parametric likelihood equations for random data u. @TO2{AlgebraicOptimization,"[3, Alg. 18]"}@
   Example
     R = QQ[t]
     s=1
     F = {s^3*(-t^3-t^2-t+1),s^2*t,s*t^2,t^3}
     parametricMLDegree (F)
+  Text
+    References:
+    [1] S. Hoşten, A. Khetan, B. Sturmfels, Solving the likelihood equations, Found. Comput. Math. 5 (2005), no. 4, 389–407.
+
 --Caveat
 --  todo
 SeeAlso
