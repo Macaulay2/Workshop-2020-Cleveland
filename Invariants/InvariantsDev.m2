@@ -470,6 +470,8 @@ degreesRing TorusAction := PolynomialRing => T -> T.degreesRing
 equivariantHilbertSeries = method(Options => {Order => infinity}, TypicalValue => Divide)
 equivariantHilbertSeries (FiniteAbelianAction) :=
 equivariantHilbertSeries (TorusAction) := op -> T -> (
+    if #(gens degreesRing T) != 1 then
+    error "only implemented for standard graded polynomial rings";
     ord := op.Order;
     if ord === infinity then (
 	equivariantHilbertRational(T)
