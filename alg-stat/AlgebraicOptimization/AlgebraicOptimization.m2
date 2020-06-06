@@ -1701,6 +1701,8 @@ Inputs
     list of numbers used to create the scaled toric variety
   u:
     list of numerical data
+  CoeffRing => 
+    A the ring of coefficients for the computation to be performed over. By default this ring is QQ.  CoeffRing => 
 Outputs
   :Ideal
     the critical ideal of likelihood equations for the corresponding scaled toric variety 
@@ -1708,7 +1710,7 @@ Outputs
 Description
   Text
     Computes the critical ideal of a scaled toric variety using the equations 
-    defined in Birch's theorem for given data $u$.
+    defined in Birch's theorem for given data $u$. 
   Example
     A = matrix {{1,1,1,0,0,0,0,0,0}, {0,0,0,1,1,1,0,0,0},{0,0,0,0,0,0,1,1,1},{1,0,0,1,0,0,1,0,0},{0,1,0,0,1,0,0,1,0},{0,0,1,0,0,1,0,0,1}}
     c = {1,2,3,1,1,1,1,1,1}
@@ -1734,22 +1736,28 @@ Inputs
     A full rank matrix of exponents defining the monomial map that parameterizes the toric variety
   c: 
     list of numbers used to create the scaled toric variety
+  Data =>
+    A list of numerical data with default value null. By default, this data is chosen at random from the natural numbers.
+  CoeffRing => 
+    A the ring of coefficients for the computation to be performed over. By default this ring is QQ.  
 Outputs
   :Number
     the ML-degree of the corresponding toric variety
 Description
   Text
     Computes the maximum likelihood degree of a toric variety using the equations 
-    defined in Birch's theorem and randomly generated data. See proposition 2.5 in https://math.berkeley.edu/~bernd/owl.pdf.
+    defined in Birch's theorem and randomly generated data. See proposition 2.5 in https://math.berkeley.edu/~bernd/owl.pdf. The Smith Normal Form is automatically 
+    used to determine if the parameterization is many-to-one and correct for this.
   Example
     A = matrix {{1,1,1,0,0,0,0,0,0}, {0,0,0,1,1,1,0,0,0},{0,0,0,0,0,0,1,1,1},{1,0,0,1,0,0,1,0,0},{0,1,0,0,1,0,0,1,0},{0,0,1,0,0,1,0,0,1}}
     c = {1,2,3,1,1,1,1,1,1}
     toricMLDegree(A,c)
-Caveat
-    The Smith Normal Form is automatically 
-    used to determine if the parameterization is many-to-one and correct for this.
+--Caveat
+    
 -- todo
---SeeAlso
+SeeAlso
+    toricMLDegree
+    parametricMLIdeal
 --  
 ///
 
