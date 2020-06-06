@@ -2,7 +2,7 @@
 newPackage(
         "RandomRationalPoints",
     	Version => "1.2",
-    	Date => "May 21, 2020",
+    	Date => "June 6th, 2020",
     	Authors => {
 	     {Name => "Sankhaneel Bisui", Email => "sbisu@tulane.edu", HomePage=>"https://sites.google.com/view/sankhaneelbisui/home"},
 	     {Name=> "Thai Nguyen", Email =>"tnguyen11@tulane.edu", HomePage=>"https://sites.google.com/view/thainguyenmath "},
@@ -222,7 +222,8 @@ genericProjection(ZZ, Ideal) := opts -> (n1, I1) -> (
         R1 := ring I1;
         psi := randomCoordinateChange(R1, opts);
         S1 := source psi;
-        I2 := psi^-1(I1);
+        local I2;
+        I2 = psi^-1(I1);
         if (n1 <= 0) then return(psi, I2); --if we don't actually want to project
         kk:=coefficientRing R1;
         local Re;
@@ -242,7 +243,8 @@ genericProjectionByKernel(ZZ, Ideal) := opts -> (n1, I1) -> (
     R1 := ring I1;
     psi := randomCoordinateChange(R1, opts);
     S1 := source psi;
-    I2 := psi^-1(I1);
+    local I2;
+    I2 = psi^-1(I1);
     if (n1 <= 0) then return(psi, I2); --if we don't actually want to project
     kk:=coefficientRing R1;
     myVars := drop(gens S1, n1);
