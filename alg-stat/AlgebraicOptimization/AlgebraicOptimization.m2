@@ -12,13 +12,13 @@ newPackage(
     {Name => "Fatemeh Tarashi Kashani",
     Email => "tarashikashanifatemeh@gmail.com",
     HomePage => "https://www.linkedin.com/in/fatemehtarashi/"},
-    {Name => "Your name here",
-    Email => "Your email here",
-    HomePage => "Your page here"}
+    {Name => "Benjamin Hollering",
+    Email => "bkholler@ncsu.edu",
+    HomePage => "https://benhollering.wordpress.ncsu.edu/"}
   },
   Headline => "A package for algebraic optimization",
   DebuggingMode => true,
-  PackageImports => {"Elimination","NumericalAlgebraicGeometry","Bertini","PrimaryDecomposition"}
+  PackageImports => {"Elimination","NumericalAlgebraicGeometry","Bertini","PrimaryDecomposition", "ToricInvariants"}
 )
 
 --------------------
@@ -45,7 +45,7 @@ export {
   "toricMLDegree",
   "probabilisticConormalVarietyOptimizationDegree",
   -- Options
-  "DualVariable", "coeffRing",
+  "DualVariable", "CoeffRing",
   --Types and keys
   "ConormalRing","CNRing","PrimalRing","DualRing","PrimalCoordinates","DualCoordinates",
   --More Types
@@ -715,32 +715,33 @@ assert(2==degree WCI)
 ///
 *-
 
-
 ----------------------------------------
 -- Toric ML Degree Code
 ----------------------------------------
-toricMLIdeal = method(Options => {coeffRing => QQ})
+toricMLIdeal = method(Options => {CoeffRing => QQ})
 toricMLIdeal(Matrix, List, List) := Ideal => opts -> (A, c, u) -> (
+    if not (rank A == min(numgens target A, numgens source A)) then error("The matrix is not full rank.");
     t := symbol t;
     n := #c;
-    R := QQ[t_1..t_(numgens target A)];
+    R := (opts.CoeffRing)[t_1..t_(numgens target A)];
     N := sum u;
     toricMapA := transpose matrix {for i from 0 to n-1 list c_i*R_(entries A_i)};
     u = transpose matrix {u};
     A = sub(A,R); 
-    MLIdeal := ideal(A*(N*toricMapA - u));  -- N A*v = A*u
+    MLIdeal := ideal(A*(N*toricMapA - u)); 
     MLIdeal
     )
 
--- add option to specify data vector
--- correct for index of lattice
-toricMLDegree = method(Options => {coeffRing => QQ})
+toricMLDegree = method(Options => {CoeffRing => QQ, Data => null})
 toricMLDegree(Matrix, List) := Number => opts -> (A,c) -> (
-    u := for i from 0 to #c-1 list random(1, 10^5); 
-    MLIdeal := toricMLIdeal(A, c, u);
-    MLdegree := degree saturate(MLIdeal, (product gens ring MLIdeal)); 
+    u := if opts.Data === null then for i from 0 to #c-1 list random(1, 10^5) else opts.Data;
+    D := smithNormalForm(A, ChangeMatrix => {false, false}, KeepZeroes => false);  
+    MLIdeal := toricMLIdeal(A, c, u, CoeffRing => opts.CoeffRing);
+    MLdegree := (degree saturate(MLIdeal, (product gens ring MLIdeal))) / (det D); 
     MLdegree
     )
+
+
 
 TEST ///
 A = matrix {{1,1,1,0,0,0,0,0,0}, {0,0,0,1,1,1,0,0,0},{0,0,0,0,0,0,1,1,1},
@@ -750,8 +751,6 @@ assert(2 == toricMLDegree(A, c));
 c = {1,2,3,1,1,1,1,1,1};
 assert(6 == toricMLDegree(A,c));
 ///
-
-
 ----------------------------------------
 --Using witness sets code
 ----------------------------------------
@@ -1626,7 +1625,7 @@ Usage
   toricMLIdeal(A, c, u)
 Inputs
   A:
-    the matrix of exponents defining the monomial map that parameterizes the toric variety
+    A full rank matrix of exponents defining the monomial map that parameterizes the toric variety
   c: 
     list of numbers used to create the scaled toric variety
   u:
@@ -1634,7 +1633,7 @@ Inputs
 Outputs
   :Ideal
     the critical ideal of likelihood equations for the corresponding scaled toric variety 
-    as described in Birch's theorem.
+    as described in Birch's theorem. See proposition 2.5 in https://math.berkeley.edu/~bernd/owl.pdf. 
 Description
   Text
     Computes the critical ideal of a scaled toric variety using the equations 
@@ -1644,9 +1643,11 @@ Description
     c = {1,2,3,1,1,1,1,1,1}
     u = {15556, 84368, 98575, 27994, 61386, 84123, 62510, 37430, 34727};
     toricMLIdeal(A, c, u)
---Caveat
+--Caveat   
 --  todo
---SeeAlso
+SeeAlso
+    toricMLDegree
+    parametricMLIdeal
 --  
 ///
 
@@ -1659,7 +1660,7 @@ Usage
   toricMLDegree(A, c)
 Inputs
   A:
-    the matrix of exponents defining the monomial map that parameterizes the toric variety
+    A full rank matrix of exponents defining the monomial map that parameterizes the toric variety
   c: 
     list of numbers used to create the scaled toric variety
 Outputs
@@ -1668,13 +1669,15 @@ Outputs
 Description
   Text
     Computes the maximum likelihood degree of a toric variety using the equations 
-    defined in Birch's theorem and randomly generated data
+    defined in Birch's theorem and randomly generated data. See proposition 2.5 in https://math.berkeley.edu/~bernd/owl.pdf.
   Example
     A = matrix {{1,1,1,0,0,0,0,0,0}, {0,0,0,1,1,1,0,0,0},{0,0,0,0,0,0,1,1,1},{1,0,0,1,0,0,1,0,0},{0,1,0,0,1,0,0,1,0},{0,0,1,0,0,1,0,0,1}}
     c = {1,2,3,1,1,1,1,1,1}
     toricMLDegree(A,c)
---Caveat
---  todo
+Caveat
+    The Smith Normal Form is automatically 
+    used to determine if the parameterization is many-to-one and correct for this.
+-- todo
 --SeeAlso
 --  
 ///
