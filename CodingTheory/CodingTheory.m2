@@ -97,7 +97,6 @@ export {
     "codewords",
     "genericCode",
     "bitflipDecode",
-    "MaxIterations",
     "shorten",
     "vNumber",
     "footPrint",
@@ -112,7 +111,7 @@ export {
     "minimumWeight",
     "matroidPartition",
     "weight",
-    "enumerateError"
+    "enumerateVectors"
     }
 
 exportMutable {}
@@ -541,8 +540,8 @@ subsetToList := (n, subset) -> (
        	)
     );
 
-minimumWeight = method(TypicalValue => Number)
-minimumWeight LinearCode := Number => C -> (
+minimumWeight = method(TypicalValue => ZZ)
+minimumWeight LinearCode := ZZ => C -> (
     M := matrix C.Generators;
     k := length C.Generators; --Assumes generators are linearly independent?
     n := length C;
@@ -597,7 +596,7 @@ minimumWeight LinearCode := Number => C -> (
         G := reduceMatrix(M_permutation);
     	
 	sameWeightWords := apply(subsets(k,w), x -> subsetToList(k,x));
-    	sameWeightWords = flatten apply(sameWeightWords, x -> enumerateError(ring(C), x));
+    	sameWeightWords = flatten apply(sameWeightWords, x -> enumerateVectors(ring(C), x));
     	
         specialCodewords := apply(sameWeightWords, u -> flatten entries ((matrix {toList u})*G));
     		
@@ -1448,13 +1447,14 @@ random (QuotientRing, ZZ, ZZ) := LinearCode => opts -> (R, n, k) -> (
  
  
  vasFunction = method(TypicalValue => ZZ);
- vasFunction (ZZ,ZZ,Ideal) := (d,r,I) ->(
- min apply(apply(subsets(apply(apply(apply(toList (set(0..char ring I-1))^**(hilbertFunction(d,coker gens gb I))-(set{0})^**(hilbertFunction(d,coker gens gb I)),toList),x -> basis(d,coker gens gb I)*vector deepSplice x),z->ideal(flatten entries z)),r)
-,ideal),
- x -> if #set flatten entries mingens ideal(leadTerm gens x)==r and not quotient(I,x)==I
-         then degree(coker gens gb quotient(I,x))
-      else degree(coker gens gb I)
-      )
+ vasFunction (ZZ,ZZ,Ideal) := (d,r,I) ->(     
+ min apply(
+     apply(subsets(apply(apply(apply(toList (set(0..char ring I-1))^**(hilbertFunction(d,coker gens gb I))-(set{0})^**(hilbertFunction(d,coker gens gb I)),toList),x -> basis(d,coker gens gb I)*vector deepSplice x),z->ideal(flatten entries z)),r),ideal),
+     x ->(if #set flatten entries mingens ideal(leadTerm gens x)==r and not quotient(I,x)==I
+     	 then degree(coker gens gb quotient(I,x))
+     	 else degree(coker gens gb I)
+     	 )
+ )
 )
 
  
@@ -1482,17 +1482,17 @@ H := matrix(R, {
 	{0,0,0,0,1,1,0},
 	{0,0,0,0,1,0,1}});
 v := vector transpose matrix(R, {{0,1,0,0,1,0,0}});
-print(bitflipDecode(H,v));
+print(bitflipDecode(H,v,100));
 
 *-
-bitflipDecode = method(TypicalValue => List, Options => {MaxIterations => 100})
-bitflipDecode(Matrix, Vector) := opts -> (H, v) -> (
+bitflipDecode = method(TypicalValue => List)
+bitflipDecode(Matrix, Vector, ZZ) := (H, v, maxI) -> (
     w := v;
     if(H*w == 0_(target H)) then(
 	return entries w;
 	);
     
-    for iteration from 0 to (opts.MaxIterations)-1 do(
+    for iteration from 0 to maxI-1 do(
     	n := rank target H;
     	fails := positions(entries (H*w), i -> i==1);
     	failsRows := select(pairs entries H, i -> member(first i, set(fails)));
@@ -1589,8 +1589,8 @@ randLDPC(ZZ, ZZ, RR, ZZ) := (n, k, m, b) -> (
 
 -- Given a 0,1 valued list errorBinary, return a list of all the possible ways to replace the
 -- one values in errorBinary with a nonzero element of the finite field R. 
-enumerateError = method(TypicalValue => List)
-enumerateError(Ring, List) := (R, errorBinary) -> (
+enumerateVectors = method(TypicalValue => List)
+enumerateVectors(Ring, List) := (R, errorBinary) -> (
     elts := for i from 1 to (R.order)-1 list( (first gens R)^i);
     ones := positions(errorBinary, x -> x == 1);
     prim := first gens R;
@@ -1643,7 +1643,7 @@ syndromeDecode(LinearCode, Matrix, ZZ) := (C, v, minDist) -> (
    	    if member(i, x) then 1 else 0
 	    )
 	);
-    lookupTable = flatten apply(lookupTable, x -> enumerateError(R, x));
+    lookupTable = flatten apply(lookupTable, x -> enumerateVectors(R, x));
     lookupTable = apply(lookupTable, x -> transpose matrix(R, {x}));
     lookupTable = apply(lookupTable, x -> {H*x,x});
     lookupHash := new HashTable from lookupTable;
@@ -2161,6 +2161,23 @@ document {
 -- Use this section for Linear Code documentation:
 -----------------------------------------------
 -----------------------------------------------
+document {
+    Key => {weight, (weight, BasicList)},
+    Headline => "The Hamming weight of a list.",
+    Usage => "weight(L)",
+    "Returns the number of non-zero entries of the list L.", 
+    "These constructors are provided by the package ", TO CodingTheory, ".",
+    Inputs => {
+	"L" => BasicList => {"A list of numbers from any ring."}
+	},
+    Outputs => {
+	Number => {"The number of nonzero entries of L."}
+	},
+    EXAMPLE {
+	"weight({1,0,1,0,1})",
+	"weight({0, 123, 48, 0, 256})"
+	}
+    }
     
 document {
     Key => {linearCode, (linearCode,Module), (linearCode,GaloisField,List), (linearCode,Module,List)},
@@ -2322,23 +2339,24 @@ document {
 	}
     }
 document {
-    Key => {bitflipDecode, (bitflipDecode,Matrix, Vector)},
+    Key => {bitflipDecode, (bitflipDecode,Matrix, Vector, ZZ)},
     Headline => "An experimental implementation of a message passing decoder.",
     Usage => "bitflipDecode(H,v)",
     Inputs => {
 	"H" => Matrix => {"The parity check matrix."},
-	"v" => Vector => {"The codeword to decode."}	
+	"v" => Vector => {"The codeword to decode."},
+	"maxI" => ZZ => {"The maximum number of iterations before failure."}	
 	},
     Outputs => {
-	List => {}
+	List => {"The resulting codeword."}
 	},
-    "Attempts to decode the vector v relative to the parity check matrix H using a message passing decoding algorithm. The matrix H and the vector v must have entries in GF(2). Returns the empty list if MaxIterations is exceeded.",
+    "Attempts to decode the vector v relative to the parity check matrix H using a message passing decoding algorithm. The matrix H and the vector v must have entries in GF(2). Returns the empty list if maxI is exceeded.",
     " At each iteration, this function flips all the bits of v that fail the maximum number of parity check equations from H. This is experimental because it has not been fully tested. The output is only guarenteed to be a codeword of the code defined by H.",
     EXAMPLE {
 	"R=GF(2);",
 	"H := matrix(R, {{1,1,0,0,0,0,0},{0,1,1,0,0,0,0},{0,1,1,1,1,0,0},{0,0,0,1,1,0,0},{0,0,0,0,1,1,0},{0,0,0,0,1,0,1}});",
 	"v := vector transpose matrix(R, {{1,0,0,1,0,1,1}});",
-	"bitflipDecode(H,v)"
+	"bitflipDecode(H,v,100)"
 	}
     }
 document {
@@ -2377,14 +2395,6 @@ document {
 	"C2.ParityCheckMatrix"
 	}
     }
-
-document {
-    Key => MaxIterations,
-    Headline => "Specifies the maximum amount of iterations before giving up. Default is 100.",
-    TT "MaxIterations", " -- Specifies the max iterations.",
-    PARA{"This symbol is provided by the package ", TO CodingTheory, "."}
-    }
-
 
 doc ///
    Key
@@ -2491,24 +2501,60 @@ doc ///
 	   C1 == C2
        
 ///
-   
+
+
+
 document {
-   Key => {randLDPC, (randLDPC, ZZ, ZZ, RR, ZZ)},
-   Headline => "Generates a low density family of parity check matrices with given parameters.",
-   Usage => "randLDPC(n, k, m, b)",
-   Inputs => {
+    Key => {minimumWeight, (minimumWeight, LinearCode)},
+    Headline => "Computes the minimum weight of a linear code.",
+    Usage => "minimumWeight(C)",
+    "Returns the minimum weight of a non-zero codeword of the linear code C. The linear code C may be over any finite field.",
+    Inputs => {
+	"C" => LinearCode => {"The linear code whose minimum distance to compute."}
+	},
+    Outputs => {
+	ZZ => {"The minimum weight of the given linear code."}
+	},
+    EXAMPLE {
+	"minimumWeight(HammingCode(2,3))"
+	}
+    }	 
+
+document {
+    Key => {enumerateVectors, (enumerateVectors, Ring, List)},
+    Headline => "A way to enumerate vectors over a finite field with a given set of non-zero coordinates.",
+    Usage => "enumerateVectors(F, L)",
+    "Given a 0,1 valued list L, return a list of all the possible ways to replace the",
+    "one values in L with a nonzero element of the finite field R.",
+    Inputs => {
+	"R" => Ring => {"The finite field of the resulting lists entries."},
+	"L" => List => {"A 0,1 valued list."}
+	},
+    Outputs => {
+	List => {"A list of lists that correspond to all possible vectors over R that have the same set of nonzero entries as L."}
+	},
+    EXAMPLE {
+	"R := GF(3);",
+	"enumerateVectors(R, {1,0,1,0,1})"
+	}
+    } 
+document {
+    Key => {randLDPC, (randLDPC, ZZ, ZZ, RR, ZZ)},
+    Headline => "Generates a low density family of parity check matrices with given parameters.",
+    Usage => "randLDPC(n, k, m, b)",
+    Inputs => {
 	"n" => ZZ => {"The number of columns of H."},
 	"k" => ZZ => {"The number of rows of H is n-k."},
 	"m" => RR => {"The slope of the line which relates n and the number of ones in H."},
 	"b" => ZZ => {"The constant term of the line which relates n and the number of ones in H."}
 	},
-   Outputs => {
-       "H" => Matrix => {"An (n-k) x n matrix over GF(2) with floor(n*m) + b ones. "}
+    Outputs => {
+       	"H" => Matrix => {"An (n-k) x n matrix over GF(2) with floor(n*m) + b ones. "}
 	},
-    	"The number of ones in H is determined by the formula floor(n*m) + b. ",
-	"Since this formula is linear in the number of columns of H, randLDPC produces a sparse sequence of matrices ",
-    	"for a fixed set of parameters k, m and b.",
-	EXAMPLE {
+    "The number of ones in H is determined by the formula floor(n*m) + b. ",
+    "Since this formula is linear in the number of columns of H, randLDPC produces a sparse sequence of matrices ",
+    "for a fixed set of parameters k, m and b.",
+    EXAMPLE {
 	"randLDPC(10,5,3.0,0)"
 	}
  }  
