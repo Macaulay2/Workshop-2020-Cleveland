@@ -6,6 +6,7 @@ newPackage(
     	Authors => {
 	     {Name => "Henry Chimal-Dzul", Email => "hc118813@ohio.edu"},
 	     {Name => "Taylor Ball", Email => "trball13@gmail.com"},
+	     {Name => "Delio Jaramillo-Velez", Email => "djaramillo@math.cinvestav.mx"},
 	     {Name => "Hiram Lopez", Email => "h.lopezvaldez@csuohio.edu"},
 	     {Name => "Nathan Nichols", Email => "nathannichols454@gmail.com"},	     
 	     {Name => "German Vera", Email => "gveram1100@gmail.com"},
@@ -1026,6 +1027,13 @@ quasiCyclicCode(List) := LinearCode => V -> (
     
     )
 
+
+-*
+F = GF(5)
+L = apply(toList(1..2),j-> apply(toList(1..4),i-> random(F)))
+C=quasiCyclicCode(L)
+*-
+
 HammingCode = method(TypicalValue => LinearCode)
 HammingCode(ZZ,ZZ) := LinearCode => (q,r) -> (
         
@@ -1407,60 +1415,67 @@ random (QuotientRing, ZZ, ZZ) := LinearCode => opts -> (R, n, k) -> (
  
  
    
- -----------------------------------------------------------
- --****************** Footprint Function ********************
- footPrint = method(TypicalValue => ZZ);
- footPrint (ZZ,ZZ,Ideal) := (d,r,I) ->(
- mD:=max apply(apply(apply(subsets(flatten entries basis(d,coker gens gb I),r),toSequence),ideal),x->if not quotient(ideal(leadTerm gens gb I),x)==ideal(leadTerm gens gb I) then 
-    degree coker gens gb ideal(ideal(leadTerm gens gb I),x) 
- else 0 );
- degree coker gens gb I - mD
- )
- 
+-----------------------------------------------------------
+--****************** Footprint Function ********************
+footPrint = method(TypicalValue => ZZ);
+footPrint (ZZ,ZZ,Ideal) := (d,r,I) ->(
+var1:=subsets(flatten entries basis(d,coker gens gb I),r); 
+var2:=apply(var1,toSequence);
+var3:=apply(var2,ideal);
+var4:=apply(var3,x->if not quotient(ideal(leadTerm gens gb I),x)==ideal(leadTerm gens gb I) then 
+    degree coker gens gb ideal(ideal(leadTerm gens gb I),x)
+    else 0 );
+degree coker gens gb I - max var4
+)
  
 -----------------------------------------------------------
- --****************** GMD Functions ********************
+--****************** GMD Functions ********************
  
- --------------------------------------------------------
- --=====================hyp function======================
- hYpFunction = method(TypicalValue => ZZ);
- hYpFunction (ZZ,ZZ,Ideal) := (d,r,I) ->(
- max apply(apply(subsets(apply(apply(apply(toList (set(0..char ring I-1))^**(hilbertFunction(d,coker gens gb I))-(set{0})^**(hilbertFunction(d,coker gens gb I)),toList),x -> basis(d,coker gens gb I)*vector deepSplice x),z->ideal(flatten entries z)),r)
-,ideal),
- x -> if #set flatten entries mingens ideal(leadTerm gens x)==r and not quotient(I,x)==I
-         then degree(I+x)
-      else 0
-)
- )
-  
- ------------------------GMD Function--------------------------------
- 
- gMdFunction = method(TypicalValue => ZZ);
- gMdFunction (ZZ,ZZ,Ideal) := (d,r,I) ->(
- degree(coker gens gb I)-hYpFunction(d,r,I)
+--------------------------------------------------------
+--=====================hyp function======================
+hYpFunction = method(TypicalValue => ZZ);
+hYpFunction (ZZ,ZZ,Ideal) := (d,r,I) ->(
+
+var1:=apply(toList (set(0..char ring I-1))^**(hilbertFunction(d,coker gens gb I))
+     -(set{0})^**(hilbertFunction(d,coker gens gb I)),toList);
+var2:=apply(var1,x -> basis(d,coker gens gb I)*vector deepSplice x);
+var3:=apply(var2,z->ideal(flatten entries z));
+var4:=subsets(var3,r);
+var5:=apply(var4,ideal);
+var6:=apply(var5,x -> if #set flatten entries mingens ideal(leadTerm gens x)==r and not quotient(I,x)==I
+    then degree(I+x)
+    else 0);
+max var6
+) 
+
+
+------------------------GMD Function--------------------------------
+
+gMdFunction = method(TypicalValue => ZZ);
+gMdFunction (ZZ,ZZ,Ideal) := (d,r,I) ->(
+degree(coker gens gb I)-hYpFunction(d,r,I)
  )
 
  
   
- --------------------------------------------------------------
- --===================== Vasconcelos Function ================
- 
- 
- vasFunction = method(TypicalValue => ZZ);
- vasFunction (ZZ,ZZ,Ideal) := (d,r,I) ->(     
- min apply(
-     apply(subsets(apply(apply(apply(toList (set(0..char ring I-1))^**(hilbertFunction(d,coker gens gb I))-(set{0})^**(hilbertFunction(d,coker gens gb I)),toList),x -> basis(d,coker gens gb I)*vector deepSplice x),z->ideal(flatten entries z)),r),ideal),
-     x ->(if #set flatten entries mingens ideal(leadTerm gens x)==r and not quotient(I,x)==I
-     	 then degree(coker gens gb quotient(I,x))
-     	 else degree(coker gens gb I)
-     	 )
- )
+--------------------------------------------------------------
+--===================== Vasconcelos Function ================
+
+vasFunction = method(TypicalValue => ZZ);
+vasFunction (ZZ,ZZ,Ideal) := (d,r,I) ->(
+var1:=apply(toList (set(0..char ring I-1))^**(hilbertFunction(d,coker gens gb I))
+ 	    -(set{0})^**(hilbertFunction(d,coker gens gb I)),toList);
+var2:=apply(var1,x -> basis(d,coker gens gb I)*vector deepSplice x); 
+var3:=apply(var2,z->ideal(flatten entries z));
+var4:=subsets(var3,r);
+var5:=apply(var4,ideal);
+var6:=apply(var5, x -> if #set flatten entries mingens ideal(leadTerm gens x)==r and not quotient(I,x)==I
+                           then degree(coker gens gb quotient(I,x))
+                        else degree(coker gens gb I)
+       );
+min var6
 )
 
- 
- 
- 
- 
 
 
 ----------------------------------------------------------------------------------
@@ -1998,6 +2013,34 @@ C=linearCode(random(F^3,F^5))
 assert(genericCode(C)==linearCode(F^5))
 ///
 
+TEST ///
+--quasi-cyclic Codes
+F = GF(5)
+L = apply(toList(1..2),j-> apply(toList(1..4),i-> random(F)))
+C=quasiCyclicCode(L)
+assert ( length C==4)
+///
+
+TEST ///
+--quasi-cyclic codes 
+F = GF(8)
+L = apply(toList(1..2),j-> apply(toList(1..5),i-> random(F)))
+C=quasiCyclicCode(F,L)
+assert ( length C==5)
+///
+
+TEST ///
+-- reduceMatrix
+F = GF(4)
+n = 7
+k = 3
+L = apply(toList(1..k),j-> apply(toList(1..n),i-> random(F)))
+m=matrix(L)
+M=reduceMatrix(m)
+assert (rank m== rank M)
+///
+
+
 -----------------------------------------------
 -----------------------------------------------
 -- Use this section for Evaluation Code Tests
@@ -2155,7 +2198,48 @@ document {
 	}
     	
 	}
-    
+
+
+doc ///
+    Key 
+    	LinearCode
+    Headline
+    	class of linear codes
+    Description
+    	Text
+	    A linear code is the image of some mapping between finitely generated modules, where each module is taken to be over 
+	    the same finite field. A code word is an element of the image. A linear code in Macaulay2 is implemented as a hash table.
+	    The keys of the hash table correspond to common representations of the code, as well as information about its structure. 
+	    The keys include the base field of the modules, a set of generators for the code, and more. To construct a linear code, 
+	    see @TO rawLinearCode@ and @TO linearCode@.
+	Example
+	    F1=GF(2)
+	    G1={{1,1,0,0,0,0},{0,0,1,1,0,0},{0,0,0,0,1,1}}
+	    C1=linearCode(F1,G1)
+	    C1.Code	
+	Text
+	    For the mapping defined above, we call the codomain of the mapping the Ambient Module. The length of a code is defined
+	    to be the rank of this module. 
+      	Example 
+	    F2=GF(3)
+	    G2={{1,0,0,0,0,1,1,1},{0,1,0,0,1,0,1,1},{0,0,1,0,1,1,0,1},{0,0,0,1,1,1,1,0}}  
+	    C2=linearCode(F2,G2)
+	    AM=C2.AmbientModule
+	    rank(AM)==length(C2)  
+	Text
+	    Since a linear code $C$ is a vector subspace over some finite field, we may represent it using a Generator Matrix, i.e. a
+	    matrix whose rows form a basis for $C$. The dimension of a code is the rank of the generator matrix.
+	Example
+	    dim(C2)==rank(C2.GeneratorMatrix)
+	Text
+	    A linear code in Macaulay2 also includes a parity check matrix $H$, which generates the vector space orthogonal to $C$. Let $c$
+	    be a code word in $C$ and $h$ a vector in the space generated by the rows of $H$. Then the dot product between $c$ and $h$
+	    is zero.
+	Example
+	    c=matrix{G2_0}
+	    h=transpose matrix({(entries(C2.ParityCheckMatrix))_0})
+ 	    c*h
+///
 -----------------------------------------------
 -----------------------------------------------
 -- Use this section for Linear Code documentation:
@@ -2338,6 +2422,26 @@ document {
 	"E.ParityCheckMatrix"
 	}
     }
+document {
+    Key => {reduceMatrix, (reduceMatrix, Matrix)},
+    Headline => "Given any matrix, compute the equivalent reduce matrix",
+    Usage => "reduceMatrix(Matrix)",
+    "If generator or parity check matrix is not full rank, this funtion choose a subset of rows that are generators",
+    Inputs => {
+    "M" => Matrix => {"A matrix."}
+          },
+    Outputs => {
+          Matrix => {"The equivalente reduce matrix of M"}
+           },
+      EXAMPLE {
+       "F = GF(4)",
+       "n = 7",
+       "k = 3",
+       "L = apply(toList(1..k),j-> apply(toList(1..n),i-> random(F)))",
+       "m=matrix(L)",
+       "reduceMatrix(m)",      
+           }
+      }
 document {
     Key => {bitflipDecode, (bitflipDecode,Matrix, Vector, ZZ)},
     Headline => "An experimental implementation of a message passing decoder.",
@@ -2810,7 +2914,7 @@ document {
     
     Key => {field,(field,LinearCode)},
     
-    Headline => "",
+    Headline => "Returns the field where the entries of the field belong.",
     
     Usage => "field C",
     
@@ -2849,6 +2953,51 @@ document {
     "genericCode(C)"
     }
     }
+
+document {
+     Key => {cyclicCode, (cyclicCode, GaloisField , RingElement, ZZ)},
+     Headline => "Given a polynomial generates a cyclic code of lenght n over the GaloisField.",
+     Usage => "cyclicCode(F ,G, n)",
+     Inputs => {
+         "F" => GaloisField => {"The Ring of coefficients of the polynomial."},
+ 	"G" => RingElement => {"A polynomial with coefficients in F."},
+ 	"n" => ZZ => {"The lenght of the code."}
+ 	},
+
+      Outputs => {
+ 	  "C" => LinearCode => {"if G is a divisor of x^n-1 Cyclic returns a Code with generating polynomial G and lenght n.
+                                   Else  Returns a code with a circulant matrix as generating matrix"}
+ 	  },
+       "G is a polynomial over F and n is an integer.",
+       "Returns the Cyclic code with generating polynomial G over F and lenght n.",
+       EXAMPLE {
+ 	  "F=GF(5);",
+ 	   "R=F[x];",
+ 	   "G=x-1;",
+ 	   "C1=cyclicCode(F,G,8);"
+ 	   }
+         }
+
+document {
+    Key => {quasiCyclicCode,(quasiCyclicCode, GaloisField,List), (quasiCyclicCode, List)},
+    Headline => "Quasi-cyclic code code constructor",
+    Usage =>"quasiCyclicCode(V)/quasiCyclicCode(F,V)",
+    Inputs => {
+          "V" => List => {"V is a list of vectors."},
+          "F" => GaloisField => {"G is the basefield of V"}
+          },
+    Outputs => {
+    "C" => LinearCode => {"Quasi-cyclic code"}
+               },
+           "Returns the quasi-cyclic code with blocks of cyclic matrices with each v in V.",
+       EXAMPLE {
+                "F = GF(5)",
+            "L = apply(toList(1..2),j-> apply(toList(1..4),i-> random(F)))",
+            "C=quasiCyclicCode(L)"
+            }
+       }
+
+
 
 -----------------------------------------------
 -----------------------------------------------
@@ -3032,31 +3181,6 @@ document {
 	"peek C"
 	}
     }
-
-document {
-     Key => {cyclicCode, (cyclicCode, GaloisField , RingElement, ZZ)},
-     Headline => "Given a polynomial generates a cyclic code of lenght n over the GaloisField.",
-     Usage => "cyclicCode(F ,G, n)",
-     Inputs => {
-         "F" => GaloisField => {"The Ring of coefficients of the polynomial."},
- 	"G" => RingElement => {"A polynomial with coefficients in F."},
- 	"n" => ZZ => {"The lenght of the code."}
- 	},
-
-      Outputs => {
- 	  "C" => LinearCode => {"if G is a divisor of x^n-1 Cyclic returns a Code with generating polynomial G and lenght n.
-                                   Else  Returns a code with a circulant matrix as generating matrix"}
- 	  },
-       "G is a polynomial over F and n is an integer.",
-       "Returns the Cyclic code with generating polynomial G over F and lenght n.",
-       EXAMPLE {
- 	  "F=GF(5);",
- 	   "R=F[x];",
- 	   "G=x-1;",
- 	   "C1=cyclicCode(F,G,8);"
- 	   }
-         }
-
 
 
  document {
