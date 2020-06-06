@@ -1089,7 +1089,11 @@ Description
     [2]  Jan Draisma, Emil Horobeţ, Giorgio Ottaviani, Bernd Sturmfels, and Rekha R. Thomas, 
     The Euclidean distance degree of an algebraic variety, Found. Comput. Math. 16 (2016), no. 1, 99–149. MR 3451425. \break
     [3] Serkan Hoşten, Amit Khetan,and Bernd Sturmfels, 
-    Solving the likelihood equations, Found. Comput. Math. 5 (2005), no. 4, 389–407. \break 
+    Solving the likelihood equations, Found. Comput. Math. 5 (2005), no. 4, 389–407. \break
+    [4] Carlos  Am ́endola,  Nathan  Bliss,  Isaac  Burke,  Courtney  R.  Gibbons,  
+    Martin  Helmer,  Serkan  Ho ̧sten,  Evan  D.  Nash,Jose  Israel  Rodriguez,  
+    and  Daniel  Smolkin.  The  maximum  likelihood  degree  of  toric  varieties.
+    Journal  of  SymbolicComputation, 92:222–242, May 2019.
   Example
     todo
 Caveat
@@ -1706,7 +1710,7 @@ Inputs
 Outputs
   :Ideal
     the critical ideal of likelihood equations for the corresponding scaled toric variety 
-    as described in Birch's theorem. See proposition 2.5 in https://math.berkeley.edu/~bernd/owl.pdf. 
+    as described in Birch's theorem. @TO2{AlgebraicOptimization,"[1, Cor. 7.2.9]"}@
 Description
   Text
     Computes the critical ideal of a scaled toric variety using the equations 
@@ -1716,7 +1720,16 @@ Description
     c = {1,2,3,1,1,1,1,1,1}
     u = {15556, 84368, 98575, 27994, 61386, 84123, 62510, 37430, 34727};
     toricMLIdeal(A, c, u)
---Caveat   
+  Text
+    References:\break
+    [1] Seth Sullivant, 
+    Algebraic Statistics, American Mathematical Soc.\break
+    [2] Carlos  Am ́endola,  Nathan  Bliss,  Isaac  Burke,  Courtney  R.  Gibbons,  
+    Martin  Helmer,  Serkan  Ho ̧sten,  Evan  D.  Nash,Jose  Israel  Rodriguez,  
+    and  Daniel  Smolkin.  The  maximum  likelihood  degree  of  toric  varieties.
+    Journal  of  SymbolicComputation, 92:222–242, May 2019.
+Caveat
+    The vector $(1,1,\ldots 1)$ must be in the rowspan of A.    
 --  todo
 SeeAlso
     toricMLDegree
@@ -1737,7 +1750,7 @@ Inputs
   c: 
     list of numbers used to create the scaled toric variety
   Data =>
-    A list of numerical data with default value null. By default, this data is chosen at random from the natural numbers.
+    A list of numerical data. By default, this data is chosen at random from the natural numbers.
   CoeffRing => 
     A the ring of coefficients for the computation to be performed over. By default this ring is QQ.  
 Outputs
@@ -1746,13 +1759,22 @@ Outputs
 Description
   Text
     Computes the maximum likelihood degree of a toric variety using the equations 
-    defined in Birch's theorem and randomly generated data. See proposition 2.5 in https://math.berkeley.edu/~bernd/owl.pdf. The Smith Normal Form is automatically 
-    used to determine if the parameterization is many-to-one and correct for this.
+    defined in Birch's theorem and randomly generated data. The Smith Normal Form is automatically 
+    used to determine if the parameterization is many-to-one and correct for this. @TO2{AlgebraicOptimization,"[1, Cor. 7.2.9]"}@
   Example
     A = matrix {{1,1,1,0,0,0,0,0,0}, {0,0,0,1,1,1,0,0,0},{0,0,0,0,0,0,1,1,1},{1,0,0,1,0,0,1,0,0},{0,1,0,0,1,0,0,1,0},{0,0,1,0,0,1,0,0,1}}
     c = {1,2,3,1,1,1,1,1,1}
     toricMLDegree(A,c)
---Caveat
+  Text
+    References:\break
+    [1] Seth Sullivant, 
+    Algebraic Statistics, American Mathematical Soc.\break
+    [2] Carlos  Am ́endola,  Nathan  Bliss,  Isaac  Burke,  Courtney  R.  Gibbons,  
+    Martin  Helmer,  Serkan  Ho ̧sten,  Evan  D.  Nash,Jose  Israel  Rodriguez,  
+    and  Daniel  Smolkin.  The  maximum  likelihood  degree  of  toric  varieties.
+    Journal  of  SymbolicComputation, 92:222–242, May 2019.
+Caveat
+    The vector $(1,1,\ldots 1)$ must be in the rowspan of A. 
     
 -- todo
 SeeAlso
