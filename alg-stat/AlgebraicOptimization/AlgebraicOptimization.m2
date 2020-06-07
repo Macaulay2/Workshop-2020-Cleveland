@@ -172,6 +172,33 @@ assert(probabilisticEDDegree(I, Data => {2/4,1/2,-1/2}, Projective => false) == 
 ///
 
 
+---------------------------
+-- fritzJohnEDdegree ------
+---------------------------
+fritzJohnEDDegree = method()
+fritzJohnEDDegree (Ideal, Ideal) := ZZ => (WI, I) -> (
+  R := ring I;
+  l := symbol l;
+  S := (coefficientRing(R))[l_1..l_(#WI_*)];
+  RS := R ** S;
+  J := ideal (sub(vars S, RS) * sub(transpose jacobian WI, RS));
+  randomAffine := sub(random(1,S) - 1, RS);
+  WIsing := J + sub(I,RS) + randomAffine; -- witness of the singular locus of I
+  RWIsing := 
+  u := apply(#R_*, i -> random(coefficientRing R));
+  uMatrix := matrix{u};
+  Ibar := (vars R - uMatrix) || transpose jacobian WI;
+  m := symbol m;
+  T := (coefficientRing(R))[m_1..m_(#WI_*+1)];
+  RT := R**T;
+  WIbar := ideal(sub(vars T, RT)*sub(Ibar, RT)) + sub(I,RT) + sub(random(1,T) - 1, RT);  -- witness of Ibar
+  RWIbar := sub(eliminate(gens T / (i -> sub(i,RT)), WIbar), R);
+  saturate(RWIbar, sub(eliminate(gens S / (i -> sub(i,RS)), WIsing), R))
+)
+
+
+
+
 --------------------
 --symbolicEDDegree
 --------------------
