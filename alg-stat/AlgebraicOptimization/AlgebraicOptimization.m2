@@ -749,9 +749,9 @@ TEST ///
 A = matrix {{1,1,1,0,0,0,0,0,0}, {0,0,0,1,1,1,0,0,0},{0,0,0,0,0,0,1,1,1},
     {1,0,0,1,0,0,1,0,0},{0,1,0,0,1,0,0,1,0},{0,0,1,0,0,1,0,0,1}};
 c = {1, 1, 1, 1, 1, 1, 1, 1, 1};
-assert(2 == toricMLDegree(A, c));
+assert(1 == toricMLDegree(A, c));
 c = {1,2,3,1,1,1,1,1,1};
-assert(6 == toricMLDegree(A,c));
+assert(3 == toricMLDegree(A,c));
 ///
 ----------------------------------------
 --Using witness sets code
