@@ -403,7 +403,7 @@ assert(symbolicMultidegreeEDDegree(J) == 13)
 ///
 
 probabilisticMultidegreeEDDegree = method();
-probabilisticMultiDegrdeEDDegree Ideal := ZZ => I -> (
+probabilisticMultidegreeEDDegree Ideal := ZZ => I -> (
   S := conormalRing ring I;
   N := conormalIdeal(I,S);
   d := dim N - 2;
