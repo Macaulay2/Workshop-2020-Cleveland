@@ -171,10 +171,7 @@ permuteToStandardForm(Matrix) := M -> (
 
 
 generatorToParityCheck = method(TypicalValue => Matrix)
-generatorToParityCheck(Matrix) := Matrix => M -> (
-    -- this function assumes M is of full rank:
-    if rank M != min(rank M.source, rank M.target) then error "Matrix M is not of full rank.";
-    
+generatorToParityCheck(Matrix) := Matrix => M -> (    
     -- produce canonical form of the generating matrix:
     G := transpose groebnerBasis transpose M;
     
@@ -188,10 +185,16 @@ generatorToParityCheck(Matrix) := Matrix => M -> (
     -- take (n-k) columns of standard generating matrix above:
     redG := Gred_{0..(rank Gred.source - rank Gred -1)};
     
+    -- take the Galois Field over which G is defined
+    F := ring G.source;
+    
+    -- take the rank of redG
+    nk := rank redG.source;
+      
     -- vertically concatenate an identity matrix of rank (n-k),
     -- then transpose :
-    return permuteMatrixColumns(transpose (id_(redG.source) || -redG),inversePermutation(P))
-    
+    return permuteMatrixColumns(transpose (id_(F^nk) || -redG),inversePermutation(P))
+
     )
 
 parityCheckToGenerator = method(TypicalValue => Matrix)
@@ -214,7 +217,6 @@ reduceRankDeficientMatrix(Matrix) := Matrix => M -> (
 	} else return reduceMatrix(M)
     )
 
- 
 -- internal function to validate user's input
 wellDefinedInput  = method(TypicalValue => List)
 
@@ -224,7 +226,7 @@ wellDefinedInput(List) :=  UserInput -> (
     -- or UserInput = {GaloisField or Ring, lengthCode,ListParityCheckRows}
     
     -- check if "baseField" is a Galois field, throw an error otherwise:
-    if not isField UserInput_0 then  "Warning: Codes over non-fields may not unstable.";
+    if not isField UserInput_0 then  error "Codes over non-fields are not defined in this version yet.";
     
     if UserInput_2 != {} then {
     	-- check that the length of all generating codewords equals the rank of AmbienModule:
@@ -232,7 +234,7 @@ wellDefinedInput(List) :=  UserInput -> (
 	    error "Expected codewords all to be the same length and equal to the rank of the Module";
 	    } 
 	else {
-	    -- coerce generators into base field, if possible:
+	    -- coerce generators into base field, if possible, an return them:
 	    return try apply(UserInput_2, codeword -> apply(codeword, entry -> sub(entry, UserInput_0)))
 	     else {
 	    error "Entries of codewords do not live in base field/ring.";
@@ -257,15 +259,11 @@ LinearCode = new Type of HashTable
 rawLinearCode = method()
 rawLinearCode(List) := LinearCode => (inputVec) -> (
     -- use externally facing functions to create list:	
-    -- { AmbientModule, BaseField, Generators, ParityCheckRows, Code}
-    
-    
-    -- check if "baseField" is a field, throw warning otherwise:
-    if not isField(inputVec_1) then print "Warning: Working over non-field.";    
+    -- { AmbientModule, BaseField, Generators, ParityCheckRows}
    
     if inputVec_2 != {} then {
-	-- validate inputs and coerce into base field:
-	newGens := wellDefinedInput({inputVec_1,rank inputVec_0,inputVec_2});
+	-- save generators into new variable
+	newGens := inputVec_2;
 	newGenMat := matrix(newGens);
     } else {
 	-- if generators and generator matrix were undefined:
@@ -274,13 +272,13 @@ rawLinearCode(List) := LinearCode => (inputVec) -> (
     };
     
     if inputVec_3 != {} then {
-	-- validate inputs and coerce into base field:
-	newParRow := wellDefinedInput({inputVec_1, rank inputVec_0, inputVec_3});
-	newParMat := matrix(newParRow);	
+	-- save generators into new variable:
+	newParRow := inputVec_3;
+	newParMat := matrix(newParRow);
 	
      } else {
-	newParMat = generatorToParityCheck(reduceMatrix(newGenMat));
-	newParRow = entries newParMat ;
+	newParMat = generatorToParityCheck(newGenMat);
+	newParRow = entries newParMat;
     };
 
     -- compute generating matrix from parity check matrix, if not already set:
@@ -289,10 +287,8 @@ rawLinearCode(List) := LinearCode => (inputVec) -> (
 	newGens = entries newGenMat;
     };
     
-    -- coerce code matrix into base field:
-    codeSpace := if (reduceMatrix(generators inputVec_4) == generators inputVec_4) then sub(inputVec_4,inputVec_1) else image groebnerBasis sub(inputVec_4,inputVec_1);
-    
-    
+    codeSpace := image transpose newGenMat;
+          
     return new LinearCode from {
         symbol AmbientModule => inputVec_0,
 	symbol BaseField => inputVec_1,
@@ -310,17 +306,19 @@ rawLinearCode(List) := LinearCode => (inputVec) -> (
 -- set ParityCheck => true to have inputs be rows of parity check matrix:
 linearCode = method(Options => {symbol ParityCheck => false})
 
-linearCode(Module,List) := LinearCode => opts -> (S,L) -> (
+linearCode(Module,List) := LinearCode => opts -> (M,L) -> (
     -- constructor for a linear code
     -- input: ambient vector space/module S, list of generating codewords
     -- outputs: code defined by submodule given by span of elements in L
-
-
-    -- { AmbientModule, BaseField, Generators, GeneratorMatrix, ParityCheckRows, ParityCheckMatrix, Code }
+    
+    -- first, check whether user's input is valid or not
+    newL := wellDefinedInput {M.ring,rank M,L};
+ 
+    -- { AmbientModule, BaseField, Generators, GeneratorMatrix, ParityCheckRows, ParityCheckMatrix}
     if opts.ParityCheck then {
-	outputVec := {S, S.ring, {}, L, kernel matrix L};
+	outputVec := {M, M.ring, {}, newL};
 	} else {
-	outputVec =  {S, S.ring, L , {}, image transpose matrix L};
+	outputVec =  {M, M.ring, newL , {}};
 	};
     
     return rawLinearCode(outputVec)
@@ -331,15 +329,19 @@ linearCode(GaloisField,ZZ,List) := LinearCode => opts -> (F,n,L) -> (
     -- input: field, ambient dimension, list of generating codewords
     -- outputs: code defined by module given by span of elements in L
     
-    -- ambient module F^n:
-    S := F^n;
-
-    if opts.ParityCheck then {
-	outputVec := {S, F, {}, L, kernel matrix L};
+    if n>0 then {
+    	-- first, check whether user's input is valid or not
+    	newL := wellDefinedInput {F,n,L};    
+        -- ambient module F^n:
+    	M := F^n;
+	if opts.ParityCheck then {
+	    outputVec := {F^n, F, {}, newL};
+	    } else {
+	    outputVec =  {F^n, F, newL , {}};
+	    };
 	} else {
-	outputVec =  {S, F, L , {}, image transpose matrix L};
+        error "The length of the code should be positive."
 	};
-    
     return rawLinearCode(outputVec)
     
     )
@@ -350,8 +352,17 @@ linearCode(GaloisField,List) := LinearCode => opts -> (F,L) -> (
     
     -- calculate length of code via elements of L:
     n := # L_0;
-        
-    linearCode(F,n,L,opts)
+    
+    --check whether user's input is valid or not
+    newL := wellDefinedInput {F,n,L};
+    
+    if opts.ParityCheck then {
+     	outputVec := {F^n, F, {}, newL};
+	} else {
+	outputVec =  {F^n, F, newL , {}};
+	};
+    
+    return rawLinearCode(outputVec)
     
     )
 
@@ -361,25 +372,48 @@ linearCode(ZZ,ZZ,ZZ,List) := LinearCode => opts -> (p,q,n,L) -> (
     -- output: code defined by module given by span of elements in L
     
     -- Galois Field:
-    R := GF(p,q);
+    F := GF(p,q);
     
-    linearCode(R,n,L)
+    if n>0 then {       
+    --check whether user's input is valid or not
+    newL := wellDefinedInput {F,n,L};
     
-    )
-
+    if opts.ParityCheck then {
+     	outputVec := {F^n, F, {}, newL};
+	} else {
+	outputVec =  {F^n, F, newL , {}};
+	};
+        
+    return rawLinearCode(outputVec)
+    } else {
+    error "The length of the code should be positive."
+    };
+    
+   )
 
 linearCode(Module) := LinearCode => opts -> V -> (
     -- constructor for a linear code
     -- input: some submodule V of S
-    -- outputs: code defined by submodule V
+    -- outputs: if ParityCheck => false then code defined by submodule V
+    --	      	if ParityCheck => true then code defined as the dual 
+    --                            of of the code defined by V
     
     -- produce a set of generators for the specified submodule V:
-    generatorMatrix := transpose generators V;
+    GorP := transpose generators V;
     
-    outputVec := {generatorMatrix.source, generatorMatrix.ring, entries generatorMatrix, {}, V};
+    --obtaining the base ring
+    R := GorP.ring;
     
-    rawLinearCode(outputVec)
+    --check whether the base ring is a GaloisField
+    if not isField R then  error "Codes over non-fields are not defined in this version yet.";
     
+    if opts.ParityCheck then {
+	outputVec := {GorP.source,R,{}, entries GorP};
+	} else {
+	outputVec = {GorP.source,R,entries GorP,{}};	
+	};
+    
+    return rawLinearCode(outputVec)
     )
 
 linearCode(Matrix) := LinearCode => opts -> M -> (
@@ -388,14 +422,16 @@ linearCode(Matrix) := LinearCode => opts -> M -> (
     -- output: if ParityCheck => true then code defined by kernel of M
     --         if ParityCheck => false then code defined by rows of M
     
+    --check whether the base ring is a GaloisField
+    if not isField M.ring then  error "Codes over non-fields are not defined in this version yet.";
 
     if opts.ParityCheck then {
-	outputVec := {M.source, M.ring, {}, entries M, kernel M};
+	outputVec := {M.source, M.ring, {}, entries M};
 	} else {
-	outputVec =  {M.source, M.ring, entries M, {}, image transpose M};
+	outputVec =  {M.source, M.ring, entries M, {}};
 	};
     
-    rawLinearCode(outputVec)
+    return rawLinearCode(outputVec)
       
     )
 
@@ -1711,6 +1747,93 @@ for i from 1 to 1 do(
     );
 ///
 
+TEST ///
+-- linearCode(Module,List)
+R := GF 4;
+M := R^4;
+L := {{1,0,1,0},{1,0,1,0}};
+C := linearCode(M,L);
+assert(C.AmbientModule == M)
+m := matrix apply(L,generator->apply(generator,entry->sub(entry,R)));
+assert(C.GeneratorMatrix == m)
+H := C.ParityCheckMatrix;
+z := matrix apply(toList(1..rank H),i -> apply(toList(1..#L), j->sub(0,R)));
+assert(H*(transpose C.GeneratorMatrix)==z)
+///
+
+TEST ///
+-- linearCode(GaloisField,ZZ,List)
+R := GF 2;
+n := 4;
+L := {{1,0,1,0},{0,1,0,1}};
+C := linearCode(R,n,L);
+assert(C.AmbientModule == R^n)
+newL := apply(L,generator->apply(generator,entry->sub(entry,R)));
+assert(C.Generators == newL)
+G := matrix newL;
+assert(C.GeneratorMatrix == G)
+H := C.ParityCheckMatrix;
+z := matrix apply(toList(1..rank H),i -> apply(toList(1..#L), j->sub(0,R)));
+assert(H*(transpose C.GeneratorMatrix) == z)
+///
+
+TEST ///
+-- linearcode(GaloisField,List)
+R := GF(8,Variable =>a);
+n := 4;
+L := {{1,0,a,0},{0,a,0,a+1}};
+C := linearCode(R,n,L);
+assert(C.AmbientModule == R^n)
+newL := apply(L,generator->apply(generator,entry->sub(entry,R)));
+assert(C.Generators == newL)
+G := matrix newL;
+assert(C.GeneratorMatrix == G)
+H := C.ParityCheckMatrix;
+z := matrix apply(toList(1..rank H),i -> apply(toList(1..#L), j->sub(0,R)));
+assert(H*(transpose C.GeneratorMatrix) == z)
+///
+
+TEST ///
+-- linearCode(ZZ,ZZ,ZZ,List)
+p := 2;
+n := 3;
+l := 4;
+R := GF(p,n);
+L := {{1,1,0,0},{0,0,1,1}};
+C := linearCode(p,n,l,L);
+assert(C.Generators == L)
+assert(C.GeneratorMatrix == C.ParityCheckMatrix)
+///
+
+TEST ///
+-- linearCode(Module)
+R = GF 2;
+M = transpose matrix {apply({1,1,1,1},entry -> sub(entry,R))};
+V = image M;
+C = linearCode(V);
+assert(C.AmbientModule == R^4)
+assert(C.GeneratorMatrix ==  transpose M)
+H = C.ParityCheckMatrix;
+z = transpose matrix {apply({0,0,0},entry ->sub(entry,R))};
+assert(H*(transpose C.GeneratorMatrix) == z)
+///
+
+TEST ///
+-- linearCode(Matrix)
+R = GF 4;
+L = apply({{1,0,1,0},{0,1,1,1}},codeword ->apply(codeword,entry->sub(entry,R)));
+M = matrix L;
+C = linearCode(M);
+assert(C.AmbientModule == R^4)
+assert(C.Generators == L)
+G = C.GeneratorMatrix;
+assert(G == M)
+H = C.ParityCheckMatrix;
+z = matrix apply(toList(1..rank H),i -> apply(toList(1..rank G), j->sub(0,R)))
+assert(H*(transpose G) == z)
+///
+
+TEST ///
 -- generatorToParityCheck constructor
 F = GF(8,Variable => a);
 G = matrix {{1,0,0,a,0,1,1,a},{0,0,0,1,1,1,1,0},{1,1,0,0,0,1,0,0},{1,0,1,0,0,1,1,0}};
@@ -2245,6 +2368,155 @@ doc ///
 -- Use this section for Linear Code documentation:
 -----------------------------------------------
 -----------------------------------------------
+
+document{
+    Key => {linearCode, (linearCode,Module,List), (linearCode,GaloisField,ZZ,List), (linearCode,GaloisField,List), (linearCode,ZZ,ZZ,ZZ,List), (linearCode,Module), (linearCode,Matrix)},
+    Headline => "Functions to construct linear codes over Galois fields.",
+    SYNOPSIS (
+       Usage => "linearCode(M,L)",
+       Inputs => {
+	   "M" => Module => {"A free module which is the ambien module of the linear code."},
+	   "L" => List => {"A non-empty list of codeword that either generate the code or the dual of the code. The codewords in L must be coercible into M."}
+	   },
+       Outputs => {
+	   "C" => LinearCode => {"A linear code whose ambient module is M. "},
+	   },
+       "Given a free module M=F^n, where F is a Galois field, and a non-empty list L of codewords, this function returns a linear code C whose ambient module is M.",
+       "If no optional imput is specified then the code C is generated by L. ",
+       "If the optional input ParityCheck => true is specified then C is the dual of the linear code over F generated by L.",
+       EXAMPLE {
+	"F = GF(4,Variable => a); M = F^5; L = {{1,0,a,0,0},{0,a,a+1,1,0},{1,1,1,a,0}};",
+	"C = linearCode(M,L)",
+	"C.AmbientModule",
+	"C.BaseField",
+	"C.Generators",
+	"C.GeneratorMatrix",
+	"C.ParityCheckMatrix",
+	"C.Code"
+	},
+       "This is an example using the optional argument ParityCheck=>true",
+       EXAMPLE {
+	"F = GF(8,Variable =>a); M = F^4; L = {{a+1,a+1,a+1,a+1}}",
+        "C = linearCode(M,L,ParityCheck => true)",
+	"G = C.GeneratorMatrix",
+	"H = C.ParityCheckMatrix"
+	}
+	),
+    SYNOPSIS (
+       Usage => "linearCode(F,n,L)",
+       Inputs => {
+	   "F" => Module => {"A Galois Field over which the code is defined."},
+	   "n" => ZZ => {"A positive integer which is the length of the code."},
+	   "L" => List => {"A non-empty list of codewords that either generate the code or the dual of the code. The codewords in L must have entries coercible into the field F."}
+	   },
+       Outputs => {
+	   "C" => LinearCode => {"A linear code of length n over F."},
+	   },
+       "Given a Galois Field F, the length of the code n, and a non-empty list L, this function returns a linear code C of length n over F.",
+       "If no optional input is specified then the linear code C is generated by L.",
+       "If the optional input ParityCheck => true is specified then the code C is the dual of the code generated by L.",
+       EXAMPLE {
+	   "F = GF 4; n = 4; L = {{1,0,1,0},{1,0,1,0}};",
+	   "C = linearCode(F,n,L)",
+	   "K = GF(9,Variable => a); n = 5; L = {{1,0,a,0,0},{0,a,a+1,1,0},{1,1,1,a,0}};",
+	   "C = linearCode(K,n,L,ParityCheck => true)",
+	   "C.GeneratorMatrix",
+	   "C.ParityCheckMatrix"
+	}
+	),
+    SYNOPSIS (
+	Usage => "linearCode(F,L)",
+	Inputs => {
+	    "F" => GaloisField => {"A Galois Field over which the code is defined."},
+	    "L" => List => {"A non-empty list of codewords that either generate the code or the dual of the code. The codewords in L must have entries coercible into the field F."},
+	    },
+	Outputs => {
+	    "C" => {"A linear code over F."},
+	    },
+	"Given a Galois Field F and a non-empty list L, this function generates a linear code C over F.",
+	"If no optional input is specified then the code C is generated by L. ",
+	"If the optional input ParityCheck => true is specified then C is the dual of the linear code over F generated by L.",
+	EXAMPLE {
+	    "F = GF 4; L = {{1,1,0,0},{0,0,1,1}};",
+	    "linearCode(F,L)",
+	    "K = GF(9,Variable => a); L = {{1,0,a,0,0},{0,a,a+1,1,0},{1,1,1,a,0}};",
+	    "C = linearCode(K,L,ParityCheck => true)",
+	    "C.GeneratorMatrix",
+	    "C.ParityCheckMatrix"
+	    }
+	),
+    SYNOPSIS (
+	Usage => "linearCode(p,q,n,L)",
+	Inputs => {
+	    "p" => ZZ => {"A prime number which is the characteristic of the Galois field,"},
+	    "q" => ZZ => {"A positive integer to be used as a power of p."},
+	    "n" => ZZ => {"A positive integer which is the lenght of the code."},
+	    "L" => List => {"A non-empty list of codewords that either generate the code or the dual of the code. The codewords in L must have entries coercible into the field F."},
+	    },
+	Outputs => {
+	    "C" => {"A linear code over the Galois Field GF(p^q)."}
+	    },
+	"Given a prime p, positive integers q and n, and  a non-empty list L, this function creates a linear code C of length n over the Galois Field GF(p^q).",
+	"If no optional input is specified then the code C is generated by L. ",
+	"If the optional input ParityCheck => true is specified then C is the dual of the linear code over F generated by L.",
+	EXAMPLE {
+	    "p = 2; q = 2; n=4; L = {{1,0,1,0},{0,1,1,1}};",
+	    "linearCode(p,q,n,L)",
+	    "p = 3; q = 2; n = 5;",
+	    "ambient GF(p,q)",
+	    "L = {{1,0,a,0,0},{0,a,a+1,1,0},{1,1,1,a+1,0}}",
+	    "linearCode(p,q,n,L)"
+	    }
+	),
+    SYNOPSIS (
+	Usage => "linearCode(Module)",
+	Inputs => {
+	    "V" => Module => {"A submodule of a free module over a Galois Field, which will be converted into a code."},
+	    },
+	Outputs => {
+	    "C" => LinearCode => {"A linear code which is equal to the submodule V."}
+	    },
+	EXAMPLE {
+	    "R = GF 2; M = transpose matrix {apply({1,1,1,1},entry -> sub(entry,R))}",
+	    "V = image M;",
+	    "C = linearCode(V)",
+	    "C.AmbientModule",
+	    "C.BaseField",
+	    "C.GeneratorMatrix",
+	    "C.ParityCheckMatrix"	    
+	    }
+	),
+    SYNOPSIS (
+	Usage => "linearCode(G)",
+	Inputs => {
+	    "G" => Matrix => {"A generator matrix of a code if ParityCheck=>false, or a parity check matrix of a code if ParityCheck => true."}
+	    },
+	Outputs => {
+	    "C" => {"A linear code whith generator matrix G or parity check matrix G. "}
+	    },
+	"Given a matrix G whose entires are in a  Galois Field F, this functions creates a linear code C over F.",
+	"If no optional input is specified then the code C has generator matrix G. ",
+	"If the optional input ParityCheck => true is specified then G is taken as the parity check matrix of the code C.",
+	EXAMPLE {
+	    "R = GF 4;",
+	    "L = apply({{1,0,1,0},{0,1,1,1}},codeword ->apply(codeword,entry->sub(entry,R)));",
+	    "M = matrix L;",
+	    "C = linearCode(M)",
+	    "C.GeneratorMatrix",
+	    "C.ParityCheckMatrix"
+	    },
+	"The next is an example where the optional argument ParityCheck => true is specified.",
+	EXAMPLE {
+	    "R = GF(4,Variable => a);",
+	    "L = {{1,0,a,0,0},{0,a,a+1,1,0},{1,1,1,a,0}};",
+	    "M = matrix L;",
+	    "C = linearCode(R,L,ParityCheck => true)",
+	    "C.GeneratorMatrix",
+	    "C.ParityCheckMatrix"
+	    }
+	)
+    }
+
 document {
     Key => {weight, (weight, BasicList)},
     Headline => "The Hamming weight of a list.",
@@ -2263,17 +2535,6 @@ document {
 	}
     }
     
-document {
-    Key => {linearCode, (linearCode,Module), (linearCode,GaloisField,List), (linearCode,Module,List)},
-    Headline => "linear code constructors",
-    Usage => "linearCode(V)\nlinearCode(F,L)\nlinearCode(F,n,L)\nlinearCode(S,V)",
-    "These constructors are provided by the package ", TO CodingTheory, ".",
-    EXAMPLE {
-	"F = GF(2,4);codeLen = 7;codeDim = 3;",
-        "L = apply(toList(1..codeDim),j-> apply(toList(1..codeLen),i-> random(F))); VerticalList(L)",
-	"C = linearCode(F,L)"
-	}
-    }
 document {
     Key => {syndromeDecode,(syndromeDecode, LinearCode, Matrix, ZZ)},
     Headline => "Performs syndrome decoding on a linear code.",
@@ -2305,10 +2566,9 @@ document {
     Headline => "Constructs a parity check Matrix given a generator matrix of a linear code over a Galois field",
     Usage => "generatorToParityCheck(G)",
     "Given a generator matrix G of a code C over a Galois field, this function constructs a parity check matrix for C.",
-    "The matrix G is assumed to be of full rank (numbers of rows equals the rank of G)",
     "This constructor is provided by the package ", TO CodingTheory, ".",
     Inputs =>{
-	"G" => Matrix => {"which is a full rank matrix that generates a code over a Galois field"},
+	"G" => Matrix => {"which generates a code over a Galois field"},
 	},
     Outputs => {
 	Matrix => {"A parity check matrix of the linear code generated by G"}
@@ -2327,10 +2587,10 @@ document {
     Key => {parityCheckToGenerator, (parityCheckToGenerator,Matrix)},
     Headline => "Constructs a generator matrix given a parity check matrix of a linear code over a Galois field",
     Usage => "parityCheckToGenerator(H)",
-    "Given a parity check matrix H of a linear code C over a Galois field, this function constructs a generator matrix for C.",
+    "Given a parity check matrix H of a linear code C over a Galois field, this function constructs a generator matrix for C. ",
     "This constructor is provided by the package ", TO CodingTheory, ".",
     Inputs =>{
-	"H" => Matrix => {"which is a full rank matrix that is the parity check matrix of a linear code over a Galois field"},
+	"H" => Matrix => {"which is the parity check matrix of a linear code over a Galois field"},
 	},
     Outputs => {
 	Matrix => {"A generator matrix of the linear code generated by H"}
