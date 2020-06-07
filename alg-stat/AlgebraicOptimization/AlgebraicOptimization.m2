@@ -36,6 +36,7 @@ export {
   "projectionEDDegree",
   "sectionEDDegree",
   "symbolicMultidegreeEDDegree",
+  "probabilisticMultidegreeEDDegree",
   "probabilisticFritzJohnEDDegree",
   "MLequationsIdeal",
   "MLequationsDegree",
@@ -1718,7 +1719,8 @@ Key
   symbolicMultidegreeEDDegree
   (symbolicMultidegreeEDDegree, Ideal)
 Inputs
-  I:Ideal
+  I:
+    a homogeneous @TO2{Ideal,"ideal"}@ in general coordinates.
 Outputs
   :ZZ
     the ED-degree of $I$
@@ -1736,9 +1738,40 @@ Description
     symbolicMultidegreeEDDegree(J)
 
 Caveat
-  The conormal variety cannot intersect the diagonal $\Delta(\mathbb{P}^{n-1}) \subset \mathbb{P}^{n-1} \times \mathbb{P}^{n-1}$.
-  At the moment this is not checked.
+  The variety $\mathbb V(I)$ must be in general coordinates, i.e. the conormal variety cannot intersect the diagonal $\Delta(\mathbb{P}^{n-1}) \subset \mathbb{P}^{n-1} \times \mathbb{P}^{n-1}$.
+  The function @TO checkGeneralCoordinates@ checks a sufficient condition.
 ///
+
+
+
+doc ///
+Key
+  probabilisticMultidegreeEDDegree
+  (probabilisticMultidegreeEDDegree, Ideal)
+Inputs
+  I:
+    a homogeneous @TO2{Ideal,"ideal"}@ in general coordinates.
+Outputs
+  :ZZ
+    the ED-degree of $I$
+Usage
+  probabilisticMultidegreeEDDegree(I)
+Description
+  Text
+    Computes the ED degree by taking the sum of multidegrees of the conormal ideal 
+    @TO2{AlgebraicOptimization,"[2, Th. 5.4]"}@. The multidegree is computed probabilistically 
+    by looking at degrees of complementary dimensional linear slices of the conormal variety in $\mathbb P^n \times P^n$.
+
+  Example
+    R = QQ[x_0..x_3]
+    J = ideal det(matrix{{x_0, x_1, x_2}, {x_1, x_0, x_3}, {x_2, x_3, x_0}})
+    probabilisticMultidegreeEDDegree(J)
+
+Caveat
+  The variety $\mathbb V(I)$ must be in general coordinates, i.e. the conormal variety cannot intersect the diagonal $\Delta(\mathbb{P}^{n-1}) \subset \mathbb{P}^{n-1} \times \mathbb{P}^{n-1}$.
+  The function @TO checkGeneralCoordinates@ checks a sufficient condition.
+///
+
 
 doc ///
 Key
