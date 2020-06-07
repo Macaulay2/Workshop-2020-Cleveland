@@ -32,11 +32,11 @@ export {
   "conormalIdeal",
   "probabilisticEDDegree",
   "symbolicEDDegree",
-  "checkProjective",
+  "checkGeneralCoordinates",
   "projectionEDDegree",
   "sectionEDDegree",
-  "multiDegreeEDDegree",
-  "fritzJohnEDDegree",
+  "symbolicMultidegreeEDDegree",
+  "probabilisticFritzJohnEDDegree",
   "MLequationsIdeal",
   "MLequationsDegree",
   "parametricMLIdeal",
@@ -174,10 +174,10 @@ assert(probabilisticEDDegree(I, Data => {2/4,1/2,-1/2}, Projective => false) == 
 
 
 ---------------------------
--- fritzJohnEDdegree ------
+-- probabilisticFritzJohnEDdegree ------
 ---------------------------
-fritzJohnEDDegree = method(Options => {Projective => false, Data => null})
-fritzJohnEDDegree (Ideal, Ideal) := ZZ => opts -> (WI, I) -> (
+probabilisticFritzJohnEDDegree = method(Options => {Projective => false, Data => null})
+probabilisticFritzJohnEDDegree (Ideal, Ideal) := ZZ => opts -> (WI, I) -> (
   R := ring I;
   l := symbol l;
   S := (coefficientRing(R))[l_1..l_(#WI_*)];
@@ -207,31 +207,31 @@ fritzJohnEDDegree (Ideal, Ideal) := ZZ => opts -> (WI, I) -> (
   );
   degree critIdeal
 )
-fritzJohnEDDegree (Ideal) := ZZ => opts -> (I) -> (
+probabilisticFritzJohnEDDegree (Ideal) := ZZ => opts -> (I) -> (
   c := codim I;
-  if codim I == numgens I then fritzJohnEDDegree(I,I,opts)
+  if codim I == numgens I then probabilisticFritzJohnEDDegree(I,I,opts)
   else (
     R := ring I;
     -- use a random linear combination of generators as witness
     witness := gens I * random(R^(numgens I), R^c);
-    fritzJohnEDDegree(ideal witness, I, opts)
+    probabilisticFritzJohnEDDegree(ideal witness, I, opts)
   )
 )
 TEST ///
 R = QQ[x,y]
 I = ideal"x2 + y2 - 1"
-assert(fritzJohnEDDegree(I, Data => {1/3, 2/5}) == 2)
+assert(probabilisticFritzJohnEDDegree(I, Data => {1/3, 2/5}) == 2)
 J = ideal((x^2+y^2+x)^2 - x^2 - y^2)
-assert(fritzJohnEDDegree(J, Data => {1,2}) == 3)
+assert(probabilisticFritzJohnEDDegree(J, Data => {1,2}) == 3)
 R = QQ[x,y,z]
 I = ideal"x2 - y2 - z2"
-assert(fritzJohnEDDegree(I, Data => {2/4,1/2,-1/2}, Projective => true) == 2)
-assert(fritzJohnEDDegree(I, Data => {2/4,1/2,-1/2}, Projective => false) == 2)
+assert(probabilisticFritzJohnEDDegree(I, Data => {2/4,1/2,-1/2}, Projective => true) == 2)
+assert(probabilisticFritzJohnEDDegree(I, Data => {2/4,1/2,-1/2}, Projective => false) == 2)
 R = QQ[x,y,z,w]
 I = ideal"xz-y2,yw-z2,xw-yz"
-assert(fritzJohnEDDegree(ideal(I_0,I_1),I, Projective => true) == 7)
-assert(fritzJohnEDDegree(ideal(I_0,I_1),I, Projective => false) == 7)
-assert(fritzJohnEDDegree(I) == 7)
+assert(probabilisticFritzJohnEDDegree(ideal(I_0,I_1),I, Projective => true) == 7)
+assert(probabilisticFritzJohnEDDegree(ideal(I_0,I_1),I, Projective => false) == 7)
+assert(probabilisticFritzJohnEDDegree(I) == 7)
 ///
 
 
@@ -294,13 +294,13 @@ edDegreeStrategies = (I,strat) -> (
 
 
 --------------------
--- checkProjective -
+-- checkGeneralCoordinates -
 --------------------
 -- Checks if the conormal variety intersects the diagonal
 -- This checks a sufficient condition
 -- Needs more testing
-checkProjective = method();
-checkProjective Ideal := Boolean => I -> (
+checkGeneralCoordinates = method();
+checkGeneralCoordinates Ideal := Boolean => I -> (
   R := ring I;
   Q := gens R / (i -> i^2) // sum // ideal;
   InQ := I + Q;
@@ -384,12 +384,12 @@ assert(sectionEDDegree I == 13)
 
 
 --------------------
---multiDegreeEDDegree
+--multidegreeEDDegree
 --------------------
 
 
-multiDegreeEDDegree = method();
-multiDegreeEDDegree Ideal := ZZ => I -> (
+symbolicMultidegreeEDDegree = method();
+symbolicMultidegreeEDDegree Ideal := ZZ => I -> (
   S := conormalRing ring I;
   N := conormalIdeal(I,S);
   (mon,coef) := coefficients multidegree N;
@@ -399,7 +399,29 @@ multiDegreeEDDegree Ideal := ZZ => I -> (
 TEST ///
 R = QQ[x_0..x_3]
 J = ideal det(matrix{{x_0, x_1, x_2}, {x_1, x_0, x_3}, {x_2, x_3, x_0}})
-assert(multiDegreeEDDegree(J) == 13)
+assert(symbolicMultidegreeEDDegree(J) == 13)
+///
+
+probabilisticMultidegreeEDDegree = method();
+probabilisticMultiDegrdeEDDegree Ideal := ZZ => I -> (
+  S := conormalRing ring I;
+  N := conormalIdeal(I,S);
+  d := dim N - 2;
+  R := ring N;
+  dehomog := ideal(random({1,0}, R) - 1, random({0,1}, R) - 1);
+  multideg := for i from 0 to d list (
+      slices := apply(i, j->random({1,0}, R)) | apply(d-i, j->random({0,1},R));
+      degree(N + ideal(slices) + dehomog)
+  );
+  sum multideg
+)
+TEST ///
+R = QQ[x_0..x_3]
+J = ideal det(matrix{{x_0, x_1, x_2}, {x_1, x_0, x_3}, {x_2, x_3, x_0}})
+assert(probabilisticMultidegreeEDDegree(J) == 13)
+R = QQ[x,y,z,w]
+I = ideal"xz-y2,yw-z2,xw-yz"
+assert(probabilisticMultidegreeEDDegree I == 7)
 ///
 
 --------------------
@@ -1396,17 +1418,17 @@ Description
 
 doc ///
 Key
-  fritzJohnEDDegree
-  (fritzJohnEDDegree, Ideal, Ideal)
-  [fritzJohnEDDegree, Data]
-  [fritzJohnEDDegree, Projective]
+  probabilisticFritzJohnEDDegree
+  (probabilisticFritzJohnEDDegree, Ideal, Ideal)
+  [probabilisticFritzJohnEDDegree, Data]
+  [probabilisticFritzJohnEDDegree, Projective]
 Headline
   compute ED-degree for a random point using Fritz John conditions
 Usage
-  fritzJohnEDDegree(WI,I)
-  fritzJohnEDDegree(WI, I, Projective => true)
-  fritzJohnEDDegree(WI, I, Projective => false)
-  fritzJohnEDDegree(WI, I, Data => L)
+  probabilisticFritzJohnEDDegree(WI,I)
+  probabilisticFritzJohnEDDegree(WI, I, Projective => true)
+  probabilisticFritzJohnEDDegree(WI, I, Projective => false)
+  probabilisticFritzJohnEDDegree(WI, I, Data => L)
 Inputs
   WI:
     an @TO2{Ideal, "ideal"}@ with ${codim}(I)$ generators such that $\mathbb V(WI)$ contains
@@ -1442,11 +1464,11 @@ Description
     R = QQ[x,y,z,w]
     I = ideal"xz-y2,yw-z2,xw-yz"
     WI = ideal(I_0, I_1)
-    fritzJohnEDDegree(WI,I)
+    probabilisticFritzJohnEDDegree(WI,I)
   Text
     Instead of a random point, the user can specify their own point
   Example
-    fritzJohnEDDegree(I, Data => {2,3,4,5})
+    probabilisticFritzJohnEDDegree(I, Data => {2,3,4,5})
 
   Text
     This function tends to perform well compared to e.g. @TO probabilisticEDDegree@ when the number of generators is larger than the codimension.
@@ -1472,7 +1494,7 @@ Description
 
     o7 = 12
 
-    i8 : elapsedTime fritzJohnEDDegree (WI,I)
+    i8 : elapsedTime probabilisticFritzJohnEDDegree (WI,I)
          0.707514 seconds elapsed
 
     o8 = 12
@@ -1492,12 +1514,12 @@ Description
 
     o6 : Ideal of R
 
-    i7 : elapsedTime fritzJohnEDDegree(I,I, Projective => false)
+    i7 : elapsedTime probabilisticFritzJohnEDDegree(I,I, Projective => false)
          0.812368 seconds elapsed
 
     o7 = 12
 
-    i8 : elapsedTime fritzJohnEDDegree(I,I, Projective => true)
+    i8 : elapsedTime probabilisticFritzJohnEDDegree(I,I, Projective => true)
          8.19129 seconds elapsed
 
     o8 = 12
@@ -1510,11 +1532,11 @@ SeeAlso
 
 doc ///
 Key
-  (fritzJohnEDDegree, Ideal)
+  (probabilisticFritzJohnEDDegree, Ideal)
 Headline
   compute ED-degree for a random point using Fritz John conditions
 Usage
-  fritzJohnEDDegree I
+  probabilisticFritzJohnEDDegree I
 Inputs
   I:
     an @TO2{Ideal, "ideal"}@ corresponding to an irreducible variety.
@@ -1525,20 +1547,20 @@ Outputs
 --  Item
 Description
   Text
-    Computes the ED-degree using Frtiz John conditions. See @TO (fritzJohnEDDegree, Ideal, Ideal)@ for more detail.
+    Computes the ED-degree using Frtiz John conditions. See @TO (probabilisticFritzJohnEDDegree, Ideal, Ideal)@ for more detail.
 
-    If the codimension of $I$ is equal to the number of generators, this function calls {\tt fritzJohnEDDegree(I,I)}.
+    If the codimension of $I$ is equal to the number of generators, this function calls {\tt probabilisticFritzJohnEDDegree(I,I)}.
     If not, we construct a witness ideal $WI$ by taking $codim(I)$ many random linear combinations
-    of generators, and  call {\tt fritzJohnEDDegree(WI,I)}.
+    of generators, and  call {\tt probabilisticFritzJohnEDDegree(WI,I)}.
   Example
     R = QQ[x,y,z,w]
     I = ideal"xz-y2,yw-z2,xw-yz"
-    fritzJohnEDDegree I
+    probabilisticFritzJohnEDDegree I
 --Subnodes
 Caveat
   This function does not check whether or not $\mathbb V(WI)$ cotains $\mathbb V(I)$ as an irreducible component.
 SeeAlso
-  fritzJohnEDDegree
+  probabilisticFritzJohnEDDegree
   probabilisticEDDegree
 ///
 
@@ -1613,7 +1635,7 @@ Usage
   projectionEDDegree I
 Inputs
   I:
-    a projective @TO2{Ideal, "ideal"}@
+    a homogeneous @TO2{Ideal, "ideal"}@
 Outputs
   :ZZ
     the projective ED-degree
@@ -1626,7 +1648,7 @@ Description
 
     This function repeatedly applies such a map $\pi$ until the image becomes a hyperlane, and then
     calls @TO probabilisticEDDegree@ or @TO symbolicEDDegree@, depending on the optional argument @TO [projectionEDDegree,Strategy]@.
-    This may provide significant computational speedups compared to @TO probabilisticEDDegree@, @TO symbolicEDDegree@ or @TO multiDegreeEDDegree@,
+    This may provide significant computational speedups compared to e.g. @TO probabilisticEDDegree@, @TO symbolicEDDegree@ or @TO symbolicMultidegreeEDDegree@,
     especially the codimension of $X$ is large.
   CannedExample
     i4 : R = QQ[x_0..x_5]
@@ -1677,7 +1699,7 @@ Description
 
     --This function repeatedly applies such a map $\pi$ until the image becomes a hyperlane, and then
     --calls @TO probabilisticEDDegree@ or @TO symbolicEDDegree@, depending on the optional argument @TO [projectionEDDegree,Strategy]@.
-    --This may provide significant computational speedups compared to @TO probabilisticEDDegree@, @TO symbolicEDDegree@ or @TO multiDegreeEDDegree@,
+    --This may provide significant computational speedups compared to @TO probabilisticEDDegree@, @TO symbolicEDDegree@ or @TO symbolicMultidegreeEDDegree@,
     --especially the codimension of $X$ is large.
   Text
     References: [1] Draisma, J., Horobeţ, E., Ottaviani, G., Sturmfels, B., & Thomas, R. R. (2016). The Euclidean distance degree of an algebraic variety. {\em Foundations of computational mathematics}, 16(1), 99-149.
@@ -1693,15 +1715,15 @@ Caveat
 
 doc ///
 Key
-  multiDegreeEDDegree
-  (multiDegreeEDDegree, Ideal)
+  symbolicMultidegreeEDDegree
+  (symbolicMultidegreeEDDegree, Ideal)
 Inputs
   I:Ideal
 Outputs
   :ZZ
     the ED-degree of $I$
 Usage
-  multiDegreeEDDegree(I)
+  symbolicMultidegreeEDDegree(I)
 Description
   Text
     Computes the ED degree symbolically by taking the sum of multidegrees of the conormal ideal. 
@@ -1711,7 +1733,7 @@ Description
   Example
     R = QQ[x_0..x_3]
     J = ideal det(matrix{{x_0, x_1, x_2}, {x_1, x_0, x_3}, {x_2, x_3, x_0}})
-    multiDegreeEDDegree(J)
+    symbolicMultidegreeEDDegree(J)
 
 Caveat
   The conormal variety cannot intersect the diagonal $\Delta(\mathbb{P}^{n-1}) \subset \mathbb{P}^{n-1} \times \mathbb{P}^{n-1}$.
@@ -1869,11 +1891,11 @@ SeeAlso
 
 doc ///
 Key
-  checkProjective
+  checkGeneralCoordinates
 Headline
   checks if projective variety is in general coordinates
 Usage
-  checkProjective I
+  checkGeneralCoordinates I
 Inputs
   I:
     a projective @TO2(Ideal,"ideal")@
@@ -1889,19 +1911,19 @@ Description
     the isotropic quadric. This funciton checks a sufficient condition: 
     $X$ is in general coordinates if $X \cap Q$ is smooth and disjoint from the singular locus of $X$.
 
-    The assumption that $X$ is in general coordinates is required for @TO multiDegreeEDDegree@, @TO sectionEDDegree@ and @TO projectionEDDegree@.
+    The assumption that $X$ is in general coordinates is required for @TO symbolicMultidegreeEDDegree@, @TO sectionEDDegree@ and @TO projectionEDDegree@.
   Example
     R = QQ[x_0..x_3]
     M = matrix{{x_0,x_1,x_2},{x_1,x_0,x_3},{x_2,x_3,x_0}}
     I = ideal det M
-    checkProjective I
-    multiDegreeEDDegree I == probabilisticEDDegree I
+    checkGeneralCoordinates I
+    symbolicMultidegreeEDDegree I == probabilisticEDDegree I
   Text
-    If @TO checkProjective@ returns {\tt false}, the behavior of these functions is undefined.
+    If @TO checkGeneralCoordinates@ returns {\tt false}, the behavior of these functions is undefined.
   Example
     S = QQ[y_0..y_2]
     J = ideal(y_1^2 + y_2^2 - y_0^2)
-    checkProjective J
+    checkGeneralCoordinates J
     sectionEDDegree J == probabilisticEDDegree J
 ///
 
