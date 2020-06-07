@@ -217,6 +217,22 @@ fritzJohnEDDegree (Ideal) := ZZ => opts -> (I) -> (
     fritzJohnEDDegree(ideal witness, I, opts)
   )
 )
+TEST ///
+R = QQ[x,y]
+I = ideal"x2 + y2 - 1"
+assert(fritzJohnEDDegree(I, Data => {1/3, 2/5}) == 2)
+J = ideal((x^2+y^2+x)^2 - x^2 - y^2)
+assert(fritzJohnEDDegree(J, Data => {1,2}) == 3)
+R = QQ[x,y,z]
+I = ideal"x2 - y2 - z2"
+assert(fritzJohnEDDegree(I, Data => {2/4,1/2,-1/2}, Projective => true) == 2)
+assert(fritzJohnEDDegree(I, Data => {2/4,1/2,-1/2}, Projective => false) == 2)
+R = QQ[x,y,z,w]
+I = ideal"xz-y2,yw-z2,xw-yz"
+assert(fritzJohnEDDegree(ideal(I_0,I_1),I, Projective => true) == 7)
+assert(fritzJohnEDDegree(ideal(I_0,I_1),I, Projective => false) == 7)
+assert(fritzJohnEDDegree(I) == 7)
+///
 
 
 
