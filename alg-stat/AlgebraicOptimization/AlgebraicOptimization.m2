@@ -1296,13 +1296,20 @@ SeeAlso
 doc ///
 Key
   conormalRing
+  (conormalRing,Ring)
+  (conormalRing,Ideal)
   [conormalRing, DualVariable]
 Headline
   Creates a ring with primal and dual variables
 Usage
-  conormalRing(R)
+  conormalRing R
+  conormalRing I
 Inputs
   R:Ring
+  I:Ideal
+  DualVariable=>
+    a user defined @TO2{Symbol, "symbol"}@ used to denote dual variables
+
 Outputs
   :ConormalRing
 Description
@@ -1311,7 +1318,8 @@ Description
   Example
     R = QQ[x_0..x_2]
     conormalRing(R)
-    conormalRing(R, DualVariable => l)
+    I = ideal(x_0^2)
+    conormalRing(I, DualVariable => symbol l)
 Caveat
   The ring $R$ must have degree length 1
 SeeAlso
@@ -1322,18 +1330,30 @@ doc ///
 Key
   conormalIdeal
   (conormalIdeal, Ideal, ConormalRing)
+  (conormalIdeal, Ideal)
+  [conormalIdeal, DualVariable]
 --Headline
 --  todo
 Inputs
-  I:Ideal
-    defined in the primal variables only
+  I:
+    a homogeneous @TO2{Ideal, "ideal"}@ defined in the primal variables only
   S:ConormalRing
+  DualVariable:
+    a user defined @TO2{Symbol, "symbol"}@ used to denote dual variables. This option is ignored if a @TO ConormalRing@ is supplied.
 Usage
   conormalIdeal(I,S)
+  conormalIdeal I
+Description
+  Text
+    For a projective variety $X = \mathbb V(I) \subseteq \mathbb P^n$, the conormal variety is the closure of the set of points
+    $(x,u) \in \mathbb P^n \times \mathbb P^n$ such that $x$ is a regular point on $X$ and $u$ is tangent to $X$ at $x$.
 
-Caveat
-  The ring containing $I$ and $p$ must have primal variables in degree $\{1,0\}$ and dual variables in degree $\{0,1\}$.
-  Such a ring can be obtained using @TO{conormalRing}@.
+    If an instance $S$ of @TO ConormalRing@ is supplied, the resulting ideal will reside in {\tt S.AmbientRing}.
+  Example
+    R = QQ[x,y,z]
+    I = ideal(x^2 + y^2 - z^2)
+    S = conormalRing R
+    conormalIdeal(I,S)
 ///
 
 doc ///
@@ -1925,6 +1945,7 @@ SeeAlso
 doc ///
 Key
   checkGeneralCoordinates
+  (checkGeneralCoordinates, Ideal)
 Headline
   checks if projective variety is in general coordinates
 Usage
@@ -1937,14 +1958,14 @@ Outputs
 Description
   Text
     Let $X \subseteq \mathbb P^n$ be the variety corresponding to $I$ and let $N \subseteq \mathbb P^n \times \mathbb P^n$.
-    We say that $X$ is in general coordinates if $N$ does not intersect the diagonal of $\mathbb P^n \times \mathbb P^n$.
-    In other words, there is no point $x \in \mathbb P^n$ such that $x \in X$ and $x \in X^*$, where $X^*$ is the dual of $X$.
+    We say that $X$ is in general coordinates if $N$ does not intersect the diagonal of $\mathbb P^n \times \mathbb P^n$,
+    i.e. there is no point $x \in \mathbb P^n$ such that $x \in X$ and $x \in X^*$, where $X^*$ is the projective dual of $X$.
 
     Let $Q = \{x = [x_0 : x_1 : \dots : x_n] \in \mathbb P^n : x_0^2 + x_1^2 + \dots + x_n = 0\}$ be the variety corresponding to
     the isotropic quadric. This funciton checks a sufficient condition: 
     $X$ is in general coordinates if $X \cap Q$ is smooth and disjoint from the singular locus of $X$.
 
-    The assumption that $X$ is in general coordinates is required for @TO symbolicMultidegreeEDDegree@, @TO sectionEDDegree@ and @TO projectionEDDegree@.
+    The assumption that $X$ is in general coordinates is required for @TO symbolicMultidegreeEDDegree@, @TO probabilisticMultidegreeEDDegree@, @TO sectionEDDegree@ and @TO projectionEDDegree@.
   Example
     R = QQ[x_0..x_3]
     M = matrix{{x_0,x_1,x_2},{x_1,x_0,x_3},{x_2,x_3,x_0}}
