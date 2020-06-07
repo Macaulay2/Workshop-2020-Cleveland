@@ -207,6 +207,16 @@ fritzJohnEDDegree (Ideal, Ideal) := ZZ => opts -> (WI, I) -> (
   );
   degree critIdeal
 )
+fritzJohnEDDegree (Ideal) := ZZ => opts -> (I) -> (
+  c := codim I;
+  if codim I == numgens I then fritzJohnEDDegree(I,I,opts)
+  else (
+    R := ring I;
+    -- use a random linear combination of generators as witness
+    witness := gens I * random(R^(numgens I), R^c);
+    fritzJohnEDDegree(ideal witness, I, opts)
+  )
+)
 
 
 
