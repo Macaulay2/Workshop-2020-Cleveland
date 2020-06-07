@@ -1380,6 +1380,156 @@ Description
 --SeeAlso
 ///
 
+
+doc ///
+Key
+  fritzJohnEDDegree
+  (fritzJohnEDDegree, Ideal, Ideal)
+  [fritzJohnEDDegree, Data]
+  [fritzJohnEDDegree, Projective]
+Headline
+  compute ED-degree for a random point using Fritz John conditions
+Usage
+  fritzJohnEDDegree(WI,I)
+  fritzJohnEDDegree(WI, I, Projective => true)
+  fritzJohnEDDegree(WI, I, Projective => false)
+  fritzJohnEDDegree(WI, I, Data => L)
+Inputs
+  WI:
+    an @TO2{Ideal, "ideal"}@ with ${codim}(I)$ generators such that $\mathbb V(WI)$ contains
+    $\mathbb V(I)$ as an irreducible component
+  I:
+    an @TO2{Ideal, "ideal"}@ corresponding to an irreducible variety.
+  Projective => Boolean
+    specifies whether or not to use a specialized algorithm for projective varieties.
+    Note that if $I$ is homogeneous, both {\tt true} and {\tt false} should return the same answer
+  Data => List
+    specifies coordinates of the point from which the ED degree is computed.
+    By default, this point is chosen at random from the coefficient ring using @TO (random,Type)@.
+Outputs
+  :ZZ
+    the ED-degree of $I$.
+--Consequences
+--  Item
+Description
+  Text
+    The function computes the Euclidean distance degree of an irreducible variety corresponding to
+    the prime ideal $I$ using the Fritz John conditions. In other words, we choose a random point $u$ and output the number of critical
+    points of the distance function from the variety to $u$. A random point will give the correct ED degree
+    with probability 1.
+
+    In this function, rank conditions on a polymomial matrix $M$ are expressed by adding equations of the form
+    $\Lambda M = 0$, where $\Lambda$ is a row vector of new indeterminates $\lambda_i$. If $M$ is of full rank 
+    (e.g. $M$ is the Jacobian or augmented Jacobian of $WI$), solutions of the system
+    $\Lambda M = 0$, $\sum_{i} c_i\lambda_i = 1$ lying on $\mathbb V(I)$ are points where the rank
+    of $M$ drops (here the $c_i$ are random constants).
+
+    We can confirm that the EDDegree of the twisted cubic is 7.
+  Example
+    R = QQ[x,y,z,w]
+    I = ideal"xz-y2,yw-z2,xw-yz"
+    WI = ideal(I_0, I_1)
+    fritzJohnEDDegree(WI,I)
+  Text
+    Instead of a random point, the user can specify their own point
+  Example
+    fritzJohnEDDegree(I, Data => {2,3,4,5})
+
+  Text
+    This function tends to perform well compared to e.g. @TO probabilisticEDDegree@ when the number of generators is larger than the codimension.
+    In the example below, we have an ideal $I$ of codimension 2 with 7 generators.
+    We will use two random linear combinations of the 7 generators as our witness ideal $WI$.
+  CannedExample
+    i2 : R = QQ[x_0..x_3];
+
+    i3 : f1 = random(2,R);
+
+    i4 : f2 = random(2,R);
+
+    i5 : I = ideal(matrix{{f1,f2}} * random(R^2, R^5) | matrix{{f1,f2}});
+
+    o5 : Ideal of R
+
+    i6 : WI = ideal (gens I * random(R^7,R^2));
+
+    o6 : Ideal of R
+
+    i7 : elapsedTime probabilisticEDDegree I
+         2.8346 seconds elapsed
+
+    o7 = 12
+
+    i8 : elapsedTime fritzJohnEDDegree (WI,I)
+         0.707514 seconds elapsed
+
+    o8 = 12
+
+
+
+  Text
+    If the variety corresponding to $I$ is projective, the projective
+    ED degree is defined as the ED degree of the corresponding affine cone.
+    By default, the function uses the non-projective algorithm, as it is requires
+    fewer new $\lambda_i$ variables. The user can force the projective algorithm
+    by setting {\tt Projective => true}.
+  CannedExample
+    i5 : R = QQ[x_0..x_3];
+
+    i6 : I = ideal(random(2,R), random(2,R));
+
+    o6 : Ideal of R
+
+    i7 : elapsedTime fritzJohnEDDegree(I,I, Projective => false)
+         0.812368 seconds elapsed
+
+    o7 = 12
+
+    i8 : elapsedTime fritzJohnEDDegree(I,I, Projective => true)
+         8.19129 seconds elapsed
+
+    o8 = 12
+
+--Subnodes
+--Caveat
+SeeAlso
+  probabilisticEDDegree
+///
+
+doc ///
+Key
+  (fritzJohnEDDegree, Ideal)
+Headline
+  compute ED-degree for a random point using Fritz John conditions
+Usage
+  fritzJohnEDDegree I
+Inputs
+  I:
+    an @TO2{Ideal, "ideal"}@ corresponding to an irreducible variety.
+Outputs
+  :ZZ
+    the ED-degree of $I$.
+--Consequences
+--  Item
+Description
+  Text
+    Computes the ED-degree using Frtiz John conditions. See @TO (fritzJohnEDDegree, Ideal, Ideal)@ for more detail.
+
+    If the codimension of $I$ is equal to the number of generators, this function calls {\tt fritzJohnEDDegree(I,I)}.
+    If not, we construct a witness ideal $WI$ by taking $codim(I)$ many random linear combinations
+    of generators, and  call {\tt fritzJohnEDDegree(WI,I)}.
+  Example
+    R = QQ[x,y,z,w]
+    I = ideal"xz-y2,yw-z2,xw-yz"
+    fritzJohnEDDegree I
+--Subnodes
+Caveat
+  This function does not check whether or not $\mathbb V(WI)$ cotains $\mathbb V(I)$ as an irreducible component.
+SeeAlso
+  fritzJohnEDDegree
+  probabilisticEDDegree
+///
+
+
 doc ///
 Key
   symbolicEDDegree
