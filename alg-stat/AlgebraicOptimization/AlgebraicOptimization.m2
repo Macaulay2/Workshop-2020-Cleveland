@@ -175,8 +175,8 @@ assert(probabilisticEDDegree(I, Data => {2/4,1/2,-1/2}, Projective => false) == 
 ---------------------------
 -- fritzJohnEDdegree ------
 ---------------------------
-fritzJohnEDDegree = method()
-fritzJohnEDDegree (Ideal, Ideal) := ZZ => (WI, I) -> (
+fritzJohnEDDegree = method(Options => {Projective => null, Data => null})
+fritzJohnEDDegree (Ideal, Ideal) := ZZ => opts -> (WI, I) -> (
   R := ring I;
   l := symbol l;
   S := (coefficientRing(R))[l_1..l_(#WI_*)];
@@ -184,17 +184,30 @@ fritzJohnEDDegree (Ideal, Ideal) := ZZ => (WI, I) -> (
   J := ideal (sub(vars S, RS) * sub(transpose jacobian WI, RS));
   randomAffine := sub(random(1,S) - 1, RS);
   WIsing := J + sub(I,RS) + randomAffine; -- witness of the singular locus of I
-  RWIsing := 
-  u := apply(#R_*, i -> random(coefficientRing R));
+  RWIsing := sub(eliminate(gens S / (i -> sub(i,RS)), WIsing) , R);
+  u := if opts.Data === null then (gens R / (i -> random(coefficientRing R))) else opts.Data;
   uMatrix := matrix{u};
-  Ibar := (vars R - uMatrix) || transpose jacobian WI;
+  proj := if opts.Projective === null then (if isHomogeneous I then true else false) else opts.Projective;
   m := symbol m;
-  T := (coefficientRing(R))[m_1..m_(#WI_*+1)];
+  Ibar := if not proj 
+    then 
+      (vars R - uMatrix) || transpose jacobian WI
+    else
+      error "projective fritzJohnEDDegree not yet implemented";--vars R || uMatrix || transpose jacobian WI;
+  T := (coefficientRing(R))[m_1..m_(numRows Ibar)];
   RT := R**T;
   WIbar := ideal(sub(vars T, RT)*sub(Ibar, RT)) + sub(I,RT) + sub(random(1,T) - 1, RT);  -- witness of Ibar
   RWIbar := sub(eliminate(gens T / (i -> sub(i,RT)), WIbar), R);
-  saturate(RWIbar, sub(eliminate(gens S / (i -> sub(i,RS)), WIsing), R))
+  critIdeal := if not proj
+    then
+      saturate(RWIbar, RWIsing)
+    else (
+      Q := gens R / (i -> i^2) // sum // ideal;
+      saturate(RWIbar, RWIsing * Q)
+  );
+  degree critIdeal
 )
+
 
 
 
