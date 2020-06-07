@@ -606,15 +606,11 @@ minimumWeight LinearCode := ZZ => C -> (
     -- a call to "rank" on a (k x k) matrix and a message encoding of C take about the 
     -- same amount of time. Also, it assumes that this function actually does call "matroid" 
     -- on the generator matrix of C.)
-
     if numMatrices > numCodewords then(
 	x := (minDistEnumerate C);
 	C.cache#"minWeight" = x;
 	return x;
 	);
-    
-    
-    
     --Partition columns of LinearCode into information sets
     cMatroid := matroid(M);
     cMatroids := apply(toList(1..l),i->cMatroid);
@@ -634,15 +630,14 @@ minimumWeight LinearCode := ZZ => C -> (
     	
 	sameWeightWords := apply(subsets(k,w), x -> subsetToList(k,x));
     	sameWeightWords = flatten apply(sameWeightWords, x -> enumerateVectors(ring(C), x));
-    	
         specialCodewords := apply(sameWeightWords, u -> flatten entries ((matrix {toList u})*G));
-    		
+
         dupper = min(append(apply(specialCodewords, i->weight i),dupper));
         dlower = sum(toList apply(1..j,i->max(0,w+1-k+r_(i-1))))+sum(toList apply(j+1..D,i->max(0,w-k+r_(i-1))));
 
 	if dlower >= dupper then (
-	    C.cache#"minWeight" = dlower;
-	    return dlower;
+	    C.cache#"minWeight" = dupper;
+	    return dupper;
     	    ) else (
 	    if j < D then j = j+1 else w = w+1
 	    );
@@ -1716,6 +1711,32 @@ syndromeDecode(LinearCode, Matrix, ZZ) := (C, v, minDist) -> (
 -- Use this section for LinearCode tests:
 -----------------------------------------------
 -----------------------------------------------
+
+TEST ///
+-- minimumWeight test
+
+-- This example is not over GF(2) and takes the matroid partition algorithm path. 
+M := {{1,1,1,1,1,1},{1,0,1,0,1,0},{0,0,0,1,0,0}};
+C := linearCode(GF(5),M);
+assert(minimumWeight(C) == 1);
+
+-- The binary golay code (has a minimum weight of 8.)
+-- This example takes the brute force path.
+G:={{1,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,1,1,1,0,0,0,1,1},
+    {0,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,1,0,0,1,0},
+    {0,0,1,0,0,0,0,0,0,0,0,0,1,1,0,1,0,0,1,0,1,0,1,1},
+    {0,0,0,1,0,0,0,0,0,0,0,0,1,1,0,0,0,1,1,1,0,1,1,0},
+    {0,0,0,0,1,0,0,0,0,0,0,0,1,1,0,0,1,1,0,1,1,0,0,1},
+    {0,0,0,0,0,1,0,0,0,0,0,0,0,1,1,0,0,1,1,0,1,1,0,1},
+    {0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,1,0,0,1,1,0,1,1,1},
+    {0,0,0,0,0,0,0,1,0,0,0,0,1,0,1,1,0,1,1,1,1,0,0,0},
+    {0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,1,1,0,1,1,1,1,0,0},
+    {0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,1,1,0,1,1,1,1,0},
+    {0,0,0,0,0,0,0,0,0,0,1,0,1,0,1,1,1,0,0,0,1,1,0,1},
+    {0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,1,1,1,0,0,0,1,1,1}};
+C = linearCode(matrix(GF(2),G));
+assert(minimumWeight(C) == 8);
+///
 
 TEST ///
 
