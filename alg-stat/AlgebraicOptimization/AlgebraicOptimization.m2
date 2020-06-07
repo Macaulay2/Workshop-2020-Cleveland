@@ -193,7 +193,7 @@ fritzJohnEDDegree (Ideal, Ideal) := ZZ => opts -> (WI, I) -> (
     then 
       (vars R - uMatrix) || transpose jacobian WI
     else
-      error "projective fritzJohnEDDegree not yet implemented";--vars R || uMatrix || transpose jacobian WI;
+      vars R || uMatrix || transpose jacobian WI;
   T := (coefficientRing(R))[m_1..m_(numRows Ibar)];
   RT := R**T;
   WIbar := ideal(sub(vars T, RT)*sub(Ibar, RT)) + sub(I,RT) + sub(random(1,T) - 1, RT);  -- witness of Ibar
