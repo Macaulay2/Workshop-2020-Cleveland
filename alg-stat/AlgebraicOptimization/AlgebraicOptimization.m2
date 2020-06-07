@@ -1,13 +1,13 @@
 newPackage(
   "AlgebraicOptimization",
-  Version => "0.1", 
+  Version => "0.1",
   Date => "May 12, 2020",
-  Authors => { 
-    {Name => "Marc Harkonen", 
-    Email => "harkonen@gatech.edu", 
+  Authors => {
+    {Name => "Marc Harkonen",
+    Email => "harkonen@gatech.edu",
     HomePage => "https://people.math.gatech.edu/~mharkonen3/"},
-    {Name => "Jose Israel Rodriguez", 
-    Email => "jose@math.wisc.edu", 
+    {Name => "Jose Israel Rodriguez",
+    Email => "jose@math.wisc.edu",
     HomePage => "https://www.math.wisc.edu/~jose/"},
     {Name => "Fatemeh Tarashi Kashani",
     Email => "tarashikashanifatemeh@gmail.com",
@@ -36,6 +36,7 @@ export {
   "projectionEDDegree",
   "sectionEDDegree",
   "multiDegreeEDDegree",
+  "fritzJohnEDDegree",
   "MLequationsIdeal",
   "MLequationsDegree",
   "parametricMLIdeal",
@@ -49,19 +50,22 @@ export {
   --Types and keys
   "ConormalRing","CNRing","PrimalRing","DualRing","PrimalCoordinates","DualCoordinates",
   --More Types
-  "LagrangeVarietyWitness","LagrangeIdeal", "IsolatedCriticalPointSet",
+  "LagrangeVarietyWitness","LagrangeIdeal",
+  --"IsolatedCriticalPointSet",
   --Methods
   --"isolatedRegularCriticalPointSet","criticalIdeal","lagrangeIdeal",
   --"gradient",
   "probabilisticLagrangeMultiplierOptimizationDegree",
   --More Keys
   "LagrangeVariable","PrimalIdeal","JacobianConstraint","AmbientRing","LagrangeCoordinates","WitnessPrimalIdeal",
-  "Data", "Gradient", "WitnessSuperSet", "SaveFileDirectory",
+  "Data",
+  --"Gradient",
+  --"WitnessSuperSet", "SaveFileDirectory",
   -- Tolerances
-  "MultiplicityTolerance","EvaluationTolerance", "ConditionNumberTolerance",
+  --"MultiplicityTolerance","EvaluationTolerance", "ConditionNumberTolerance",
   --"updateMultiplicityTolerance","updateEvaluationTolerance","updateConditionNumberTolerance",
   "Coordinates", "Factors",
-  "Numerators","Denominators",
+  --"Numerators","Denominators",
   -- Strategies
   "Probabilistic", "Symbolic"
 }
@@ -73,7 +77,7 @@ export {
 --------------------
 
 ConormalRing = new Type of MutableHashTable;
---a ConormalRing always has the following keys: 
+--a ConormalRing always has the following keys:
 -- AmbientRing, Factors, Coordinates
 conormalRing = method(Options => {DualVariable => null});
 -- Creates a ConormalRing from a primal ring R
@@ -94,7 +98,7 @@ conormalIdeal = method(Options => options conormalRing);
 -- Computes the conormal variety
 conormalIdeal (Ideal, ConormalRing) := Ideal => opts -> (I,C) -> (
   if not ring I === C.Factors_0 then error "expected ideal in primal ring";
-  
+
   c := codim I;
   jacI := sub(diff(matrix{C.Coordinates_0}, transpose gens I), C.AmbientRing);
   jacBar := sub(matrix{C.Coordinates_1}, C.AmbientRing) || jacI;
@@ -132,7 +136,7 @@ S = QQ[x_0..x_2]
 I = ideal(x_2^2-x_0^2+x_1^2)
 dualI = projectiveDual(I)
 S = ring dualI
-assert( dualI == ideal(S_0^2 - S_1^2 - S_2^2)) 
+assert( dualI == ideal(S_0^2 - S_1^2 - S_2^2))
 ///
 
 
@@ -170,6 +174,71 @@ I = ideal"x2 - y2 - z2"
 assert(probabilisticEDDegree(I, Data => {2/4,1/2,-1/2}, Projective => true) == 2)
 assert(probabilisticEDDegree(I, Data => {2/4,1/2,-1/2}, Projective => false) == 2)
 ///
+
+
+---------------------------
+-- fritzJohnEDdegree ------
+---------------------------
+fritzJohnEDDegree = method(Options => {Projective => false, Data => null})
+fritzJohnEDDegree (Ideal, Ideal) := ZZ => opts -> (WI, I) -> (
+  R := ring I;
+  l := symbol l;
+  S := (coefficientRing(R))[l_1..l_(#WI_*)];
+  RS := R ** S;
+  J := ideal (sub(vars S, RS) * sub(transpose jacobian WI, RS));
+  randomAffine := sub(random(1,S) - 1, RS);
+  WIsing := J + sub(I,RS) + randomAffine; -- witness of the singular locus of I
+  RWIsing := sub(eliminate(gens S / (i -> sub(i,RS)), WIsing) , R);
+  u := if opts.Data === null then (gens R / (i -> random(coefficientRing R))) else opts.Data;
+  uMatrix := matrix{u};
+  m := symbol m;
+  Ibar := if not opts.Projective
+    then
+      (vars R - uMatrix) || transpose jacobian WI
+    else
+      vars R || uMatrix || transpose jacobian WI;
+  T := (coefficientRing(R))[m_1..m_(numRows Ibar)];
+  RT := R**T;
+  WIbar := ideal(sub(vars T, RT)*sub(Ibar, RT)) + sub(I,RT) + sub(random(1,T) - 1, RT);  -- witness of Ibar
+  RWIbar := sub(eliminate(gens T / (i -> sub(i,RT)), WIbar), R);
+  critIdeal := if not opts.Projective
+    then
+      saturate(RWIbar, RWIsing)
+    else (
+      Q := gens R / (i -> i^2) // sum // ideal;
+      saturate(RWIbar, RWIsing * Q)
+  );
+  degree critIdeal
+)
+fritzJohnEDDegree (Ideal) := ZZ => opts -> (I) -> (
+  c := codim I;
+  if codim I == numgens I then fritzJohnEDDegree(I,I,opts)
+  else (
+    R := ring I;
+    -- use a random linear combination of generators as witness
+    witness := gens I * random(R^(numgens I), R^c);
+    fritzJohnEDDegree(ideal witness, I, opts)
+  )
+)
+TEST ///
+R = QQ[x,y]
+I = ideal"x2 + y2 - 1"
+assert(fritzJohnEDDegree(I, Data => {1/3, 2/5}) == 2)
+J = ideal((x^2+y^2+x)^2 - x^2 - y^2)
+assert(fritzJohnEDDegree(J, Data => {1,2}) == 3)
+R = QQ[x,y,z]
+I = ideal"x2 - y2 - z2"
+assert(fritzJohnEDDegree(I, Data => {2/4,1/2,-1/2}, Projective => true) == 2)
+assert(fritzJohnEDDegree(I, Data => {2/4,1/2,-1/2}, Projective => false) == 2)
+R = QQ[x,y,z,w]
+I = ideal"xz-y2,yw-z2,xw-yz"
+assert(fritzJohnEDDegree(ideal(I_0,I_1),I, Projective => true) == 7)
+assert(fritzJohnEDDegree(ideal(I_0,I_1),I, Projective => false) == 7)
+assert(fritzJohnEDDegree(I) == 7)
+///
+
+
+
 
 
 --------------------
@@ -275,7 +344,7 @@ TEST ///
 R = QQ[x_0..x_6]
 I = ideal(apply(2, i-> random(1,R)))
 assert(projectionEDDegree I == 1)
--- TODO this test may be too slow -- 
+-- TODO this test may be too slow --
 S = QQ[y_0..y_3,z]
 J = ideal det(matrix{{y_0, y_1, y_2}, {y_1, y_0, y_3}, {y_2, y_3, y_0}})
 assert(probabilisticEDDegree (J+z) == 13)
@@ -343,28 +412,28 @@ MLequationsIdeal = method()
 MLequationsIdeal (Ideal,List) := (I,u)-> (
     P := (gens I)_(0,0); -- must find better command.
     if not (isHomogeneous I) then error("The Ideal isn't Homogeneous");
-    if not (isPrime I) then error("The Ideal isn't Prime"); 
-    
+    if not (isPrime I) then error("The Ideal isn't Prime");
+
     c := codim I;
     jacI := transpose jacobian I;
-    Q := minors(c, jacI); 
-    
+    Q := minors(c, jacI);
+
     R := ring I;
     numVars := #gens R;
     i1 := for i from 1 to numVars list 1;
     J := matrix {i1} || jacI;
     diagM := diagonalMatrix gens R;
-    J' := J * diagM; 
+    J' := J * diagM;
     dmp := for i from 1 to numRows J' list P;
-    I' := diagonalMatrix matrix{dmp};  
+    I' := diagonalMatrix matrix{dmp};
     M := kernel( inducedMap(coker I', target I') * J' );
-    
+
     g := generators M;
     g' := matrix drop(entries g,-numrows g+#u);
     Iu' := ideal (matrix {u} * g');
-    
-    MLIdeal := saturate(saturate(saturate(Iu', Q), sum gens R), product gens R); 
-    MLIdeal  
+
+    MLIdeal := saturate(saturate(saturate(Iu', Q), sum gens R), product gens R);
+    MLIdeal
 )
 
 MLequationsDegree = method(Options => {Data => null})
@@ -376,7 +445,7 @@ MLequationsDegree (Ideal) := ZZ => opts -> (I) -> (
     MLdegree := degree MLIdeal;
     MLdegree
 )
-  
+
 TEST ///
 R = QQ[p0, p1, p2, p12]
 I = ideal (2*p0*p1*p2 + p1^2*p2 + p1*p2^2 - p0^2*p12 + p1*p2*p12)
@@ -388,14 +457,14 @@ assert( MLequationsDegree (I ,  Data => u) == 3)
 --------------------
 --parametricMLDegree
 --------------------
-parametricMLIdeal = method(); 
+parametricMLIdeal = method();
 parametricMLIdeal (List,List) := (F,u)-> (
     if not (sum F ==1) then error("The sum of functions is not equal to one.");
     m1 := diagonalMatrix F;
     m2 := for i in F list transpose jacobian ideal(i);
     m2p := fold(m2, (i,j) -> i || j);
     M := m1 | m2p;
-    
+
     g := generators ker M;
     g' := matrix drop(entries g,-numrows g+#u);
     Ju' := ideal (matrix {u} * g');
@@ -403,7 +472,7 @@ parametricMLIdeal (List,List) := (F,u)-> (
     MLIdeal
 )
 
-parametricMLDegree = method(Options => {Data => null}); 
+parametricMLDegree = method(Options => {Data => null});
 parametricMLDegree (List) := ZZ => opts -> (F)-> (
     u := if opts.Data ===null then  for i from 0 to #F-1 list random(1, 10^5) else opts.Data;
     MLIdeal := parametricMLIdeal(F,u);
@@ -416,8 +485,8 @@ R = QQ[t]
 s=1
 u = {2,3,5,7}
 F = {s^3*(-t^3-t^2-t+1),s^2*t,s*t^2,t^3}
-assert( parametricMLDegree (F) == 3) 
-assert( parametricMLDegree (F ,  Data => u) == 3) 
+assert( parametricMLDegree (F) == 3)
+assert( parametricMLDegree (F ,  Data => u) == 3)
 ///
 
 --------------------
@@ -432,7 +501,7 @@ probabilisticLagrangeMultiplierEDDegree (Ideal,Ideal) := ZZ => opts -> (WI,I) ->
     degree criticalIdeal(gradient(X-g),aLI)
     )
 --probabilisticLagrangeMultiplierEDDegree Ideal := ZZ => opts -> I ->probabilisticLagrangeMultiplierEDDegree(I,I)
-    
+
 
 TEST///
 R=QQ[x,y]
@@ -446,10 +515,10 @@ assert(3==probabilisticLagrangeMultiplierEDDegree(WI,I))
 --Lagrange multipliers code
 ------------------------------
 
-LagrangeIdeal = new Type of MutableHashTable; 
+LagrangeIdeal = new Type of MutableHashTable;
 --LagrangeIdeal always have these keys (Is for the parametric version)
---  JacobianConstraint 
---  Ideal 
+--  JacobianConstraint
+--  Ideal
 --  CornomalRing
 --  WitnessPrimalIdeal  (Ideal so that the parameterization is generically finite to one and we have a sqare system.)
 --Optional keys
@@ -509,16 +578,17 @@ assert(4==degree aLI.Ideal)
 --------------------
 
 coefficientRing(ConormalRing) := CR ->coefficientRing CR.AmbientRing
-ring (LagrangeIdeal) := aLI -> ring aLI#JacobianConstraint 
+ring (LagrangeIdeal) := aLI -> ring aLI#JacobianConstraint
 
-degree (List,LagrangeIdeal) := (v,aLI) -> (    
+-* Depracated because LagrangeIdeal is not exported
+degree (List,LagrangeIdeal) := (v,aLI) -> (
 --TODO: How to document this?
     if degreeLength  ring aLI == 4 then(
 	u := gens coefficientRing ring aLI;
 	if #v=!=#u then error "data does not agree with number of parameters. ";
     	subData :=apply(u,v,(i,j)->i=>j);
 	return degree sub(sub(aLI.PrimalIdeal,aLI) + aLI.JacobianConstraint,subData)
-	)	
+	)
     else error"degreeLength is not 4."--TODO: should be able to handle any degree length.
     )
 degree (Nothing,LagrangeIdeal) := (a,LVW) -> (
@@ -529,14 +599,14 @@ degree (Nothing,LagrangeIdeal) := (a,LVW) -> (
 	)
 --Degree with parameters as indeterminants
 degree (LagrangeIdeal) := LVW -> (if LVW#?PrimalIdeal then  degree(LVW.Ideal) else error" PrimalIdeal key is missing. ")
-
+*-
 
 sub(RingElement, LagrangeIdeal) := (f,aLI) -> sub(f,ring aLI)
 sub(List, LagrangeIdeal) := (L,aLI) -> L/(f -> sub(f,ring aLI))
 sub(Ideal, LagrangeIdeal) := (I,aLI) -> sub(I,ring aLI)
 
--* 
---lagrangeIdeal no longer expoerted 
+-*
+--lagrangeIdeal no longer expoerted
 TEST///
     R = QQ[u][x,y,z,w]
     I=minors(2,matrix{{x,y,z},{y,z,w}})
@@ -553,19 +623,19 @@ TEST///
 
     LVW2.PrimalIdeal=I
     assert(20 == degree LVW2)
-    assert(20 == degree LVW1)   
+    assert(20 == degree LVW1)
     assert(16 == degree({482}, LVW1))
     assert(16 == degree(, LVW1))
-    
+
     LVW3 = lagrangeIdeal(WI2)
     assert(not  LVW3#?PrimalIdeal)
     LVW3.PrimalIdeal = I
-    assert(20 == degree LVW3)   
+    assert(20 == degree LVW3)
 
     R=QQ[u][x,y,z,w]
 
     WI = ideal(u*x*z-y^2,y*w-z^2)
-    I = ideal(u*x*w-z*y)+WI 
+    I = ideal(u*x*w-z*y)+WI
     LVW1 = lagrangeIdeal(WI,I)
     assert(16 == degree({1},LVW1)	)
     assert(16 == degree(,LVW1)	)
@@ -585,8 +655,8 @@ Gradient = new Type of MutableHashTable
 gradient = method(Options => {});
 gradient (List,List) := Gradient => opts  -> (n,d) ->(
     new Gradient from {
-	Numerators => n,
-	Denominators => d
+	"Numerators" => n,
+	"Denominators" => d
 	})
 gradient (List) := Gradient => opts  -> (g) ->(
     n := apply(g,i-> if instance(ring i,FractionField) then numerator i else i);
@@ -594,10 +664,10 @@ gradient (List) := Gradient => opts  -> (g) ->(
     gradient(n,d))
 
 sub(Gradient,LagrangeIdeal) :=  (g,aLI) -> (
-    n := apply(g.Numerators,i->sub(i,aLI));
-    d := apply(g.Denominators,i->sub(i,aLI));
-    gradient(n,d)    
-    )    
+    n := apply(g#"Numerators",i->sub(i,aLI));
+    d := apply(g#"Denominators",i->sub(i,aLI));
+    gradient(n,d)
+    )
 
 
 --gradient no longer exported
@@ -615,7 +685,7 @@ assert(2 == # keys gradient({x},{y}))
 
 --witnessCriticalVariety and Optimization degree
 CriticalIdeal = new Type of MutableHashTable
-criticalIdeal = method(Options => {Data=>null});--Evaluate data option. 
+criticalIdeal = method(Options => {Data=>null});--Evaluate data option.
 criticalIdeal (Gradient,LagrangeIdeal) := CriticalIdeal => opts  -> (g,aLI) ->(
 	u := gens coefficientRing ring (aLI);
 	dataSub := if opts.Data===null then {} else apply(u,opts.Data,(i,j) -> i => j);
@@ -625,8 +695,8 @@ criticalIdeal (Gradient,LagrangeIdeal) := CriticalIdeal => opts  -> (g,aLI) ->(
 	y:=sub(aLI.ConormalRing.Factors#1//gens,aLI);
     	newJC = ideal apply(#y,
 	    i->(
-	    	lamSub := Lam/(j->j=>j*gCN.Denominators#i);	    	    
-	    	gCN.Numerators#i + sub( newJC_i, lamSub )-y_i
+	    	lamSub := Lam/(j->j=>j*gCN#"Denominators"#i);
+	    	gCN#"Numerators"#i + sub( newJC_i, lamSub )-y_i
 		)
 	    );
 	CI := new CriticalIdeal from {
@@ -663,28 +733,28 @@ criticalIdeal (RingElement,Ideal,Ideal) := CriticalIdeal =>opts -> (psi,WI,I) ->
     g := gradient apply(gens ring psi,x->diff(x,psi));
     criticalIdeal(g,WI,I,opts)
     )
- 
-degree (CriticalIdeal) :=  CI -> ( 
+
+degree (CriticalIdeal) :=  CI -> (
     if not(CI#LagrangeIdeal#?PrimalIdeal) then error"CriticalIdeal#LagrangeIdeal#?PrimalIdeal is false. ";
     w := CI#JacobianConstraint;
-    w = w+sub(CI#LagrangeIdeal#PrimalIdeal,CI#LagrangeIdeal);    
+    w = w+sub(CI#LagrangeIdeal#PrimalIdeal,CI#LagrangeIdeal);
     u := gens coefficientRing ring (CI#LagrangeIdeal);
     dataSub := if CI.Data===null then {} else apply(u,CI.Data,(i,j)->i=>j);
     sCI := sub(w,dataSub);
     g := sub(CI#Gradient,CI#LagrangeIdeal);
-    print (peek g);    
-    scan( g.Denominators , d -> sCI = saturate(sCI, d) );
+    print (peek g);
+    scan( g#"Denominators" , d -> sCI = saturate(sCI, d) );
     print(toString sCI);
     targetCodim := #gens ring(CI#LagrangeIdeal#WitnessPrimalIdeal)+ #gens(CI#LagrangeIdeal.ConormalRing#Factors#2);
-    if codim sCI =!= targetCodim 
+    if codim sCI =!= targetCodim
     then sum \\ degree \ select(primaryDecomposition sCI, i-> codim i ==targetCodim)
     else degree sCI
-    )    
+    )
 
 
 --lagrangeIdeal no longer exported
 -*
-TEST/// 
+TEST///
 R=QQ[a,b][x,y]
 I=ideal(x^2+y^2-1)
 WI=I
@@ -703,7 +773,7 @@ assert(2==degree WCI)--ED degree of the circle
 
 --lagrangeIdeal and criticalIdeal no longer exported
 -*
-TEST/// 
+TEST///
 R=QQ[x,y]
 I=ideal(x^2+y^2-1)
 WI=I
@@ -729,8 +799,8 @@ toricMLIdeal(Matrix, List, List) := Ideal => opts -> (A, c, u) -> (
     N := sum u;
     toricMapA := transpose matrix {for i from 0 to n-1 list c_i*R_(entries A_i)};
     u = transpose matrix {u};
-    A = sub(A,R); 
-    MLIdeal := ideal(A*(N*toricMapA - u)); 
+    A = sub(A,R);
+    MLIdeal := ideal(A*(N*toricMapA - u));
     MLIdeal
     )
 
@@ -738,9 +808,9 @@ toricMLDegree = method(Options => {CoeffRing => QQ, Data => null})
 toricMLDegree(Matrix, List) := Number => opts -> (A,c) -> (
     if not (rank A == min(numgens target A, numgens source A)) then error("The matrix is not full rank.");
     u := if opts.Data === null then for i from 0 to #c-1 list random(1, 10^5) else opts.Data;
-    D := smithNormalForm(A, ChangeMatrix => {false, false}, KeepZeroes => false);  
+    D := smithNormalForm(A, ChangeMatrix => {false, false}, KeepZeroes => false);
     MLIdeal := toricMLIdeal(A, c, u, CoeffRing => opts.CoeffRing);
-    MLdegree := (degree saturate(MLIdeal, (product gens ring MLIdeal))) / (det D); 
+    MLdegree := (degree saturate(MLIdeal, (product gens ring MLIdeal))) / (det D);
     MLdegree
     )
 
@@ -754,233 +824,9 @@ assert(1 == toricMLDegree(A, c));
 c = {1,2,3,1,1,1,1,1,1};
 assert(3 == toricMLDegree(A,c));
 ///
-----------------------------------------
---Using witness sets code
-----------------------------------------
 
---Each method in this section will rely on strategies 
--- These vary by implementation and algorithms used. 
--*
-strategyIndex=new HashTable from {
-	0=>regenerateBertiniIsolatedRegularCriticalPointSet,
-	1=>bezoutBertiniIsolatedRegularCriticalPointSet
-	}
-*-
-
-------------------------------
---IsolatedCriticalPointSet code
-------------------------------
-
---code to compute witness points with various strategies.
-IsolatedCriticalPointSet = new Type of WitnessSet;
---Always has the following keys.
--- CriticalIdeal
--- MultiplicityTolerance
--- EvaluationTolerance
--- ConditionNumberTolerance
--- WitnessSuperSet
--- SaveFileDirectory
--- Data => u
--- Gradient => g,
--- Slice => matrix{{}}
--- IsIrreducible => null,
--- Points --An index of points
--- Strategy
-
-
-isolatedRegularCriticalPointSet = method(Options => {Strategy=>0});--Carry options over?
-isolatedRegularCriticalPointSet (List,List,LagrangeIdeal) := IsolatedCriticalPointSet => opts  -> (u,g,aLI) ->(
-    strategyIndex := new HashTable from {
-	0=>regenerateBertiniIsolatedRegularCriticalPointSet,
-	1=>bezoutBertiniIsolatedRegularCriticalPointSet
-	};
-    f := strategyIndex#(opts.Strategy);
-    f(u,g,aLI)
-    )
-
-
-------------------------------
---UpdateWitnessSet code
-------------------------------
-
---TODO: This needs to be redone like isolatedRegularCriticalPointSet and branch off into Bertini sections. 
-
-updateEvaluationTolerance=(evalTol,ICPS)->(
-    sols:=ICPS.WitnessSuperSet;
-    wpIndex := delete(null,
-	apply(#sols,i->(
-		fn := "evaluation_"|i|"_mt_primal";
-	    	p := sols_i;
-	    	if isEvaluationZero(ICPS.SaveFileDirectory,fn,p,evalTol) then return i
-	    	)));
-    ICPS.EvaluationTolerance = evalTol;
-    ICPS.Points=wpIndex;)
-
-updateMultiplicityTolerance=(multiplicityTol,ICPS)->(
-    sols:=ICPS.WitnessSuperSet;
-    wpIndex := delete(null,
-	apply(#sols,i->(
-	    	p := sols_i;
-		m := p.Multiplicity;
-		if m<=multiplicityTol then return i
-	    	)));
-    ICPS.MultiplicityTolerance=multiplicityTol;
-    ICPS.Points=wpIndex;)
-
-updateConditionNumberTolerance=(conditionNumberTol,ICPS)->(
-    sols:=ICPS.WitnessSuperSet;
-    wpIndex := delete(null,
-	apply(#sols,i->(
-	    	p := sols_i;
-		c := p.ConditionNumber;
-		if c<=conditionNumberTol then return i
-	    	)));
-    ICPS.ConditionNumberTolerance=conditionNumberTol;
-    ICPS.Points=wpIndex;)
-
-
---------------------
---bertiniCriticalPointSet code
---------------------
-
-
---Data,gradient,aLI,bic	
-bertiniCriticalPointSet = (u,g,LVW,bic)->(
-    evalTol :=-6;
-    CI := criticalIdeal(g,LVW);
-    dir := temporaryFileName();
-    if not fileExists dir then mkdir dir;
-    arCoords := CI#LagrangeIdeal.ConormalRing.Coordinates;
-    avg := AffVariableGroup=>{arCoords#0,arCoords#2};
-    bc := B'Constants => apply(gens coefficientRing ring LVW,u,(i,j)->i=>j);
-    JC := CI.JacobianConstraint;
-    WI := LVW.WitnessPrimalIdeal;
-    makeB'InputFile(dir,avg,bc,
-	NameB'InputFile=>"input_ss",
-	BertiniInputConfiguration=>bic,
-	B'Polynomials =>WI_*|JC_*);
-    runBertini(dir,NameB'InputFile=>"input_ss");
-    sols := importMainDataFile(dir);
-    moveB'File(dir,"main_data","main_data_ss");
-    I := LVW.PrimalIdeal;
-    makeB'InputFile(dir,
-	avg,bc,
-	NameB'InputFile=>"input_mt_primal",
-	BertiniInputConfiguration=>{"TrackType" => -4},
-	B'Polynomials =>I_*);
-    scan(#sols,i->(
-	    p := sols_i;
-	    writeStartFile(dir,{coordinates p},
-		NameStartFile=>"start");
-	    runBertini(dir,NameB'InputFile =>"input_mt_primal");
-	    fn := "evaluation_"|i|"_mt_primal";
-	    moveB'File(dir,"function",fn)));
-    ICPS:=new IsolatedCriticalPointSet from {
-    	EvaluationTolerance => evalTol,
-    	SaveFileDirectory => dir,
-    	Data => u,
-	Gradient => g,
-	Slice => matrix{{}},
-    	WitnessSuperSet => sols,
-	Points => null,
-	IsIrreducible => null,
-    	CriticalIdeal => CI
-	};
-    updateEvaluationTolerance(evalTol,ICPS);
-    updateMultiplicityTolerance(1,ICPS);
-    updateConditionNumberTolerance(1e10,ICPS);    
-    ICPS
-    )
- 
- --test for the numerical version
- -*
-TEST/// 
-R=QQ[a,b][x,y] 
-I=ideal(x^2+1*y^2-1)
-LVW = lagrangeIdeal(I,I)
-ring LVW
-u ={7,99}
-g= {x-a,y-b}
-bic={}
---bertiniCriticalPointSet(u,g,LVW,bic)
-ICPS = isolatedRegularCriticalPointSet (u,g,LVW)
-
-ICPS = isolatedRegularCriticalPointSet (u,g,LVW,Strategy=>1)
---assert(2==#ICPS.Points)--Issue with keys here TODO. 
-updateEvaluationTolerance(-100,ICPS)	
-peek ICPS
---assert({}==ICPS.Points)--Issue with keys here TODO. 
-isolatedRegularCriticalPointSet(u,g,LVW)
-isolatedRegularCriticalPointSet(u,g,LVW,Strategy=>1)
-peek oo
-
-///
-*-
-------------------------------
---Index the stategies  code
-------------------------------
---Five functions are needed to have a strategy.
-----solve: From aLI and possible other arguments, outputs an IsolatedCriticalPointSet
-----updateEvaluationTolerance 
-----updateMultiplicityTolerance
-----updateConditionNumberTolerance
------Each update should also reclassify witness points. 
-
---------------------
---Stategy=>0 regenerateBertiniIsolatedRegularCriticalPointSet
---------------------
-
-    --TODO: Fix print display.
-regenerateBertiniIsolatedRegularCriticalPointSet = (u,g,LVW)->(
-    bic := {"TrackType"=>0,"UseRegeneration"=>1};
-    bertiniCriticalPointSet(u,g,LVW,bic))
-
-----------
---Stategy=>1 bezoutBertiniIsolatedRegularCriticalPointSet 
-----------
-
-bezoutBertiniIsolatedRegularCriticalPointSet = (u,g,LVW)->(
-    bic := {"TrackType"=>0,"UseRegeneration"=>0};
-    bertiniCriticalPointSet(u,g,LVW,bic))
-
-
---TODO : bertiniSolve
---TODO : monodromySolve
-
-
---------------------
---Helper functions
---------------------
-
---Used to read Bertini function files which contain information about evaluations of a point. 
-isEvaluationZero = (dir,fn,p,evalTol)->(
-	    isRoot:= true;	    
-	    scanLines(line->(
-		     num := separateRegexp("[e ]", line);
-		     if #num==4 
-		     then (if min(value(num#1),value(num#3))>evalTol then isRoot=false)
-		     else if #num>1 then error("parsing file incorrectly"|line)
-		     ),
-		     dir|"/"|fn
-		     );		     
-	    isRoot)
-
-
---Used to easily create options.
-newPairs=(A,B)->apply(A,B,(i,j)-> i=>j)
-
-
---Used to determine if a symbolic method can be used
-isCofficientRingInexact = R -> (
- -- This checks if kk is a ComplexField or RealField 
-    kk := ultimate(coefficientRing,R);
---    instance(kk,InexactField)--This is probably better, but not sure. 
-    member(kk,{ComplexField,RealField}) 
-    )
-
-
---Used to find WI symbollically without using randomization. 
---Instead: We could also take a random linear combination. 
+--Used to find WI symbollically without using randomization.
+--Instead: We could also take a random linear combination.
 findRegularSequence = I -> (
     c:=codim I;
     WI := sub(ideal(),ring I);
@@ -1008,7 +854,7 @@ probabilisticLagrangeMultiplierOptimizationDegree (RingElement,Ideal,Ideal) := Z
     CI := criticalIdeal(psi,aLI,opts);
     degree CI
     )
-    
+
 
 TEST///
 
@@ -1026,7 +872,7 @@ assert(3==probabilisticLagrangeMultiplierOptimizationDegree(psi,WI,I,Data=>{2,3}
 
 ///
 
- 
+
 
 probabilisticConormalVarietyOptimizationDegree = method(Options => {Data => null});
 probabilisticConormalVarietyOptimizationDegree (List,Ideal) := ZZ => opts -> (g,I) -> (
@@ -1037,14 +883,15 @@ probabilisticConormalVarietyOptimizationDegree (List,Ideal) := ZZ => opts -> (g,
   --v := if opts.Data ===null then apply(gens coefficientRing R,i->random kk ) else opts.Data;
   v := if opts.Data ===null then gens coefficientRing R else opts.Data;
   c := codim I;
-  jacI := diff(matrix{gens ring I}, transpose gens I);  
-  jacBar := matrix{n} || (jacI*diagonalMatrix (d));  
+  jacI := diff(matrix{gens ring I}, transpose gens I);
+  jacBar := matrix{n} || (jacI*diagonalMatrix (d));
   jacBar = sub(jacBar,apply(gens coefficientRing R,v,(i,j)-> i=>j));
   J' := I + minors(c+1, jacBar);
   J := saturate(J', minors(c, jacI));
-  scan(d, h -> J = saturate(J,sub(h,R)));  
-  if codim J =!= #gens R
-  then 0 
+  scan(d, h -> J = saturate(J,sub(h,R)));
+  targetCodim := #gens R;
+  if codim J =!= targetCodim
+  then sum \\ degree \ select(primaryDecomposition J, i-> codim i ==targetCodim)
   else degree J
   )
 probabilisticConormalVarietyOptimizationDegree (RingElement,Ideal) := ZZ => opts -> (psi,I) -> (
@@ -1069,7 +916,7 @@ assert(1==probabilisticConormalVarietyOptimizationDegree(psi,I,Data=>{0,0}))
 
 ///
 
- 
+
 
 
 -- Documentation below
@@ -1085,14 +932,14 @@ Headline
 Description
   Text
     References: \break
-    [1] Seth Sullivant, 
+    [1] Seth Sullivant,
     Algebraic Statistics, American Mathematical Soc. \break
-    [2]  Jan Draisma, Emil Horobeţ, Giorgio Ottaviani, Bernd Sturmfels, and Rekha R. Thomas, 
+    [2]  Jan Draisma, Emil Horobeţ, Giorgio Ottaviani, Bernd Sturmfels, and Rekha R. Thomas,
     The Euclidean distance degree of an algebraic variety, Found. Comput. Math. 16 (2016), no. 1, 99–149. MR 3451425. \break
-    [3] Serkan Hoşten, Amit Khetan,and Bernd Sturmfels, 
+    [3] Serkan Hoşten, Amit Khetan,and Bernd Sturmfels,
     Solving the likelihood equations, Found. Comput. Math. 5 (2005), no. 4, 389–407. \break
-    [4] Carlos  Am ́endola,  Nathan  Bliss,  Isaac  Burke,  Courtney  R.  Gibbons,  
-    Martin  Helmer,  Serkan  Ho ̧sten,  Evan  D.  Nash,Jose  Israel  Rodriguez,  
+    [4] Carlos  Am ́endola,  Nathan  Bliss,  Isaac  Burke,  Courtney  R.  Gibbons,
+    Martin  Helmer,  Serkan  Ho ̧sten,  Evan  D.  Nash,Jose  Israel  Rodriguez,
     and  Daniel  Smolkin.  The  maximum  likelihood  degree  of  toric  varieties.
     Journal  of  SymbolicComputation, 92:222–242, May 2019.
   Example
@@ -1300,7 +1147,7 @@ Description
     ED degree is defined as the ED degree of the corresponding affine cone. Nonetheless, the algorithm
     for computing the ED degree of a homogeneous ideal is slightly faster than for non-homogeneous ideals.
     By default, the function checks whether or not the ideal is homogeneous
-    and chooses an algorithm based on the result. The user can force the choice of algorithm by specifying 
+    and chooses an algorithm based on the result. The user can force the choice of algorithm by specifying
     {\tt Projective => true} or {\tt Projective => false}.
   CannedExample
     i1 : R = QQ[x_0..x_3];
@@ -1327,6 +1174,156 @@ Description
 --Caveat
 --SeeAlso
 ///
+
+
+doc ///
+Key
+  fritzJohnEDDegree
+  (fritzJohnEDDegree, Ideal, Ideal)
+  [fritzJohnEDDegree, Data]
+  [fritzJohnEDDegree, Projective]
+Headline
+  compute ED-degree for a random point using Fritz John conditions
+Usage
+  fritzJohnEDDegree(WI,I)
+  fritzJohnEDDegree(WI, I, Projective => true)
+  fritzJohnEDDegree(WI, I, Projective => false)
+  fritzJohnEDDegree(WI, I, Data => L)
+Inputs
+  WI:
+    an @TO2{Ideal, "ideal"}@ with ${codim}(I)$ generators such that $\mathbb V(WI)$ contains
+    $\mathbb V(I)$ as an irreducible component
+  I:
+    an @TO2{Ideal, "ideal"}@ corresponding to an irreducible variety.
+  Projective => Boolean
+    specifies whether or not to use a specialized algorithm for projective varieties.
+    Note that if $I$ is homogeneous, both {\tt true} and {\tt false} should return the same answer
+  Data => List
+    specifies coordinates of the point from which the ED degree is computed.
+    By default, this point is chosen at random from the coefficient ring using @TO (random,Type)@.
+Outputs
+  :ZZ
+    the ED-degree of $I$.
+--Consequences
+--  Item
+Description
+  Text
+    The function computes the Euclidean distance degree of an irreducible variety corresponding to
+    the prime ideal $I$ using the Fritz John conditions. In other words, we choose a random point $u$ and output the number of critical
+    points of the distance function from the variety to $u$. A random point will give the correct ED degree
+    with probability 1.
+
+    In this function, rank conditions on a polymomial matrix $M$ are expressed by adding equations of the form
+    $\Lambda M = 0$, where $\Lambda$ is a row vector of new indeterminates $\lambda_i$. If $M$ is of full rank
+    (e.g. $M$ is the Jacobian or augmented Jacobian of $WI$), solutions of the system
+    $\Lambda M = 0$, $\sum_{i} c_i\lambda_i = 1$ lying on $\mathbb V(I)$ are points where the rank
+    of $M$ drops (here the $c_i$ are random constants).
+
+    We can confirm that the EDDegree of the twisted cubic is 7.
+  Example
+    R = QQ[x,y,z,w]
+    I = ideal"xz-y2,yw-z2,xw-yz"
+    WI = ideal(I_0, I_1)
+    fritzJohnEDDegree(WI,I)
+  Text
+    Instead of a random point, the user can specify their own point
+  Example
+    fritzJohnEDDegree(I, Data => {2,3,4,5})
+
+  Text
+    This function tends to perform well compared to e.g. @TO probabilisticEDDegree@ when the number of generators is larger than the codimension.
+    In the example below, we have an ideal $I$ of codimension 2 with 7 generators.
+    We will use two random linear combinations of the 7 generators as our witness ideal $WI$.
+  CannedExample
+    i2 : R = QQ[x_0..x_3];
+
+    i3 : f1 = random(2,R);
+
+    i4 : f2 = random(2,R);
+
+    i5 : I = ideal(matrix{{f1,f2}} * random(R^2, R^5) | matrix{{f1,f2}});
+
+    o5 : Ideal of R
+
+    i6 : WI = ideal (gens I * random(R^7,R^2));
+
+    o6 : Ideal of R
+
+    i7 : elapsedTime probabilisticEDDegree I
+         2.8346 seconds elapsed
+
+    o7 = 12
+
+    i8 : elapsedTime fritzJohnEDDegree (WI,I)
+         0.707514 seconds elapsed
+
+    o8 = 12
+
+
+
+  Text
+    If the variety corresponding to $I$ is projective, the projective
+    ED degree is defined as the ED degree of the corresponding affine cone.
+    By default, the function uses the non-projective algorithm, as it is requires
+    fewer new $\lambda_i$ variables. The user can force the projective algorithm
+    by setting {\tt Projective => true}.
+  CannedExample
+    i5 : R = QQ[x_0..x_3];
+
+    i6 : I = ideal(random(2,R), random(2,R));
+
+    o6 : Ideal of R
+
+    i7 : elapsedTime fritzJohnEDDegree(I,I, Projective => false)
+         0.812368 seconds elapsed
+
+    o7 = 12
+
+    i8 : elapsedTime fritzJohnEDDegree(I,I, Projective => true)
+         8.19129 seconds elapsed
+
+    o8 = 12
+
+--Subnodes
+--Caveat
+SeeAlso
+  probabilisticEDDegree
+///
+
+doc ///
+Key
+  (fritzJohnEDDegree, Ideal)
+Headline
+  compute ED-degree for a random point using Fritz John conditions
+Usage
+  fritzJohnEDDegree I
+Inputs
+  I:
+    an @TO2{Ideal, "ideal"}@ corresponding to an irreducible variety.
+Outputs
+  :ZZ
+    the ED-degree of $I$.
+--Consequences
+--  Item
+Description
+  Text
+    Computes the ED-degree using Frtiz John conditions. See @TO (fritzJohnEDDegree, Ideal, Ideal)@ for more detail.
+
+    If the codimension of $I$ is equal to the number of generators, this function calls {\tt fritzJohnEDDegree(I,I)}.
+    If not, we construct a witness ideal $WI$ by taking $codim(I)$ many random linear combinations
+    of generators, and  call {\tt fritzJohnEDDegree(WI,I)}.
+  Example
+    R = QQ[x,y,z,w]
+    I = ideal"xz-y2,yw-z2,xw-yz"
+    fritzJohnEDDegree I
+--Subnodes
+Caveat
+  This function does not check whether or not $\mathbb V(WI)$ cotains $\mathbb V(I)$ as an irreducible component.
+SeeAlso
+  fritzJohnEDDegree
+  probabilisticEDDegree
+///
+
 
 doc ///
 Key
@@ -1405,7 +1402,7 @@ Outputs
 Description
   Text
     Let $X$ be a projective variety in $\mathbb{P}^n$ of codimension $\geq 2$, and let $\pi : \mathbb P^n \to \mathbb P^{n-1}$
-    be a rational map induced by a general linear map $\mathbb C^{n+1} \to \mathbb C^n$. 
+    be a rational map induced by a general linear map $\mathbb C^{n+1} \to \mathbb C^n$.
     Under some regularity assumptions (see Caveat), the ED-degree of $\pi(X)$ is equal to the ED-degree
     of $X$ @TO2{AlgebraicOptimization,"[2, Cor. 6.1.]"}@.
 
@@ -1456,7 +1453,7 @@ Description
   Text
     TODO
     --Let $X$ be a projective variety in $\mathbb{P}^n$ of codimension $\geq 2$, and let $\pi : \mathbb P^n \to \mathbb P^{n-1}$
-    --be a rational map induced by a general linear map $\mathbb C^{n+1} \to \mathbb C^n$. 
+    --be a rational map induced by a general linear map $\mathbb C^{n+1} \to \mathbb C^n$.
     --Under some regularity assumptions (see Caveat), the ED-degree of $\pi(X)$ is equal to the ED-degree
     --of $X$ [1, Cor. 6.1.].
 
@@ -1489,8 +1486,8 @@ Usage
   multiDegreeEDDegree(I)
 Description
   Text
-    Computes the ED degree symbolically by taking the sum of multidegrees of the conormal ideal. 
-    @TO2{AlgebraicOptimization,"[2, Th. 5.4]"}@ 
+    Computes the ED degree symbolically by taking the sum of multidegrees of the conormal ideal.
+    @TO2{AlgebraicOptimization,"[2, Th. 5.4]"}@
 
     As an example, we see that the ED-degree of Cayley's cubic surface is 13
   Example
@@ -1506,7 +1503,7 @@ Caveat
 doc ///
 Key
     MLequationsIdeal
-   ( MLequationsIdeal,Ideal,List) 
+   ( MLequationsIdeal,Ideal,List)
 Headline
   compute ML-ideal for Homogeneous prime ideal
 Usage
@@ -1521,24 +1518,24 @@ Outputs
     the likelihoood ideal of $I$
 Description
   Text
-    Computes the likelihood ideal by taking an Ideal and List of numerical data when the ideal is homogeneous and prime. @TO2{AlgebraicOptimization,"[1, Alg. 7.2.4][3, Alg. 6]"}@ 
+    Computes the likelihood ideal by taking an Ideal and List of numerical data when the ideal is homogeneous and prime. @TO2{AlgebraicOptimization,"[1, Alg. 7.2.4][3, Alg. 6]"}@
   Example
     R = QQ[p0, p1, p2, p12]
     I = ideal (2*p0*p1*p2 + p1^2*p2 + p1*p2^2 - p0^2*p12 + p1*p2*p12)
-    u= {4,2, 11, 15} 
+    u= {4,2, 11, 15}
     MLequationsIdeal (I,u)
 --Caveat
 --  todo
 SeeAlso
   MLequationsDegree
   parametricMLIdeal
-  toricMLIdeal  
+  toricMLIdeal
 ///
 
 doc ///
 Key
     MLequationsDegree
-   ( MLequationsDegree, Ideal) 
+   ( MLequationsDegree, Ideal)
    [ MLequationsDegree, Data]
 Headline
   compute ML-degree for Homogeneous prime ideal
@@ -1549,14 +1546,14 @@ Inputs
   I:
     an @TO2{Ideal, "ideal"}@, Homogeneous prime ideal.
   Data => List
-    a @TO2{List, "list"}@, default value null, By default, this data is chosen at random from natural number. 
+    a @TO2{List, "list"}@, default value null, By default, this data is chosen at random from natural number.
 Outputs
   :Number
     the ML-degree of $I$
 Description
   Text
-    Computes the maximum likelihood degree of homogeneous prime ideal. 
-    In other words, we choose a random data u and output is 
+    Computes the maximum likelihood degree of homogeneous prime ideal.
+    In other words, we choose a random data u and output is
     the number of complex critical points of the likelihood equations
      for random data u. @TO2{AlgebraicOptimization,"[1, Alg. 7.2.4][3, Alg. 6]"}@
   Example
@@ -1573,15 +1570,15 @@ Description
 --Caveat
 --  todo
 SeeAlso
-  MLequationsIdeal 
-  parametricMLDegree 
+  MLequationsIdeal
+  parametricMLDegree
   toricMLDegree
 ///
 
 doc ///
 Key
    parametricMLIdeal
-   (parametricMLIdeal,List,List) 
+   (parametricMLIdeal,List,List)
 Headline
   compute parametric ML-ideal for List of Polynomials
 Usage
@@ -1596,7 +1593,7 @@ Outputs
     the parametric ML-ideal of $F$
 Description
   Text
-    Computes the parametric likelihood ideal by taking List of function and 
+    Computes the parametric likelihood ideal by taking List of function and
     List of numerical data when summation F equal to 1. @TO2{AlgebraicOptimization,"[3, Alg. 18]"}@
   Example
     R = QQ[t]
@@ -1609,13 +1606,13 @@ Description
 SeeAlso
   parametricMLDegree
   MLequationsIdeal
-  toricMLIdeal 
+  toricMLIdeal
 ///
 
 doc ///
 Key
    parametricMLDegree
-   (parametricMLDegree,List) 
+   (parametricMLDegree,List)
 Headline
   compute parametric ML-degree for List of Polynomials
 Usage
@@ -1624,15 +1621,15 @@ Inputs
   F:
     a @TO2{List, "list"}@ of Polynomials, the summation of polynomials is equal to one.
   Data => List
-    a @TO2{List, "list"}@, default value null, By default, this data is chosen at random from natural number. 
+    a @TO2{List, "list"}@, default value null, By default, this data is chosen at random from natural number.
 Outputs
   :Number
     the ML-degree of $F$
 Description
   Text
-    Computes the maximum likelihood degree by taking List of Polynomials 
-    when summation of polynomials is equal to one. In other words, 
-    we choose a random data u and output is the number of complex critical points 
+    Computes the maximum likelihood degree by taking List of Polynomials
+    when summation of polynomials is equal to one. In other words,
+    we choose a random data u and output is the number of complex critical points
     of the parametric likelihood equations for random data u. @TO2{AlgebraicOptimization,"[3, Alg. 18]"}@
   Example
     R = QQ[t]
@@ -1671,7 +1668,7 @@ Description
     In other words, there is no point $x \in \mathbb P^n$ such that $x \in X$ and $x \in X^*$, where $X^*$ is the dual of $X$.
 
     Let $Q = \{x = [x_0 : x_1 : \dots : x_n] \in \mathbb P^n : x_0^2 + x_1^2 + \dots + x_n = 0\}$ be the variety corresponding to
-    the isotropic quadric. This funciton checks a sufficient condition: 
+    the isotropic quadric. This funciton checks a sufficient condition:
     $X$ is in general coordinates if $X \cap Q$ is smooth and disjoint from the singular locus of $X$.
 
     The assumption that $X$ is in general coordinates is required for @TO multiDegreeEDDegree@, @TO sectionEDDegree@ and @TO projectionEDDegree@.
@@ -1696,26 +1693,26 @@ Description
 doc ///
 Key
    toricMLIdeal
-   (toricMLIdeal,Matrix,List,List) 
+   (toricMLIdeal,Matrix,List,List)
 Usage
   toricMLIdeal(A, c, u)
 Inputs
   A:
     A full rank matrix of exponents defining the monomial map that parameterizes the toric variety
-  c: 
+  c:
     list of numbers used to create the scaled toric variety
   u:
     list of numerical data
-  CoeffRing => 
-    A the ring of coefficients for the computation to be performed over. By default this ring is QQ.  CoeffRing => 
+  CoeffRing =>
+    A the ring of coefficients for the computation to be performed over. By default this ring is QQ.  CoeffRing =>
 Outputs
   :Ideal
-    the critical ideal of likelihood equations for the corresponding scaled toric variety 
+    the critical ideal of likelihood equations for the corresponding scaled toric variety
     as described in Birch's theorem. @TO2{AlgebraicOptimization,"[1, Cor. 7.2.9]"}@
 Description
   Text
-    Computes the critical ideal of a scaled toric variety using the equations 
-    defined in Birch's theorem for given data $u$. 
+    Computes the critical ideal of a scaled toric variety using the equations
+    defined in Birch's theorem for given data $u$.
   Example
     A = matrix {{1,1,1,0,0,0,0,0,0}, {0,0,0,1,1,1,0,0,0},{0,0,0,0,0,0,1,1,1},{1,0,0,1,0,0,1,0,0},{0,1,0,0,1,0,0,1,0}}
     c = {1,2,3,1,1,1,1,1,1}
@@ -1723,44 +1720,44 @@ Description
     toricMLIdeal(A, c, u)
   Text
     References:\break
-    [1] Seth Sullivant, 
+    [1] Seth Sullivant,
     Algebraic Statistics, American Mathematical Soc.\break
-    [2] Carlos  Am ́endola,  Nathan  Bliss,  Isaac  Burke,  Courtney  R.  Gibbons,  
-    Martin  Helmer,  Serkan  Ho ̧sten,  Evan  D.  Nash,Jose  Israel  Rodriguez,  
+    [2] Carlos  Am ́endola,  Nathan  Bliss,  Isaac  Burke,  Courtney  R.  Gibbons,
+    Martin  Helmer,  Serkan  Ho ̧sten,  Evan  D.  Nash,Jose  Israel  Rodriguez,
     and  Daniel  Smolkin.  The  maximum  likelihood  degree  of  toric  varieties.
     Journal  of  SymbolicComputation, 92:222–242, May 2019.
 Caveat
-    The vector $(1,1,\ldots 1)$ must be in the rowspan of A.    
+    The vector $(1,1,\ldots 1)$ must be in the rowspan of A.
 --  todo
 SeeAlso
     toricMLDegree
     parametricMLIdeal
---  
+--
 ///
 
 
 doc ///
 Key
    toricMLDegree
-   (toricMLDegree,Matrix,List) 
+   (toricMLDegree,Matrix,List)
 Usage
   toricMLDegree(A, c)
 Inputs
   A:
     A full rank matrix of exponents defining the monomial map that parameterizes the toric variety
-  c: 
+  c:
     list of numbers used to create the scaled toric variety
   Data =>
     A list of numerical data. By default, this data is chosen at random from the natural numbers.
-  CoeffRing => 
-    A the ring of coefficients for the computation to be performed over. By default this ring is QQ.  
+  CoeffRing =>
+    A the ring of coefficients for the computation to be performed over. By default this ring is QQ.
 Outputs
   :Number
     the ML-degree of the corresponding toric variety
 Description
   Text
-    Computes the maximum likelihood degree of a toric variety using the equations 
-    defined in Birch's theorem and randomly generated data. The Smith Normal Form is automatically 
+    Computes the maximum likelihood degree of a toric variety using the equations
+    defined in Birch's theorem and randomly generated data. The Smith Normal Form is automatically
     used to determine if the parameterization is many-to-one and correct for this. @TO2{AlgebraicOptimization,"[1, Cor. 7.2.9]"}@
   Example
     A = matrix {{1,1,1,0,0,0,0,0,0}, {0,0,0,1,1,1,0,0,0},{0,0,0,0,0,0,1,1,1},{1,0,0,1,0,0,1,0,0},{0,1,0,0,1,0,0,1,0}}
@@ -1768,23 +1765,23 @@ Description
     toricMLDegree(A,c)
   Text
     References:\break
-    [1] Seth Sullivant, 
+    [1] Seth Sullivant,
     Algebraic Statistics, American Mathematical Soc.\break
-    [2] Carlos  Am ́endola,  Nathan  Bliss,  Isaac  Burke,  Courtney  R.  Gibbons,  
-    Martin  Helmer,  Serkan  Ho ̧sten,  Evan  D.  Nash,Jose  Israel  Rodriguez,  
+    [2] Carlos  Am ́endola,  Nathan  Bliss,  Isaac  Burke,  Courtney  R.  Gibbons,
+    Martin  Helmer,  Serkan  Ho ̧sten,  Evan  D.  Nash,Jose  Israel  Rodriguez,
     and  Daniel  Smolkin.  The  maximum  likelihood  degree  of  toric  varieties.
     Journal  of  SymbolicComputation, 92:222–242, May 2019.
 Caveat
-    The vector $(1,1,\ldots 1)$ must be in the rowspan of A. 
-    
+    The vector $(1,1,\ldots 1)$ must be in the rowspan of A.
+
 -- todo
 SeeAlso
     toricMLDegree
     parametricMLIdeal
---  
+--
 ///
 
-doc /// 
+doc ///
 Key
   probabilisticConormalVarietyOptimizationDegree
   (probabilisticConormalVarietyOptimizationDegree, RingElement, Ideal)
@@ -1814,7 +1811,7 @@ Description
     The function computes the optimization degree of an equidimensional variety corresponding to
     the ideal $I$.
 
-    We can confirm that the optimization-degree for Euclidean distance for the cardioid curve is 3.  
+    We can confirm that the optimization-degree for Euclidean distance for the cardioid curve is 3.
   Example
     R=QQ[x,y]
     I = ideal((x^2+y^2+x)^2-x^2-y^2)
@@ -1822,7 +1819,7 @@ Description
     probabilisticConormalVarietyOptimizationDegree(psi,I)
 
   Text
-    The function can handle polynomial objective functions psi or objective functions with rational functions as derivatives. 
+    The function can handle polynomial objective functions psi or objective functions with rational functions as derivatives.
 
   Example
     R=QQ[x,y]
@@ -1833,14 +1830,14 @@ Description
     probabilisticConormalVarietyOptimizationDegree(g,I)--14
 
   Text
-    The function works with parameters as well when the Data option is specified otherwise the total degree of the critical ideal with parameters as indeterminants is returned.  --TODO: decide what to do here. 
+    The function works with parameters as well when the Data option is specified otherwise the total degree of the critical ideal with parameters as indeterminants is returned.  --TODO: decide what to do here.
 
   Example
     R=QQ[u,v][x,y]
     I = ideal((x^2+y^2+x)^2-x^2-y^2)
     psi =(x-u)^2+(y-v)^2
     probabilisticConormalVarietyOptimizationDegree(psi,I,Data=>{2,3})--this is three
-    probabilisticConormalVarietyOptimizationDegree(psi,I)--TODO: decide what to do here. 
+    probabilisticConormalVarietyOptimizationDegree(psi,I)--TODO: decide what to do here.
 
 SeeAlso
   probabilisticEDDegree
@@ -1850,7 +1847,7 @@ SeeAlso
 ///
 
 
-doc /// 
+doc ///
 Key
   probabilisticLagrangeMultiplierOptimizationDegree
   (probabilisticLagrangeMultiplierOptimizationDegree, RingElement, Ideal, Ideal)
@@ -1882,7 +1879,7 @@ Description
     The function computes the optimization degree of an equidimensional variety corresponding to
     the ideal $I$.
 
-    We can confirm that the optimization-degree for Euclidean distance for the cardioid curve is 3.  
+    We can confirm that the optimization-degree for Euclidean distance for the cardioid curve is 3.
   Example
     R=QQ[x,y]
     WI = I = ideal((x^2+y^2+x)^2-x^2-y^2)
@@ -1890,7 +1887,7 @@ Description
     probabilisticLagrangeMultiplierOptimizationDegree(psi,WI,I)--3
 
   Text
-    The function can handle polynomial objective functions psi or objective functions with rational functions as derivatives. 
+    The function can handle polynomial objective functions psi or objective functions with rational functions as derivatives.
 
   Example
     R=QQ[x,y]
@@ -1901,7 +1898,7 @@ Description
     probabilisticLagrangeMultiplierOptimizationDegree(g,WI,I)--14
 
   Text
-    The function works with parameters as well when the Data option is specified otherwise the total degree of the critical ideal with parameters as indeterminants is returned.  
+    The function works with parameters as well when the Data option is specified otherwise the total degree of the critical ideal with parameters as indeterminants is returned.
 
   Example
     R=QQ[u,v][x,y]
@@ -1943,7 +1940,7 @@ Description
     The function computes the Euclidean distance degree of an equidimensional variety corresponding to
     the ideal $I$.
 
-    We can confirm that the ED-degree of the affine cone of the twisted cubic is 
+    We can confirm that the ED-degree of the affine cone of the twisted cubic is
   Example
     R = QQ[x0,x1,x2,x3]
     WI = ideal(x0*x2-x1^2 ,x1*x3-x2^2)
@@ -1960,9 +1957,9 @@ Description
     probabilisticLagrangeMultiplierEDDegree(WI,I)--7
 
   Text
-    This function is probabilistic and chooses the data at random by default. 
-    A user may specify the data they want to use. 
-    
+    This function is probabilistic and chooses the data at random by default.
+    A user may specify the data they want to use.
+
     In the example below, the ED degree of a cardioid is 3 but the non-generic data choice does not recover this result
   Example
     R = QQ[x,y]
@@ -1993,13 +1990,13 @@ Headline
   Make a ring for using Lagrange multipliers
 Usage
   makeLagrangeRing(I)
-  makeLagrangeRing(c,I)  
+  makeLagrangeRing(c,I)
 Inputs
   I:
-    an  @TO2{Ideal, "ideal"}@    
+    an  @TO2{Ideal, "ideal"}@
   c:
     the number of Lagrange multipliers
-    
+
 Outputs
   :LagrangeRing
     a desciption of the output is needed TODO
@@ -2023,7 +2020,7 @@ Description
 --SeeAlso
 --  todo
 ///
-  
+
 doc ///
 Key
   witnessLagrangeVariety
@@ -2033,16 +2030,16 @@ Key
 Headline
   witness a Lagrange variety
 Usage
-  witnessLagrangeVariety(WI,I,LR)  
-  witnessLagrangeVariety(WI,I)  
+  witnessLagrangeVariety(WI,I,LR)
+  witnessLagrangeVariety(WI,I)
   witnessLagrangeVariety(I)
 Inputs
   I:
-    an  @TO2{Ideal, "ideal"}@    
+    an  @TO2{Ideal, "ideal"}@
   WI:
     a complete intersection with I as an irreducible component
   LR:
-    a LagrangeRing    
+    a LagrangeRing
 Outputs
   :LagrangeVarietyWitness
     a desciption of the output is needed TODO
@@ -2055,11 +2052,11 @@ Description
   Example
     R=QQ[x,y,z,w]
     WI = ideal(x*z-y^2,y*w-z^2)
-    I = ideal(x*w-z*y)+WI 
+    I = ideal(x*w-z*y)+WI
     codim I
     LVW1 = witnessLagrangeVariety(WI,I)
     LVW2 = witnessLagrangeVariety I
-    LVW1#PrimalWitnessSystem =!=    LVW2#PrimalWitnessSystem 
+    LVW1#PrimalWitnessSystem =!=    LVW2#PrimalWitnessSystem
 
 --  Code
 --    todo
@@ -2071,15 +2068,15 @@ Description
 --  todo
 ///
 *-
-  
-  
+
+
 end
 
 
 --Example
 restart
-path={"/Users/jo/Documents/GoodGit/M2020/Workshop-2020-Cleveland/alg-stat/AlgebraicOptimization"}|path  
-path={"/home/fatemeh/w/Workshop-2020-Cleveland/alg-stat/AlgebraicOptimization"}|path  
+path={"/Users/jo/Documents/GoodGit/M2020/Workshop-2020-Cleveland/alg-stat/AlgebraicOptimization"}|path
+path={"/home/fatemeh/w/Workshop-2020-Cleveland/alg-stat/AlgebraicOptimization"}|path
 loadPackage("AlgebraicOptimization",Reload=>true)
 debug AlgebraicOptimization
 
@@ -2114,8 +2111,8 @@ R=QQ[t]; --target m
 S =QQ[x,y,z,w]--source m
 d = {x=>s^3, y=>s^2*t,z=>s*t^2, w=>t^3}
 m = map(R,S,d)
-affineI = kernel m--this is the twisted cubic's ideal  
-homogenize(affineI,x)--twisted cubic again. 
+affineI = kernel m--this is the twisted cubic's ideal
+homogenize(affineI,x)--twisted cubic again.
 
 f= d/last--
 sum f ==1--This isn't true, so we replace one of the f's to get this condition to hold.
@@ -2141,5 +2138,5 @@ degree coimage m
 
 degree coimage m
 
-methods class m 
+methods class m
 *-
