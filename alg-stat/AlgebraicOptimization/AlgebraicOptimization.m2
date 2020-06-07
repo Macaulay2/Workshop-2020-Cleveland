@@ -176,7 +176,7 @@ assert(probabilisticEDDegree(I, Data => {2/4,1/2,-1/2}, Projective => false) == 
 ---------------------------
 -- fritzJohnEDdegree ------
 ---------------------------
-fritzJohnEDDegree = method(Options => {Projective => null, Data => null})
+fritzJohnEDDegree = method(Options => {Projective => false, Data => null})
 fritzJohnEDDegree (Ideal, Ideal) := ZZ => opts -> (WI, I) -> (
   R := ring I;
   l := symbol l;
@@ -188,9 +188,8 @@ fritzJohnEDDegree (Ideal, Ideal) := ZZ => opts -> (WI, I) -> (
   RWIsing := sub(eliminate(gens S / (i -> sub(i,RS)), WIsing) , R);
   u := if opts.Data === null then (gens R / (i -> random(coefficientRing R))) else opts.Data;
   uMatrix := matrix{u};
-  proj := if opts.Projective === null then (if isHomogeneous I then true else false) else opts.Projective;
   m := symbol m;
-  Ibar := if not proj 
+  Ibar := if not opts.Projective 
     then 
       (vars R - uMatrix) || transpose jacobian WI
     else
@@ -199,7 +198,7 @@ fritzJohnEDDegree (Ideal, Ideal) := ZZ => opts -> (WI, I) -> (
   RT := R**T;
   WIbar := ideal(sub(vars T, RT)*sub(Ibar, RT)) + sub(I,RT) + sub(random(1,T) - 1, RT);  -- witness of Ibar
   RWIbar := sub(eliminate(gens T / (i -> sub(i,RT)), WIbar), R);
-  critIdeal := if not proj
+  critIdeal := if not opts.Projective
     then
       saturate(RWIbar, RWIsing)
     else (
