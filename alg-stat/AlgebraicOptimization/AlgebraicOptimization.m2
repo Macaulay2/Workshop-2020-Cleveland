@@ -36,6 +36,7 @@ export {
   "projectionEDDegree",
   "sectionEDDegree",
   "multiDegreeEDDegree",
+  "fritzJohnEDDegree",
   "MLequationsIdeal",
   "MLequationsDegree",
   "parametricMLIdeal",
