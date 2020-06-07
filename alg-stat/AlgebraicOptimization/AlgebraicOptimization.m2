@@ -817,11 +817,11 @@ toricMLDegree(Matrix, List) := Number => opts -> (A,c) -> (
 
 TEST ///
 A = matrix {{1,1,1,0,0,0,0,0,0}, {0,0,0,1,1,1,0,0,0},{0,0,0,0,0,0,1,1,1},
-    {1,0,0,1,0,0,1,0,0},{0,1,0,0,1,0,0,1,0},{0,0,1,0,0,1,0,0,1}};
+    {1,0,0,1,0,0,1,0,0},{0,1,0,0,1,0,0,1,0}};
 c = {1, 1, 1, 1, 1, 1, 1, 1, 1};
-assert(2 == toricMLDegree(A, c));
+assert(1 == toricMLDegree(A, c));
 c = {1,2,3,1,1,1,1,1,1};
-assert(6 == toricMLDegree(A,c));
+assert(3 == toricMLDegree(A,c));
 ///
 
 --Used to find WI symbollically without using randomization.
@@ -1713,7 +1713,7 @@ Description
     Computes the critical ideal of a scaled toric variety using the equations
     defined in Birch's theorem for given data $u$.
   Example
-    A = matrix {{1,1,1,0,0,0,0,0,0}, {0,0,0,1,1,1,0,0,0},{0,0,0,0,0,0,1,1,1},{1,0,0,1,0,0,1,0,0},{0,1,0,0,1,0,0,1,0},{0,0,1,0,0,1,0,0,1}}
+    A = matrix {{1,1,1,0,0,0,0,0,0}, {0,0,0,1,1,1,0,0,0},{0,0,0,0,0,0,1,1,1},{1,0,0,1,0,0,1,0,0},{0,1,0,0,1,0,0,1,0}}
     c = {1,2,3,1,1,1,1,1,1}
     u = {15556, 84368, 98575, 27994, 61386, 84123, 62510, 37430, 34727};
     toricMLIdeal(A, c, u)
@@ -1759,7 +1759,7 @@ Description
     defined in Birch's theorem and randomly generated data. The Smith Normal Form is automatically
     used to determine if the parameterization is many-to-one and correct for this. @TO2{AlgebraicOptimization,"[1, Cor. 7.2.9]"}@
   Example
-    A = matrix {{1,1,1,0,0,0,0,0,0}, {0,0,0,1,1,1,0,0,0},{0,0,0,0,0,0,1,1,1},{1,0,0,1,0,0,1,0,0},{0,1,0,0,1,0,0,1,0},{0,0,1,0,0,1,0,0,1}}
+    A = matrix {{1,1,1,0,0,0,0,0,0}, {0,0,0,1,1,1,0,0,0},{0,0,0,0,0,0,1,1,1},{1,0,0,1,0,0,1,0,0},{0,1,0,0,1,0,0,1,0}}
     c = {1,2,3,1,1,1,1,1,1}
     toricMLDegree(A,c)
   Text
