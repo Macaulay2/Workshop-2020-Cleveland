@@ -433,28 +433,24 @@ assert(probabilisticMultidegreeEDDegree I == 7)
 --------------------
 MLequationsIdeal = method()
 MLequationsIdeal (Ideal,List) := (I,u)-> (
-    P := (gens I)_(0,0); -- must find better command.
     if not (isHomogeneous I) then error("The Ideal isn't Homogeneous");
     if not (isPrime I) then error("The Ideal isn't Prime");
-
+    
     c := codim I;
     jacI := transpose jacobian I;
     Q := minors(c, jacI);
-
+    
     R := ring I;
     numVars := #gens R;
     i1 := for i from 1 to numVars list 1;
     J := matrix {i1} || jacI;
     diagM := diagonalMatrix gens R;
     J' := J * diagM;
-    dmp := for i from 1 to numRows J' list P;
-    I' := diagonalMatrix matrix{dmp};
-    M := kernel( inducedMap(coker I', target I') * J' );
-
+    M := ker sub(J', R/I); -- compute kernel of J' over the coordinate ring
+    
     g := generators M;
     g' := matrix drop(entries g,-numrows g+#u);
-    Iu' := ideal (matrix {u} * g');
-
+    Iu' := sub(ideal (matrix {u} * g'), R); -- put the ideal Iu' back in the original ring R
     MLIdeal := saturate(saturate(saturate(Iu', Q), sum gens R), product gens R);
     MLIdeal
 )
@@ -1328,7 +1324,7 @@ Description
 --Caveat
 SeeAlso
   probabilisticEDDegree
-  symbolicFritzJohnEDDegree
+  --symbolicFritzJohnEDDegree
 ///
 
 doc ///
@@ -1362,7 +1358,7 @@ Caveat
   This function does not check whether or not $\mathbb V(WI)$ cotains $\mathbb V(I)$ as an irreducible component.
 SeeAlso
   probabilisticFritzJohnEDDegree
-  symbolicFritzJohnEDDegree
+  --symbolicFritzJohnEDDegree
   probabilisticEDDegree
 ///
 
