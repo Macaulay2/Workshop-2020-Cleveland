@@ -1632,7 +1632,7 @@ Description
     Computes the maximum likelihood degree of homogeneous prime ideal.
     In other words, we choose a random data u and output is
     the number of complex critical points of the likelihood equations
-     for random data u. @TO2{AlgebraicOptimization,"[1, Alg. 7.2.4][3, Alg. 6]"}@
+     for random data u. @TO2{AlgebraicOptimization,"[3, Alg. 6][1]"}@
   Example
     R = QQ[p0, p1, p2, p12]
     I = ideal (2*p0*p1*p2 + p1^2*p2 + p1*p2^2 - p0^2*p12 + p1*p2*p12)
@@ -1713,10 +1713,6 @@ Description
     s=1
     F = {s^3*(-t^3-t^2-t+1),s^2*t,s*t^2,t^3}
     parametricMLDegree (F)
-  Text
-    References:
-    [1] S. Hoşten, A. Khetan, B. Sturmfels, Solving the likelihood equations, Found. Comput. Math. 5 (2005), no. 4, 389–407.
-
 --Caveat
 --  todo
 SeeAlso
@@ -1776,11 +1772,11 @@ Usage
   toricMLIdeal(A, c, u)
 Inputs
   A:
-    A full rank matrix of exponents defining the monomial map that parameterizes the toric variety
+    A full rank @TO2{Matrix, "matrix"}@ of exponents defining the monomial map that parameterizes the toric variety
   c:
-    list of numbers used to create the scaled toric variety
+    @TO2{List, "list"}@ of numbers used to create the scaled toric variety
   u:
-    list of numerical data
+    @TO2{List, "list"}@ of numerical data
   CoeffRing =>
     A the ring of coefficients for the computation to be performed over. By default this ring is QQ.  CoeffRing =>
 Outputs
@@ -1809,6 +1805,7 @@ Caveat
 --  todo
 SeeAlso
     toricMLDegree
+    MLequationsIdeal
     parametricMLIdeal
 --
 ///
@@ -1822,11 +1819,11 @@ Usage
   toricMLDegree(A, c)
 Inputs
   A:
-    A full rank matrix of exponents defining the monomial map that parameterizes the toric variety
+    A full rank @TO2{Matrix, "matrix"}@ of exponents defining the monomial map that parameterizes the toric variety
   c:
-    list of numbers used to create the scaled toric variety
+    @TO2{Ideal, "ideal"}@ of numbers used to create the scaled toric variety
   Data =>
-    A list of numerical data. By default, this data is chosen at random from the natural numbers.
+    A @TO2{Ideal, "ideal"}@ of numerical data. By default, this data is chosen at random from the natural numbers.
   CoeffRing =>
     A the ring of coefficients for the computation to be performed over. By default this ring is QQ.
 Outputs
@@ -1855,6 +1852,7 @@ Caveat
 -- todo
 SeeAlso
     toricMLDegree
+    MLequationsDegree
     parametricMLIdeal
 --
 ///
