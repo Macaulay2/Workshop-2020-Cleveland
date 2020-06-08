@@ -433,28 +433,24 @@ assert(probabilisticMultidegreeEDDegree I == 7)
 --------------------
 MLequationsIdeal = method()
 MLequationsIdeal (Ideal,List) := (I,u)-> (
-    P := (gens I)_(0,0); -- must find better command.
     if not (isHomogeneous I) then error("The Ideal isn't Homogeneous");
     if not (isPrime I) then error("The Ideal isn't Prime");
-
+    
     c := codim I;
     jacI := transpose jacobian I;
     Q := minors(c, jacI);
-
+    
     R := ring I;
     numVars := #gens R;
     i1 := for i from 1 to numVars list 1;
     J := matrix {i1} || jacI;
     diagM := diagonalMatrix gens R;
     J' := J * diagM;
-    dmp := for i from 1 to numRows J' list P;
-    I' := diagonalMatrix matrix{dmp};
-    M := kernel( inducedMap(coker I', target I') * J' );
-
+    M := ker sub(J', R/I); -- compute kernel of J' over the coordinate ring
+    
     g := generators M;
     g' := matrix drop(entries g,-numrows g+#u);
-    Iu' := ideal (matrix {u} * g');
-
+    Iu' := sub(ideal (matrix {u} * g'), R); -- put the ideal Iu' back in the original ring R
     MLIdeal := saturate(saturate(saturate(Iu', Q), sum gens R), product gens R);
     MLIdeal
 )
@@ -1328,7 +1324,7 @@ Description
 --Caveat
 SeeAlso
   probabilisticEDDegree
-  symbolicFritzJohnEDDegree
+  --symbolicFritzJohnEDDegree
 ///
 
 doc ///
@@ -1362,7 +1358,7 @@ Caveat
   This function does not check whether or not $\mathbb V(WI)$ cotains $\mathbb V(I)$ as an irreducible component.
 SeeAlso
   probabilisticFritzJohnEDDegree
-  symbolicFritzJohnEDDegree
+  --symbolicFritzJohnEDDegree
   probabilisticEDDegree
 ///
 
@@ -1636,18 +1632,11 @@ Description
     Computes the maximum likelihood degree of homogeneous prime ideal.
     In other words, we choose a random data u and output is
     the number of complex critical points of the likelihood equations
-     for random data u. @TO2{AlgebraicOptimization,"[1, Alg. 7.2.4][3, Alg. 6]"}@
+     for random data u. @TO2{AlgebraicOptimization,"[3, Alg. 6][1]"}@
   Example
     R = QQ[p0, p1, p2, p12]
     I = ideal (2*p0*p1*p2 + p1^2*p2 + p1*p2^2 - p0^2*p12 + p1*p2*p12)
     MLequationsDegree (I)
-  Text
-    another example with specific data.
-  Example
-    R = QQ[p_111,p_112,p_121,p_122,p_211,p_212,p_221,p_222]
-    I = ideal (p_111^2*p_222^2+p_121^2*p_212^2+p_122^2*p_211^2+p_112^2*p_221^2-2*p_121*p_122*p_211*p_212-2*p_112*p_122*p_211*p_221-2*p_112*p_121*p_212*p_221-2*p_111*p_122*p_211*p_222-2*p_111*p_121*p_212*p_222-2*p_111*p_112*p_221*p_222+4*p_111*p_122*p_212*p_221+4*p_112*p_121*p_211*p_222)
-    u = {2,3,5,7,11,13,17,19}
-    MLequationsDegree (I, Data => u)
 --Caveat
 --  todo
 SeeAlso
@@ -1694,6 +1683,7 @@ doc ///
 Key
    parametricMLDegree
    (parametricMLDegree,List)
+   [parametricMLDegree, Data]
 Headline
   compute parametric ML-degree for List of Polynomials
 Usage
@@ -1717,10 +1707,6 @@ Description
     s=1
     F = {s^3*(-t^3-t^2-t+1),s^2*t,s*t^2,t^3}
     parametricMLDegree (F)
-  Text
-    References:
-    [1] S. Hoşten, A. Khetan, B. Sturmfels, Solving the likelihood equations, Found. Comput. Math. 5 (2005), no. 4, 389–407.
-
 --Caveat
 --  todo
 SeeAlso
@@ -1776,15 +1762,19 @@ doc ///
 Key
    toricMLIdeal
    (toricMLIdeal,Matrix,List,List)
+   [toricMLIdeal, CoeffRing]
+
+Headline
+  compute toric ML-ideal
 Usage
   toricMLIdeal(A, c, u)
 Inputs
   A:
-    A full rank matrix of exponents defining the monomial map that parameterizes the toric variety
+    A full rank @TO2{Matrix, "matrix"}@ of exponents defining the monomial map that parameterizes the toric variety
   c:
-    list of numbers used to create the scaled toric variety
+    @TO2{List, "list"}@ of numbers used to create the scaled toric variety
   u:
-    list of numerical data
+    @TO2{List, "list"}@ of numerical data
   CoeffRing =>
     A the ring of coefficients for the computation to be performed over. By default this ring is QQ.  CoeffRing =>
 Outputs
@@ -1813,6 +1803,7 @@ Caveat
 --  todo
 SeeAlso
     toricMLDegree
+    MLequationsIdeal
     parametricMLIdeal
 --
 ///
@@ -1822,15 +1813,19 @@ doc ///
 Key
    toricMLDegree
    (toricMLDegree,Matrix,List)
+   [toricMLDegree, Data]
+   [toricMLDegree, CoeffRing]
+Headline
+  compute toric ML-degree
 Usage
   toricMLDegree(A, c)
 Inputs
   A:
-    A full rank matrix of exponents defining the monomial map that parameterizes the toric variety
+    A full rank @TO2{Matrix, "matrix"}@ of exponents defining the monomial map that parameterizes the toric variety
   c:
-    list of numbers used to create the scaled toric variety
+    @TO2{Ideal, "ideal"}@ of numbers used to create the scaled toric variety
   Data =>
-    A list of numerical data. By default, this data is chosen at random from the natural numbers.
+    A @TO2{Ideal, "ideal"}@ of numerical data. By default, this data is chosen at random from the natural numbers.
   CoeffRing =>
     A the ring of coefficients for the computation to be performed over. By default this ring is QQ.
 Outputs
@@ -1859,6 +1854,7 @@ Caveat
 -- todo
 SeeAlso
     toricMLDegree
+    MLequationsDegree
     parametricMLIdeal
 --
 ///
@@ -2052,10 +2048,78 @@ Description
 SeeAlso
   probabilisticLagrangeMultiplierOptimizationDegree
 ///
+-------------------
+--Symbols doc
+------------------
+doc ///
+Key
+  CoeffRing
+Headline
+  Incomplete  +
+--Usage
+--Inputs
+--Outputs
+--Consequences
+--  Item
+--Description
+--  Text
+--  Code
+--  Pre
+--  Example
+--  CannedExample
+--Subnodes
+--Caveat
+--SeeAlso
+///
 
+doc ///
+Key
+  Data
+Headline
+  Incomplete + 
+--Usage
+--Inputs
+--Outputs
+--Consequences
+--  Item
+Description
+  Text
+    The option Data is a @TO2{List,"list"}@. This Method is used by the commands @TO2{MLequationsDegree,"MLequationsDegree"}@, @TO2{parametricMLDegree,"parametricMLDegree"}@, @TO2{probabilisticConormalVarietyOptimizationDegree,"probabilisticConormalVarietyOptimizationDegree"}@, @TO2{probabilisticEDDegree,"probabilisticEDDegree"}@, @TO2{probabilisticFritzJohnEDDegree,"probabilisticFritzJohnEDDegree"}@, @TO2{probabilisticLagrangeMultiplierEDDegree,"probabilisticLagrangeMultiplierEDDegree"}@, @TO2{probabilisticLagrangeMultiplierOptimizationDegree,"probabilisticLagrangeMultiplierOptimizationDegree"}@ and @TO2{toricMLDegree,"toricMLDegree"}@.
+--  Code
+--  Pre
+  Example
+    R = QQ[p_111,p_112,p_121,p_122,p_211,p_212,p_221,p_222]
+    I = ideal (p_111^2*p_222^2+p_121^2*p_212^2+p_122^2*p_211^2+p_112^2*p_221^2-2*p_121*p_122*p_211*p_212-2*p_112*p_122*p_211*p_221-2*p_112*p_121*p_212*p_221-2*p_111*p_122*p_211*p_222-2*p_111*p_121*p_212*p_222-2*p_111*p_112*p_221*p_222+4*p_111*p_122*p_212*p_221+4*p_112*p_121*p_211*p_222)
+    u = {2,3,5,7,11,13,17,19}
+    MLequationsDegree (I, Data => u)
+--  CannedExample
+--Subnodes
+--Caveat
+--SeeAlso
+///
 
+doc ///
+Key
+  DualVariable
+Headline
+  Incomplete +
+--Usage
+--Inputs
+--Outputs
+--Consequences
+--  Item
+--Description
+--  Text
+--  Code
+--  Pre
+--  Example
+--  CannedExample
+--Subnodes
+--Caveat
+--SeeAlso
+///
 
-
+--------------------
 
 TEST ///
   -- test code and assertions here
