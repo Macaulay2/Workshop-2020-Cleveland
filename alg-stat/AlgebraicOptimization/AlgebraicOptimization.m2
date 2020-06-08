@@ -1328,6 +1328,7 @@ Description
 --Caveat
 SeeAlso
   probabilisticEDDegree
+  symbolicFritzJohnEDDegree
 ///
 
 doc ///
@@ -1361,6 +1362,7 @@ Caveat
   This function does not check whether or not $\mathbb V(WI)$ cotains $\mathbb V(I)$ as an irreducible component.
 SeeAlso
   probabilisticFritzJohnEDDegree
+  symbolicFritzJohnEDDegree
   probabilisticEDDegree
 ///
 
@@ -1422,6 +1424,7 @@ Description
 
 SeeAlso
   probabilisticEDDegree
+  probabilisticFritzJohnEDDegree
 ///
 
 
@@ -1472,7 +1475,8 @@ Description
     o7 = 1
 
 Caveat
-  TODO
+  The variety $\mathbb V(I)$ must be in general coordinates, i.e. the conormal variety cannot intersect the diagonal $\Delta(\mathbb{P}^{n-1}) \subset \mathbb{P}^{n-1} \times \mathbb{P}^{n-1}$.
+  The function @TO checkGeneralCoordinates@ checks a sufficient condition.
 ///
 
 doc ///
@@ -1504,7 +1508,8 @@ Description
   Text
     References: [1] Draisma, J., Horobeţ, E., Ottaviani, G., Sturmfels, B., & Thomas, R. R. (2016). The Euclidean distance degree of an algebraic variety. {\em Foundations of computational mathematics}, 16(1), 99-149.
 Caveat
-  TODO
+  The variety $\mathbb V(I)$ must be in general coordinates, i.e. the conormal variety cannot intersect the diagonal $\Delta(\mathbb{P}^{n-1}) \subset \mathbb{P}^{n-1} \times \mathbb{P}^{n-1}$.
+  The function @TO checkGeneralCoordinates@ checks a sufficient condition.
 ///
 
 
