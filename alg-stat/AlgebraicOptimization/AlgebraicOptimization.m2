@@ -1637,13 +1637,6 @@ Description
     R = QQ[p0, p1, p2, p12]
     I = ideal (2*p0*p1*p2 + p1^2*p2 + p1*p2^2 - p0^2*p12 + p1*p2*p12)
     MLequationsDegree (I)
-  Text
-    another example with specific data.
-  Example
-    R = QQ[p_111,p_112,p_121,p_122,p_211,p_212,p_221,p_222]
-    I = ideal (p_111^2*p_222^2+p_121^2*p_212^2+p_122^2*p_211^2+p_112^2*p_221^2-2*p_121*p_122*p_211*p_212-2*p_112*p_122*p_211*p_221-2*p_112*p_121*p_212*p_221-2*p_111*p_122*p_211*p_222-2*p_111*p_121*p_212*p_222-2*p_111*p_112*p_221*p_222+4*p_111*p_122*p_212*p_221+4*p_112*p_121*p_211*p_222)
-    u = {2,3,5,7,11,13,17,19}
-    MLequationsDegree (I, Data => u)
 --Caveat
 --  todo
 SeeAlso
@@ -1690,6 +1683,7 @@ doc ///
 Key
    parametricMLDegree
    (parametricMLDegree,List)
+   [parametricMLDegree, Data]
 Headline
   compute parametric ML-degree for List of Polynomials
 Usage
@@ -1768,6 +1762,10 @@ doc ///
 Key
    toricMLIdeal
    (toricMLIdeal,Matrix,List,List)
+   [toricMLIdeal, CoeffRing]
+
+Headline
+  compute toric ML-ideal
 Usage
   toricMLIdeal(A, c, u)
 Inputs
@@ -1815,6 +1813,10 @@ doc ///
 Key
    toricMLDegree
    (toricMLDegree,Matrix,List)
+   [toricMLDegree, Data]
+   [toricMLDegree, CoeffRing]
+Headline
+  compute toric ML-degree
 Usage
   toricMLDegree(A, c)
 Inputs
@@ -2046,10 +2048,78 @@ Description
 SeeAlso
   probabilisticLagrangeMultiplierOptimizationDegree
 ///
+-------------------
+--Symbols doc
+------------------
+doc ///
+Key
+  CoeffRing
+Headline
+  Incomplete  +
+--Usage
+--Inputs
+--Outputs
+--Consequences
+--  Item
+--Description
+--  Text
+--  Code
+--  Pre
+--  Example
+--  CannedExample
+--Subnodes
+--Caveat
+--SeeAlso
+///
 
+doc ///
+Key
+  Data
+Headline
+  Incomplete + 
+--Usage
+--Inputs
+--Outputs
+--Consequences
+--  Item
+Description
+  Text
+    The option Data is a @TO2{List,"list"}@. This Method is used by the commands @TO2{MLequationsDegree,"MLequationsDegree"}@, @TO2{parametricMLDegree,"parametricMLDegree"}@, @TO2{probabilisticConormalVarietyOptimizationDegree,"probabilisticConormalVarietyOptimizationDegree"}@, @TO2{probabilisticEDDegree,"probabilisticEDDegree"}@, @TO2{probabilisticFritzJohnEDDegree,"probabilisticFritzJohnEDDegree"}@, @TO2{probabilisticLagrangeMultiplierEDDegree,"probabilisticLagrangeMultiplierEDDegree"}@, @TO2{probabilisticLagrangeMultiplierOptimizationDegree,"probabilisticLagrangeMultiplierOptimizationDegree"}@ and @TO2{toricMLDegree,"toricMLDegree"}@.
+--  Code
+--  Pre
+  Example
+    R = QQ[p_111,p_112,p_121,p_122,p_211,p_212,p_221,p_222]
+    I = ideal (p_111^2*p_222^2+p_121^2*p_212^2+p_122^2*p_211^2+p_112^2*p_221^2-2*p_121*p_122*p_211*p_212-2*p_112*p_122*p_211*p_221-2*p_112*p_121*p_212*p_221-2*p_111*p_122*p_211*p_222-2*p_111*p_121*p_212*p_222-2*p_111*p_112*p_221*p_222+4*p_111*p_122*p_212*p_221+4*p_112*p_121*p_211*p_222)
+    u = {2,3,5,7,11,13,17,19}
+    MLequationsDegree (I, Data => u)
+--  CannedExample
+--Subnodes
+--Caveat
+--SeeAlso
+///
 
+doc ///
+Key
+  DualVariable
+Headline
+  Incomplete +
+--Usage
+--Inputs
+--Outputs
+--Consequences
+--  Item
+--Description
+--  Text
+--  Code
+--  Pre
+--  Example
+--  CannedExample
+--Subnodes
+--Caveat
+--SeeAlso
+///
 
-
+--------------------
 
 TEST ///
   -- test code and assertions here
