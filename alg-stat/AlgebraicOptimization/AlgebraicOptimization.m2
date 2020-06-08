@@ -1101,8 +1101,6 @@ Description
     conormalRing(R)
     I = ideal(x_0^2)
     conormalRing(I, DualVariable => symbol l)
-Caveat
-  The ring $R$ must have degree length 1
 SeeAlso
   conormalIdeal
 ///
@@ -1519,6 +1517,8 @@ doc ///
 Key
   symbolicMultidegreeEDDegree
   (symbolicMultidegreeEDDegree, Ideal)
+Headline
+  compute ED-degree symbolically via multidegrees
 Inputs
   I:
     a homogeneous @TO2{Ideal,"ideal"}@ in general coordinates.
@@ -1549,6 +1549,8 @@ doc ///
 Key
   probabilisticMultidegreeEDDegree
   (probabilisticMultidegreeEDDegree, Ideal)
+Headline
+  compute ED-degree probabilistically via multidegrees
 Inputs
   I:
     a homogeneous @TO2{Ideal,"ideal"}@ in general coordinates.
