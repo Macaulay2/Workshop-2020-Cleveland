@@ -49,7 +49,7 @@ export {
   -- Options
   "DualVariable", "CoeffRing",
   --Types and keys
-  "ConormalRing","CNRing","PrimalRing","DualRing","PrimalCoordinates","DualCoordinates",
+  "ConormalRing","PrimalRing","DualRing","PrimalCoordinates","DualCoordinates",
   --More Types
   "LagrangeVarietyWitness","LagrangeIdeal", 
   --"IsolatedCriticalPointSet",
@@ -1623,7 +1623,7 @@ Inputs
   I:
     an @TO2{Ideal, "ideal"}@, Homogeneous prime ideal.
   Data => List
-    a @TO2{List, "list"}@, default value null, By default, this data is chosen at random from natural number.
+    By default, this data is chosen at random from natural number.
 Outputs
   :Number
     the ML-degree of $I$
@@ -1692,7 +1692,7 @@ Inputs
   F:
     a @TO2{List, "list"}@ of Polynomials, the summation of polynomials is equal to one.
   Data => List
-    a @TO2{List, "list"}@, default value null, By default, this data is chosen at random from natural number.
+    By default, this data is chosen at random from natural number.
 Outputs
   :Number
     the ML-degree of $F$
@@ -2084,7 +2084,15 @@ Headline
 --  Item
 Description
   Text
-    The option Data is a @TO2{List,"list"}@. This Method is used by the commands @TO2{MLequationsDegree,"MLequationsDegree"}@, @TO2{parametricMLDegree,"parametricMLDegree"}@, @TO2{probabilisticConormalVarietyOptimizationDegree,"probabilisticConormalVarietyOptimizationDegree"}@, @TO2{probabilisticEDDegree,"probabilisticEDDegree"}@, @TO2{probabilisticFritzJohnEDDegree,"probabilisticFritzJohnEDDegree"}@, @TO2{probabilisticLagrangeMultiplierEDDegree,"probabilisticLagrangeMultiplierEDDegree"}@, @TO2{probabilisticLagrangeMultiplierOptimizationDegree,"probabilisticLagrangeMultiplierOptimizationDegree"}@ and @TO2{toricMLDegree,"toricMLDegree"}@.
+    The option Data is a @TO2{List,"list"}@. 
+    This Method is used by the commands @TO2{MLequationsDegree,"MLequationsDegree"}@, 
+    @TO2{parametricMLDegree,"parametricMLDegree"}@, 
+    @TO2{probabilisticConormalVarietyOptimizationDegree,"probabilisticConormalVarietyOptimizationDegree"}@, 
+    @TO2{probabilisticEDDegree,"probabilisticEDDegree"}@, 
+    @TO2{probabilisticFritzJohnEDDegree,"probabilisticFritzJohnEDDegree"}@, 
+    @TO2{probabilisticLagrangeMultiplierEDDegree,"probabilisticLagrangeMultiplierEDDegree"}@, 
+    @TO2{probabilisticLagrangeMultiplierOptimizationDegree,"probabilisticLagrangeMultiplierOptimizationDegree"}@ 
+    and @TO2{toricMLDegree,"toricMLDegree"}@.
 --  Code
 --  Pre
   Example
