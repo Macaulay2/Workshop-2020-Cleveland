@@ -681,6 +681,8 @@ invariants TorusAction := List => T -> (
 	);
     
     -- The generating invariant monomials are the monomials in S of weight 0.
+    -- TO DO: add if/then/else to handle the case when there
+    -- are no invariants
     return S#(0_(ZZ^r))
     )
 
