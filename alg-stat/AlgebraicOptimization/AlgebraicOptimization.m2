@@ -800,7 +800,7 @@ toricMLIdeal(Matrix, List, List) := Ideal => opts -> (A, c, u) -> (
     toricMapA := transpose matrix {for i from 0 to n-1 list c_i*R_(entries A_i)};
     u = transpose matrix {u};
     A = sub(A,R);
-    MLIdeal := ideal(A*(N*toricMapA - u));
+    MLIdeal := saturate(saturate(ideal(A*(N*toricMapA - u)), product gens R), ideal sum entries toricMapA);
     MLIdeal
     )
 
@@ -810,7 +810,7 @@ toricMLDegree(Matrix, List) := Number => opts -> (A,c) -> (
     u := if opts.Data === null then for i from 0 to #c-1 list random(1, 10^5) else opts.Data;
     D := smithNormalForm(A, ChangeMatrix => {false, false}, KeepZeroes => false);
     MLIdeal := toricMLIdeal(A, c, u, CoeffRing => opts.CoeffRing);
-    MLdegree := (degree saturate(MLIdeal, (product gens ring MLIdeal))) / (det D);
+    MLdegree := (degree MLIdeal) / (det D);
     MLdegree
     )
 
