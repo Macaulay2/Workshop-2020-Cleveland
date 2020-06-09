@@ -28,6 +28,12 @@ phi = map(degreesRing R, degreesRing T)
 phi h
 hilbertSeries(S,Order=>8)
 
+-- example for rank 1
+R = QQ[x]
+W = matrix{{1}}
+T = torusAction(W,R)
+R^T
+
 ----------------------------------------
 -- Fred's experiments
 ----------------------------------------
