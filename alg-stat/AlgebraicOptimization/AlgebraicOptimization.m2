@@ -51,7 +51,7 @@ export {
   --Types and keys
   "ConormalRing","PrimalRing","DualRing","PrimalCoordinates","DualCoordinates",
   --More Types
-  "LagrangeVarietyWitness","LagrangeIdeal", 
+  "LagrangeVarietyWitness","LagrangeIdeal",
   --"IsolatedCriticalPointSet",
   --Methods
   --"isolatedRegularCriticalPointSet","criticalIdeal","lagrangeIdeal",
@@ -59,8 +59,8 @@ export {
   "probabilisticLagrangeMultiplierOptimizationDegree",
   --More Keys
   "LagrangeVariable","PrimalIdeal","JacobianConstraint","AmbientRing","LagrangeCoordinates","WitnessPrimalIdeal",
-  "Data", 
-  --"Gradient", 
+  "Data",
+  --"Gradient",
   --"WitnessSuperSet", "SaveFileDirectory",
   -- Tolerances
   --"MultiplicityTolerance","EvaluationTolerance", "ConditionNumberTolerance",
@@ -819,16 +819,17 @@ toricMLIdeal(Matrix, List, List) := Ideal => opts -> (A, c, u) -> (
     toricMapA := transpose matrix {for i from 0 to n-1 list c_i*R_(entries A_i)};
     u = transpose matrix {u};
     A = sub(A,R);
-    MLIdeal := ideal(A*(N*toricMapA - u));
+    MLIdeal := saturate(saturate(ideal(A*(N*toricMapA - u)), product gens R), ideal sum entries toricMapA);
     MLIdeal
     )
 
 toricMLDegree = method(Options => {CoeffRing => QQ, Data => null})
 toricMLDegree(Matrix, List) := Number => opts -> (A,c) -> (
+    if not (rank A == min(numgens target A, numgens source A)) then error("The matrix is not full rank.");
     u := if opts.Data === null then for i from 0 to #c-1 list random(1, 10^5) else opts.Data;
     D := smithNormalForm(A, ChangeMatrix => {false, false}, KeepZeroes => false);
     MLIdeal := toricMLIdeal(A, c, u, CoeffRing => opts.CoeffRing);
-    MLdegree := (degree saturate(MLIdeal, (product gens ring MLIdeal))) / (det D);
+    MLdegree := (degree MLIdeal) / (det D);
     MLdegree
     )
 
