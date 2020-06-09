@@ -2077,7 +2077,7 @@ doc ///
 Key
   Data
 Headline
-  Incomplete + 
+  Optional data 
 --Usage
 --Inputs
 --Outputs
@@ -2085,17 +2085,9 @@ Headline
 --  Item
 Description
   Text
-    The option Data is a @TO2{List,"list"}@. 
-    This Method is used by the commands @TO2{MLequationsDegree,"MLequationsDegree"}@, 
-    @TO2{parametricMLDegree,"parametricMLDegree"}@, 
-    @TO2{probabilisticConormalVarietyOptimizationDegree,"probabilisticConormalVarietyOptimizationDegree"}@, 
-    @TO2{probabilisticEDDegree,"probabilisticEDDegree"}@, 
-    @TO2{probabilisticFritzJohnEDDegree,"probabilisticFritzJohnEDDegree"}@, 
-    @TO2{probabilisticLagrangeMultiplierEDDegree,"probabilisticLagrangeMultiplierEDDegree"}@, 
-    @TO2{probabilisticLagrangeMultiplierOptimizationDegree,"probabilisticLagrangeMultiplierOptimizationDegree"}@ 
-    and @TO2{toricMLDegree,"toricMLDegree"}@.
---  Code
---  Pre
+    The option Data is a @TO2{List,"list"}@ that some functions can use it for specific data.
+    To find out the exact type of option, see the document function you want. \break
+    You can see a use case in the example below.
   Example
     R = QQ[p_111,p_112,p_121,p_122,p_211,p_212,p_221,p_222]
     I = ideal (p_111^2*p_222^2+p_121^2*p_212^2+p_122^2*p_211^2+p_112^2*p_221^2-2*p_121*p_122*p_211*p_212-2*p_112*p_122*p_211*p_221-2*p_112*p_121*p_212*p_221-2*p_111*p_122*p_211*p_222-2*p_111*p_121*p_212*p_222-2*p_111*p_112*p_221*p_222+4*p_111*p_122*p_212*p_221+4*p_112*p_121*p_211*p_222)
