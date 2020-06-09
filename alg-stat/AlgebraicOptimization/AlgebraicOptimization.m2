@@ -2056,14 +2056,16 @@ doc ///
 Key
   CoeffRing
 Headline
-  Incomplete  +
+  optional argument
 --Usage
 --Inputs
 --Outputs
 --Consequences
 --  Item
---Description
---  Text
+Description
+  Text
+    The option coeffRing is the ring of coefficients for the computation to be performed over. 
+    By default this ring is QQ
 --  Code
 --  Pre
 --  Example
@@ -2077,7 +2079,7 @@ doc ///
 Key
   Data
 Headline
-  Optional data 
+  optional argument 
 --Usage
 --Inputs
 --Outputs
@@ -2103,7 +2105,7 @@ doc ///
 Key
   DualVariable
 Headline
-  Incomplete +
+  optional argument Incomplete +
 --Usage
 --Inputs
 --Outputs
@@ -2221,7 +2223,7 @@ end
 
 
 --Example
-restart
+restat
 path={"/Users/jo/Documents/GoodGit/M2020/Workshop-2020-Cleveland/alg-stat/AlgebraicOptimization"}|path
 path={"/home/fatemeh/w/Workshop-2020-Cleveland/alg-stat/AlgebraicOptimization"}|path
 loadPackage("AlgebraicOptimization",Reload=>true)
