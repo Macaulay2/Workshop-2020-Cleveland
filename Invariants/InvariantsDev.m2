@@ -194,7 +194,7 @@ addHook(LinearlyReductiveAction, symbol hilbertIdeal, V -> break (
     
     -- now make the enlarged polynomial ring we'll work in, and convert inputs to that ring
     x := local x, y := local y, z := local z;
-    S := K[x_1..x_n, y_1..y_n, z_1..z_l];
+    S := K[z_1..z_l, x_1..x_n, y_1..y_n];
     M' := sub(M, apply(l, i -> (ring M)_i => z_(i+1)));
     A' := sub(A, apply(l, i -> (ring M)_i => z_(i+1)));
     
@@ -2008,9 +2008,58 @@ document {
 -- to do: Add TEST for every method in the package, ideally two tests for each
 
 TEST ///
+R = QQ[x_1]
+G = finiteAction({matrix{{-1}}}, R)
+assert(set group G === set {matrix{{1_QQ}}, matrix{{-1_QQ}}})
+assert(isAbelian G)
+assert(reynoldsOperator(x_1 + x_1^2, G) === x_1^2)
+assert(isInvariant(1 + x_1^4 + x_1^6, G))
+assert(not isInvariant(1 + x_1^5 + x_1^4, G))
+///
+
+TEST ///
+R = QQ[x_1..x_3]
+L = apply(2, i -> permutationMatrix(3, [i + 1, i + 2] ) )
+S3 = finiteAction(L,R)
+assert(#(group S3) === 6)
+assert(not isAbelian S3)
+assert(reynoldsOperator(x_1 + x_1*x_2*x_3, S3) === (1/3)*(x_1 + x_2 + x_3) + x_1*x_2*x_3)
+assert(isInvariant(1 + x_1 + x_2 + x_3, S3))
+assert(not isInvariant(1 + x_1, S3))
+///
+
+-- finiteAbelianAction tests
+
+TEST ///
+R0 = QQ[x_1]
+T0 = finiteAbelianAction({2},matrix{{1}},R0)
+invariants0 = set {x_1^2}
+assert(set invariants T0 === invariants0)
+assert(isInvariant(x_1^2, T0))
+///
+
+TEST ///
+R1 = QQ[x_1..x_3]
+T1 = finiteAbelianAction({3,3},matrix{{1,0,1},{0,1,1}},R1)
+invariants1 = set {x_3^3, x_2^3, x_1^3, x_1*x_2*x_3^2, x_1^2*x_2^2*x_3}
+assert(set invariants T1 === invariants1)
+///
+
+-- torusAction tests
+
+TEST ///
+R0 = QQ[x_1..x_2]
+T0 = torusAction(matrix{{1,1}}, R0)
+invariants0 = set {}
+assert(weights T0 === matrix{{1,1}})
+assert(set invariants T0 === invariants0) --This one has an error
+///
+
+TEST ///
 R1 = QQ[x_1..x_4]
 T1 = torusAction(matrix {{-3, -1, 1, 2}}, R1)
 invariants1 =  set {x_2*x_3, x_2^2*x_4, x_1*x_3*x_4, x_1*x_2*x_4^2, x_1^2*x_4^3, x_1*x_3^3}
+assert(weights T1 === matrix{{-3, -1, 1, 2}})
 assert(set invariants T1 === invariants1)
 ///
 
@@ -2021,6 +2070,30 @@ invariants2 = set {x_1*x_2*x_3,x_1^2*x_3*x_4}
 assert(set invariants T2 === invariants2)
 ///
      
+-- linearlyReductiveAction tests
+
+TEST ///
+A = QQ[z]
+I = ideal(z^2 - 1)
+M = matrix{{(z+1)/2, (1-z)/2},{(1-z)/2, (1+z)/2}}
+R = QQ[x_1,x_2]
+V = linearlyReductiveAction(I,M,R)
+assert(hilbertIdeal V == ideal(x_1 + x_2, x_2^2))
+///
+
+TEST ///
+R = QQ[a,b,c,d]
+idealSL2 = ideal(a*d - b*c - 1)
+SL2std = matrix{{a,b},{c,d}}
+R1 = QQ[x_1..x_2]
+V1 = linearlyReductiveAction(idealSL2,SL2std,R1)
+assert(hilbertIdeal V1 == 0)
+assert(set invariants V1 === set {})
+SL2Sym2 = matrix{{a^2, a*b, b^2}, {2*a*c, b*c + a*d, 2*b*d}, {c^2, c*d, d^2}}
+R2 = QQ[x_1..x_3]
+V2 = linearlyReductiveAction(idealSL2,SL2Sym2,R2)
+assert(set invariants V2 === set {x_2^2-x_1*x_3})
+///
 -- to do: write this part to work with Invariants as InvariantsOld
 --     	   and InvariantsDev becomes Invariants     
        
@@ -2052,26 +2125,45 @@ installPackage "InvariantsDev"
 --installPackage("Invariants", RemakeAllDocumentation=>true)
 check InvariantsDev
 
-S = QQ[a,b,c,d]
-idealSL2 = ideal(a*d - b*c - 1)
+B = QQ[a,b,c,d]
+A = ideal(a*d - b*c - 1)
 SL2std = matrix{{a,b},{c,d}}
 R1 = QQ[x_1..x_2]
 time V1 = linearlyReductiveAction(idealSL2,SL2std,R1)
 time hilbertIdeal V1
 
 needsPackage "SchurFunctors"
-n = 3 -- 4 takes a second or so, 5 takes a long time (I didn't wait around for it to finish)
-Rn = QQ[x_0..x_n]
-Vn = linearlyReductiveAction(idealSL2, schur({n}, SL2std), Rn)
+q = 2 -- 4 takes a second or so, 5 takes a long time (I didn't wait around for it to finish)
+R = QQ[x_0..x_q]
+n = 3
+K = QQ
+l = 4
+M = schur({q}, SL2std)
 time hilbertIdeal Vn
-invariants(Vn,6)
+invariants(Vn)
 isInvariant(x_0,Vn)
+
+    -- now make the enlarged polynomial ring we'll work in, and convert inputs to that ring
+    x := local x, y := local y, z := local z;
+    S = K[z_1..z_l, x_1..x_n, y_1..y_n, MonomialOrder=>{l,n,n}];
+    M' = sub(M, apply(l, i -> (ring M)_i => z_(i+1)));
+    A' = sub(A, apply(l, i -> (ring M)_i => z_(i+1)));
+    
+    -- the actual algorithm follows
+    J' = apply(n, i -> y_(i+1) - sum(n, j -> M'_(j,i) * x_(j+1)));
+    J = A' + ideal(J');
+    I = eliminate(apply(l, i -> z_(i+1)),J);
+    II := sub(I, apply(n, i -> y_(i+1) => 0));
+    
+    -- return the result back in the user's input ring R
+    trim(sub(II, join(apply(n, i -> x_(i+1) => R_i),apply(n, i -> y_(i+1) => 0), apply(l, i -> z_(i+1) => 0))))
+    ))
 
 needsPackage "InvariantsDev"
 R1 = QQ[a_1..a_3]
 W = matrix{{1,0,1},{0,1,1}}
 L = {3,3}
-T = finiteAction(W,R1,L)
+T = finiteAbelianAction(L,W,R1)
 R1^T
 invariantRing T
 
