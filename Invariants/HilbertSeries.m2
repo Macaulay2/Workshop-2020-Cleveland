@@ -34,6 +34,14 @@ W = matrix{{1}}
 T = torusAction(W,R)
 R^T
 
+-- example for abelian rank 1
+-- why when W=0 we don't get the whole ring?
+R = QQ[x]
+d = {2}
+W = matrix{{0}}
+A = finiteAbelianAction(d,W,R)
+R^A
+
 ----------------------------------------
 -- Fred's experiments
 ----------------------------------------
