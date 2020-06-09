@@ -45,9 +45,10 @@ export {
   "probabilisticLagrangeMultiplierEDDegree",
   "toricMLIdeal",
   "toricMLDegree",
+  "toricEDDegree",
   "probabilisticConormalVarietyOptimizationDegree",
   -- Options
-  "DualVariable", "CoeffRing",
+  "DualVariable", "CoeffRing", "ForceAMat", "OutputText", "OutputType",
   --Types and keys
   "ConormalRing","PrimalRing","DualRing","PrimalCoordinates","DualCoordinates",
   --More Types
@@ -833,15 +834,29 @@ toricMLDegree(Matrix, List) := Number => opts -> (A,c) -> (
     MLdegree
     )
 
+TEST///
 
-
-TEST ///
 A = matrix {{1,1,1,0,0,0,0,0,0}, {0,0,0,1,1,1,0,0,0},{0,0,0,0,0,0,1,1,1},
     {1,0,0,1,0,0,1,0,0},{0,1,0,0,1,0,0,1,0}};
 c = {1, 1, 1, 1, 1, 1, 1, 1, 1};
 assert(1 == toricMLDegree(A, c));
 c = {1,2,3,1,1,1,1,1,1};
 assert(3 == toricMLDegree(A,c));
+
+///
+
+toricEDDegree = method(Options => {ForceAMat => false, OutputText => "Quiet", OutputType => List})
+toricEDDegree(Matrix) := ZZ => opts -> A -> (
+    ed := edDeg(A,ForceAmat => opts.ForceAMat, Output => opts.OutputType, TextOutput => opts.OutputText);
+    ed
+    )
+
+TEST///
+
+A = matrix {{1,1,1,0,0,0,0,0,0}, {0,0,0,1,1,1,0,0,0},{0,0,0,0,0,0,1,1,1},
+    {1,0,0,1,0,0,1,0,0},{0,1,0,0,1,0,0,1,0}};
+assert(39 == toricEDDegree(A);
+    
 ///
 
 --Used to find WI symbollically without using randomization.
@@ -960,7 +975,9 @@ Description
     [4] Carlos  Am ́endola,  Nathan  Bliss,  Isaac  Burke,  Courtney  R.  Gibbons,
     Martin  Helmer,  Serkan  Ho ̧sten,  Evan  D.  Nash,Jose  Israel  Rodriguez,
     and  Daniel  Smolkin.  The  maximum  likelihood  degree  of  toric  varieties.
-    Journal  of  SymbolicComputation, 92:222–242, May 2019.
+    Journal  of  SymbolicComputation, 92:222–242, May 2019. \break
+    [5] Martin Helmer and Bernd Sturmfels. 
+    Nearest points on toric varieties. MATHEMATICA SCANDINAVICA, 122(2):213,Apr 2018.
   Example
     todo
 Caveat
@@ -1857,6 +1874,116 @@ SeeAlso
     toricMLDegree
     MLequationsDegree
     parametricMLIdeal
+--
+///
+
+doc ///
+Key
+   toricEDDegree
+   (toricEDDegree,Matrix)
+Usage
+  toricEDDegree(A)
+Inputs
+  A:
+    A full rank matrix of exponents defining the monomial map that parameterizes the toric variety
+Outputs
+  :Number
+    the ED-degree of the corresponding toric variety
+Description
+  Text
+    Calls the method @TO2{edDeg, "edDeg"}@ from the @TO2{ToricInvariants, "ToricInvariants"}@ package to compute the generic ED degree of the toric variety
+    associated to the matrix $A$. The generic ED degree is greater than or equal to the ED Degree @TO2{AlgebraicOptimization,"[5, Eqn. 33]"}@.
+  CannedExample
+    i3 : A = matrix {{1,1,1,0,0,0}, {1,0,0,1,1,0}, {0,1,0,1,0,1}, {0,0,1,0,1,1}}
+     
+    o3 = | 1 1 1 0 0 0 |
+         | 1 0 0 1 1 0 |
+         | 0 1 0 1 0 1 |
+         | 0 0 1 0 1 1 |
+
+              4        6
+    o3 : Matrix ZZ  <--- ZZ
+
+    i4 : toricEDDegree(A)
+
+    The toric variety has degree = 4
+    The dual variety has degree = 4, and codimension = 1
+    Chern-Mather Volumes: (V_0,..,V_(d-1)) = {12, 12, 8, 4}
+    Polar Degrees: {4, 12, 8, 4}
+    ED Degree = 28
+
+                           5      4     3     2
+    Chern-Mather Class: 12h  + 12h  + 8h  + 4h
+
+    o4 = 28
+
+    o4 : QQ
+
+    i5 : R = QQ[x_1..x_6];
+
+    i6 : I = ideal(-x_2*x_5+x_1*x_6,-x_3*x_4+x_1*x_6)
+
+    o6 = ideal (- x x  + x x , - x x  + x x )
+                   2 5    1 6     3 4    1 6
+
+    o6 : Ideal of R
+
+    i7 : probabilisticEDDegree(I)
+
+    o7 = 28
+  Text
+    In the next case  $(1,1,\ldots 1)$ is in the principal A-determinant and we see that the ED degree drops from the generic ED degree
+  CannedExample
+    i3 : A = matrix {{1, 1, 0, 0}, {0, 0, 1, 1}, {1, 0, 1, 0}, {0, 1, 0, 1}}
+
+    o3 = | 1 1 0 0 |
+         | 0 0 1 1 |
+         | 1 0 1 0 |
+         | 0 1 0 1 |
+
+              4        4
+    o3 : Matrix ZZ  <--- ZZ
+
+    i4 : toricEDDegree(A)
+
+    The toric variety has degree = 2
+    The dual variety has degree = 2, and codimension = 1
+    Chern-Mather Volumes: (V_0,..,V_(d-1)) = {4, 4, 2}
+    Polar Degrees: {2, 2, 2}
+    ED Degree = 6
+
+                          3     2
+    Chern-Mather Class: 4h  + 4h  + 2h
+
+    o4 = 6
+
+    o4 : QQ
+
+    i5 : R = QQ[x_1..x_4];
+
+    i6 : I = ideal(x_1*x_4 - x_2*x_3)
+
+    o6 = ideal(- x x  + x x )
+                  2 3    1 4
+
+    o6 : Ideal of R
+
+    i7 : probabilisticEDDegree(I)
+
+    o7 = 2
+  Text
+    References:\break
+    [1]Martin Helmer and Bernd Sturmfels. 
+    Nearest points on toric varieties. MATHEMATICA SCANDINAVICA, 122(2):213,Apr 2018.
+Caveat
+    The vector $(1,1,\ldots 1)$ must be in the rowspan of A. This methods computes the generic ED degree 
+    which may differ from the ED degree if the weight vector $(1,1,\ldots, 1)$ if the principal A-determinant
+    vanishes at $(1,1,\ldots 1)$ @TO2{AlgebraicOptimization,"[5, Prop 4.1]"}@. 
+-- todo
+SeeAlso
+    edDeg
+    symbolicEDDegree
+    toricMLDegree
 --
 ///
 
