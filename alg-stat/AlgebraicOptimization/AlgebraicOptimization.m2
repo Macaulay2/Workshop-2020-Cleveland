@@ -1183,7 +1183,7 @@ Key
   [probabilisticEDDegree, Projective]
   [probabilisticEDDegree, Data]
 Headline
-  compute ED-degree for a random point
+  Euclidean distance degree for a random point
 Usage
   probabilisticEDDegree I
   probabilisticEDDegree(I, Projective => true)
@@ -1264,7 +1264,7 @@ Key
   [probabilisticFritzJohnEDDegree, Data]
   [probabilisticFritzJohnEDDegree, Projective]
 Headline
-  compute ED-degree for a random point using Fritz John conditions
+  Euclidean distance degree for a random point using Fritz John conditions
 Usage
   probabilisticFritzJohnEDDegree(WI,I)
   probabilisticFritzJohnEDDegree(WI, I, Projective => true)
@@ -1376,7 +1376,7 @@ doc ///
 Key
   (probabilisticFritzJohnEDDegree, Ideal)
 Headline
-  compute ED-degree for a random point using Fritz John conditions
+  Euclidean distance degree for a random point using Fritz John conditions
 Usage
   probabilisticFritzJohnEDDegree I
 Inputs
@@ -1413,7 +1413,7 @@ Key
   symbolicEDDegree
   (symbolicEDDegree, Ideal)
 Headline
-  Compute EDDegree symbolically
+  compute Euclidean distance degree symbolically
 Usage
   symbolicEDDegree I
   symbolicEDDegree(I, Projective => true)
@@ -1501,7 +1501,7 @@ Key
   projectionEDDegree
   (projectionEDDegree, Ideal)
 Headline
-  ED-degree via random linear projections
+  Euclidean distance degree via random linear projections
 Usage
   projectionEDDegree I
 Inputs
@@ -1552,7 +1552,7 @@ Key
   sectionEDDegree
   (sectionEDDegree, Ideal)
 Headline
-  ED-degree via random linear sections
+  Euclidean distance degree via random linear sections
 Usage
   sectionEDDegree I
 Inputs
@@ -1609,7 +1609,7 @@ Key
   symbolicMultidegreeEDDegree
   (symbolicMultidegreeEDDegree, Ideal)
 Headline
-  compute ED-degree symbolically via multidegrees
+  compute Euclidean distance degree symbolically via multidegrees
 Inputs
   I:
     a homogeneous @TO2{Ideal,"ideal"}@ in general coordinates.
@@ -1641,7 +1641,7 @@ Key
   probabilisticMultidegreeEDDegree
   (probabilisticMultidegreeEDDegree, Ideal)
 Headline
-  compute ED-degree probabilistically via multidegrees
+  compute Euclidean distance degree probabilistically via multidegrees
 Inputs
   I:
     a homogeneous @TO2{Ideal,"ideal"}@ in general coordinates.
@@ -1672,7 +1672,7 @@ Key
     MLequationsIdeal
    (MLequationsIdeal,Ideal,List)
 Headline
-  compute ML-ideal for Homogeneous prime ideal
+  Maximum likelihood ideal for a homogeneous prime ideal
 Usage
   MLequationsIdeal (I,u)
 Inputs
@@ -1704,7 +1704,7 @@ Key
    ( MLequationsDegree, Ideal)
    [ MLequationsDegree, Data]
 Headline
-  compute ML-degree for Homogeneous prime ideal
+  compute Maximum likelihood degree for a homogeneous prime ideal
 Usage
   MLequationsDegree (I)
   MLequationsDegree (I, Data => u)
@@ -1737,7 +1737,7 @@ Key
    parametricMLIdeal
    (parametricMLIdeal,List,List)
 Headline
-  compute parametric ML-ideal for List of Polynomials
+  parametric Maximum likelihood ideal for a list of polynomials
 Usage
   parametricMLMLIdeal (F,u)
 Inputs
@@ -1775,7 +1775,7 @@ Key
    (parametricMLDegree,List)
    [parametricMLDegree, Data]
 Headline
-  compute parametric ML-degree for List of Polynomials
+  compute parametric Maximum likelihood degree for a list of polynomials
 Usage
   parametricMLDegree (F)
 Inputs
@@ -1813,7 +1813,7 @@ Key
   checkGeneralCoordinates
   (checkGeneralCoordinates, Ideal)
 Headline
-  checks if projective variety is in general coordinates
+  checks if a projective variety is in general coordinates
 Usage
   checkGeneralCoordinates I
 Inputs
@@ -1857,7 +1857,7 @@ Key
    [toricMLIdeal, CoeffRing]
 
 Headline
-  compute toric ML-ideal
+  compute toric Maximum likelihood ideal
 Usage
   toricMLIdeal(A, c, u)
 Inputs
@@ -1908,7 +1908,7 @@ Key
    [toricMLDegree, Data]
    [toricMLDegree, CoeffRing]
 Headline
-  compute toric ML-degree
+  compute toric maximum likelihood degree
 Usage
   toricMLDegree(A, c)
 Inputs
@@ -1956,7 +1956,7 @@ Key
    toricEDDegree
    (toricEDDegree,Matrix)
 Headline
-  compute toric ED-degree
+  compute toric Euclidean distance degree
 Usage
   toricEDDegree(A)
 Inputs
@@ -2070,7 +2070,7 @@ Key
   (probabilisticConormalVarietyOptimizationDegree, List, Ideal)
   [probabilisticConormalVarietyOptimizationDegree, Data]
 Headline
-  compute ED-degree for a random point
+  compute Euclidean distance degree for a random point
 Usage
   probabilisticConormalVarietyOptimizationDegree(psi, I)
   probabilisticConormalVarietyOptimizationDegree(psi, I, Data => L)
@@ -2136,7 +2136,7 @@ Key
   (probabilisticLagrangeMultiplierOptimizationDegree, List, Ideal, Ideal)
   [probabilisticLagrangeMultiplierOptimizationDegree, Data]
 Headline
-  compute ED-degree for a random point
+  compute Euclidean distance degree for a random point
 Usage
   probabilisticLagrangeMultiplierOptimizationDegree(psi,WI, I)
   probabilisticLagrangeMultiplierOptimizationDegree(psi,WI,I, Data => L)
@@ -2202,7 +2202,7 @@ Key
   (probabilisticLagrangeMultiplierEDDegree, Ideal,Ideal)
   [probabilisticLagrangeMultiplierEDDegree, Data]
 Headline
-  compute EDDegree symbolically using Lagrange multipliers
+  compute Euclidean distance degree symbolically using Lagrange multipliers
 Usage
   probabilisticLagrangeMultiplierEDDegree (WI,I)
   probabilisticLagrangeMultiplierEDDegree(WI,I, Data => L)
