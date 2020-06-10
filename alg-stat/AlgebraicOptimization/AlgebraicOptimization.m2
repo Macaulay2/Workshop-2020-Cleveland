@@ -957,39 +957,6 @@ assert(1==probabilisticConormalVarietyOptimizationDegree(psi,I,Data=>{0,0}))
 
 beginDocumentation()
 
--- template for package documentation
-doc ///
-Key
-  AlgebraicOptimization
-Headline
-  Package for algebraic optimization
-Description
-  Text
-    References: \break
-    [1] Seth Sullivant,
-    Algebraic Statistics, American Mathematical Soc. \break
-    [2]  Jan Draisma, Emil Horobeţ, Giorgio Ottaviani, Bernd Sturmfels, and Rekha R. Thomas,
-    The Euclidean distance degree of an algebraic variety, Found. Comput. Math. 16 (2016), no. 1, 99–149. MR 3451425. \break
-    [3] Serkan Hoşten, Amit Khetan,and Bernd Sturmfels,
-    Solving the likelihood equations, Found. Comput. Math. 5 (2005), no. 4, 389–407. \break
-    [4] Carlos  Am ́endola,  Nathan  Bliss,  Isaac  Burke,  Courtney  R.  Gibbons,
-    Martin  Helmer,  Serkan  Ho ̧sten,  Evan  D.  Nash,Jose  Israel  Rodriguez,
-    and  Daniel  Smolkin.  The  maximum  likelihood  degree  of  toric  varieties.
-    Journal  of  SymbolicComputation, 92:222–242, May 2019. \break
-    [5] Martin Helmer and Bernd Sturmfels. 
-    Nearest points on toric varieties. MATHEMATICA SCANDINAVICA, 122(2):213,Apr 2018.
-  Example
-    todo
-Caveat
-SeeAlso
-///
-
-doc ///
-Key
-  ConormalRing
-///
-
-
 -- template for function documentation
 --doc ///
 --Key
@@ -1009,6 +976,44 @@ Key
 --Caveat
 --SeeAlso
 --///
+
+doc ///
+Key
+  AlgebraicOptimization
+Headline
+  Package for algebraic optimization
+Description
+  Text
+    The AlgebraicOptimization package provides methods for determining the algebraic degree of 
+    an optimization problem.
+    The algebraic degree of an optimization problem is an important invariant in applied
+    algebraic geometry. It gives an algebraic measure of complexity to a problem and has been
+    studied in the context of nearest point problems, maximum likelihood estimation,
+    and semidefinite programming. \break
+  Text
+    References: \break
+    [1] Seth Sullivant,
+    Algebraic Statistics, American Mathematical Soc. \break
+    [2]  Jan Draisma, Emil Horobeţ, Giorgio Ottaviani, Bernd Sturmfels, and Rekha R. Thomas,
+    The Euclidean distance degree of an algebraic variety, Found. Comput. Math. 16 (2016), no. 1, 99–149. MR 3451425. \break
+    [3] Serkan Hoşten, Amit Khetan,and Bernd Sturmfels,
+    Solving the likelihood equations, Found. Comput. Math. 5 (2005), no. 4, 389–407. \break
+    [4] Carlos  Am ́endola,  Nathan  Bliss,  Isaac  Burke,  Courtney  R.  Gibbons,
+    Martin  Helmer,  Serkan  Ho ̧sten,  Evan  D.  Nash,Jose  Israel  Rodriguez,
+    and  Daniel  Smolkin.  The  maximum  likelihood  degree  of  toric  varieties.
+    Journal  of  SymbolicComputation, 92:222–242, May 2019. \break
+    [5] Martin Helmer and Bernd Sturmfels. 
+    Nearest points on toric varieties. MATHEMATICA SCANDINAVICA, 122(2):213,Apr 2018.
+--Example
+--  todo
+--Caveat
+--SeeAlso
+///
+
+doc ///
+Key
+  ConormalRing
+///
 
 doc ///
 Key
@@ -1598,7 +1603,7 @@ Caveat
 doc ///
 Key
     MLequationsIdeal
-   ( MLequationsIdeal,Ideal,List)
+   (MLequationsIdeal,Ideal,List)
 Headline
   compute ML-ideal for Homogeneous prime ideal
 Usage
@@ -1613,14 +1618,13 @@ Outputs
     the likelihoood ideal of $I$
 Description
   Text
-    Computes the likelihood ideal by taking an Ideal and List of numerical data when the ideal is homogeneous and prime. @TO2{AlgebraicOptimization,"[1, Alg. 7.2.4][3, Alg. 6]"}@
+    Computes the likelihood ideal by taking an Ideal and List 
+    of numerical data when the ideal is homogeneous and prime. @TO2{AlgebraicOptimization,"[3, Alg. 6][1]"}@
   Example
     R = QQ[p0, p1, p2, p12]
     I = ideal (2*p0*p1*p2 + p1^2*p2 + p1*p2^2 - p0^2*p12 + p1*p2*p12)
     u= {4,2, 11, 15}
     MLequationsIdeal (I,u)
---Caveat
---  todo
 SeeAlso
   MLequationsDegree
   parametricMLIdeal
@@ -1655,8 +1659,6 @@ Description
     R = QQ[p0, p1, p2, p12]
     I = ideal (2*p0*p1*p2 + p1^2*p2 + p1*p2^2 - p0^2*p12 + p1*p2*p12)
     MLequationsDegree (I)
---Caveat
---  todo
 SeeAlso
   MLequationsIdeal
   parametricMLDegree
@@ -1681,16 +1683,19 @@ Outputs
     the parametric ML-ideal of $F$
 Description
   Text
-    Computes the parametric likelihood ideal by taking List of function and
-    List of numerical data when summation F equal to 1. @TO2{AlgebraicOptimization,"[3, Alg. 18]"}@
+    Let $F:\mathbb{R}^d \rightarrow \mathbb{R}^{n+1}$ be a polynomial map whose image is parametric model. 
+    Each coordinate $f_i$ of $F$ is a polynomial in the model parameters $\theta = (\theta_0,..., \theta_d)$. 
+    Assuming the summation of $f_i$'s is equal to one, the likelihood function is 
+    $f_0(\theta)^{u_0} f_1(\theta)^{u_1} ··· f_n(\theta)^{u_n}$ where $u = (u_0,... , u_n)$ is a vector of natural numbers.
+    This function Computes the parametric likelihood ideal 
+    of this model by taking F as List of Polynomials and List of numerical data when 
+    summation F equal to 1. @TO2{AlgebraicOptimization,"[3, Alg. 18]"}@
   Example
     R = QQ[t]
     s=1
     u = {2,3,5,7}
     F = {s^3*(-t^3-t^2-t+1),s^2*t,s*t^2,t^3}
     parametricMLIdeal (F,u)
---Caveat
---  todo
 SeeAlso
   parametricMLDegree
   MLequationsIdeal
@@ -1716,7 +1721,11 @@ Outputs
     the ML-degree of $F$
 Description
   Text
-    Computes the maximum likelihood degree by taking List of Polynomials
+    Let $F:\mathbb{R}^d \rightarrow \mathbb{R}^{n+1}$ be a polynomial map whose image is parametric model. 
+    Each coordinate $f_i$ of $F$ is a polynomial in the model parameters $\theta = (\theta_0,..., \theta_d)$. 
+    Assuming the summation of $f_i$'s is equal to one, the likelihood function is 
+    $f_0(\theta)^{u_0} f_1(\theta)^{u_1} ··· f_n(\theta)^{u_n}$ where $u = (u_0,... , u_n)$ is a vector of natural numbers.
+    This function computes the maximum likelihood degree of parametric model by taking F as List of Polynomials
     when summation of polynomials is equal to one. In other words,
     we choose a random data u and output is the number of complex critical points
     of the parametric likelihood equations for random data u. @TO2{AlgebraicOptimization,"[3, Alg. 18]"}@
@@ -1725,8 +1734,6 @@ Description
     s=1
     F = {s^3*(-t^3-t^2-t+1),s^2*t,s*t^2,t^3}
     parametricMLDegree (F)
---Caveat
---  todo
 SeeAlso
   parametricMLIdeal
   MLequationsDegree
@@ -2176,9 +2183,9 @@ Description
 SeeAlso
   probabilisticLagrangeMultiplierOptimizationDegree
 ///
--------------------
+---------------------
 --Symbols doc
-------------------
+---------------------
 doc ///
 Key
   CoeffRing
@@ -2249,7 +2256,7 @@ Headline
 --SeeAlso
 ///
 
---------------------
+---------------------
 
 TEST ///
   -- test code and assertions here
@@ -2350,7 +2357,7 @@ end
 
 
 --Example
-restat
+restart
 path={"/Users/jo/Documents/GoodGit/M2020/Workshop-2020-Cleveland/alg-stat/AlgebraicOptimization"}|path
 path={"/home/fatemeh/w/Workshop-2020-Cleveland/alg-stat/AlgebraicOptimization"}|path
 loadPackage("AlgebraicOptimization",Reload=>true)
