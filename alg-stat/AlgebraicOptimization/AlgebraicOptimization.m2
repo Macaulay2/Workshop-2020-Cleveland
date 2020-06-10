@@ -1022,6 +1022,7 @@ Key
   AmbientRing
   AlgebraicOptimization$Coordinates
   Factors
+  (coefficientRing, ConormalRing)
 Headline
   primal ring, dual ring and their product
 Description
@@ -1031,7 +1032,10 @@ Description
     {\tt Factors}: a @TO List@ containing the primal ring and dual ring
     {\tt Coordinates}: a @TO List@ containing lists of coorinates for each factor
     {\tt AmbientRing}: the tensor product of the factors
+
+    All rings should be polynomial rings defined over the same coefficient ring, accessible via @TO (coefficientRing, ConormalRing)@.
 ///
+
 
 doc ///
 Key
@@ -1462,6 +1466,33 @@ Description
 SeeAlso
   probabilisticEDDegree
   probabilisticFritzJohnEDDegree
+///
+
+
+doc ///
+Key
+  "ED degree strategies"
+  [projectionEDDegree,Strategy]
+  [sectionEDDegree,Strategy]
+  Probabilistic
+  Symbolic
+  ProbProjection
+  SymbProjection
+Description
+  Text
+    The methods @TO projectionEDDegree@ and @TO sectionEDDegree@ don't compute the ED degree of $I$ directly.
+    Instead they transform $I$ (e.g. by projecting or taking sections), and then computes the ED degree of the new ideal.
+    The option {\tt Strategy} allows the user to choose which method to use to compute the ED degree of the transformed ideal.
+
+    Let $J$ be the transformed ideal $I$. The option {\tt Strategy} can take the following values
+
+    {\tt Probabilistic}, which corresponds to @TO2 {probabilisticEDDegree,"probabilisticEDDegree J"}@
+
+    {\tt Symbolic}, which corresponds to @TO2 {symbolicEDDegree, "symbolicEDDegree J"}@
+
+    {\tt ProbProjection}, which corresponds to @TO2 {projectionEDDegree, "projectionEDDegree(J, Strategy => Probabilistic)"}@
+
+    {\tt SymbProjection}, which corresponds to @TO2 {projectionEDDegree, "projectionEDDegree(J, Strategy => Symbolic)"}@
 ///
 
 
