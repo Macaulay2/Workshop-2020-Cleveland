@@ -2307,8 +2307,6 @@ Description
 doc ///
 Key
   DualVariable
-Headline
-  optional argument Incomplete +
 --Usage
 --Inputs
 --Outputs
