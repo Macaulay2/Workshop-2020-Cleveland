@@ -382,7 +382,10 @@ R = QQ[x_0,x_1,x_2,x_3]
 M = matrix{{x_0,x_1,x_2},{x_1,x_0,x_3},{x_2,x_3,x_0}}
 I = ideal det M
 assert(sectionEDDegree I == 13)
---
+-- TODO this test fails!
+R = QQ[x_0..x_4]
+I = ideal(random(2,R))
+assert(sectionEDDegree(I, Strategy => Probabilistic) == 8)
 ///
 
 
