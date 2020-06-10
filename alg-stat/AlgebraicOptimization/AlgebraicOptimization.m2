@@ -1625,8 +1625,6 @@ Description
     I = ideal (2*p0*p1*p2 + p1^2*p2 + p1*p2^2 - p0^2*p12 + p1*p2*p12)
     u= {4,2, 11, 15}
     MLequationsIdeal (I,u)
---Caveat
---  todo
 SeeAlso
   MLequationsDegree
   parametricMLIdeal
@@ -1661,8 +1659,6 @@ Description
     R = QQ[p0, p1, p2, p12]
     I = ideal (2*p0*p1*p2 + p1^2*p2 + p1*p2^2 - p0^2*p12 + p1*p2*p12)
     MLequationsDegree (I)
---Caveat
---  todo
 SeeAlso
   MLequationsIdeal
   parametricMLDegree
@@ -1700,8 +1696,6 @@ Description
     u = {2,3,5,7}
     F = {s^3*(-t^3-t^2-t+1),s^2*t,s*t^2,t^3}
     parametricMLIdeal (F,u)
---Caveat
---  todo
 SeeAlso
   parametricMLDegree
   MLequationsIdeal
@@ -1740,8 +1734,6 @@ Description
     s=1
     F = {s^3*(-t^3-t^2-t+1),s^2*t,s*t^2,t^3}
     parametricMLDegree (F)
---Caveat
---  todo
 SeeAlso
   parametricMLIdeal
   MLequationsDegree
@@ -2365,7 +2357,7 @@ end
 
 
 --Example
-restat
+restart
 path={"/Users/jo/Documents/GoodGit/M2020/Workshop-2020-Cleveland/alg-stat/AlgebraicOptimization"}|path
 path={"/home/fatemeh/w/Workshop-2020-Cleveland/alg-stat/AlgebraicOptimization"}|path
 loadPackage("AlgebraicOptimization",Reload=>true)
