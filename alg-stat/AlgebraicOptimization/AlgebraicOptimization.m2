@@ -1029,9 +1029,9 @@ Description
   Text
     A {\tt ConormalRing} is a type of @TO HashTable@, typically with the following keys
 
-    {\tt Factors}: a @TO List@ containing the primal ring and dual ring
-    {\tt Coordinates}: a @TO List@ containing lists of coorinates for each factor
-    {\tt AmbientRing}: the tensor product of the factors
+    {\tt Factors}: a @TO List@ containing the primal ring and dual ring \break
+    {\tt Coordinates}: a @TO List@ containing lists of coorinates for each factor \break
+    {\tt AmbientRing}: the tensor product of the factors \break
 
     All rings should be polynomial rings defined over the same coefficient ring, accessible via @TO (coefficientRing, ConormalRing)@.
 ///
@@ -1685,7 +1685,7 @@ Outputs
     the likelihoood ideal of $I$
 Description
   Text
-    Computes the likelihood ideal by taking an Ideal and List 
+    Computes the maximum likelihood ideal by taking an Ideal and List 
     of numerical data when the ideal is homogeneous and prime. @TO2{AlgebraicOptimization,"[3, Alg. 6][1]"}@
   Example
     R = QQ[p0, p1, p2, p12]
@@ -1704,7 +1704,7 @@ Key
    ( MLequationsDegree, Ideal)
    [ MLequationsDegree, Data]
 Headline
-  compute Maximum likelihood degree for a homogeneous prime ideal
+  Maximum likelihood degree for a homogeneous prime ideal
 Usage
   MLequationsDegree (I)
   MLequationsDegree (I, Data => u)
@@ -1775,7 +1775,7 @@ Key
    (parametricMLDegree,List)
    [parametricMLDegree, Data]
 Headline
-  compute parametric Maximum likelihood degree for a list of polynomials
+  parametric Maximum likelihood degree for a list of polynomials
 Usage
   parametricMLDegree (F)
 Inputs
