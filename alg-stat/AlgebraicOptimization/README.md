@@ -1,7 +1,7 @@
 # Algebraic Optimization
 
 ## Quick start guide
-Open a Macaulay2 instance in this folder. Load the package with
+Download the file `AlgebraicOptimization.m2`, and open a Macaulay2 instance in the same folder. Load the package with
 
 `loadPackage "AlgebraicOptimization"`
 
