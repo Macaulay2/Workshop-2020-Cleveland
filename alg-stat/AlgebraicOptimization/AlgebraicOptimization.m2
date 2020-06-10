@@ -1508,18 +1508,20 @@ Outputs
     the projective ED-degree
 Description
   Text
-    TODO
-    --Let $X$ be a projective variety in $\mathbb{P}^n$ of codimension $\geq 2$, and let $\pi : \mathbb P^n \to \mathbb P^{n-1}$
-    --be a rational map induced by a general linear map $\mathbb C^{n+1} \to \mathbb C^n$.
-    --Under some regularity assumptions (see Caveat), the ED-degree of $\pi(X)$ is equal to the ED-degree
-    --of $X$ [1, Cor. 6.1.].
+    Let $X$ be a projective variety in $\mathbb{P}^n$ of dimension $d$, and let $H_1, \dotsc, H_{d-1}$ be generic hyperplanes.
+    By Bertini's theorem, the intersection of $Y = X \cap H_1 \cap \dots \cap H_{d-1}$ is a curve. 
+    Under some regularity assumptions (see Caveat), there is a relation between the ED-degree $X$ and $Y$ given in @TO2{AlgebraicOptimization,"[2, Cor. 6.4.]"}@.
 
-    --This function repeatedly applies such a map $\pi$ until the image becomes a hyperlane, and then
-    --calls @TO probabilisticEDDegree@ or @TO symbolicEDDegree@, depending on the optional argument @TO [projectionEDDegree,Strategy]@.
-    --This may provide significant computational speedups compared to @TO probabilisticEDDegree@, @TO symbolicEDDegree@ or @TO symbolicMultidegreeEDDegree@,
-    --especially the codimension of $X$ is large.
-  Text
-    References: [1] Draisma, J., Horobeţ, E., Ottaviani, G., Sturmfels, B., & Thomas, R. R. (2016). The Euclidean distance degree of an algebraic variety. {\em Foundations of computational mathematics}, 16(1), 99-149.
+    This function repeatedly computes the @TO2 {projectiveDual, "projective dual"}@ of $X$ and intersects it with hyperplanes until the dimension is 1.
+    The ED degree of the resulting curve is computed using @TO probabilisticEDDegree@, @TO symbolicEDDegree@ or @TO projectionEDDegree@, depending on the optional argument @TO [sectionEDDegree,Strategy]@.
+  Example
+    R = QQ[x_0..x_5]
+    M = matrix{{x_0, x_1, x_2},{x_1,x_3,x_4},{x_2,x_4,x_5}}
+    I = ideal mingens minors(3,M)
+    elapsedTime sectionEDDegree(I, Strategy => ProbProjection)
+
+
+
 Caveat
   The variety $\mathbb V(I)$ must be in general coordinates, i.e. the conormal variety cannot intersect the diagonal $\Delta(\mathbb{P}^{n-1}) \subset \mathbb{P}^{n-1} \times \mathbb{P}^{n-1}$.
   The function @TO checkGeneralCoordinates@ checks a sufficient condition.
