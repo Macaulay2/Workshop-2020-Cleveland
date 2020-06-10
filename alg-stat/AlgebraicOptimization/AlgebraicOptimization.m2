@@ -354,31 +354,25 @@ assert(probabilisticEDDegree (J+z) == 13)
 ///
 
 
--------------------
--- randomSection --
--------------------
-randomSection = method();
-randomSection Ideal := Ideal => I -> (
-  R := ring I;
-  I + ideal random(1,R)
-)
-
 ---------------------
 -- sectionEDDegree --
 ---------------------
 sectionEDDegree = method(Options => {Strategy => Probabilistic});
 sectionEDDegree Ideal := ZZ => opts -> I -> (
-  Idual := projectiveDual I;
-  sections := {I} | accumulate((J, j) -> randomSection J, I, toList(1..(dim I - 1)));
-  intermediateSections := drop(sections, -1);
-  degs := intermediateSections / (I -> (Istar := projectiveDual(I); if codim Istar == 1 then degree Istar else 0));
-  edDegreeStrategies(last sections, opts.Strategy) + sum degs
+  R := ring I;
+  n := numgens R;
+  I' := projectiveDual I;
+  d := dim I;
+  Icurve := I + ideal apply(d-2, i -> random(1,R));
+  T' := ring I' / I';
+  L := symbol L;
+  lastDual := kernel map(T', (coefficientRing R)[L_0..L_(n - d + 2)], vars T' * random(T'^(n), T'^(n-d+3)));
+  probabilisticEDDegree(Icurve) + if codim lastDual == 1 then degree lastDual else 0
 )
 TEST ///
 R = QQ[x_0..x_6]
 I = ideal(apply(2, i-> random(1,R)))
 assert(sectionEDDegree I == 1)
--- TODO this test may be too slow
 R = QQ[x_0,x_1,x_2,x_3]
 M = matrix{{x_0,x_1,x_2},{x_1,x_0,x_3},{x_2,x_3,x_0}}
 I = ideal det M
