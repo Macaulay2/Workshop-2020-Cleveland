@@ -1511,18 +1511,33 @@ Outputs
     the projective ED-degree
 Description
   Text
-    Let $X$ be a projective variety in $\mathbb{P}^n$ of dimension $d$, and let $H_1, \dotsc, H_{d-1}$ be generic hyperplanes.
+    Let $X$ be a projective variety in $\mathbb{P}^n$ of dimension $d$, and let $H_1, \dots, H_{d-1}$ be generic hyperplanes.
     By Bertini's theorem, the intersection of $Y = X \cap H_1 \cap \dots \cap H_{d-1}$ is a curve. 
     Under some regularity assumptions (see Caveat), there is a relation between the ED-degree $X$ and $Y$ given in @TO2{AlgebraicOptimization,"[2, Cor. 6.4.]"}@.
 
     This function repeatedly computes the @TO2 {projectiveDual, "projective dual"}@ of $X$ and intersects it with hyperplanes until the dimension is 1.
     The ED degree of the resulting curve is computed using @TO probabilisticEDDegree@, @TO symbolicEDDegree@ or @TO projectionEDDegree@, depending on the optional argument @TO [sectionEDDegree,Strategy]@.
-  Example
-    R = QQ[x_0..x_5]
-    M = matrix{{x_0, x_1, x_2},{x_1,x_3,x_4},{x_2,x_4,x_5}}
-    I = ideal mingens minors(3,M)
-    elapsedTime sectionEDDegree(I, Strategy => ProbProjection)
+  CannedExample
+    i1 :     R = QQ[x_0..x_5];
 
+    i2 :     M = matrix{{x_0, x_1, x_2},{x_1,x_3,x_4},{x_2,x_4,x_5}};
+
+                  3       3
+    o2 : Matrix R  <--- R
+
+    i3 :     I = minors(3,M);
+
+    o3 : Ideal of R
+
+    i4 :     elapsedTime sectionEDDegree(I, Strategy => ProbProjection)
+          0.0850545 seconds elapsed
+
+    o4 = 13
+
+    i5 :     elapsedTime probabilisticEDDegree I
+          1.23155 seconds elapsed
+
+    o5 = 13
 
 
 Caveat
