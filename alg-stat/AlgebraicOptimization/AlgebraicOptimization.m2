@@ -1152,8 +1152,8 @@ Key
   (conormalIdeal, Ideal, ConormalRing)
   (conormalIdeal, Ideal)
   [conormalIdeal, DualVariable]
---Headline
---  todo
+Headline
+  ideal corresponding to the conormal variety
 Inputs
   I:
     a homogeneous @TO2{Ideal, "ideal"}@ defined in the primal variables only
@@ -2307,6 +2307,8 @@ Description
 doc ///
 Key
   DualVariable
+Headline
+  specifies a symbol to use as dual space variables
 --Usage
 --Inputs
 --Outputs
