@@ -69,7 +69,7 @@ export {
   "Coordinates", "Factors",
   --"Numerators","Denominators",
   -- Strategies
-  "Probabilistic", "Symbolic"
+  "Probabilistic", "Symbolic", "ProbProjection", "SymbProjection"
 }
 
 
@@ -294,6 +294,8 @@ assert(symbolicEDDegree(I, Projective => false) == 2)
 edDegreeStrategies = (I,strat) -> (
   if strat == Probabilistic then probabilisticEDDegree I
   else if strat == Symbolic then symbolicEDDegree I
+  else if strat == ProbProjection then projectionEDDegree I
+  else if strat == SymbProjection then projectionEDDegree(I, Strategy => Symbolic)
   else error "invalid Strategy"
 )
 
@@ -354,36 +356,40 @@ assert(probabilisticEDDegree (J+z) == 13)
 ///
 
 
--------------------
--- randomSection --
--------------------
-randomSection = method();
-randomSection Ideal := Ideal => I -> (
-  R := ring I;
-  I + ideal random(1,R)
-)
-
 ---------------------
 -- sectionEDDegree --
 ---------------------
 sectionEDDegree = method(Options => {Strategy => Probabilistic});
 sectionEDDegree Ideal := ZZ => opts -> I -> (
-  Idual := projectiveDual I;
-  sections := {I} | accumulate((J, j) -> randomSection J, I, toList(1..(dim I - 1)));
-  intermediateSections := drop(sections, -1);
-  degs := intermediateSections / (I -> (Istar := projectiveDual(I); if codim Istar == 1 then degree Istar else 0));
-  edDegreeStrategies(last sections, opts.Strategy) + sum degs
+  R := ring I;
+  S := conormalRing R;
+  n := numgens R;
+  I' := projectiveDual(I,S);
+  d := dim I;
+
+  c := codim I';
+  linSpace := ideal apply(c, i -> random(1,R));
+  projCenter := projectiveDual(sub(ideal drop(linSpace_*, 1),R) ,S);  
+  
+  Isection := I + linSpace;
+  
+  T' := ring I' / I';
+  L := symbol L;
+  lastDual := kernel map(T', (coefficientRing R)[L_0..L_(#projCenter_* - 1)], projCenter_*);
+  edDegreeStrategies(Isection, opts.Strategy) + if codim lastDual == 1 then degree lastDual else 0
 )
 TEST ///
 R = QQ[x_0..x_6]
 I = ideal(apply(2, i-> random(1,R)))
 assert(sectionEDDegree I == 1)
--- TODO this test may be too slow
 R = QQ[x_0,x_1,x_2,x_3]
 M = matrix{{x_0,x_1,x_2},{x_1,x_0,x_3},{x_2,x_3,x_0}}
 I = ideal det M
 assert(sectionEDDegree I == 13)
---
+-- TODO this test fails!
+R = QQ[x_0..x_4]
+I = ideal(random(2,R))
+assert(sectionEDDegree(I, Strategy => Probabilistic) == 8)
 ///
 
 
@@ -1514,18 +1520,36 @@ Outputs
     the projective ED-degree
 Description
   Text
-    TODO
-    --Let $X$ be a projective variety in $\mathbb{P}^n$ of codimension $\geq 2$, and let $\pi : \mathbb P^n \to \mathbb P^{n-1}$
-    --be a rational map induced by a general linear map $\mathbb C^{n+1} \to \mathbb C^n$.
-    --Under some regularity assumptions (see Caveat), the ED-degree of $\pi(X)$ is equal to the ED-degree
-    --of $X$ [1, Cor. 6.1.].
+    Let $X$ be a projective variety in $\mathbb{P}^n$ of dimension $d$, and let $H_1, \dots, H_{d-1}$ be generic hyperplanes.
+    By Bertini's theorem, the intersection of $Y = X \cap H_1 \cap \dots \cap H_{d-1}$ is a curve. 
+    Under some regularity assumptions (see Caveat), there is a relation between the ED-degree $X$ and $Y$ given in @TO2{AlgebraicOptimization,"[2, Cor. 6.4.]"}@.
 
-    --This function repeatedly applies such a map $\pi$ until the image becomes a hyperlane, and then
-    --calls @TO probabilisticEDDegree@ or @TO symbolicEDDegree@, depending on the optional argument @TO [projectionEDDegree,Strategy]@.
-    --This may provide significant computational speedups compared to @TO probabilisticEDDegree@, @TO symbolicEDDegree@ or @TO symbolicMultidegreeEDDegree@,
-    --especially the codimension of $X$ is large.
-  Text
-    References: [1] Draisma, J., Horobeţ, E., Ottaviani, G., Sturmfels, B., & Thomas, R. R. (2016). The Euclidean distance degree of an algebraic variety. {\em Foundations of computational mathematics}, 16(1), 99-149.
+    This function computes the @TO2 {projectiveDual, "projective dual"}@ of $X$ and projects the dual such that the codimension is 1.
+    This corresponds to sections of the primal variety.
+    The ED degree of the resulting section is computed using @TO probabilisticEDDegree@, @TO symbolicEDDegree@ or @TO projectionEDDegree@, depending on the optional argument @TO [sectionEDDegree,Strategy]@.
+  CannedExample
+    i1 :     R = QQ[x_0..x_5];
+
+    i2 :     M = matrix{{x_0, x_1, x_2},{x_1,x_3,x_4},{x_2,x_4,x_5}};
+
+                  3       3
+    o2 : Matrix R  <--- R
+
+    i3 :     I = minors(3,M);
+
+    o3 : Ideal of R
+
+    i4 :     elapsedTime sectionEDDegree(I, Strategy => ProbProjection)
+          0.0850545 seconds elapsed
+
+    o4 = 13
+
+    i5 :     elapsedTime probabilisticEDDegree I
+          1.23155 seconds elapsed
+
+    o5 = 13
+
+
 Caveat
   The variety $\mathbb V(I)$ must be in general coordinates, i.e. the conormal variety cannot intersect the diagonal $\Delta(\mathbb{P}^{n-1}) \subset \mathbb{P}^{n-1} \times \mathbb{P}^{n-1}$.
   The function @TO checkGeneralCoordinates@ checks a sufficient condition.
