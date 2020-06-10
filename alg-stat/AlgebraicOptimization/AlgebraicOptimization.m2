@@ -1019,6 +1019,18 @@ Description
 doc ///
 Key
   ConormalRing
+  AmbientRing
+  AlgebraicOptimization$Coordinates
+  Factors
+Headline
+  primal ring, dual ring and their product
+Description
+  Text
+    A {\tt ConormalRing} is a type of @TO HashTable@, typically with the following keys
+
+    {\tt Factors}: a @TO List@ containing the primal ring and dual ring
+    {\tt Coordinates}: a @TO List@ containing lists of coorinates for each factor
+    {\tt AmbientRing}: the tensor product of the factors
 ///
 
 doc ///
