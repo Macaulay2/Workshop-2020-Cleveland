@@ -1001,9 +1001,9 @@ Description
     [4] Carlos  Am ́endola,  Nathan  Bliss,  Isaac  Burke,  Courtney  R.  Gibbons,
     Martin  Helmer,  Serkan  Ho ̧sten,  Evan  D.  Nash,Jose  Israel  Rodriguez,
     and  Daniel  Smolkin.  The  maximum  likelihood  degree  of  toric  varieties.
-    Journal  of  SymbolicComputation, 92:222–242, May 2019. \break
+    Journal  of  SymbolicComputation, 5 (2009), 92:222–242. \break
     [5] Martin Helmer and Bernd Sturmfels. 
-    Nearest points on toric varieties. MATHEMATICA SCANDINAVICA, 122(2):213,Apr 2018.
+    Nearest points on toric varieties. MATHEMATICA SCANDINAVICA, 4 (2018), 122(2):213.
 --Example
 --  todo
 --Caveat
