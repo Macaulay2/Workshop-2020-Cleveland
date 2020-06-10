@@ -69,7 +69,7 @@ export {
   "Coordinates", "Factors",
   --"Numerators","Denominators",
   -- Strategies
-  "Probabilistic", "Symbolic"
+  "Probabilistic", "Symbolic", "ProbProjection", "SymbProjection"
 }
 
 
@@ -294,6 +294,8 @@ assert(symbolicEDDegree(I, Projective => false) == 2)
 edDegreeStrategies = (I,strat) -> (
   if strat == Probabilistic then probabilisticEDDegree I
   else if strat == Symbolic then symbolicEDDegree I
+  else if strat == ProbProjection then projectionEDDegree I
+  else if strat == SymbProjection then projectionEDDegree(I, Strategy => Symbolic)
   else error "invalid Strategy"
 )
 
@@ -360,14 +362,17 @@ assert(probabilisticEDDegree (J+z) == 13)
 sectionEDDegree = method(Options => {Strategy => Probabilistic});
 sectionEDDegree Ideal := ZZ => opts -> I -> (
   R := ring I;
+  S := conormalRing R;
   n := numgens R;
-  I' := projectiveDual I;
+  I' := projectiveDual(I,S);
   d := dim I;
-  Icurve := I + ideal apply(d-2, i -> random(1,R));
+  linSpace := ideal apply(d-2, i -> random(1,R));
+  Icurve := I + linSpace;
+  projCenter := projectiveDual(sub(ideal drop(linSpace_*, 1),R) ,S);
   T' := ring I' / I';
   L := symbol L;
-  lastDual := kernel map(T', (coefficientRing R)[L_0..L_(n - d + 2)], vars T' * random(T'^(n), T'^(n-d+3)));
-  probabilisticEDDegree(Icurve) + if codim lastDual == 1 then degree lastDual else 0
+  lastDual := kernel map(T', (coefficientRing R)[L_0..L_(n - d + 2)], projCenter_*);
+  edDegreeStrategies(Icurve, opts.Strategy) + if codim lastDual == 1 then degree lastDual else 0
 )
 TEST ///
 R = QQ[x_0..x_6]
