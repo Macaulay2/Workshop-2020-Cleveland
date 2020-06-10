@@ -2030,6 +2030,24 @@ assert(not isInvariant(1 + x_1, S3))
 
 -- finiteAbelianAction tests
 
+-- The first two tests are of trivial actions, and seem to run into problems. The analogous torusAction test seems to be fine though
+
+TEST ///
+R0 = QQ[x_1]
+T0 = finiteAbelianAction({3},matrix{{0}},R0)
+invariants0 = set {x_1}
+assert(set invariants T0 === invariants0)
+assert(isInvariant(x_1 + x_1^2, T0))
+///
+
+TEST ///
+R0 = QQ[x_1]
+T0 = finiteAbelianAction({1},matrix{{3}},R0)
+invariants0 = set {x_1}
+assert(set invariants T0 === invariants0)
+assert(isInvariant(x_1 + x_1^2, T0))
+///
+
 TEST ///
 R0 = QQ[x_1]
 T0 = finiteAbelianAction({2},matrix{{1}},R0)
@@ -2048,11 +2066,19 @@ assert(set invariants T1 === invariants1)
 -- torusAction tests
 
 TEST ///
+R = QQ[x_1]
+T = torusAction(matrix{{0}}, R)
+invariants0 = set {x_1}
+assert(weights T === matrix{{0}})
+assert(set invariants T === invariants0)
+///
+
+TEST ///
 R0 = QQ[x_1..x_2]
 T0 = torusAction(matrix{{1,1}}, R0)
 invariants0 = set {}
 assert(weights T0 === matrix{{1,1}})
-assert(set invariants T0 === invariants0) --This one has an error
+assert(set invariants T0 === invariants0)
 ///
 
 TEST ///
@@ -2142,22 +2168,6 @@ M = schur({q}, SL2std)
 time hilbertIdeal Vn
 invariants(Vn)
 isInvariant(x_0,Vn)
-
-    -- now make the enlarged polynomial ring we'll work in, and convert inputs to that ring
-    x := local x, y := local y, z := local z;
-    S = K[z_1..z_l, x_1..x_n, y_1..y_n, MonomialOrder=>{l,n,n}];
-    M' = sub(M, apply(l, i -> (ring M)_i => z_(i+1)));
-    A' = sub(A, apply(l, i -> (ring M)_i => z_(i+1)));
-    
-    -- the actual algorithm follows
-    J' = apply(n, i -> y_(i+1) - sum(n, j -> M'_(j,i) * x_(j+1)));
-    J = A' + ideal(J');
-    I = eliminate(apply(l, i -> z_(i+1)),J);
-    II := sub(I, apply(n, i -> y_(i+1) => 0));
-    
-    -- return the result back in the user's input ring R
-    trim(sub(II, join(apply(n, i -> x_(i+1) => R_i),apply(n, i -> y_(i+1) => 0), apply(l, i -> z_(i+1) => 0))))
-    ))
 
 needsPackage "InvariantsDev"
 R1 = QQ[a_1..a_3]
