@@ -1021,7 +1021,7 @@ Key
   (projectiveDual, Ideal)
   [projectiveDual, DualVariable]
 Headline
-  Compute projective dual
+  compute projective dual
 Usage
   projectiveDual(I)
 Inputs
@@ -1060,7 +1060,7 @@ doc ///
 Key
   (projectiveDual, Ideal, ConormalRing)
 Headline
-  Compute projective dual
+  compute projective dual
 Usage
   projectiveDual(I, C)
 Inputs
@@ -1100,7 +1100,7 @@ Key
   (conormalRing,Ideal)
   [conormalRing, DualVariable]
 Headline
-  Creates a ring with primal and dual variables
+  creates a ring with primal and dual variables
 Usage
   conormalRing R
   conormalRing I
@@ -1888,6 +1888,8 @@ doc ///
 Key
    toricEDDegree
    (toricEDDegree,Matrix)
+Headline
+  compute toric ED-degree
 Usage
   toricEDDegree(A)
 Inputs
@@ -2133,7 +2135,7 @@ Key
   (probabilisticLagrangeMultiplierEDDegree, Ideal,Ideal)
   [probabilisticLagrangeMultiplierEDDegree, Data]
 Headline
-  Compute EDDegree symbolically using Lagrange multipliers
+  compute EDDegree symbolically using Lagrange multipliers
 Usage
   probabilisticLagrangeMultiplierEDDegree (WI,I)
   probabilisticLagrangeMultiplierEDDegree(WI,I, Data => L)
