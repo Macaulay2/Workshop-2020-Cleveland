@@ -1,61 +1,20 @@
-## Algebraic Optimization
---The following file sketches the structure of the package. 
+# Algebraic Optimization
 
-######	maximum likelihood estimation
-######	Euclidean distance degrees
+## Quick start guide
+Download the file `AlgebraicOptimization.m2`, and open a Macaulay2 instance in the same folder. Load the package with
 
-######	Numerical KKT conditions
-######	Symbolic methods
+`loadPackage "AlgebraicOptimization"`
 
- -----------
+To build the documentation, run
 
-1. Using Lagrange multipliers, and the observation that...
-2. Example 1.1 
-3. ED Critical Ideal (equation 2.1)
-4. Lemma 2.1. ED degree is well defined
-5. Example 2.5
-6. Example 2.7 
- 
- -----------
+`installPackage AlgebraicOptimization`
 
-1. Document Marc's function
-2. Work through Example 5.24 
-3. Use Theorem 5.23 to determine the degree of of an algebraic optimization problem
+The documentation can be accessed by using
+
+`viewHelp AlgebraicOptimization`
 
 
-#### Notes from panel discussion
-International journal of algebra and computation.
+### pre-install necessary packages
+To use this package, you need the following packages before install package. 
 
-#### Notes from Aida/Ben presentation
-Chapter 9.1.3 
-List of people there interested 
-Goals
-Illustrative example and references
-
-#### Git discussion
-- Clone or download [https://github.com/Macaulay2/Workshop-2020-Cleveland](https://github.com/Macaulay2/Workshop-2020-Cleveland)
-- Change branch
-- Start a new branch
-
-
-#### Notes from Mike Dan
-```
-R=QQ[x_1 .. x_19]
-baseName x_4
-peek baseName x_4
-(peek baseName x_4)#1
-GF(4)--what is this.
-smithNormalForm
-LLL 
-benchMark 
-random(ZZ^4, ZZ^10, Height=>100)
-benchMark ("M=matrix  entries M; image M== target M")
-```
-
-
-
-
-
-
-
-
+Elimination, NumericalAlgebraicGeometry, Bertini, PrimaryDecomposition, ToricInvariants
