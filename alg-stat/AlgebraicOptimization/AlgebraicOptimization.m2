@@ -366,13 +366,17 @@ sectionEDDegree Ideal := ZZ => opts -> I -> (
   n := numgens R;
   I' := projectiveDual(I,S);
   d := dim I;
-  linSpace := ideal apply(d-2, i -> random(1,R));
-  Icurve := I + linSpace;
-  projCenter := projectiveDual(sub(ideal drop(linSpace_*, 1),R) ,S);
+
+  c := codim I';
+  linSpace := ideal apply(c, i -> random(1,R));
+  projCenter := projectiveDual(sub(ideal drop(linSpace_*, 1),R) ,S);  
+  
+  Isection := I + linSpace;
+  
   T' := ring I' / I';
   L := symbol L;
-  lastDual := kernel map(T', (coefficientRing R)[L_0..L_(n - d + 2)], projCenter_*);
-  edDegreeStrategies(Icurve, opts.Strategy) + if codim lastDual == 1 then degree lastDual else 0
+  lastDual := kernel map(T', (coefficientRing R)[L_0..L_(#projCenter_* - 1)], projCenter_*);
+  edDegreeStrategies(Isection, opts.Strategy) + if codim lastDual == 1 then degree lastDual else 0
 )
 TEST ///
 R = QQ[x_0..x_6]
@@ -1515,8 +1519,9 @@ Description
     By Bertini's theorem, the intersection of $Y = X \cap H_1 \cap \dots \cap H_{d-1}$ is a curve. 
     Under some regularity assumptions (see Caveat), there is a relation between the ED-degree $X$ and $Y$ given in @TO2{AlgebraicOptimization,"[2, Cor. 6.4.]"}@.
 
-    This function repeatedly computes the @TO2 {projectiveDual, "projective dual"}@ of $X$ and intersects it with hyperplanes until the dimension is 1.
-    The ED degree of the resulting curve is computed using @TO probabilisticEDDegree@, @TO symbolicEDDegree@ or @TO projectionEDDegree@, depending on the optional argument @TO [sectionEDDegree,Strategy]@.
+    This function computes the @TO2 {projectiveDual, "projective dual"}@ of $X$ and projects the dual such that the codimension is 1.
+    This corresponds to sections of the primal variety.
+    The ED degree of the resulting section is computed using @TO probabilisticEDDegree@, @TO symbolicEDDegree@ or @TO projectionEDDegree@, depending on the optional argument @TO [sectionEDDegree,Strategy]@.
   CannedExample
     i1 :     R = QQ[x_0..x_5];
 
