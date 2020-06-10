@@ -1001,9 +1001,9 @@ Description
     [4] Carlos  Am ́endola,  Nathan  Bliss,  Isaac  Burke,  Courtney  R.  Gibbons,
     Martin  Helmer,  Serkan  Ho ̧sten,  Evan  D.  Nash,Jose  Israel  Rodriguez,
     and  Daniel  Smolkin.  The  maximum  likelihood  degree  of  toric  varieties.
-    Journal  of  SymbolicComputation, 92:222–242, May 2019. \break
+    Journal  of  SymbolicComputation, 5 (2009), 92:222–242. \break
     [5] Martin Helmer and Bernd Sturmfels. 
-    Nearest points on toric varieties. MATHEMATICA SCANDINAVICA, 122(2):213,Apr 2018.
+    Nearest points on toric varieties. MATHEMATICA SCANDINAVICA, 4 (2018), 122(2):213.
 --Example
 --  todo
 --Caveat
@@ -1021,7 +1021,7 @@ Key
   (projectiveDual, Ideal)
   [projectiveDual, DualVariable]
 Headline
-  Compute projective dual
+  compute projective dual
 Usage
   projectiveDual(I)
 Inputs
@@ -1060,7 +1060,7 @@ doc ///
 Key
   (projectiveDual, Ideal, ConormalRing)
 Headline
-  Compute projective dual
+  compute projective dual
 Usage
   projectiveDual(I, C)
 Inputs
@@ -1100,7 +1100,7 @@ Key
   (conormalRing,Ideal)
   [conormalRing, DualVariable]
 Headline
-  Creates a ring with primal and dual variables
+  creates a ring with primal and dual variables
 Usage
   conormalRing R
   conormalRing I
@@ -1888,6 +1888,8 @@ doc ///
 Key
    toricEDDegree
    (toricEDDegree,Matrix)
+Headline
+  compute toric ED-degree
 Usage
   toricEDDegree(A)
 Inputs
@@ -2133,7 +2135,7 @@ Key
   (probabilisticLagrangeMultiplierEDDegree, Ideal,Ideal)
   [probabilisticLagrangeMultiplierEDDegree, Data]
 Headline
-  Compute EDDegree symbolically using Lagrange multipliers
+  compute EDDegree symbolically using Lagrange multipliers
 Usage
   probabilisticLagrangeMultiplierEDDegree (WI,I)
   probabilisticLagrangeMultiplierEDDegree(WI,I, Data => L)
