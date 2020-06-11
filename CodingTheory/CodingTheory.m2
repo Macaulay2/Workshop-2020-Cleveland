@@ -9,7 +9,7 @@ newPackage(
 	     {Name => "Delio Jaramillo-Velez", Email => "djaramillo@math.cinvestav.mx"},
 	     {Name => "Hiram Lopez", Email => "h.lopezvaldez@csuohio.edu"},
 	     {Name => "Nathan Nichols", Email => "nathannichols454@gmail.com"},	     
-	     {Name => "German Vera", Email => "gveram1100@gmail.com"},
+	     {Name => "German Vera", Email => "gveram1100@alumno.ipn.mx"},
 	     {Name => "Gwyn Whieldon", Email => "gwyn.whieldon@gmail.com"}
 	     },
     	HomePage => "https://academic.csuohio.edu/h_lopez/",
