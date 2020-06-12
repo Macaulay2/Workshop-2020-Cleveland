@@ -129,7 +129,7 @@ invariants TorusAction := List => T -> (
     -- of the (scaled) weight vectors, initialized with the list of each weight vector
     -- being the corresponding variable in the ring.
     S := new MutableHashTable from apply(C, w -> w => {});
-    scan(n, i -> S#(W_i) = {R_i});
+    scan(n, i -> S#(W_i) = S#(W_i)|{R_i});
     U := new MutableHashTable from S;
     
     local v, local m, local v', local u;
@@ -194,7 +194,7 @@ invariants FiniteAbelianAction := List => G -> (
         );
     );
     S := new MutableHashTable from apply(C, w -> w => {});
-    scan(n, i -> S#(W_i) = {R_i});
+    scan(n, i -> S#(W_i) = S#(W_i)|{R_i});
     U := flatten entries vars R;
     local v, local m, local u, local v';
     while  #U > 0 do(
