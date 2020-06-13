@@ -703,13 +703,6 @@ evaluationCode(Ring,List,Matrix) := EvaluationCode => opts -> (F,P,M) -> (
 net EvaluationCode := c -> (
     c.LinearCode
     )
-    
---input: A linear code C
---output: The vector space dimension of the subspace given by the
---span of the generators of C
-dim LinearCode := Number => C -> (
-    return rank (C.Code);
-    )
 
 dualCode = method()
 dualCode(LinearCode) := LinearCode => C -> (
@@ -1269,9 +1262,6 @@ vectorSpace LinearCode := Module => C -> (
 
 
 
-
-
-
 --input: A linear code C
 --output: The ambient vector space the code is a subspace of
 ambientSpace = method(TypicalValue => Module)
@@ -1286,13 +1276,14 @@ length LinearCode := ZZ  => C -> (
     return rank(C.AmbientModule)
     )
 
+
 --input: A linear code C
 --output: The vector space dimension of the subspace given by the
 --span of the generators of C
-dim LinearCode := ZZ => C -> (
-    --return length C.Generators; (generating set may not be minimal)
-    return rank generators C.Code
+dim LinearCode := Number => C -> (
+    return rank (C.Code);
     )
+
 
 --input: A linear code C
 --output: The ratio (dim C)/(length C)
@@ -1303,7 +1294,7 @@ informationRate LinearCode := QQ => C -> (
 --input: A linear code C
 --output: the number of codewords in C
 size LinearCode := ZZ => C -> (
-    return (dim C)^(C.BaseField.order)
+    return (C.BaseField.order)^(dim C)
     )
 
 alphabet = method(TypicalValue => List)
@@ -1353,9 +1344,6 @@ codewords(LinearCode) := List => C -> (
     -- map m -> mG to compute codewords:
     return flatten apply(M, m -> entries (m*G))
     )
-
-
-
 
 shorten = method(TypicalValue => LinearCode)
 -- input: An [n,k] linear code C and a set S of distinct integers { i1, ..., ir} such that 1 <= ik <= n.
@@ -2090,13 +2078,13 @@ assert( length C2 == 15)
 ///
 
 TEST ///
--- Ciclic codes
+-- Cyclic codes
 C=cyclicCode(GF(7),1,5)
 assert( length C == 5)
 ///
 
 TEST ///
--- Ciclic codes
+-- Cyclic codes
 GF(7)[x]
 C=cyclicCode(GF(7),(x+3)*(x-1)*(x^3-2),9)
 assert( length C == 9)
@@ -2150,11 +2138,81 @@ C=linearCode(random(F^3,F^5))
 assert(field C===F)
 ///
 
+
 TEST ///
 -- genericCode
 F=GF(4)
 C=linearCode(random(F^3,F^5))
 assert(genericCode(C)==linearCode(F^5))
+///
+
+TEST ///
+-- dimension of a linear code
+F = GF(4);
+C= linearCode(F,{{1,1,0,0},{0,0,1,1}});
+assert(dim C == 2)
+///
+
+TEST ///
+-- informationRate
+R = GF(5); 
+L = {{1,1,1,1},{2,2,2,2}};
+C = linearCode(R,L);
+assert(informationRate(C) == 1/4)
+C = HammingCode(2,3);
+assert(informationRate(C) == 4/7)
+///
+
+
+TEST ///
+-- size of a code
+F = GF(2); L = {{1,1,1,1}};
+C = linearCode(F,L);
+assert (size(C) == 2)
+F = GF(8); L = {{1,1,1,1,1}}
+C = linearCode(F,L);
+assert(size(C) == 8);
+F = GF(4); L = {{1,1,1,1,1}};
+C = linearCode(F,L,ParityCheck => true);
+assert(size(C) == 4^4)
+///
+
+TEST ///
+-- length of a code
+F = GF(2); L = {{1,1,1,1}};
+C = linearCode(F,L);
+assert (length(C) == 4)
+F = GF(8); L = {{1,1,1,1,1}}
+C = linearCode(F,L);
+assert(length(C) == 5);
+C = HammingCode(2,3);
+assert(length(C) == 7)
+///
+
+
+TEST ///
+-- vectorSpace
+F = GF(8);
+L = apply({{1,1,1,1,1}},codeword->apply(codeword,entry->sub(entry,F)));
+C = linearCode(F,L);
+M = matrix(L);
+D = image transpose M;
+assert(vectorSpace(C) == D)
+///
+
+
+TEST ///
+-- messages
+F = GF(4,Variable => a); L = {{1,1,1,1,1}};
+C = linearCode(F,L);
+m = set apply({{0},{1},{a},{a+1}}, me -> apply(me,entry -> sub(entry,F)));
+mm = set messages(C);
+assert(mm == m)
+H = HammingCode(2,3);
+m = {{0,0,0,0},{0,0,0,1},{0,0,1,0},{0,0,1,1},{0,1,0,0},{0,1,0,1},{0,1,1,0},{0,1,1,1},{1,0,0,0},{1,0,0,1},{1,0,1,0},{1,0,1,1},{1,1,0,0},{1,1,0,1},{1,1,1,0},{1,1,1,1}};
+Lmessage = set apply(m,plain -> apply(plain,entry->sub(entry,H.BaseField)));
+hmessage = set messages(H);
+assert(hmessage == Lmessage)
 ///
 
 TEST ///
@@ -2355,7 +2413,7 @@ doc ///
 	    the same finite field. A code word is an element of the image. A linear code in Macaulay2 is implemented as a hash table.
 	    The keys of the hash table correspond to common representations of the code, as well as information about its structure. 
 	    The keys include the base field of the modules, a set of generators for the code, and more. To construct a linear code, 
-	    see @TO rawLinearCode@ and @TO linearCode@.
+	    see @TO linearCode@.
 	Example
 	    F1=GF(2)
 	    G1={{1,1,0,0,0,0},{0,0,1,1,0,0},{0,0,0,0,1,1}}
@@ -2391,7 +2449,7 @@ doc ///
 -----------------------------------------------
 
 document{
-    Key => {linearCode, (linearCode,Module,List), (linearCode,GaloisField,ZZ,List), (linearCode,GaloisField,List), (linearCode,ZZ,ZZ,ZZ,List), (linearCode,Module), (linearCode,Matrix)},
+    Key => {linearCode, [linearCode,ParityCheck],(linearCode,Module,List), (linearCode,GaloisField,ZZ,List), (linearCode,GaloisField,List), (linearCode,ZZ,ZZ,ZZ,List), (linearCode,Module), (linearCode,Matrix)},
     Headline => "Functions to construct linear codes over Galois fields.",
     SYNOPSIS (
        Usage => "linearCode(M,L)",
@@ -2536,6 +2594,106 @@ document{
 	    "C.ParityCheckMatrix"
 	    }
 	)
+    }
+
+document {
+    Key => ParityCheck,
+    Headline => "Optional input for the linearCode constructor.",
+    Usage => "linearCode(..., ParityCheck => ...)",
+    "ParityCheck is a Boolean symbol: false, true. Defalt value is false.",
+    EXAMPLE {
+	    "R = GF(4,Variable => a);",
+	    "L = {{1,0,a,0,0},{0,a,a+1,1,0},{1,1,1,a,0}};",
+	    "M = matrix L;",
+	    "C = linearCode(R,L,ParityCheck => true)",
+	    "C.GeneratorMatrix",
+	    "C.ParityCheckMatrix"
+	    }
+    }
+
+document {
+    Key => AmbientModule,
+    Headline => "The ambient module of a linear Code",
+    "Given a linear code C of length n over a Galois Field F, this internal key returns the free module F^n, which is refered to as the Ambient Module of C.",
+    EXAMPLE {
+	"C = linearCode(GF(4,Variable => a), {{1,0,a,0,0},{0,a,a+1,1,0},{1,1,1,a,0}})",
+	"C.AmbientModule"
+	},
+    PARA{"This symbol is provided by the package ", TO CodingTheory, "."},
+    SeeAlso => {"ambientSpace"},
+    }
+
+document {
+    Key => BaseField,
+    Headline => "The Galois Field of a code",
+    "Given a linear code C of length n over a Galois Field F, this internal key it returns the Galois Field F",
+    EXAMPLE {
+	"C = linearCode(GF(8,Variable => b), {{1,0,b,0,0},{0,b,b+1,1,0},{1,1,1,b,0}})",
+	"C.BaseField"
+	},
+    PARA{"This symbol is provided by the package ", TO CodingTheory, "."},
+    SeeAlso => {"ring","alphabet"},
+    }
+
+document {
+    Key => Generators,
+    Headline => "Generators of a linear code",
+    "Given a linear code C with generator matrix G, this internal key returns the rows of G as a list.",
+    EXAMPLE {
+	"C = linearCode(GF(8,Variable => a), {{1,1,a,0,0},{0,a,a,1,0},{1,1,1,a,0}})",
+	"C.Generators",
+	"C.GeneratorMatrix"
+	},
+    PARA{"This symbol is provided by the package ", TO CodingTheory, "."},
+    SeeAlso => {"reduceMatrix","GeneratorMatrix"},
+    }
+
+document {
+    Key => GeneratorMatrix,
+    Headline => "Generator Matrix of a linear code",
+    "Given a linear code C, this internal key  gives a generator matrix of C.",
+    EXAMPLE {
+	"C = linearCode(GF(8,Variable => b), {{1,1,b,0,0},{0,b,b,1,0},{1,1,1,b,0}})",
+	"C.GeneratorMatrix"
+	},
+    PARA{"This symbol is provided by the package ", TO CodingTheory, "."},
+    SeeAlso => {"reduceMatrix","Generators"},
+    }
+
+document {
+    Key => ParityCheckRows,
+    Headline => "Rows of a parity check matrix of a linear code",
+    "Given a linear code C, this internal key  gives a list of the rows of a parity check matrix of C.",
+    EXAMPLE {
+	"C = linearCode(GF(8,Variable => b), {{1,1,b,0,0},{0,b,b,1,0},{1,1,1,b,0}})",
+	"C.ParityCheckRows",
+	"C.ParityCheckMatrix"
+	},
+    PARA{"This symbol is provided by the package ", TO CodingTheory, "."},
+    SeeAlso => {"ParityCheckMatrix","Generators","reduceMatrix","generatorToParityCheck","parityCheckToGenerator"},
+    }
+
+document {
+    Key => ParityCheckMatrix,
+    Headline => "A parity check matrix of a linear code",
+    "Given a linear code C, the symbol gives a parity check matrix of C.",
+    EXAMPLE {
+	"C = linearCode(GF(8,Variable => b), {{1,1,b,0,0},{0,b,b,1,0},{1,1,1,b,0}})",
+	"C.ParityCheckMatrix"
+	},
+    PARA{"This symbol is provided by the package ", TO CodingTheory, "."},
+    SeeAlso => {"ParityCheckRows","Generators","reduceMatrix","generatorToParityCheck","parityCheckToGenerator"},
+    }
+
+document {
+    Key => Code,
+    Headline => "A linear code as image",
+    "Given a linear code C, this internal key returns C as the image of some mapping between finitely generated modules, where each module is over the same Galois Field.",
+    EXAMPLE {
+	"C = linearCode(GF(8,Variable => b), {{1,1,b,0,0},{0,b,b,1,0},{1,1,1,b,0}})",
+	"C.Code"
+	},
+    PARA{"This symbol is provided by the package ", TO CodingTheory, "."}
     }
 
 document {
@@ -3236,7 +3394,165 @@ document {
     }
 
 document {
-     Key => {cyclicCode, (cyclicCode, GaloisField , RingElement, ZZ)},
+    Key => {(dim,LinearCode)},
+    Headline => "Gives the dimension of a linear code C.",
+    Usage => "dim C",
+    Inputs => {
+	"C" => LinearCode => {"A linear code over a Galois field."},
+	},
+    Outputs => {
+	Number => {"The dimension of the code C."},
+	},
+    "Given a linear code C, this method returns the dimension of C.",
+    EXAMPLE {
+	"C = linearCode(GF(2),{{1,1,0,0},{0,0,1,1}})",
+	"dim C",
+	"H = HammingCode(2,3)",
+	"dim H",
+	},
+    "We show next the usage od this method to compute the dimension of Evaluation Codes.",
+    EXAMPLE {
+	"RM = RMCode(2,2,1);",
+	"dim(RM.LinearCode)"
+	},
+    PARA{"This method is provided by the package ", TO CodingTheory, "."},
+    }
+
+document {
+    Key => {informationRate,(informationRate,LinearCode)},
+    Headline => "Gives the information rate of a linear code.",
+    Usage => "informationRate C",
+    Inputs => {
+	"C" => LinearCode => {"A linear code over a Galois field"},
+	},
+    Outputs => {
+	QQ => {"The information rate of the linear code C."},
+	},
+    "Given a linear code C of length n and dimension k over a Galois field F, it computes the information rate of C: k/n.",
+    EXAMPLE {
+	"R = linearCode(GF(4),{{1,1,1,1}});",
+	"informationRate R",
+	"H = HammingCode(2,3);",
+	"informationRate H",
+	"F = GF(4,Variable=>a);",
+	"L = {{1,a,a+1},{a+1,1,a},{a,a+1,1},{0,0,0}};",
+	"C = linearCode(F,L);",
+	"informationRate C",
+	},
+    "The next is an example for the class of Evalation Codes",
+    EXAMPLE {
+	"RM = RMCode(2,3,1);",
+	"informationRate(RM.LinearCode)"
+	},
+    PARA{"This method is provided by the package ", TO CodingTheory, "."},
+    }
+
+document {
+    Key => {(size,LinearCode)},
+    Headline => "Gives the number of codewords in a linear code.",
+    Usage => "size C",
+    Inputs => {
+	"C" => LinearCode => {"A linear code over a Galois field."},
+	},
+    Outputs => {
+	ZZ => {"The number of codewords in the code C."},
+	},
+    "Given a linear code of length n and dimension k over a Galois Field F with q elements, it computes the number of codewords in C, which is q^k.",
+    EXAMPLE {
+	"R = linearCode(GF(4),{{1,1,1,1}});",
+	"size R",
+	"H = HammingCode(2,3);",
+	"size H",
+	"F = GF(4,Variable=>a);",
+	"L = {{1,a,a+1},{a+1,1,a},{a,a+1,1},{1,0,1}};",
+	"C = linearCode(F,L);",
+	"size C"
+	},
+    "The next is an example of how to use the size method for Evaluation Codes.",
+    EXAMPLE {
+	"RM = RMCode(2,2,4);",
+        "size(RM.LinearCode)"
+	},
+    PARA{"This method is provided by the package ", TO CodingTheory, "."},
+    }
+
+document {
+    Key => {(length,LinearCode)},
+    Headline => "Gives the length of a linear code.",
+    Usage => "length C",
+    Inputs => {
+	"C" => LinearCode => {"A linear code over a Galois field."},
+	},
+    Outputs => {
+	ZZ => {"The length of the linear code C."},
+	},
+    "Given a linear code C over a Galois Field, this function returns the number of entries in any codeword in C.",
+    "This parameter is called the length of the code.",
+    EXAMPLE {
+	"R = linearCode(GF(4),{{1,1,1,1}});",
+	"length R",
+	"H = HammingCode(2,3);",
+	"length H"
+	},
+    "The next example illustrates how to use this method for the class of Evaluation Codes.",
+    EXAMPLE {
+	"RM = RMCode(2,3,1);",
+	"length(RM.LinearCode)",
+	},
+    PARA{"This method is provided by the package ", TO CodingTheory, "."},
+    }
+
+document {
+    Key => {vectorSpace, (vectorSpace,LinearCode)},
+    Headline => "Vector Space genearted by a generator matrix of a linear code",
+    Usage => "vectorSpace C",
+    Inputs => {
+	"C" => LinearCode => {"A linear code over a Galois field."},
+	},
+    Outputs => {
+	Module => {"The vector space generated by a generator matrix of C."},
+	},
+    "Given a linear code C over a Galois Field, say F, with generator matrix G, it construct the vector space over F generated by the rows of G.",
+    EXAMPLE {
+	"H = HammingCode(2,3);",
+	"vectorSpace(H)",
+	},
+    "The next is an example of how to use the vectorSpace method for the class of Evaluation Codes.",
+    EXAMPLE {
+	"RM = RMCode(2,4,1)",
+        "vectorSpace(RM.LinearCode)"
+	},
+    PARA{"This method is provided by the package ", TO CodingTheory, "."},
+    SeeAlso => {"Code"},
+    }
+
+document {
+    Key => {messages, (messages,LinearCode)},
+    Headline => "Plain messages that can be encoded by a linear code.",
+    Usage => "messages C",
+    Inputs => {
+	"C" => LinearCode => {"A linear code over a Galois Field."},
+	},
+    Outputs => {
+	List => {"A list of all possible plain messages that can be encoded using C."},
+	},
+    "Given a code C of length n and dimension k over a Galois Field F, this function returns a list with all elements of F^k.",
+    EXAMPLE {
+	"R = linearCode(GF(4,Variable => b),{{1,1,1}});",
+	"messages R",
+	"messages HammingCode(2,3)"
+	},
+    "The next example shows how to use the size method for Evaluation Codes.",
+    EXAMPLE {
+	"RM = RMCode(2,2,1);",
+        "messages(RM.LinearCode)"
+	},
+    PARA{"This method is provided by the package ", TO CodingTheory, "."},
+    SeeAlso => {"codewords"}
+    }
+
+document {
+     Key => {cyclicCode, (cyclicCode, GaloisField , RingElement, ZZ), (cyclicCode,GaloisField,ZZ,ZZ)},
      Headline => "Given a polynomial generates a cyclic code of lenght n over the GaloisField.",
      Usage => "cyclicCode(F ,G, n)",
      Inputs => {
