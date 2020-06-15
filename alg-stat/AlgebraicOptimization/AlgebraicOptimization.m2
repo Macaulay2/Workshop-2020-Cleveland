@@ -69,7 +69,7 @@ export {
   "Coordinates", "Factors",
   --"Numerators","Denominators",
   -- Strategies
-  "Probabilistic", "Symbolic"
+  "Probabilistic", "Symbolic", "ProbProjection", "SymbProjection"
 }
 
 
@@ -294,6 +294,8 @@ assert(symbolicEDDegree(I, Projective => false) == 2)
 edDegreeStrategies = (I,strat) -> (
   if strat == Probabilistic then probabilisticEDDegree I
   else if strat == Symbolic then symbolicEDDegree I
+  else if strat == ProbProjection then projectionEDDegree I
+  else if strat == SymbProjection then projectionEDDegree(I, Strategy => Symbolic)
   else error "invalid Strategy"
 )
 
@@ -354,36 +356,40 @@ assert(probabilisticEDDegree (J+z) == 13)
 ///
 
 
--------------------
--- randomSection --
--------------------
-randomSection = method();
-randomSection Ideal := Ideal => I -> (
-  R := ring I;
-  I + ideal random(1,R)
-)
-
 ---------------------
 -- sectionEDDegree --
 ---------------------
 sectionEDDegree = method(Options => {Strategy => Probabilistic});
 sectionEDDegree Ideal := ZZ => opts -> I -> (
-  Idual := projectiveDual I;
-  sections := {I} | accumulate((J, j) -> randomSection J, I, toList(1..(dim I - 1)));
-  intermediateSections := drop(sections, -1);
-  degs := intermediateSections / (I -> (Istar := projectiveDual(I); if codim Istar == 1 then degree Istar else 0));
-  edDegreeStrategies(last sections, opts.Strategy) + sum degs
+  R := ring I;
+  S := conormalRing R;
+  n := numgens R;
+  I' := projectiveDual(I,S);
+  d := dim I;
+
+  c := codim I';
+  linSpace := ideal apply(c, i -> random(1,R));
+  projCenter := projectiveDual(sub(ideal drop(linSpace_*, 1),R) ,S);  
+  
+  Isection := I + linSpace;
+  
+  T' := ring I' / I';
+  L := symbol L;
+  lastDual := kernel map(T', (coefficientRing R)[L_0..L_(#projCenter_* - 1)], projCenter_*);
+  edDegreeStrategies(Isection, opts.Strategy) + if codim lastDual == 1 then degree lastDual else 0
 )
 TEST ///
 R = QQ[x_0..x_6]
 I = ideal(apply(2, i-> random(1,R)))
 assert(sectionEDDegree I == 1)
--- TODO this test may be too slow
 R = QQ[x_0,x_1,x_2,x_3]
 M = matrix{{x_0,x_1,x_2},{x_1,x_0,x_3},{x_2,x_3,x_0}}
 I = ideal det M
 assert(sectionEDDegree I == 13)
---
+-- TODO this test fails!
+R = QQ[x_0..x_4]
+I = ideal(random(2,R))
+assert(sectionEDDegree(I, Strategy => Probabilistic) == 8)
 ///
 
 
@@ -855,7 +861,7 @@ TEST///
 
 A = matrix {{1,1,1,0,0,0,0,0,0}, {0,0,0,1,1,1,0,0,0},{0,0,0,0,0,0,1,1,1},
     {1,0,0,1,0,0,1,0,0},{0,1,0,0,1,0,0,1,0}};
-assert(39 == toricEDDegree(A);
+assert(39 == toricEDDegree(A));
     
 ///
 
@@ -957,39 +963,6 @@ assert(1==probabilisticConormalVarietyOptimizationDegree(psi,I,Data=>{0,0}))
 
 beginDocumentation()
 
--- template for package documentation
-doc ///
-Key
-  AlgebraicOptimization
-Headline
-  Package for algebraic optimization
-Description
-  Text
-    References: \break
-    [1] Seth Sullivant,
-    Algebraic Statistics, American Mathematical Soc. \break
-    [2]  Jan Draisma, Emil Horobeţ, Giorgio Ottaviani, Bernd Sturmfels, and Rekha R. Thomas,
-    The Euclidean distance degree of an algebraic variety, Found. Comput. Math. 16 (2016), no. 1, 99–149. MR 3451425. \break
-    [3] Serkan Hoşten, Amit Khetan,and Bernd Sturmfels,
-    Solving the likelihood equations, Found. Comput. Math. 5 (2005), no. 4, 389–407. \break
-    [4] Carlos  Am ́endola,  Nathan  Bliss,  Isaac  Burke,  Courtney  R.  Gibbons,
-    Martin  Helmer,  Serkan  Ho ̧sten,  Evan  D.  Nash,Jose  Israel  Rodriguez,
-    and  Daniel  Smolkin.  The  maximum  likelihood  degree  of  toric  varieties.
-    Journal  of  SymbolicComputation, 92:222–242, May 2019. \break
-    [5] Martin Helmer and Bernd Sturmfels. 
-    Nearest points on toric varieties. MATHEMATICA SCANDINAVICA, 122(2):213,Apr 2018.
-  Example
-    todo
-Caveat
-SeeAlso
-///
-
-doc ///
-Key
-  ConormalRing
-///
-
-
 -- template for function documentation
 --doc ///
 --Key
@@ -1012,11 +985,65 @@ Key
 
 doc ///
 Key
+  AlgebraicOptimization
+Headline
+  Package for algebraic optimization
+Description
+  Text
+    The AlgebraicOptimization package provides methods for determining the algebraic degree of 
+    an optimization problem.
+    The algebraic degree of an optimization problem is an important invariant in applied
+    algebraic geometry. It gives an algebraic measure of complexity to a problem and has been
+    studied in the context of nearest point problems, maximum likelihood estimation,
+    and semidefinite programming. \break
+  Text
+    References: \break
+    [1] Seth Sullivant,
+    Algebraic Statistics, American Mathematical Soc. \break
+    [2]  Jan Draisma, Emil Horobeţ, Giorgio Ottaviani, Bernd Sturmfels, and Rekha R. Thomas,
+    The Euclidean distance degree of an algebraic variety, Found. Comput. Math. 16 (2016), no. 1, 99–149. MR 3451425. \break
+    [3] Serkan Hoşten, Amit Khetan,and Bernd Sturmfels,
+    Solving the likelihood equations, Found. Comput. Math. 5 (2005), no. 4, 389–407. \break
+    [4] Carlos  Am ́endola,  Nathan  Bliss,  Isaac  Burke,  Courtney  R.  Gibbons,
+    Martin  Helmer,  Serkan  Ho ̧sten,  Evan  D.  Nash,Jose  Israel  Rodriguez,
+    and  Daniel  Smolkin.  The  maximum  likelihood  degree  of  toric  varieties.
+    Journal  of  SymbolicComputation, 5 (2009), 92:222–242. \break
+    [5] Martin Helmer and Bernd Sturmfels. 
+    Nearest points on toric varieties. MATHEMATICA SCANDINAVICA, 4 (2018), 122(2):213.
+--Example
+--  todo
+--Caveat
+--SeeAlso
+///
+
+doc ///
+Key
+  ConormalRing
+  AmbientRing
+  AlgebraicOptimization$Coordinates
+  Factors
+  (coefficientRing, ConormalRing)
+Headline
+  primal ring, dual ring and their product
+Description
+  Text
+    A {\tt ConormalRing} is a type of @TO HashTable@, typically with the following keys
+
+    {\tt Factors}: a @TO List@ containing the primal ring and dual ring \break
+    {\tt Coordinates}: a @TO List@ containing lists of coorinates for each factor \break
+    {\tt AmbientRing}: the tensor product of the factors \break
+
+    All rings should be polynomial rings defined over the same coefficient ring, accessible via @TO (coefficientRing, ConormalRing)@.
+///
+
+
+doc ///
+Key
   projectiveDual
   (projectiveDual, Ideal)
   [projectiveDual, DualVariable]
 Headline
-  Compute projective dual
+  compute projective dual
 Usage
   projectiveDual(I)
 Inputs
@@ -1055,7 +1082,7 @@ doc ///
 Key
   (projectiveDual, Ideal, ConormalRing)
 Headline
-  Compute projective dual
+  compute projective dual
 Usage
   projectiveDual(I, C)
 Inputs
@@ -1095,7 +1122,7 @@ Key
   (conormalRing,Ideal)
   [conormalRing, DualVariable]
 Headline
-  Creates a ring with primal and dual variables
+  creates a ring with primal and dual variables
 Usage
   conormalRing R
   conormalRing I
@@ -1125,8 +1152,8 @@ Key
   (conormalIdeal, Ideal, ConormalRing)
   (conormalIdeal, Ideal)
   [conormalIdeal, DualVariable]
---Headline
---  todo
+Headline
+  ideal corresponding to the conormal variety
 Inputs
   I:
     a homogeneous @TO2{Ideal, "ideal"}@ defined in the primal variables only
@@ -1156,7 +1183,7 @@ Key
   [probabilisticEDDegree, Projective]
   [probabilisticEDDegree, Data]
 Headline
-  compute ED-degree for a random point
+  Euclidean distance degree for a random point
 Usage
   probabilisticEDDegree I
   probabilisticEDDegree(I, Projective => true)
@@ -1237,7 +1264,7 @@ Key
   [probabilisticFritzJohnEDDegree, Data]
   [probabilisticFritzJohnEDDegree, Projective]
 Headline
-  compute ED-degree for a random point using Fritz John conditions
+  Euclidean distance degree for a random point using Fritz John conditions
 Usage
   probabilisticFritzJohnEDDegree(WI,I)
   probabilisticFritzJohnEDDegree(WI, I, Projective => true)
@@ -1349,7 +1376,7 @@ doc ///
 Key
   (probabilisticFritzJohnEDDegree, Ideal)
 Headline
-  compute ED-degree for a random point using Fritz John conditions
+  Euclidean distance degree for a random point using Fritz John conditions
 Usage
   probabilisticFritzJohnEDDegree I
 Inputs
@@ -1386,7 +1413,7 @@ Key
   symbolicEDDegree
   (symbolicEDDegree, Ideal)
 Headline
-  Compute EDDegree symbolically
+  compute Euclidean distance degree symbolically
 Usage
   symbolicEDDegree I
   symbolicEDDegree(I, Projective => true)
@@ -1444,10 +1471,37 @@ SeeAlso
 
 doc ///
 Key
+  "ED degree strategies"
+  [projectionEDDegree,Strategy]
+  [sectionEDDegree,Strategy]
+  Probabilistic
+  Symbolic
+  ProbProjection
+  SymbProjection
+Description
+  Text
+    The methods @TO projectionEDDegree@ and @TO sectionEDDegree@ don't compute the ED degree of $I$ directly.
+    Instead they transform $I$ (e.g. by projecting or taking sections), and then computes the ED degree of the new ideal.
+    The option {\tt Strategy} allows the user to choose which method to use to compute the ED degree of the transformed ideal.
+
+    Let $J$ be the transformed ideal $I$. The option {\tt Strategy} can take the following values
+
+    {\tt Probabilistic}, which corresponds to @TO2 {probabilisticEDDegree,"probabilisticEDDegree J"}@
+
+    {\tt Symbolic}, which corresponds to @TO2 {symbolicEDDegree, "symbolicEDDegree J"}@
+
+    {\tt ProbProjection}, which corresponds to @TO2 {projectionEDDegree, "projectionEDDegree(J, Strategy => Probabilistic)"}@
+
+    {\tt SymbProjection}, which corresponds to @TO2 {projectionEDDegree, "projectionEDDegree(J, Strategy => Symbolic)"}@
+///
+
+
+doc ///
+Key
   projectionEDDegree
   (projectionEDDegree, Ideal)
 Headline
-  ED-degree via random linear projections
+  Euclidean distance degree via random linear projections
 Usage
   projectionEDDegree I
 Inputs
@@ -1498,7 +1552,7 @@ Key
   sectionEDDegree
   (sectionEDDegree, Ideal)
 Headline
-  ED-degree via random linear sections
+  Euclidean distance degree via random linear sections
 Usage
   sectionEDDegree I
 Inputs
@@ -1509,18 +1563,36 @@ Outputs
     the projective ED-degree
 Description
   Text
-    TODO
-    --Let $X$ be a projective variety in $\mathbb{P}^n$ of codimension $\geq 2$, and let $\pi : \mathbb P^n \to \mathbb P^{n-1}$
-    --be a rational map induced by a general linear map $\mathbb C^{n+1} \to \mathbb C^n$.
-    --Under some regularity assumptions (see Caveat), the ED-degree of $\pi(X)$ is equal to the ED-degree
-    --of $X$ [1, Cor. 6.1.].
+    Let $X$ be a projective variety in $\mathbb{P}^n$ of dimension $d$, and let $H_1, \dots, H_{d-1}$ be generic hyperplanes.
+    By Bertini's theorem, the intersection of $Y = X \cap H_1 \cap \dots \cap H_{d-1}$ is a curve. 
+    Under some regularity assumptions (see Caveat), there is a relation between the ED-degree $X$ and $Y$ given in @TO2{AlgebraicOptimization,"[2, Cor. 6.4.]"}@.
 
-    --This function repeatedly applies such a map $\pi$ until the image becomes a hyperlane, and then
-    --calls @TO probabilisticEDDegree@ or @TO symbolicEDDegree@, depending on the optional argument @TO [projectionEDDegree,Strategy]@.
-    --This may provide significant computational speedups compared to @TO probabilisticEDDegree@, @TO symbolicEDDegree@ or @TO symbolicMultidegreeEDDegree@,
-    --especially the codimension of $X$ is large.
-  Text
-    References: [1] Draisma, J., Horobeţ, E., Ottaviani, G., Sturmfels, B., & Thomas, R. R. (2016). The Euclidean distance degree of an algebraic variety. {\em Foundations of computational mathematics}, 16(1), 99-149.
+    This function computes the @TO2 {projectiveDual, "projective dual"}@ of $X$ and projects the dual such that the codimension is 1.
+    This corresponds to sections of the primal variety.
+    The ED degree of the resulting section is computed using @TO probabilisticEDDegree@, @TO symbolicEDDegree@ or @TO projectionEDDegree@, depending on the optional argument @TO [sectionEDDegree,Strategy]@.
+  CannedExample
+    i1 :     R = QQ[x_0..x_5];
+
+    i2 :     M = matrix{{x_0, x_1, x_2},{x_1,x_3,x_4},{x_2,x_4,x_5}};
+
+                  3       3
+    o2 : Matrix R  <--- R
+
+    i3 :     I = minors(3,M);
+
+    o3 : Ideal of R
+
+    i4 :     elapsedTime sectionEDDegree(I, Strategy => ProbProjection)
+          0.0850545 seconds elapsed
+
+    o4 = 13
+
+    i5 :     elapsedTime probabilisticEDDegree I
+          1.23155 seconds elapsed
+
+    o5 = 13
+
+
 Caveat
   The variety $\mathbb V(I)$ must be in general coordinates, i.e. the conormal variety cannot intersect the diagonal $\Delta(\mathbb{P}^{n-1}) \subset \mathbb{P}^{n-1} \times \mathbb{P}^{n-1}$.
   The function @TO checkGeneralCoordinates@ checks a sufficient condition.
@@ -1537,7 +1609,7 @@ Key
   symbolicMultidegreeEDDegree
   (symbolicMultidegreeEDDegree, Ideal)
 Headline
-  compute ED-degree symbolically via multidegrees
+  compute Euclidean distance degree symbolically via multidegrees
 Inputs
   I:
     a homogeneous @TO2{Ideal,"ideal"}@ in general coordinates.
@@ -1569,7 +1641,7 @@ Key
   probabilisticMultidegreeEDDegree
   (probabilisticMultidegreeEDDegree, Ideal)
 Headline
-  compute ED-degree probabilistically via multidegrees
+  compute Euclidean distance degree probabilistically via multidegrees
 Inputs
   I:
     a homogeneous @TO2{Ideal,"ideal"}@ in general coordinates.
@@ -1598,9 +1670,9 @@ Caveat
 doc ///
 Key
     MLequationsIdeal
-   ( MLequationsIdeal,Ideal,List)
+   (MLequationsIdeal,Ideal,List)
 Headline
-  compute ML-ideal for Homogeneous prime ideal
+  Maximum likelihood ideal for a homogeneous prime ideal
 Usage
   MLequationsIdeal (I,u)
 Inputs
@@ -1613,14 +1685,13 @@ Outputs
     the likelihoood ideal of $I$
 Description
   Text
-    Computes the likelihood ideal by taking an Ideal and List of numerical data when the ideal is homogeneous and prime. @TO2{AlgebraicOptimization,"[1, Alg. 7.2.4][3, Alg. 6]"}@
+    Computes the maximum likelihood ideal by taking an Ideal and List 
+    of numerical data when the ideal is homogeneous and prime. @TO2{AlgebraicOptimization,"[3, Alg. 6][1]"}@
   Example
     R = QQ[p0, p1, p2, p12]
     I = ideal (2*p0*p1*p2 + p1^2*p2 + p1*p2^2 - p0^2*p12 + p1*p2*p12)
     u= {4,2, 11, 15}
     MLequationsIdeal (I,u)
---Caveat
---  todo
 SeeAlso
   MLequationsDegree
   parametricMLIdeal
@@ -1633,7 +1704,7 @@ Key
    ( MLequationsDegree, Ideal)
    [ MLequationsDegree, Data]
 Headline
-  compute ML-degree for Homogeneous prime ideal
+  Maximum likelihood degree for a homogeneous prime ideal
 Usage
   MLequationsDegree (I)
   MLequationsDegree (I, Data => u)
@@ -1655,8 +1726,6 @@ Description
     R = QQ[p0, p1, p2, p12]
     I = ideal (2*p0*p1*p2 + p1^2*p2 + p1*p2^2 - p0^2*p12 + p1*p2*p12)
     MLequationsDegree (I)
---Caveat
---  todo
 SeeAlso
   MLequationsIdeal
   parametricMLDegree
@@ -1668,7 +1737,7 @@ Key
    parametricMLIdeal
    (parametricMLIdeal,List,List)
 Headline
-  compute parametric ML-ideal for List of Polynomials
+  parametric Maximum likelihood ideal for a list of polynomials
 Usage
   parametricMLMLIdeal (F,u)
 Inputs
@@ -1681,16 +1750,19 @@ Outputs
     the parametric ML-ideal of $F$
 Description
   Text
-    Computes the parametric likelihood ideal by taking List of function and
-    List of numerical data when summation F equal to 1. @TO2{AlgebraicOptimization,"[3, Alg. 18]"}@
+    Let $F:\mathbb{R}^d \rightarrow \mathbb{R}^{n+1}$ be a polynomial map whose image is parametric model. 
+    Each coordinate $f_i$ of $F$ is a polynomial in the model parameters $\theta = (\theta_0,..., \theta_d)$. 
+    Assuming the summation of $f_i$'s is equal to one, the likelihood function is 
+    $f_0(\theta)^{u_0} f_1(\theta)^{u_1} ··· f_n(\theta)^{u_n}$ where $u = (u_0,... , u_n)$ is a vector of natural numbers.
+    This function Computes the parametric likelihood ideal 
+    of this model by taking F as List of Polynomials and List of numerical data when 
+    summation F equal to 1. @TO2{AlgebraicOptimization,"[3, Alg. 18]"}@
   Example
     R = QQ[t]
     s=1
     u = {2,3,5,7}
     F = {s^3*(-t^3-t^2-t+1),s^2*t,s*t^2,t^3}
     parametricMLIdeal (F,u)
---Caveat
---  todo
 SeeAlso
   parametricMLDegree
   MLequationsIdeal
@@ -1703,7 +1775,7 @@ Key
    (parametricMLDegree,List)
    [parametricMLDegree, Data]
 Headline
-  compute parametric ML-degree for List of Polynomials
+  parametric Maximum likelihood degree for a list of polynomials
 Usage
   parametricMLDegree (F)
 Inputs
@@ -1716,7 +1788,11 @@ Outputs
     the ML-degree of $F$
 Description
   Text
-    Computes the maximum likelihood degree by taking List of Polynomials
+    Let $F:\mathbb{R}^d \rightarrow \mathbb{R}^{n+1}$ be a polynomial map whose image is parametric model. 
+    Each coordinate $f_i$ of $F$ is a polynomial in the model parameters $\theta = (\theta_0,..., \theta_d)$. 
+    Assuming the summation of $f_i$'s is equal to one, the likelihood function is 
+    $f_0(\theta)^{u_0} f_1(\theta)^{u_1} ··· f_n(\theta)^{u_n}$ where $u = (u_0,... , u_n)$ is a vector of natural numbers.
+    This function computes the maximum likelihood degree of parametric model by taking F as List of Polynomials
     when summation of polynomials is equal to one. In other words,
     we choose a random data u and output is the number of complex critical points
     of the parametric likelihood equations for random data u. @TO2{AlgebraicOptimization,"[3, Alg. 18]"}@
@@ -1725,8 +1801,6 @@ Description
     s=1
     F = {s^3*(-t^3-t^2-t+1),s^2*t,s*t^2,t^3}
     parametricMLDegree (F)
---Caveat
---  todo
 SeeAlso
   parametricMLIdeal
   MLequationsDegree
@@ -1739,7 +1813,7 @@ Key
   checkGeneralCoordinates
   (checkGeneralCoordinates, Ideal)
 Headline
-  checks if projective variety is in general coordinates
+  checks if a projective variety is in general coordinates
 Usage
   checkGeneralCoordinates I
 Inputs
@@ -1783,7 +1857,7 @@ Key
    [toricMLIdeal, CoeffRing]
 
 Headline
-  compute toric ML-ideal
+  compute toric Maximum likelihood ideal
 Usage
   toricMLIdeal(A, c, u)
 Inputs
@@ -1834,7 +1908,7 @@ Key
    [toricMLDegree, Data]
    [toricMLDegree, CoeffRing]
 Headline
-  compute toric ML-degree
+  compute toric maximum likelihood degree
 Usage
   toricMLDegree(A, c)
 Inputs
@@ -1881,6 +1955,8 @@ doc ///
 Key
    toricEDDegree
    (toricEDDegree,Matrix)
+Headline
+  compute toric Euclidean distance degree
 Usage
   toricEDDegree(A)
 Inputs
@@ -1994,7 +2070,7 @@ Key
   (probabilisticConormalVarietyOptimizationDegree, List, Ideal)
   [probabilisticConormalVarietyOptimizationDegree, Data]
 Headline
-  compute ED-degree for a random point
+  compute Euclidean distance degree for a random point
 Usage
   probabilisticConormalVarietyOptimizationDegree(psi, I)
   probabilisticConormalVarietyOptimizationDegree(psi, I, Data => L)
@@ -2060,7 +2136,7 @@ Key
   (probabilisticLagrangeMultiplierOptimizationDegree, List, Ideal, Ideal)
   [probabilisticLagrangeMultiplierOptimizationDegree, Data]
 Headline
-  compute ED-degree for a random point
+  compute Euclidean distance degree for a random point
 Usage
   probabilisticLagrangeMultiplierOptimizationDegree(psi,WI, I)
   probabilisticLagrangeMultiplierOptimizationDegree(psi,WI,I, Data => L)
@@ -2126,7 +2202,7 @@ Key
   (probabilisticLagrangeMultiplierEDDegree, Ideal,Ideal)
   [probabilisticLagrangeMultiplierEDDegree, Data]
 Headline
-  Compute EDDegree symbolically using Lagrange multipliers
+  compute Euclidean distance degree symbolically using Lagrange multipliers
 Usage
   probabilisticLagrangeMultiplierEDDegree (WI,I)
   probabilisticLagrangeMultiplierEDDegree(WI,I, Data => L)
@@ -2176,9 +2252,9 @@ Description
 SeeAlso
   probabilisticLagrangeMultiplierOptimizationDegree
 ///
--------------------
+---------------------
 --Symbols doc
-------------------
+---------------------
 doc ///
 Key
   CoeffRing
@@ -2232,7 +2308,7 @@ doc ///
 Key
   DualVariable
 Headline
-  optional argument Incomplete +
+  specifies a symbol to use as dual space variables
 --Usage
 --Inputs
 --Outputs
@@ -2249,7 +2325,7 @@ Headline
 --SeeAlso
 ///
 
---------------------
+---------------------
 
 TEST ///
   -- test code and assertions here
@@ -2350,7 +2426,7 @@ end
 
 
 --Example
-restat
+restart
 path={"/Users/jo/Documents/GoodGit/M2020/Workshop-2020-Cleveland/alg-stat/AlgebraicOptimization"}|path
 path={"/home/fatemeh/w/Workshop-2020-Cleveland/alg-stat/AlgebraicOptimization"}|path
 loadPackage("AlgebraicOptimization",Reload=>true)
