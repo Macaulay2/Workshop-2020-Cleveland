@@ -26,6 +26,8 @@ export {
 	"randomPoints", 
 	"extendingIdealByNonVanishingMinor",
 	"findANonZeroMinor",
+    "randomPointViaLinearIntersection", --these are here for debugging purposes
+    "randomPointViaLinearIntersectionOld", --these are here for debugging purposes
 	"MyOption",
 	"NumPointsToCheck", 
 	"Codimension",
@@ -92,10 +94,10 @@ pointToIdeal(Ring, List) := opts -> (R1, L1) -> (
 idealToPoint = method(Options => {Homogeneous => false});
 
 idealToPoint(Ideal) := opts -> (I1) -> (
-        if (opts.Homogeneous == false) then (
-            genList := gens ring I1;
-            return apply(genList, s -> s%I1);
-        )
+    if (opts.Homogeneous == false) then (
+        genList := gens ring I1;
+        return apply(genList, s -> s%I1);
+    )
 );
 
 --this function was taken directly from an internal function in RationalPoints.m2 by Nathaniel Stapleton
@@ -171,29 +173,6 @@ randomCoordinateChange(Ring) := opts -> (R1) -> (
     phi = map(R1, S1, genList);
     --if it's working, great, otherwise recurse
     if (rank jacobian matrix phi >= genCount) then return phi else return randomCoordinateChange(R1, opts);
-
--*    if (opts.MaxCoordinatesToReplace >= genCount) then (
-        if (opts.Homogeneous) then (
-            phi = map(R1, S1, apply(gens R1, t -> random(1, R1)));
-        )
-        else(
-            phi = map(R1, S1, apply(gens R1, t -> random(1, R1)+random(0, R1)));
-        );
-    )
-    else( --if we only want to really change some (MaxCoordinatesToReplace) of the variables, and randomize the others
-    
-    if (opts.Homogeneous) then (
-    --			genList = random apply(#(genList), t -> (if (t < opts.MaxCoordinatesToReplace) then random(1, R1) else genList#t) );
-        genList = random apply(#(genList), 
-            t -> (if (t < opts.MaxCoordinatesToReplace) then ((random(0, R1))*(genList#t) + (random(0, R1))*(genList#(random(#genList)))) else genList#t) 
-        );
-    )
-    else(
-    genList = random apply(#(genList), t -> (if (t < opts.MaxCoordinatesToReplace) then random(1, R1)+random(0, R1) else genList#t	) );
-    );
-    phi = map(R1, S1, genList);
-    );
-    return phi;*-
 );
 
 
@@ -201,34 +180,31 @@ genericProjection = method(Options=>optCoorindateChange);
 
 genericProjection(Ideal) := opts -> (I1) -> (
     return genericProjection(1, I1, opts);
-    -*if (debugLevel > 0) or (opts.Verbose) then print concatenate("genericProjection (dropping 1 dimension):  Starting, Replacement =>", toString(opts.Replacement), ", MaxCoordinatesToReplace => ", toString(opts.MaxCoordinatesToReplace));
-    R1 := ring I1;
-    psi := randomCoordinateChange(R1, opts);
-    S1 := source psi;
-    I2 := psi^-1(I1);
-    kk:=coefficientRing R1;
-    local Re;
-    local Rs;
-    Re=kk(monoid[apply(dim S1,i->S1_i),MonomialOrder => Eliminate 1]);
-    rs:=(entries selectInSubring(1,vars Re))_0;
-    Rs=kk(monoid[rs]);
-    f:=ideal substitute(selectInSubring(1, generators gb substitute(I2,Re)),Rs);
-    phi := map(S1, Rs);
-    return(psi*phi, f);*-
 );
---this code is based upon randomKRationalPoint
+
 genericProjection(ZZ, Ideal) := opts -> (n1, I1) -> (
+    return genericProjectionByKernel(n1, I1, opts);
+);
+
+--this code is based upon randomKRationalPoint
+genericProjectionOriginal = method(Options=>optCoorindateChange);
+
+genericProjectionOriginal(ZZ, Ideal) := opts -> (n1, I1) -> (
         if (debugLevel > 0) or (opts.Verbose) then print concatenate("genericProjection (dropping ", toString(n1), " dimension):  Starting, Replacement =>", toString(opts.Replacement), ", MaxCoordinatesToReplace => ", toString(opts.MaxCoordinatesToReplace));
         R1 := ring I1;
         psi := randomCoordinateChange(R1, opts);
+        flag := true;
+        local psiInv;
+        while (flag) do (
+            try psiInv = inverse(psi) then (flag = false) else (psi = randomCoordinateChange(R1, opts));
+        );
         S1 := source psi;
-        local I2;
-        I2 = psi^-1(I1);
+        I2 := psiInv(I1);
         if (n1 <= 0) then return(psi, I2); --if we don't actually want to project
         kk:=coefficientRing R1;
         local Re;
         local Rs;
-        Re=kk(monoid[apply(dim S1,i->S1_i),MonomialOrder => Eliminate n1]);
+        Re=kk(monoid[apply(dim S1,i->S1_i), MonomialOrder => Eliminate n1]);
         rs:=first (entries selectInSubring(1,vars Re));
         Rs=kk(monoid[rs]);
         f:=ideal substitute(selectInSubring(1, generators gb substitute(I2,Re)),Rs);
@@ -236,23 +212,31 @@ genericProjection(ZZ, Ideal) := opts -> (n1, I1) -> (
         return(psi*phi, f);
 );
 
+--using the SubringLimit option, as in Cremona.
 genericProjectionByKernel = method(Options=>optCoorindateChange);
 
 genericProjectionByKernel(ZZ, Ideal) := opts -> (n1, I1) -> (
     if (debugLevel > 0) or (opts.Verbose) then print concatenate("genericProjection (dropping ", toString(n1), " dimension):  Starting, Replacement =>", toString(opts.Replacement), ", MaxCoordinatesToReplace => ", toString(opts.MaxCoordinatesToReplace));
     R1 := ring I1;
     psi := randomCoordinateChange(R1, opts);
-    S1 := source psi;
-    local I2;
-    I2 = psi^-1(I1);
-    if (n1 <= 0) then return(psi, I2); --if we don't actually want to project
+    if (n1 <= 0) then( --if we don't want to project
+        local psiInv;
+        flag := true;
+        while (flag) do (
+            try psiInv = inverse(psi) then (flag = false) else (psi = randomCoordinateChange(R1, opts));
+        );
+        I2 := psiInv(I1);
+        return(psi, I2); --if we don't actually want to project
+    ); 
     kk:=coefficientRing R1;
-    myVars := drop(gens S1, n1);
+    myVars := drop(gens R1, n1);
     Rs := kk(monoid[myVars]);
-    myMap := map(S1/I2, Rs);
-    K2 := ker(myMap, SubringLimit=>1);
-    phi := map(S1, Rs);
-    return(psi*phi, K2);
+    d1 := dim I1;
+    L1 := drop(first entries matrix psi, n1);
+    myMap := map(R1/I1, Rs, L1);
+    K2 := ker(myMap);
+    phi := map(R1, Rs, L1);
+    return(phi, K2);
 );
 
 genericProjection(ZZ, Ring) := opts -> (n1, R1) -> (
@@ -274,38 +258,33 @@ genericProjection(Ring) := opts -> (R1) -> (
 );
 
 projectionToHypersurface = method(Options => optProjectionToHypersurface);
-
+-*
 projectionToHypersurface(Ideal) := opts -> (I1) -> (
         local c1;
         if (opts.Codimension === null) then (
             c1 = codim I1;
         ) else (c1 = opts.Codimension);
         return genericProjection(c1-1, I1, Homogeneous => opts.Homogeneous, MaxCoordinatesToReplace => opts.MaxCoordinatesToReplace, Replacement => opts.Replacement, Verbose=>opts.Verbose);
-);
+);*-
 
 projectionToHypersurface(Ring) := opts -> (R1) -> (
-        local c1;
-        if (opts.Codimension === null) then (
-            c1 = codim R1;
-        ) else (c1 = opts.Codimension);
-        return genericProjection(c1-1, R1, Homogeneous => opts.Homogeneous, MaxCoordinatesToReplace => opts.MaxCoordinatesToReplace, Replacement => opts.Replacement, Verbose=>opts.Verbose);
+    LO := projectionToHypersurface(ideal R1);
+    phi := map(R1, (source (LO#0))/(LO#1), matrix (LO#0) );
+    return (phi, source phi);
 );
 
-projectionToHypersurfaceV2 = method(Options=>optProjectionToHypersurface);
+--projectionToHypersurfaceV2 = method(Options=>optProjectionToHypersurface);
 
-projectionToHypersurfaceV2(Ideal) := opts -> (I1) -> (
+projectionToHypersurface(Ideal) := opts -> (I1) -> (
     R1 := ring I1;
     if (class R1 =!= PolynomialRing) then error "genericProjection:  expected an ideal in a polynomial ring.";
     local c1;
     if (opts.Codimension === null) then (
         c1 = codim I1;
     ) else (c1 = opts.Codimension);
-    if (c1 <= 1) then 1/0;
-    --print c1;
+    if (c1 <= 1) then return (map(R1, R1), I1); --its already a hypersurface
     kk:=coefficientRing R1;
     S1 := kk(monoid[drop(gens R1, c1-1)]);
-    --print dim S1;
-    --print dim R1;
     local phi;
     L1 := first entries matrix randomCoordinateChange(R1, Homogeneous => opts.Homogeneous, MaxCoordinatesToReplace => opts.MaxCoordinatesToReplace, Replacement => opts.Replacement, Verbose=>opts.Verbose);
     phi = map(R1/I1, S1, drop(L1, c1-1));
@@ -341,10 +320,28 @@ switchStrategy := (opts, newStrat) -> (
     return new OptionTable from tempHashTable;
 );
 
+verifyPoint = method(Options => optRandomPoints);
+verifyPoint(List, Ideal) := opts -> (finalPoint, I1) -> (
+    if (opts.Homogeneous) then( 
+        if (all(finalPoint, t -> t == 0)) then return false;
+    );
+    if (#finalPoint > 0) then (
+        S1 := ring finalPoint#0;
+        if (any(first entries gens I1, tt -> evalAtPoint(S1, tt, finalPoint) != 0)) then (
+            if (opts.Verbose or debugLevel > 0) then print "verifyPoint: found a point that is not on the variety, if not using a projection strategy, this may indicate a problem.";
+            return false;
+        );
+    )
+    else return false;
+    return true;
+);
+
 randomPointViaLinearProjection = method(Options => optRandomPoints);
 randomPointViaLinearProjection(Ideal) := opts -> (I1) -> (
+    if (opts.Verbose or debugLevel > 0) then print "randomPointViaLinearProjection: starting";
     flag := true;
     local phi;
+    local psi;
     local I0;
     local J0;
     local pt;
@@ -378,7 +375,7 @@ randomPointViaLinearProjection(Ideal) := opts -> (I1) -> (
         I0 = sub(I1, ring I0);
         pt = searchPoints(1, source phi, {});
         if (not pt === {}) then (
-            J0 = I1 + sub(ideal apply(dim source phi, i -> (first entries matrix phi)#i - pt#i), target phi); --lift the point to the original locus
+            J0 = I1 + sub(ideal apply(dim source phi, i -> ((first entries matrix phi)#i) - sub(pt#i, target phi)), target phi); --lift the point to the original locus
             if dim(J0) == 0 then( --hopefully the preimage is made of points
                 ptList = random decompose(J0);
                 j = 0;
@@ -387,21 +384,16 @@ randomPointViaLinearProjection(Ideal) := opts -> (I1) -> (
                     --print myDeg;
                     if (myDeg == 1) then (
                         finalPoint = apply(idealToPoint(ptList#j), s -> sub(s, coefficientRing ring I1));
-                        if (opts.Homogeneous) then( 
-                            if (any(finalPoint, t -> t != 0)) then return finalPoint;
-                        )
-                        else(
-                            return finalPoint;
-                        );
+                        if (verifyPoint(finalPoint, I1, opts)) then return finalPoint;
                     )                        
                     else if (opts.ExtendField == true) then (
                         if (debugLevel > 0) or (opts.Verbose) then print "randomPointViaLinearProjection:  extending the field.";
-                        phi = (extendFieldByDegree(myDeg, R1))#1;
-                        m2 = phi(ptList#j);
+                        psi = (extendFieldByDegree(myDeg, R1))#1;
+                        m2 = psi(ptList#j);
                         newPtList = random decompose(m2);
                         if (#newPtList > 0) then ( 
-                            finalPoint =  apply(idealToPoint(newPtList#0), s -> sub(s, target phi));
-                            return finalPoint
+                            finalPoint = apply(idealToPoint(newPtList#0), s -> sub(s, target psi));
+                            if (verifyPoint(finalPoint, I1, opts)) then return finalPoint;
                         ); 
                     );
                     j = j+1;
@@ -416,10 +408,77 @@ randomPointViaLinearProjection(Ideal) := opts -> (I1) -> (
     return {};
 );
 
-
---Function to check if random point is in the variety by intersecting with a linear space
 randomPointViaLinearIntersection = method(Options => optRandomPoints);
+
 randomPointViaLinearIntersection(Ideal) := opts -> (I1) -> (
+    c1 := opts.Codimension;
+    if (c1 === null) then (c1 = codim I1); --don't compute it if we already know it.
+    R1 := ring I1;
+    d1 := dim R1 - c1;
+    i := 0;
+    j := 0;
+    local finalPoint;
+    local ptList; local newPtList;
+    local phi;
+    local psi;
+    local myDeg;
+    local myDim;
+    local m2;
+    local targetSpace;
+    local phiMatrix;
+    local J1;
+    local myPowerList;
+    local kk; --the extended field, if we extended
+    kk = coefficientRing(R1);
+    varList := drop(gens R1, d1);
+    while(i < opts.IntersectionAttempts) do (
+        targetSpace = kk[varList];
+        phiMatrix = insert(random(c1), (gens targetSpace)#(random(c1)), apply(#(gens R1)-1, l -> random(1, targetSpace) + random(0, targetSpace) )); --random linear maps, plus one random variable
+        phi = map(targetSpace, R1, phiMatrix);
+        J1 = phi(I1);
+        if (dim J1 == 0) then (
+            if (c1 == 1) then ( --if we are intersecting with a line, we can go slightly faster by using factor instead of decompose
+                ptList = apply(toList factor(gcd(first entries gens J1)), t->ideal(t#0));
+            )
+            else (
+                ptList = random decompose(J1);
+            );
+            j = 0;
+            while (j < #ptList) do (
+                myDeg = degree(ptList#j);
+                myDim = dim(ptList#j);
+                if (myDim == 0) and (myDeg == 1) then (
+                    finalPoint = first entries evalAtPoint(R1, matrix{phiMatrix}, idealToPoint(ptList#j));
+                    --finalPoint = apply(idealToPoint(ptList#j), s -> sub(s, R1));
+                    if (verifyPoint(finalPoint, I1, opts)) then return finalPoint;
+                )
+                else if (myDim == 0) and (opts.ExtendField == true) then (
+                    if (debugLevel > 0) or (opts.Verbose) then print "randomPointViaLinearIntersection:  extending the field.";
+                    psi = (extendFieldByDegree(myDeg, targetSpace))#1;
+                    newR1 := target psi;
+                    m2 = psi(ptList#j);
+                    newPtList = random decompose(m2); --make sure we are picking points randomly from this decomposition
+                    if (#newPtList > 0) then ( 
+                        finalPoint = first entries evalAtPoint(newR1, matrix{phiMatrix}, idealToPoint(newPtList#j));
+                        --finalPoint =  apply(idealToPoint(newPtList#0), s -> sub(s, target phi));
+                        if (verifyPoint(finalPoint, I1, opts)) then return finalPoint;
+                    ); 
+                );
+                j = j+1;
+            );
+        );
+        if (debugLevel > 0) or (opts.Verbose) then print "randomPointViaLinearIntersection:  failed, looping and trying a new linear space.";
+        i = i+1;
+    );
+    return {};
+);
+
+
+
+
+randomPointViaLinearIntersectionOld = method(Options => optRandomPoints);
+
+randomPointViaLinearIntersectionOld(Ideal) := opts -> (I1) -> (
     c1 := opts.Codimension;
     if (c1 === null) then (c1 = codim I1); --don't compute it if we already know it.
     R1 := ring I1;
@@ -432,7 +491,7 @@ randomPointViaLinearIntersection(Ideal) := opts -> (I1) -> (
     local myDeg;
     local m2;
     --1/0;
-    while(i < opts.IntersectionAttempts) do ( 
+    while(i < opts.IntersectionAttempts) do (
         linearSpace = ideal apply((dim R1) - c1, i -> random(1, R1) + random(0, R1));
         J0 := linearSpace + I1;
         if (dim J0 == 0) then (
@@ -474,6 +533,7 @@ randomPointViaGenericProjection = method(Options => optRandomPoints);
 randomPointViaGenericProjection(Ideal) := opts -> (I1) -> (
     flag := true;
     local phi;
+    local psi;
     local I0;
     local J0;
     local pt;
@@ -483,6 +543,7 @@ randomPointViaGenericProjection(Ideal) := opts -> (I1) -> (
     local newPtList;
     local phi;
     local myDeg;
+    local myDim;
     local m2;
     R1 := ring I1;  
     i := 0;
@@ -511,7 +572,7 @@ randomPointViaGenericProjection(Ideal) := opts -> (I1) -> (
                 pt = randomPoints(I0, switchStrategy(opts, LinearIntersection))
             ); --find a point on the generic projection (differently, depending on strategy)
             if (not pt === {}) then (
-                J0 = I1 + sub(ideal apply(dim source phi, i -> (first entries matrix phi)#i - pt#i), target phi); --lift the point to the original locus
+                J0 = I1 + sub(ideal apply(dim source phi, i -> (first entries matrix phi)#i - sub(pt#i, target phi)), target phi); --lift the point to the original locus
                 if dim(J0) == 0 then( --hopefully the preimage is made of points
                     ptList = random decompose(J0);
                     j = 0;
@@ -520,21 +581,16 @@ randomPointViaGenericProjection(Ideal) := opts -> (I1) -> (
                         --print myDeg;
                         if (myDeg == 1) then (
                             finalPoint = apply(idealToPoint(ptList#j), s -> sub(s, coefficientRing ring I1));
-                            if (opts.Homogeneous) then( 
-                                if (any(finalPoint, t -> t != 0)) then return finalPoint;
-                            )
-                            else(
-                                return finalPoint;
-                            );
+                            if (verifyPoint(finalPoint, I1, opts)) then return finalPoint;
                         )                        
                         else if (opts.ExtendField == true) then (
                             if (debugLevel > 0) or (opts.Verbose) then print "randomPointViaGenericProjection:  extending the field.";
-                            phi = (extendFieldByDegree(myDeg, R1))#1;
-                            m2 = phi(ptList#j);
+                            psi = (extendFieldByDegree(myDeg, ring ptList#j))#1;
+                            m2 = psi(ptList#j);
                             newPtList = random decompose(m2);
                             if (#newPtList > 0) then ( 
-                                finalPoint =  apply(idealToPoint(newPtList#0), s -> sub(s, target phi));
-                                return finalPoint
+                                finalPoint =  apply(idealToPoint(newPtList#0), s -> sub(s, target psi));
+                                if (verifyPoint(finalPoint, I1, opts)) then return finalPoint;
                             ); 
                         );
                         j = j+1;
@@ -589,7 +645,7 @@ randomPoints(Ideal) := List => opts -> (I) -> (
     then return randomPointViaLinearIntersection(I, opts)
 
     else if (opts.Strategy == HybridProjectionIntersection) 
-    then return randomPointViaLinearIntersection(I, opts)
+    then return randomPointViaGenericProjection(I, opts)
     
     else if (opts.Strategy == LinearProjection) 
     then return randomPointViaLinearProjection(I, opts)
@@ -739,16 +795,23 @@ randomPointViaMultiThreads(Ideal) := List => opts -> (I) -> (
 
 getAPoint = (n, K) -> (toList apply(n, (i) -> random(K)));
 
-evalAtPoint = (R, genList, point) -> (
+evalAtPoint = (kk, myMatrix, curPoint) -> (
+    sourceRing := ring myMatrix;
+    newPhi := map(kk, sourceRing, apply(curPoint, t -> sub(t, kk)));
+    return newPhi(myMatrix)
+);
+
+
+evalAtPointIsZero = (R, genList, point) -> (
     K := coefficientRing R;
     n := #gens R;
     eval := map(K, R, point);
     for f in genList do ( 
-	if not eval(f) == 0 
-	then return false;
+    	if not eval(f) == 0 
+	    then return false;
 	);
     return true;
-    );
+);
 
 mtSearchPoints = (nn, R, genList, flag) -> (
     local point;
@@ -756,7 +819,7 @@ mtSearchPoints = (nn, R, genList, flag) -> (
     n := #gens R;
     for i from 1 to nn do (
 	point = getAPoint(n, K);
-	if evalAtPoint(R, genList, point)
+	if evalAtPointIsZero(R, genList, point)
 	then (
 	    flag#0 = true;
 	    return point;
@@ -773,7 +836,7 @@ searchPoints = (nn, R, genList) -> (
     n := #gens R;
     for i from 1 to nn do (
 	point = getAPoint(n, K);
-	if evalAtPoint(R, genList, point)
+	if evalAtPointIsZero(R, genList, point)
 	then return point;
 	);
     return {};
@@ -881,7 +944,7 @@ doc ///
             randomCoordinateChange(R)
         Text
             In some applications, a full change of coordinates is not desired, as it might cause code to run slowly, and so a Binomialr change of coordinates might be preferred.  
-            These Binomialr changes of coordinates can be accomplished with the options {\tt Replacement} and {\tt MaxCoordinatesToReplace}.
+            These Binomial changes of coordinates can be accomplished with the options {\tt Replacement} and {\tt MaxCoordinatesToReplace}.
             {\tt Replacement} can take either {\tt Binomial} or {\tt Full}.  If {\tt Binomial} is specified, then only binomial changes of coordinates will be produced. 
         Example
             S = ZZ/11[a..e]
