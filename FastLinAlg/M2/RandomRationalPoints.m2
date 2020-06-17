@@ -44,8 +44,7 @@ export {
     "IntersectionAttempts", --used in the LinearIntersection strategy
     "ExtendField", --used in GenericProjection and LinearIntersection strategy
     "PointCheckAttempts",
-    "NumThreadsToUse", -- used in the MultiThreads strategy
-    "ReturnAllResults" -- used in the multi-thread search function mtSearchPoints
+    "NumThreadsToUse" -- used in the BruteForce strategy
     }
 exportMutable {}
 
@@ -757,12 +756,6 @@ randomPointViaMultiThreads(Ideal) := List => opts -> (I) -> (
     local found;
     local resultList;
     
---    if (opts.UsePregeneratedList)
---    then (
---        randomPointsList := apply(opts.NumPoints * opts.NumThreadsToUse, (i)->(return getAPoint(n, K);));
---        taskList = apply(opts.NumThreadsToUse, (i)->(return createTask(modifiedSearchPoints, (take(randomPointsList, {i * opts.NumPoints, (i + 1) * opts.NumPoints - 1}), R, genList));));)
---    else (
---        taskList = apply(opts.NumThreadsToUse, (i)->(return createTask(searchPoints, (opts.NumPoints, R, genList));)););
     local numPointsToCheck;
     numPointsToCheck = floor(opts.PointCheckAttempts / opts.NumThreadsToUse); 
     
@@ -770,9 +763,9 @@ randomPointViaMultiThreads(Ideal) := List => opts -> (I) -> (
 --    then error "mtSearch: Not enough allowed threads to use";
     
     local flag;
-    flag = new MutableList from {false};
+    flag = new MutableList from apply(opts.NumThreadsToUse, i->false);
     
-    taskList := apply(opts.NumThreadsToUse, (i)->(return createTask(mtSearchPoints, (numPointsToCheck, R, genList, flag));));
+    taskList := apply(opts.NumThreadsToUse, (i)->(return createTask(mtSearchPoints, (i, numPointsToCheck, R, genList, flag));));
     apply(taskList, t -> schedule t);
     while true do (
 	nanosleep 100000000;--this should be replaced by a usleep or nanosleep command.
@@ -813,7 +806,7 @@ evalAtPointIsZero = (R, genList, point) -> (
     return true;
 );
 
-mtSearchPoints = (nn, R, genList, flag) -> (
+mtSearchPoints = (thNum, nn, R, genList, flag) -> (
     local point;
     K := coefficientRing R;
     n := #gens R;
@@ -821,10 +814,10 @@ mtSearchPoints = (nn, R, genList, flag) -> (
 	point = getAPoint(n, K);
 	if evalAtPointIsZero(R, genList, point)
 	then (
-	    flag#0 = true;
+	    flag#thNum = true;
 	    return point;
 	    );
-	if flag#0
+	if any(flag, x->x)
 	then return {};
 	);
     return {};
@@ -1101,8 +1094,11 @@ doc ///
         Text
             When calling {\tt randomPoints}, set the strategy to one of these.
             {\tt BruteForce} simply tries random points and sees if they are on the variety.
+	    
             {\tt GenericProjection} projects to a hypersurface, via {\tt projectionToHypersurface} and then uses a {\tt BruteForce} strategy.
+	    
             {\tt LinearIntersection} intersects with an appropriately random linear space.
+	    
             {\tt HybridProjectionIntersection} does a generic projection, followed by a linear intersection. Notice that speed, or success, varies depending on the strategy.
     SeeAlso
         randomPoints
@@ -1125,6 +1121,24 @@ doc ///
         projectionToHypersurface
 ///
 *-
+doc///
+    Key 
+        NumThreadsToUse
+        [randomPoints, NumThreadsToUse]
+    Headline
+        Number of threads the the function will use to search for a point 
+    Description
+        Text
+            When calling {\tt randomPoints}, and functions that call it, with a {\tt BruteForce} strategy, this denotes the number of threads for brute force point checking.
+        Example
+            R = ZZ/11[x,y,z];
+            I = ideal(x,y);
+	    allowableThreads = 8;
+            randomPoints(I, NumThreadsToUse=>4)
+    SeeAlso
+        randomPoints
+///
+
 doc///
     Key 
         PointCheckAttempts
@@ -1150,19 +1164,19 @@ doc///
 doc ///
     Key
         randomPoints
-        (randomPoints,ZZ,Ideal)
-        (randomPoints, Ideal)
+	(randomPoints, Ideal)
+        (randomPoints, ZZ, Ideal)
         [randomPoints, Homogeneous]
         [randomPoints, ExtendField]
         [randomPoints, Codimension]
     Headline
         a function to find random points  in a variety. 
     Usage
+        randomPoints(I) 
         randomPoints(n, I)
-        randomPoints(I)
         randomPoints(n, I, Strategy => GenericProjection)
         randomPoints(n, I, Strategy => LinearIntersection)
-        randomPoints(n,I, Strategy=> HybridProjectionIntersection)
+        randomPoints(n, I, Strategy => HybridProjectionIntersection)
     Inputs
         n: ZZ
             an integer denoting the number of desired points.
@@ -1173,18 +1187,18 @@ doc ///
         Strategy => String
             to specify which strategy to use, BruteForce, LinearIntersection, GenericProjection, HybridProjectionIntersection
         ProjectionAttempts => ZZ
-            can be changed
+            see @TO ProjectionAttempts@
         MaxCoordinatesToReplace => ZZ
-            can be changed
+            see @TO MaxCoordinatesToReplace@
         Codimension => ZZ
-            can be changed
+            see @TO Codimension@
         ExtendField => Boolean
         IntersectionAttempts => ZZ
-            can be changed
+            see @TO IntersectionAttempts@
 	PointCheckAttempts => ZZ
-	    points to search in total
+	    points to search in total, see @TO PointCheckAttempts@
         NumThreadsToUse => ZZ
-	    number of threads to use
+	    number of threads to use, see @TO NumThreadsToUse@
     Outputs
         :List
             a list of points in the variety with possible repetitions.
@@ -1287,36 +1301,6 @@ doc ///
         findANonZeroMinor
 ///
 
-
--*doc ///
-    Key
-        mtSearchPoints
-        (mtSearchPoints, Ideal)
-    Headline
-        searching points in $V(I)$ using multiple threads
-    Usage
-        mtSearchPoints I   
-    Inputs
-        I:Ideal
-            an ideal in a polynomial Ring
-        PointCheckAttempts => ZZ
-            points to search in total
-        NumThreadsToUse => ZZ
-            number of threads to use
-        ReturnAllResults => Boolean
-            whether to search and return all found points
-    Outputs
-        :List
-            a list of points in the variety $V(I)$.
-    Description
-        Text
-            This function use NumThreadsToUse threads to search for points in the variety.
-        Example
-            R=ZZ/101[x,y,z];
-            I = ideal "xy-z,x2-y+z-1";
-            mtSearchPoints I
-///
-*-
  ----- TESTS -----
 
 --this test tests ....
