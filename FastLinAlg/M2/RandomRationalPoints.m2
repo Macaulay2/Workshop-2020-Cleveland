@@ -481,6 +481,81 @@ randomPointViaLinearIntersection(Ideal) := opts -> (I1) -> (
     varList := drop(gens R1, d1);
     while(i < opts.IntersectionAttempts) do (
         targetSpace = kk[varList];
+        if (opts.Replacement == Binomial) then (
+            phiMatrix = getRandomForms(targetSpace, {c1, 0, d1-c1,0}, Homogeneous => false, Verify=>true);
+        )
+        else if (opts.Replacement == Full) then (
+            phiMatrix = getRandomForms(targetSpace, {c1, 0, 0, d1-c1}, Homogeneous => false, Verify=>true);
+        );
+--        phiMatrix = apply(#(gens R1)-c1, l -> random(1, targetSpace) + random(0, targetSpace) );
+--        apply(c1, t -> phiMatrix = insert(random(#phiMatrix + 1), (gens targetSpace)#t, phiMatrix)); --this trick was stolen from Cremona.
+        --phiMatrix = insert(random(c1), (gens targetSpace)#(random(c1)), apply(#(gens R1)-1, l -> random(1, targetSpace) + random(0, targetSpace) )); --random linear maps, plus one random variable
+        if (debugLevel > 0 or opts.Verbose == true) then print concatenate("randomPointViaLinearIntersection:  Doing a loop with:", toString(phiMatrix));
+        phi = map(targetSpace, R1, phiMatrix);
+        J1 = phi(I1);
+        if (dim J1 == 0) then (
+            if (c1 == 1) then ( --if we are intersecting with a line, we can go slightly faster by using factor instead of decompose
+                ptList = apply(toList factor(gcd(first entries gens J1)), t->ideal(t#0));
+            )
+            else (
+                ptList = random decompose(J1);
+            );
+            j = 0;
+            while (j < #ptList) do (
+                myDeg = degree(ptList#j);
+                myDim = dim(ptList#j);
+                if (myDim == 0) and (myDeg == 1) then (
+                    finalPoint = first entries evalAtPoint(R1, matrix{phiMatrix}, idealToPoint(ptList#j));
+                    --finalPoint = apply(idealToPoint(ptList#j), s -> sub(s, R1));
+                    if (verifyPoint(finalPoint, I1, opts)) then return finalPoint;
+                )
+                else if (myDim == 0) and (opts.ExtendField == true) then (
+                    if (debugLevel > 0) or (opts.Verbose) then print "randomPointViaLinearIntersection:  extending the field.";
+                    psi = (extendFieldByDegree(myDeg, targetSpace))#1;
+                    newR1 := target psi;
+                    m2 = psi(ptList#j);
+                    newPtList = random decompose(m2); --make sure we are picking points randomly from this decomposition
+                    if (#newPtList > 0) then ( 
+                        finalPoint = first entries evalAtPoint(newR1, matrix{phiMatrix}, idealToPoint(newPtList#j));
+                        --finalPoint =  apply(idealToPoint(newPtList#0), s -> sub(s, target phi));
+                        if (verifyPoint(finalPoint, I1, opts)) then return finalPoint;
+                    ); 
+                );
+                j = j+1;
+            );
+        );
+        if (debugLevel > 0) or (opts.Verbose) then print "randomPointViaLinearIntersection:  failed, looping and trying a new linear space.";
+        i = i+1;
+    );
+    return {};
+);
+
+
+randomPointViaLinearIntersectionOld = method(Options => optRandomPoints);
+
+randomPointViaLinearIntersectionOld(Ideal) := opts -> (I1) -> (
+    c1 := opts.Codimension;
+    if (c1 === null) then (c1 = codim I1); --don't compute it if we already know it.
+    R1 := ring I1;
+    d1 := dim R1 - c1;
+    i := 0;
+    j := 0;
+    local finalPoint;
+    local ptList; local newPtList;
+    local phi;
+    local psi;
+    local myDeg;
+    local myDim;
+    local m2;
+    local targetSpace;
+    local phiMatrix;
+    local J1;
+    local myPowerList;
+    local kk; --the extended field, if we extended
+    kk = coefficientRing(R1);
+    varList := drop(gens R1, d1);
+    while(i < opts.IntersectionAttempts) do (
+        targetSpace = kk[varList];
         phiMatrix = apply(#(gens R1)-c1, l -> random(1, targetSpace) + random(0, targetSpace) );
         apply(c1, t -> phiMatrix = insert(random(#phiMatrix + 1), (gens targetSpace)#t, phiMatrix)); --this trick was stolen from Cremona.
         --phiMatrix = insert(random(c1), (gens targetSpace)#(random(c1)), apply(#(gens R1)-1, l -> random(1, targetSpace) + random(0, targetSpace) )); --random linear maps, plus one random variable
@@ -527,9 +602,9 @@ randomPointViaLinearIntersection(Ideal) := opts -> (I1) -> (
 
 
 
-randomPointViaLinearIntersectionOld = method(Options => optRandomPoints);
+randomPointViaLinearIntersectionOlder = method(Options => optRandomPoints);
 
-randomPointViaLinearIntersectionOld(Ideal) := opts -> (I1) -> (
+randomPointViaLinearIntersectionOlder(Ideal) := opts -> (I1) -> (
     c1 := opts.Codimension;
     if (c1 === null) then (c1 = codim I1); --don't compute it if we already know it.
     R1 := ring I1;
