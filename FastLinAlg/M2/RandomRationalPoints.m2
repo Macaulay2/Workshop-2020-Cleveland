@@ -1,4 +1,4 @@
--- -*- coding: utf-8 -*-
+
 newPackage(
         "RandomRationalPoints",
     	Version => "1.2",
