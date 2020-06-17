@@ -28,6 +28,7 @@ export {
 	"findANonZeroMinor",
     "randomPointViaLinearIntersection", --these are here for debugging purposes
     "randomPointViaLinearIntersectionOld", --these are here for debugging purposes
+    "getRandomForms", --here for debugging purposes
 	"MyOption",
 	"NumPointsToCheck", 
 	"Codimension",
@@ -56,11 +57,11 @@ installMinprimes();
 optRandomPoints := {
     Strategy=>BruteForce, 
     Homogeneous => true,  
-    MaxCoordinatesToReplace => 0, 
+    MaxCoordinatesToReplace => 1, 
     Replacement => Binomial,
     Codimension => null,
     IntersectionAttempts => 20,
-    ProjectionAttempts => 20,
+    ProjectionAttempts => 30,
     ExtendField => false,
     PointCheckAttempts => 100,
     NumThreadsToUse => 1,
@@ -152,34 +153,21 @@ randomCoordinateChange(Ring) := opts -> (R1) -> (
     if not class R1 === PolynomialRing then error "randomCoordinateChange: expected a polynomial ring";
     myMon := monoid R1;
     S1 := (coefficientRing R1)(myMon);
-    genList := random gens R1;
-    genCount := #(genList);
-    local replacementFunction;
+    d1 := #gens R1;
+    local genList;
     if (opts.Replacement == Binomial) then (
-        if opts.Homogeneous then (
-            replacementFunction = trm -> (v2 := (random(0, R1))*trm + (random(0, R1))*(genList#(random(#genList))); if (v2 == 0) then trm else v2);) 
-        else (
-            replacementFunction = trm -> ((random(0, R1))*trm + random(0, R1));
-        );
-    )
+        genList = getRandomForms(R1, {0, max(d1 - opts.MaxCoordinatesToReplace, 0), min(d1, opts.MaxCoordinatesToReplace), 0}, Homogeneous => opts.Homogeneous, Verbose=>opts.Verbose, Verify=>true); )
     else if (opts.Replacement == Full) then (
-        if opts.Homogeneous then (
-            replacementFunction = trm -> random(1, R1);)
-        else (
-            replacementFunction = trm -> random(1, R1)+random(0, R1);
-        );
-    );
-    genList = random apply(genCount, t -> if (t < opts.MaxCoordinatesToReplace) then replacementFunction(genList#t) else genList#t);
-    phi = map(R1, S1, genList);
-    --if it's working, great, otherwise recurse
-    if (rank jacobian matrix phi >= genCount) then return phi else return randomCoordinateChange(R1, opts);
+        genList = getRandomForms(R1, {0, max(d1 - opts.MaxCoordinatesToReplace, 0), 0, min(d1, opts.MaxCoordinatesToReplace)}, Homogeneous => opts.Homogeneous, Verbose=>opts.Verbose, Verify=>true); );
+--    genList = random apply(genCount, t -> if (t < opts.MaxCoordinatesToReplace) then replacementFunction(genList#t) else genList#t);
+    return map(R1, S1, genList);
 );
 
 
 genericProjection = method(Options=>optCoorindateChange);
 
 genericProjection(Ideal) := opts -> (I1) -> (
-    return genericProjection(1, I1, opts);
+    return genericProjectionByKernel(1, I1, opts);
 );
 
 genericProjection(ZZ, Ideal) := opts -> (n1, I1) -> (
@@ -216,27 +204,27 @@ genericProjectionOriginal(ZZ, Ideal) := opts -> (n1, I1) -> (
 genericProjectionByKernel = method(Options=>optCoorindateChange);
 
 genericProjectionByKernel(ZZ, Ideal) := opts -> (n1, I1) -> (
-    if (debugLevel > 0) or (opts.Verbose) then print concatenate("genericProjection (dropping ", toString(n1), " dimension):  Starting, Replacement =>", toString(opts.Replacement), ", MaxCoordinatesToReplace => ", toString(opts.MaxCoordinatesToReplace));
+    if (debugLevel > 0) or (opts.Verbose) then print concatenate("genericProjectionByKernel (dropping ", toString(n1), " dimension):  Starting, Replacement =>", toString(opts.Replacement), ", MaxCoordinatesToReplace => ", toString(opts.MaxCoordinatesToReplace));
     R1 := ring I1;
-    psi := randomCoordinateChange(R1, opts);
+    local psi;
+    if not class R1 === PolynomialRing then error "genericProjectionByKernel: expected an ideal in a polynomial ring";
     if (n1 <= 0) then( --if we don't want to project
-        local psiInv;
-        flag := true;
-        while (flag) do (
-            try psiInv = inverse(psi) then (flag = false) else (psi = randomCoordinateChange(R1, opts));
-        );
-        I2 := psiInv(I1);
-        return(psi, I2); --if we don't actually want to project
+        return(map(R1, R1), I1); --if we don't actually want to project
     ); 
     kk:=coefficientRing R1;
     myVars := drop(gens R1, n1);
     Rs := kk(monoid[myVars]);
-    d1 := dim I1;
-    L1 := drop(first entries matrix psi, n1);
-    myMap := map(R1/I1, Rs, L1);
+    d2 := #myVars;
+    local genList;
+    if (opts.Replacement == Binomial) then (
+        genList = getRandomForms(R1, {0, max(d2 - opts.MaxCoordinatesToReplace, 0), min(d2, opts.MaxCoordinatesToReplace), 0}, Homogeneous => opts.Homogeneous, Verbose=>opts.Verbose, Verify=>true); )
+    else if (opts.Replacement == Full) then (
+        genList = getRandomForms(R1, {0, max(d2 - opts.MaxCoordinatesToReplace, 0), 0, min(d2, opts.MaxCoordinatesToReplace)}, Homogeneous => opts.Homogeneous, Verbose=>opts.Verbose, Verify=>true); );
+--    genList = random apply(genCount, t -> if (t < opts.MaxCoordinatesToReplace) then replacementFunction(genList#t) else genList#t);
+    psi = map(R1, Rs, genList);
+    myMap := map(R1/I1, Rs, genList);
     K2 := ker(myMap);
-    phi := map(R1, Rs, L1);
-    return(phi, K2);
+    return(psi, K2);
 );
 
 genericProjection(ZZ, Ring) := opts -> (n1, R1) -> (
@@ -268,7 +256,7 @@ projectionToHypersurface(Ideal) := opts -> (I1) -> (
 );*-
 
 projectionToHypersurface(Ring) := opts -> (R1) -> (
-    LO := projectionToHypersurface(ideal R1);
+    LO := projectionToHypersurface(ideal R1, opts);
     phi := map(R1, (source (LO#0))/(LO#1), matrix (LO#0) );
     return (phi, source phi);
 );
@@ -276,20 +264,33 @@ projectionToHypersurface(Ring) := opts -> (R1) -> (
 --projectionToHypersurfaceV2 = method(Options=>optProjectionToHypersurface);
 
 projectionToHypersurface(Ideal) := opts -> (I1) -> (
-    R1 := ring I1;
-    if (class R1 =!= PolynomialRing) then error "genericProjection:  expected an ideal in a polynomial ring.";
     local c1;
+    R1 := ring I1;
+    if (class R1 =!= PolynomialRing) then error "projectionToHypersurface:  expected an ideal in a polynomial ring.";
+    
     if (opts.Codimension === null) then (
         c1 = codim I1;
     ) else (c1 = opts.Codimension);
     if (c1 <= 1) then return (map(R1, R1), I1); --its already a hypersurface
+    n1 := c1-1;
+    
+    --build the target ring
     kk:=coefficientRing R1;
-    S1 := kk(monoid[drop(gens R1, c1-1)]);
-    local phi;
-    L1 := first entries matrix randomCoordinateChange(R1, Homogeneous => opts.Homogeneous, MaxCoordinatesToReplace => opts.MaxCoordinatesToReplace, Replacement => opts.Replacement, Verbose=>opts.Verbose);
-    phi = map(R1/I1, S1, drop(L1, c1-1));
-    J1 := ker(phi, SubringLimit=>1);
-    return (phi, J1);
+    myVars := drop(gens R1, n1);
+    Rs := kk(monoid[myVars]);
+    d2 := #myVars;
+    
+    --build the replacement map
+    local genList;
+    if (opts.Replacement == Binomial) then (
+        genList = getRandomForms(R1, {0, max(d2 - opts.MaxCoordinatesToReplace, 0), min(d2, opts.MaxCoordinatesToReplace), 0}, Homogeneous => opts.Homogeneous, Verbose=>opts.Verbose, Verify=>true); )
+    else if (opts.Replacement == Full) then (
+        genList = getRandomForms(R1, {0, max(d2 - opts.MaxCoordinatesToReplace, 0), 0, min(d2, opts.MaxCoordinatesToReplace)}, Homogeneous => opts.Homogeneous, Verbose=>opts.Verbose, Verify=>true); );
+--    genList = random apply(genCount, t -> if (t < opts.MaxCoordinatesToReplace) then replacementFunction(genList#t) else genList#t);
+    psi := map(R1, Rs, genList);
+    myMap := map(R1/I1, Rs, genList);
+    J1 := ker(myMap, SubringLimit=>1);
+    return (psi, J1);
 );
 
 
@@ -336,6 +337,53 @@ verifyPoint(List, Ideal) := opts -> (finalPoint, I1) -> (
     return true;
 );
 
+--The following gets a list of random forms in a ring.  You specify how many.  
+--if Verify is true, it will check to for linear independence of the monomial, binomial and randForms 
+getRandomForms = method(Options => {Verify => false, Homogeneous => false, Verbose=>true});
+getRandomForms(Ring, List) := opts -> (R1, L1) ->(
+    if (opts.Verbose) or (debugLevel > 0) then print "getRandomForms: starting";
+    constForms := L1#0;
+    monomialForms := L1#1;
+    binomialForms := L1#2; 
+    randForms := L1#3;
+    formList := {}; 
+    genList := gens R1;
+    d := #genList;
+    --tempList is used if Verify => true, it tries to maximize linear independence of monomial and binomial forms,
+    --this is important if you are trying to verify some ring map is actually surjective 
+    tempList := random genList;
+    if (opts.Verify) then (
+        if (#tempList < monomialForms + binomialForms) then (tempList = tempList | apply(monomialForms + binomialForms - #tempList, i->(genList)#(random d)));
+    );
+    if (opts.Homogeneous) then (
+        if (opts.Verbose) or (debugLevel > 0) then print "getRandomForms: generating homogeneous forms.";
+        if (opts.Verify) then (formList = formList | apply(monomialForms, i -> (tempList)#i);)
+        else (formList = formList | apply(monomialForms, i -> (genList)#(random(d))););
+        if (opts.Verify) then (formList = formList | apply(binomialForms, i -> (tempList)#(i+monomialForms) + (random(0, R1))*(genList)#(random(d)));) 
+        else (formList = formList | apply(binomialForms, i -> (genList)#(random(d)) + (random(0, R1))*(genList)#(random(d))););
+        formList = formList | apply(randForms, i-> random(1, R1));
+    )
+    else(
+        if (opts.Verbose) or (debugLevel > 0) then print "getRandomForms: generating non-homogeneous forms.";
+        if (opts.Verify) then (formList = formList | apply(monomialForms, i -> random(0, R1) + (tempList)#i);)
+        else (formList = formList | apply(monomialForms, i -> random(0, R1) + (genList)#(random(d))););
+        if (opts.Verify) then (formList = formList | apply(binomialForms, i -> random(0, R1) + (tempList)#(i+monomialForms) + (random(0, R1))*(genList)#(random(d)));) 
+        else (formList = formList | apply(binomialForms, i -> random(0, R1) + (genList)#(random(d)) + (random(0, R1))*(genList)#(random(d))););
+        formList = formList | apply(randForms, i->random(0, R1) + random(1, R1));
+    );
+    if (opts.Verify) and (#formList > 0) then ( --if we are checking our work
+        J1 := jacobian ideal formList;
+        val := min(d, #formList);
+        if (rank J1 < val) then ( 
+            if (opts.Verbose) or (debugLevel > 0) then print "getRandomForms: forms were not random enough, trying again recusrively.";            
+            return getRandomForms(R1, L1, opts);
+        );
+    );
+    formList = formList | apply(constForms, i -> random(0, R1));
+
+    return random formList;
+);
+
 randomPointViaLinearProjection = method(Options => optRandomPoints);
 randomPointViaLinearProjection(Ideal) := opts -> (I1) -> (
     if (opts.Verbose or debugLevel > 0) then print "randomPointViaLinearProjection: starting";
@@ -376,6 +424,7 @@ randomPointViaLinearProjection(Ideal) := opts -> (I1) -> (
         pt = searchPoints(1, source phi, {});
         if (not pt === {}) then (
             J0 = I1 + sub(ideal apply(dim source phi, i -> ((first entries matrix phi)#i) - sub(pt#i, target phi)), target phi); --lift the point to the original locus
+            print sub(ideal apply(dim source phi, i -> ((first entries matrix phi)#i) - sub(pt#i, target phi)), target phi);
             if dim(J0) == 0 then( --hopefully the preimage is made of points
                 ptList = random decompose(J0);
                 j = 0;
@@ -433,7 +482,10 @@ randomPointViaLinearIntersection(Ideal) := opts -> (I1) -> (
     varList := drop(gens R1, d1);
     while(i < opts.IntersectionAttempts) do (
         targetSpace = kk[varList];
-        phiMatrix = insert(random(c1), (gens targetSpace)#(random(c1)), apply(#(gens R1)-1, l -> random(1, targetSpace) + random(0, targetSpace) )); --random linear maps, plus one random variable
+        phiMatrix = apply(#(gens R1)-c1, l -> random(1, targetSpace) + random(0, targetSpace) );
+        apply(c1, t -> phiMatrix = insert(random(#phiMatrix + 1), (gens targetSpace)#t, phiMatrix)); --this trick was stolen from Cremona.
+        --phiMatrix = insert(random(c1), (gens targetSpace)#(random(c1)), apply(#(gens R1)-1, l -> random(1, targetSpace) + random(0, targetSpace) )); --random linear maps, plus one random variable
+        if (debugLevel > 0 or opts.Verbose == true) then print concatenate("randomPointViaLinearIntersection:  Doing a loop with:", toString(phiMatrix));
         phi = map(targetSpace, R1, phiMatrix);
         J1 = phi(I1);
         if (dim J1 == 0) then (
@@ -566,6 +618,7 @@ randomPointViaGenericProjection(Ideal) := opts -> (I1) -> (
             (phi, I0) = projectionToHypersurface(I1, Homogeneous=>opts.Homogeneous, Replacement => opts.Replacement, MaxCoordinatesToReplace => opts.MaxCoordinatesToReplace, Codimension => opts.Codimension, Verbose=>opts.Verbose);
         );
         if (codim I0 == 1) then (
+            if (debugLevel > 0) or opts.Verbose then print "randomPointViaGenericProjection:  found a good generic projection, now finding a point on it.";
             if (opts.Strategy == GenericProjection) then (
                 pt = randomPoints(I0, switchStrategy(opts, BruteForce)))
             else if (opts.Strategy == HybridProjectionIntersection) then (
@@ -596,6 +649,9 @@ randomPointViaGenericProjection(Ideal) := opts -> (I1) -> (
                         j = j+1;
                     )
                 )
+                else(
+                    if (debugLevel > 0) or opts.Verbose then print "randomPointViaGenericProjection:  Lift of point is not a point (our projection was not sufficiently generic).";
+                );
             );
         );
         if (debugLevel > 0) or (opts.Verbose) then print "randomPointViaGenericProjection: That didn't work, trying again...";
