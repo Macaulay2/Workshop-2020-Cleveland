@@ -32,6 +32,7 @@ I2 =  ideal(YY_8^2-YY_7*YY_9,YY_6*YY_8-YY_5*YY_9,YY_3*YY_8-YY_2*YY_9,YY_2*YY_8-Y
       10*YY_1*YY_3-YY_2*YY_3+10*YY_3^2+YY_4*YY_8+10*YY_4*YY_9,YY_1^2-YY_3^2+YY_4*YY_7+20*YY_4*YY_8-YY_4*YY_9);
 M2 = jacobian I2;
 J2 = I2 + chooseGoodMinors(15, 7, M2);
+J3 = I2 + chooseGoodMinors(35, 7, M2);
 
 
 extendingIdealByNonVanishingMinor(I, M, 4, Strategy=>GenericProjection)
