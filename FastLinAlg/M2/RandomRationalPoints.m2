@@ -40,7 +40,7 @@ export {
     "GenericProjection",  --a valid value for [RandomPoint, Strategy]
     "HybridProjectionIntersection", --a valid value for [RandomPoint, Strategy]
     "LinearIntersection",  --a valid value for [RandomPoint, Strategy]
-    "LinearProjection", --a valid value for [RandomPoint, Strategy]
+--    "LinearProjection", --a valid value for [RandomPoint, Strategy]
     --"MultiThreads",  --a valid value for [RandomPoint, Strategy]
 	"ProjectionAttempts", --used in the GenericProjection strategy
     "IntersectionAttempts", --used in the LinearIntersection strategy
@@ -390,82 +390,10 @@ getRandomForms(Ring, List) := opts -> (R1, L1) ->(
     return random formList;
 );
 
-randomPointViaLinearProjection = method(Options => optRandomPoints);
-randomPointViaLinearProjection(Ideal) := opts -> (I1) -> (
-    if (opts.Verbose or debugLevel > 0) then print "randomPointViaLinearProjection: starting";
-    flag := true;
-    local phi;
-    local psi;
-    local I0;
-    local J0;
-    local pt;
-    local ptList;
-    local j;
-    local finalPoint;
-    local newPtList;
-    local phi;
-    local myDeg;
-    local m2;
-    R1 := ring I1;  
-    i := 0;
-    while(flag) and (i < opts.ProjectionAttempts) do (
-        if (opts.Codimension === null) then (
-            c1 := codim I1;
-            if (c1 == 0) then ( --don't project, if we are already a space
-                phi = map(ring I1, ring I1);
-                I0 = I1;
-            )
-            else(
-                (phi, I0) = genericProjection(c1, ideal(0_(ring I1)), Homogeneous=>opts.Homogeneous, MaxCoordinatesToReplace => opts.MaxCoordinatesToReplace, Replacement => opts.Replacement, Verbose=>opts.Verbose);
-            );
-        )
-        else if (opts.Codimension == 0) then (
-            phi = map(ring I1, ring I1);
-            I0 = I1;
-        )
-        else(
-            (phi, I0) = genericProjection(opts.Codimension, ideal(0_(ring I1)), Homogeneous=>opts.Homogeneous, MaxCoordinatesToReplace => opts.MaxCoordinatesToReplace, Replacement => opts.Replacement, Verbose=>opts.Verbose);
-        );
-        I0 = sub(I1, ring I0);
-        pt = searchPoints(1, source phi, {});
-        if (not pt === {}) then (
-            J0 = I1 + sub(ideal apply(dim source phi, i -> ((first entries matrix phi)#i) - sub(pt#i, target phi)), target phi); --lift the point to the original locus
-            print sub(ideal apply(dim source phi, i -> ((first entries matrix phi)#i) - sub(pt#i, target phi)), target phi);
-            if dim(J0) == 0 then( --hopefully the preimage is made of points
-                ptList = random decompose(J0);
-                j = 0;
-                while (j < #ptList) do (
-                    myDeg = degree (ptList#j);
-                    --print myDeg;
-                    if (myDeg == 1) then (
-                        finalPoint = apply(idealToPoint(ptList#j), s -> sub(s, coefficientRing ring I1));
-                        if (verifyPoint(finalPoint, I1, opts)) then return finalPoint;
-                    )                        
-                    else if (opts.ExtendField == true) then (
-                        if (debugLevel > 0) or (opts.Verbose) then print "randomPointViaLinearProjection:  extending the field.";
-                        psi = (extendFieldByDegree(myDeg, R1))#1;
-                        m2 = psi(ptList#j);
-                        newPtList = random decompose(m2);
-                        if (#newPtList > 0) then ( 
-                            finalPoint = apply(idealToPoint(newPtList#0), s -> sub(s, target psi));
-                            if (verifyPoint(finalPoint, I1, opts)) then return finalPoint;
-                        ); 
-                    );
-                    j = j+1;
-                );
-            )
-            else if (debugLevel > 0) or (opts.Verbose == true) then print "randomPointViaLinearProjection: dimension is wrong.";
-        );
-    
-        if (debugLevel > 0) or (opts.Verbose) then print "randomPointViaLinearProjection: That didn't work, trying again...";
-        i = i+1;
-    );
-    return {};
-);
-
 randomPointViaLinearIntersection = method(Options => optRandomPoints);
 
-randomPointViaLinearIntersection(Ideal) := opts -> (I1) -> (
+randomPointViaLinearIntersection(ZZ, Ideal) := opts -> (n1, I1) -> (
+    returnPointsList := {};
     c1 := opts.Codimension;
     if (c1 === null) then (c1 = codim I1); --don't compute it if we already know it.
     R1 := ring I1;
@@ -489,7 +417,7 @@ randomPointViaLinearIntersection(Ideal) := opts -> (I1) -> (
     varList := drop(gens R1, d1);
     toReplace := max(0, min(opts.MaxCoordinatesToReplace, c1));
     toTrivialize := min(d1, opts.MaxCoordinatesToTrivalize);
-    while(i < opts.IntersectionAttempts) do (
+    while(i < opts.IntersectionAttempts) and (#returnPointsList < n1) do (
         targetSpace = kk[varList];
         
         if (opts.Replacement == Binomial) then (
@@ -514,13 +442,13 @@ randomPointViaLinearIntersection(Ideal) := opts -> (I1) -> (
                 ptList = random decompose(J1);
             );
             j = 0;
-            while (j < #ptList) do (
+            while (j < #ptList) and (#returnPointsList < n1) do (
                 myDeg = degree(ptList#j);
                 myDim = dim(ptList#j);
                 if (myDim == 0) and (myDeg == 1) then (
                     finalPoint = first entries evalAtPoint(R1, matrix{phiMatrix}, idealToPoint(ptList#j));
                     --finalPoint = apply(idealToPoint(ptList#j), s -> sub(s, R1));
-                    if (verifyPoint(finalPoint, I1, opts)) then return finalPoint;
+                    if (verifyPoint(finalPoint, I1, opts)) then returnPointsList = append(returnPointsList, finalPoint);
                 )
                 else if (myDim == 0) and (opts.ExtendField == true) then (
                     if (debugLevel > 0) or (opts.Verbose) then print "randomPointViaLinearIntersection:  extending the field.";
@@ -528,156 +456,39 @@ randomPointViaLinearIntersection(Ideal) := opts -> (I1) -> (
                     newR1 := target psi;
                     m2 = psi(ptList#j);
                     newPtList = random decompose(m2); --make sure we are picking points randomly from this decomposition
+                    --since these points are going to be conjugate, we only pick 1.  
                     if (#newPtList > 0) then ( 
-                        finalPoint = first entries evalAtPoint(newR1, matrix{phiMatrix}, idealToPoint(newPtList#j));
+                        finalPoint = first entries evalAtPoint(newR1, matrix{phiMatrix}, idealToPoint(newPtList#0));
                         --finalPoint =  apply(idealToPoint(newPtList#0), s -> sub(s, target phi));
-                        if (verifyPoint(finalPoint, I1, opts)) then return finalPoint;
+                        if (verifyPoint(finalPoint, I1, opts)) then returnPointsList = append(returnPointsList, finalPoint);
                     ); 
                 );
                 j = j+1;
             );
         );
-        if (debugLevel > 0) or (opts.Verbose) then print "randomPointViaLinearIntersection:  failed, looping and trying a new linear space.";
-        i = i+1;
-    );
-    return {};
-);
-
-
-randomPointViaLinearIntersectionOld = method(Options => optRandomPoints);
-
-randomPointViaLinearIntersectionOld(Ideal) := opts -> (I1) -> (
-    c1 := opts.Codimension;
-    if (c1 === null) then (c1 = codim I1); --don't compute it if we already know it.
-    R1 := ring I1;
-    d1 := dim R1 - c1;
-    i := 0;
-    j := 0;
-    local finalPoint;
-    local ptList; local newPtList;
-    local phi;
-    local psi;
-    local myDeg;
-    local myDim;
-    local m2;
-    local targetSpace;
-    local phiMatrix;
-    local J1;
-    local myPowerList;
-    local kk; --the extended field, if we extended
-    kk = coefficientRing(R1);
-    varList := drop(gens R1, d1);
-    while(i < opts.IntersectionAttempts) do (
-        targetSpace = kk[varList];
-        phiMatrix = apply(#(gens R1)-c1, l -> random(1, targetSpace) + random(0, targetSpace) );
-        apply(c1, t -> phiMatrix = insert(random(#phiMatrix + 1), (gens targetSpace)#t, phiMatrix)); --this trick was stolen from Cremona.
-        --phiMatrix = insert(random(c1), (gens targetSpace)#(random(c1)), apply(#(gens R1)-1, l -> random(1, targetSpace) + random(0, targetSpace) )); --random linear maps, plus one random variable
-        if (debugLevel > 0 or opts.Verbose == true) then print concatenate("randomPointViaLinearIntersection:  Doing a loop with:", toString(phiMatrix));
-        phi = map(targetSpace, R1, phiMatrix);
-        J1 = phi(I1);
-        if (dim J1 == 0) then (
-            if (c1 == 1) then ( --if we are intersecting with a line, we can go slightly faster by using factor instead of decompose
-                ptList = apply(toList factor(gcd(first entries gens J1)), t->ideal(t#0));
-            )
-            else (
-                ptList = random decompose(J1);
-            );
-            j = 0;
-            while (j < #ptList) do (
-                myDeg = degree(ptList#j);
-                myDim = dim(ptList#j);
-                if (myDim == 0) and (myDeg == 1) then (
-                    finalPoint = first entries evalAtPoint(R1, matrix{phiMatrix}, idealToPoint(ptList#j));
-                    --finalPoint = apply(idealToPoint(ptList#j), s -> sub(s, R1));
-                    if (verifyPoint(finalPoint, I1, opts)) then return finalPoint;
-                )
-                else if (myDim == 0) and (opts.ExtendField == true) then (
-                    if (debugLevel > 0) or (opts.Verbose) then print "randomPointViaLinearIntersection:  extending the field.";
-                    psi = (extendFieldByDegree(myDeg, targetSpace))#1;
-                    newR1 := target psi;
-                    m2 = psi(ptList#j);
-                    newPtList = random decompose(m2); --make sure we are picking points randomly from this decomposition
-                    if (#newPtList > 0) then ( 
-                        finalPoint = first entries evalAtPoint(newR1, matrix{phiMatrix}, idealToPoint(newPtList#j));
-                        --finalPoint =  apply(idealToPoint(newPtList#0), s -> sub(s, target phi));
-                        if (verifyPoint(finalPoint, I1, opts)) then return finalPoint;
-                    ); 
-                );
-                j = j+1;
-            );
+        if (debugLevel > 0) or (opts.Verbose) then(
+            if (#returnPointsList < n1) then 
+                print ("randomPointViaLinearIntersection:  found " | toString(#returnPointsList) | " points so far, trying a new linear space.")
+            else print ("randomPointViaLinearIntersection:  found " | toString(#returnPointsList) | " points so far, stopping.");
         );
-        if (debugLevel > 0) or (opts.Verbose) then print "randomPointViaLinearIntersection:  failed, looping and trying a new linear space.";
         i = i+1;
     );
-    return {};
+    return returnPointsList;
 );
-
-
-
-
-randomPointViaLinearIntersectionOlder = method(Options => optRandomPoints);
-
-randomPointViaLinearIntersectionOlder(Ideal) := opts -> (I1) -> (
-    c1 := opts.Codimension;
-    if (c1 === null) then (c1 = codim I1); --don't compute it if we already know it.
-    R1 := ring I1;
-    local linearSpace;
-    i := 0;
-    j := 0 ;
-    local finalPoint;
-    local ptList; local newPtList;
-    local phi;
-    local myDeg;
-    local m2;
-    --1/0;
-    while(i < opts.IntersectionAttempts) do (
-        linearSpace = ideal apply((dim R1) - c1, i -> random(1, R1) + random(0, R1));
-        J0 := linearSpace + I1;
-        if (dim J0 == 0) then (
-            ptList = random decompose(J0);
-            j = 0;
-            while (j < #ptList) do (
-                myDeg = degree(ptList#j);
-                if (myDeg == 1) then (
-                    finalPoint = apply(idealToPoint(ptList#j), s -> sub(s, R1));
-                    return finalPoint;
-                )
-                else if (opts.ExtendField == true) then (
-                    if (debugLevel > 0) or (opts.Verbose) then print "randomPointViaLinearIntersection:  extending the field.";
-                    phi = (extendFieldByDegree(myDeg, R1))#1;
-                    m2 = phi(ptList#j);
-                    newPtList = random decompose(m2); --make sure we are picking points randomly from this decomposition
---                    1/0;
-                    if (#newPtList > 0) then ( 
-                        finalPoint =  apply(idealToPoint(newPtList#0), s -> sub(s, target phi));
-                        if (opts.Homogeneous) then ( --only return point in the homogeneous case if its not the origin
-                            if (any(finalPoint, t -> t != 0)) then return finalPoint;
-                        )
-                        else(
-                            return finalPoint;
-                        );
-                    ); 
-                );
-                j = j+1;
-            );
-        );
-        if (debugLevel > 0) or (opts.Verbose) then print "randomPointViaLinearIntersection:  failed, looping and trying a new linear space.";
-        i = i+1;
-    );
-    return {};
-);
-
 
 randomPointViaGenericProjection = method(Options => optRandomPoints);
-randomPointViaGenericProjection(Ideal) := opts -> (I1) -> (
+randomPointViaGenericProjection(ZZ, Ideal) := opts -> (n1, I1) -> (
+    pointsList := {}; --a list of points to output
     flag := true;
     local phi;
     local psi;
     local I0;
     local J0;
     local pt;
+    local pts; --a list of points produced by 
     local ptList;
     local j;
+    local k;
     local finalPoint;
     local newPtList;
     local phi;
@@ -686,7 +497,7 @@ randomPointViaGenericProjection(Ideal) := opts -> (I1) -> (
     local m2;
     R1 := ring I1;  
     i := 0;
-    while(flag) and (i < opts.ProjectionAttempts) do (
+    while (flag) and (i < opts.ProjectionAttempts) and (#pointsList < n1) do (
         if (opts.Codimension === null) then (
             c1 := codim I1;
             if (c1 == 1) then ( --don't project, if we are already a hypersurface
@@ -707,44 +518,49 @@ randomPointViaGenericProjection(Ideal) := opts -> (I1) -> (
         if (codim I0 == 1) then (
             if (debugLevel > 0) or opts.Verbose then print "randomPointViaGenericProjection:  found a good generic projection, now finding a point on it.";
             if (opts.Strategy == GenericProjection) then (
-                pt = randomPoints(I0, switchStrategy(opts, BruteForce)))
+                pts = randomPoints(n1-#pointsList, I0, switchStrategy(opts, BruteForce)))
             else if (opts.Strategy == HybridProjectionIntersection) then (
-                pt = randomPoints(I0, switchStrategy(opts, LinearIntersection))
+                pts = random randomPoints(n1-#pointsList, I0, switchStrategy(opts, LinearIntersection))
             ); --find a point on the generic projection (differently, depending on strategy)
-            if (not pt === {}) then (
-                J0 = I1 + sub(ideal apply(dim source phi, i -> (first entries matrix phi)#i - sub(pt#i, target phi)), target phi); --lift the point to the original locus
-                if dim(J0) == 0 then( --hopefully the preimage is made of points
-                    ptList = random decompose(J0);
-                    j = 0;
-                    while (j < #ptList) do (
-                        myDeg = degree (ptList#j);
-                        --print myDeg;
-                        if (myDeg == 1) then (
-                            finalPoint = apply(idealToPoint(ptList#j), s -> sub(s, coefficientRing ring I1));
-                            if (verifyPoint(finalPoint, I1, opts)) then return finalPoint;
-                        )                        
-                        else if (opts.ExtendField == true) then (
-                            if (debugLevel > 0) or (opts.Verbose) then print "randomPointViaGenericProjection:  extending the field.";
-                            psi = (extendFieldByDegree(myDeg, ring ptList#j))#1;
-                            m2 = psi(ptList#j);
-                            newPtList = random decompose(m2);
-                            if (#newPtList > 0) then ( 
-                                finalPoint =  apply(idealToPoint(newPtList#0), s -> sub(s, target psi));
-                                if (verifyPoint(finalPoint, I1, opts)) then return finalPoint;
-                            ); 
-                        );
-                        j = j+1;
+            if (#pts > 0) then (
+                k = 0;
+                while (k < #pts) and (#pointsList < n1) do ( --we produced some other points, now lift them
+                    pt = pts#k;
+                    J0 = I1 + sub(ideal apply(dim source phi, i -> (first entries matrix phi)#i - sub(pt#i, target phi)), target phi); --lift the point to the original locus
+                    if dim(J0) == 0 then( --hopefully the preimage is made of points
+                        ptList = random decompose(J0);
+                        j = 0;
+                        while (j < #ptList) do ( --points we produced
+                            myDeg = degree (ptList#j);
+                            --print myDeg;
+                            if (myDeg == 1) then (
+                                finalPoint = apply(idealToPoint(ptList#j), s -> sub(s, coefficientRing ring I1));
+                                if (verifyPoint(finalPoint, I1, opts)) then pointsList = append(pointsList, finalPoint);
+                            )                        
+                            else if (opts.ExtendField == true) then (
+                                if (debugLevel > 0) or (opts.Verbose) then print "randomPointViaGenericProjection:  extending the field.";
+                                psi = (extendFieldByDegree(myDeg, ring ptList#j))#1;
+                                m2 = psi(ptList#j);
+                                newPtList = random decompose(m2);
+                                if (#newPtList > 0) then ( 
+                                    finalPoint =  apply(idealToPoint(newPtList#0), s -> sub(s, target psi));
+                                    if (verifyPoint(finalPoint, I1, opts)) then pointsList = append(pointsList, finalPoint);
+                                ); 
+                            );
+                            j = j+1;
+                        )
                     )
-                )
-                else(
-                    if (debugLevel > 0) or opts.Verbose then print "randomPointViaGenericProjection:  Lift of point is not a point (our projection was not sufficiently generic).";
+                    else(
+                        if (debugLevel > 0) or opts.Verbose then print "randomPointViaGenericProjection:  Lift of point is not a point (our projection was not sufficiently generic).";
+                    );
+                    k = k+1;
                 );
             );
         );
-        if (debugLevel > 0) or (opts.Verbose) then print "randomPointViaGenericProjection: That didn't work, trying again...";
+        if (debugLevel > 0) or (opts.Verbose) then print ("randomPointViaGenericProjection: found " | toString(#pointsList) | " points so far.  We may do another loop.");
         i = i+1;
     );
-    return {};
+    return pointsList;
 );
 
 -*
@@ -764,10 +580,21 @@ checkRandomPoint =(I1)->(
 
 randomPoints = method(TypicalValue => List, Options => optRandomPoints);
 
-randomPoints(Ideal) := List => opts -> (I) -> (
+randomPoints(ZZ, Ideal) := List => opts -> (n1, I1) ->(
+    randomPointsBranching(n1, I1, opts)
+);
+randomPoints(Ideal) := List => opts -> (I1) ->(
+    randomPointsBranching(1, I1, opts)
+);
+
+
+randomPointsBranching = method(TypicalValue => List, Options => optRandomPoints);
+
+randomPointsBranching(ZZ, Ideal) := List => opts -> (n1, I) -> (
+    if (opts.Verbose) or (debugLevel > 0) then print concatenate("randomPointsBranching: starting with Strategy => ", toString(opts.Strategy));
     --if they give us an ideal of a quotient ring, then 
     if (class ring I === QuotientRing) 
-    then return randomPoints(sub(I, ambient ring I) + ideal ring I, opts);
+    then return randomPointsBranching(n1, sub(I, ambient ring I) + ideal ring I, opts);
     
     --if it is not a quotient of polynomial ring, nor a polynomial ring, then we error
     if (not class ring I === PolynomialRing) 
@@ -778,37 +605,27 @@ randomPoints(Ideal) := List => opts -> (I) -> (
    
     if (opts.Strategy == BruteForce) 
     then (
-        if (opts.NumThreadsToUse > 1) then return randomPointViaMultiThreads(I, opts)
-        else return searchPoints(opts.PointCheckAttempts, R, genList);
+        if (opts.NumThreadsToUse > 1) then return randomPointViaMultiThreads(n1, I, opts)
+        else return searchPoints(n1, R, genList, opts);
     )	
     else if (opts.Strategy == GenericProjection) 
-    then return randomPointViaGenericProjection(I, opts)
+    then return randomPointViaGenericProjection(n1, I, opts)
 	
     else if (opts.Strategy == LinearIntersection) 
-    then return randomPointViaLinearIntersection(I, opts)
+    then return randomPointViaLinearIntersection(n1, I, opts)
 
     else if (opts.Strategy == HybridProjectionIntersection) 
-    then return randomPointViaGenericProjection(I, opts)
+    then return randomPointViaGenericProjection(n1, I, opts)
     
-    else if (opts.Strategy == LinearProjection) 
-    then return randomPointViaLinearProjection(I, opts)
+--    else if (opts.Strategy == LinearProjection) 
+--    then return randomPointViaLinearProjection(I, opts)
     --else if (opts.Strategy == MultiThreads)
     --then return randomPointViaMultiThreads(I, opts)
     
     else error "randomPoints:  Not a valid Strategy";
 );
 
-randomPoints(ZZ, Ideal) := opts -> (n1, I1) -> (
-    --todo:  The generic projection in particular, would be able to do this much better, without a loop.
-    local apoint;
-    local L;
-    L = new MutableList;
-    for i from 1 to n1 do (
-        apoint = randomPoints(I1, opts);
-        L = append(L, apoint);
-	);  
-    return new List from L;
-);
+
 
 findANonZeroMinor = method(Options => optRandomPoints);
 
@@ -823,6 +640,7 @@ findANonZeroMinor(ZZ, Matrix, Ideal) := opts -> (n,M,I)->(
     kk = coefficientRing R;
     P = randomPoints(I, opts);
     if (#P == 0) then  error "Couldn't find a point. Try Changing Strategy.";
+    P = P#0;
     phi =  map(kk,R,sub(matrix{P},kk));
     N = mutableMatrix phi(M);
     rk := rank(N);
@@ -849,38 +667,6 @@ findANonZeroMinor(ZZ, Matrix, Ideal) := opts -> (n,M,I)->(
 
 extendingIdealByNonVanishingMinor = method(Options=>optRandomPoints);
 extendingIdealByNonVanishingMinor(ZZ,Matrix,Ideal):= opts -> (n, M, I) -> (
- -*   local P;
-    local kk; 
-    local R;
-    local phi;
-    local N; local N1; local N2; local N1new; local N2new;
-    local J; local Mcolumnextract; local Mrowextract;
-    R = ring I;
-    local kk;
-    P = randomPoints(I, opts);
-    if (#P == 0) 
-    then error "No Point Found"
-    else (
-        kk = ring {P#0};
-        phi =  map(kk,R,sub(matrix{P},kk));
-        N = mutableMatrix phi(M);
-        rk := rank(N);
-        if (rk < n) then return I;
-        N1 = random(columnRankProfile(N));
-	    N1new = {};
-	    for i from  0 to n-1 do(
-	    N1new = join(N1new, {N1#i});
-        );
-	    Mcolumnextract = M_N1new;
-        M3 := mutableMatrix phi(Mcolumnextract);
-        if (rank(M3)<n) then error "..";
-        N2 = random(rowRankProfile(M3);
-        N2new = {};
-        for i from 0 to n-1 do(
-            N2new = join(N2new, {N2#i});
-        );
-        Mrowextract = Mcolumnextract^N2new;
- *-   
     local O;  local Ifin;
     O = findANonZeroMinor(n,M,I,opts); 
     L1 := ideal (det(O#3));
@@ -891,7 +677,7 @@ extendingIdealByNonVanishingMinor(ZZ,Matrix,Ideal):= opts -> (n, M, I) -> (
 
 
 randomPointViaMultiThreads = method(TypicalValue => List, Options => optRandomPoints);
-randomPointViaMultiThreads(Ideal) := List => opts -> (I) -> (
+randomPointViaMultiThreads(ZZ, Ideal) := List => opts -> (n1, I) -> (
     genList := first entries gens I;
     R := ring I;
     K := coefficientRing R;
@@ -912,7 +698,7 @@ randomPointViaMultiThreads(Ideal) := List => opts -> (I) -> (
     taskList := apply(opts.NumThreadsToUse, (i)->(return createTask(mtSearchPoints, (i, numPointsToCheck, R, genList, flag));));
     apply(taskList, t -> schedule t);
     while true do (
-	nanosleep 100000000;--this should be replaced by a usleep or nanosleep command.
+	    nanosleep 100000000;--this should be replaced by a usleep or nanosleep command.
         if (all(taskList, t -> isReady(t))) then break;
     );
       
@@ -967,17 +753,23 @@ mtSearchPoints = (thNum, nn, R, genList, flag) -> (
     return {};
     );
 
-searchPoints = (nn, R, genList) -> (
+--a brute force point search tool
+searchPoints = method(Options => optRandomPoints);
+searchPoints(ZZ, Ring, List) := opts -> (nn, R, genList) -> (
     local point;
     K := coefficientRing R;
     n := #gens R;
-    for i from 1 to nn do (
-	point = getAPoint(n, K);
-	if evalAtPointIsZero(R, genList, point)
-	then return point;
+    pointList := {};
+    i := 0;
+    while (i < opts.PointCheckAttempts) and (#pointList < nn) do (
+	    point = getAPoint(n, K);
+	    if evalAtPointIsZero(R, genList, point) then (
+            if not ((opts.Homogeneous) and (matrix{point} == 0)) then pointList = append(pointList, point);
+        );
+        i = i+1;
 	);
-    return {};
-    );
+    return pointList;
+);
 
 ---
 
