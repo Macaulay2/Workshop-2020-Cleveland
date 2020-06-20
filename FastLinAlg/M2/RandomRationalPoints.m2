@@ -324,6 +324,11 @@ switchStrategy := (opts, newStrat) -> (
 );
 
 verifyPoint = method(Options => optRandomPoints);
+
+verifyPoint(List, List) := opts -> (finalPoint, idealList) ->(
+    verifyPoint(finalPoint, ideal idealList)
+);
+
 verifyPoint(List, Ideal) := opts -> (finalPoint, I1) -> (
     if (opts.Homogeneous) then( 
         if (all(finalPoint, t -> t == 0)) then return false;
@@ -606,13 +611,15 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
 
     --next do a very fast intersection with coordinate linear spaces
     if (#pointsList >= n1) then return pointsList;
-    if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 2): trying a quick linear intersection, coordinates only";
-    pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
-        opts++{ Strategy=>LinearIntersection,
-                MaxCoordinatesToReplace => 0,
-                IntersectionAttempts => 2*n1,
-                MaxCoordinatesToTrivalize => infinity
-            }
+    if (opts.ProjectionAttempts > 0) then (
+        if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 2): trying a quick linear intersection, coordinates only";
+        pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
+            opts++{ Strategy=>LinearIntersection,
+                    MaxCoordinatesToReplace => 0,
+                    IntersectionAttempts => 2*n1,
+                    MaxCoordinatesToTrivalize => infinity
+                }
+        );
     );
     if (#pointsList >= n1) then return pointsList;
     
@@ -641,15 +648,17 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
     if (#pointsList >= n1) then return pointsList;
     
     --lets give generic projection another shot
-    if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 5): giving projection another shot, coordinates and one binomial only";
-    pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
-        opts++{ Strategy=>HybridProjectionIntersection,
-                MaxCoordinatesToReplace => 1,
-                Replacement => Binomial,
-                MaxCoordinatesToTrivalize => infinity,
-                ProjectionAttempts => 3,
-                IntersectionAttempts => 4*n1
-            }
+    if (opts.ProjectionAttempts > 0) then (
+        if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 5): giving projection another shot, coordinates and one binomial only";
+        pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
+            opts++{ Strategy=>HybridProjectionIntersection,
+                    MaxCoordinatesToReplace => 1,
+                    Replacement => Binomial,
+                    MaxCoordinatesToTrivalize => infinity,
+                    ProjectionAttempts => 3,
+                    IntersectionAttempts => 4*n1
+                }
+        );
     );
     if (#pointsList >= n1) then return pointsList;
     
@@ -678,15 +687,17 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
     if (#pointsList >= n1) then return pointsList;
     
     --lets try another projection
-    if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 8): giving projection another shot, coordinates and two binomials only";
-    pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
-        opts++{ Strategy=>HybridProjectionIntersection,
-                MaxCoordinatesToReplace => 2,
-                Replacement => Binomial,
-                MaxCoordinatesToTrivalize => 2,
-                ProjectionAttempts => 3*n1,
-                IntersectionAttempts => 4*n1
-            }
+    if (opts.ProjectionAttempts > 0) then (
+        if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 8): giving projection another shot, coordinates and two binomials only";
+        pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
+            opts++{ Strategy=>HybridProjectionIntersection,
+                    MaxCoordinatesToReplace => 2,
+                    Replacement => Binomial,
+                    MaxCoordinatesToTrivalize => 2,
+                    ProjectionAttempts => 3*n1,
+                    IntersectionAttempts => 4*n1
+                }
+        );
     );
     if (#pointsList >= n1) then return pointsList;
     
@@ -766,7 +777,8 @@ randomPointsBranching(ZZ, Ideal) := List => opts -> (n1, I) -> (
 
 
 randomPointViaMultiThreads = method(TypicalValue => List, Options => optRandomPoints);
-randomPointViaMultiThreads(ZZ, Ideal) := List => opts -> (n1, I) -> (
+randomPointViaMultiThreads(ZZ, Ideal) := List => opts -> (toFind, I) -> (
+    if (debugLevel > 0) or (opts.Verbose) then print "randomPointViaMultiThreads: starting";
     genList := first entries gens I;
     R := ring I;
     K := coefficientRing R;
@@ -774,6 +786,7 @@ randomPointViaMultiThreads(ZZ, Ideal) := List => opts -> (n1, I) -> (
     
     local found;
     local resultList;
+    pointList := {};
     
     local numPointsToCheck;
     numPointsToCheck = floor(opts.PointCheckAttempts / opts.NumThreadsToUse); 
@@ -782,25 +795,26 @@ randomPointViaMultiThreads(ZZ, Ideal) := List => opts -> (n1, I) -> (
 --    then error "mtSearch: Not enough allowed threads to use";
     
     local flag;
-    flag = new MutableList from apply(opts.NumThreadsToUse, i->false);
+    flag = new MutableList from apply(opts.NumThreadsToUse, i->0);
     
-    taskList := apply(opts.NumThreadsToUse, (i)->(return createTask(mtSearchPoints, (i, numPointsToCheck, R, genList, flag));));
+    taskList := apply(opts.NumThreadsToUse, (i)->(return createTask(mtSearchPoints, (toFind, numPointsToCheck, genList, {i,flag}, opts));));
     apply(taskList, t -> schedule t);
     while true do (
-	    nanosleep 100000000;--this should be replaced by a usleep or nanosleep command.
+	    nanosleep 1000000; --one thousandth of a second
         if (all(taskList, t -> isReady(t))) then break;
     );
       
     resultList = apply(taskList, t -> taskResult(t));
-    
+    apply(#resultList, i -> pointList = pointList|(resultList#i));
+ -*   
     if any(resultList, (l) -> (#l>0))
     then (
         j := 0;
         while #(resultList#j) == 0 do j = j + 1;
         return resultList#j;
     );
-
-    return {};
+*-
+    return pointList;
 );
 
 --some helper functions for randomPointViaMultiThreads
@@ -825,23 +839,32 @@ evalAtPointIsZero = (R, genList, point) -> (
     return true;
 );
 
---a function for multithreads
-mtSearchPoints = (thNum, nn, R, genList, flag) -> (
+--a brute force function for multithreads
+mtSearchPoints = method(Options => optRandomPoints);
+mtSearchPoints(ZZ, ZZ, List, List) := opts -> (toFind, nn, genList, flagList) -> (
+    if (debugLevel > 0) or (opts.Verbose) then (print "mtSearchPoints: starting thread #" | toString(nn));
+    thNum := flagList#0;
+    flag := flagList#1;
     local point;
+    pointList := {};
+    R := ring(genList#0);
     K := coefficientRing R;
     n := #gens R;
-    for i from 1 to nn do (
-	point = getAPoint(n, K);
-	if evalAtPointIsZero(R, genList, point)
-	then (
-	    flag#thNum = true;
-	    return point;
+    i := 0;
+    myMod := ceiling(nn/20);
+    while (i < nn) do (
+        if (i%(myMod) == 0) and (sum toList flag >= toFind) then break;
+	    point = getAPoint(n, K);
+	    --if verifyPoint(point, genList, opts)  --
+        if evalAtPointIsZero(R, genList, point) and not (opts.Homogeneous and all(point, t -> t == 0))
+	    then (
+	        flag#thNum = flag#thNum+1;
+            pointList = append(pointList, point);
 	    );
-	if any(flag, x->x)
-	then return {};
+        i = i+1;
 	);
-    return {};
-    );
+    return pointList;
+);
 
 --a brute force point search tool
 searchPoints = method(Options => optRandomPoints);
