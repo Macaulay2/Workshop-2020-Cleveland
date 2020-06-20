@@ -36,6 +36,7 @@ export {
     "MaxCoordinatesToTrivalize",
     "Replacement",
     "Full", 
+    "Default", --a valid value for [RandomPoint, Strategy]
 	"BruteForce", --a valid value for [RandomPoint, Strategy], documented, 
     "GenericProjection",  --a valid value for [RandomPoint, Strategy]
     "HybridProjectionIntersection", --a valid value for [RandomPoint, Strategy]
@@ -55,7 +56,7 @@ needsPackage "MinimalPrimes";
 installMinprimes();
 
 optRandomPoints := {
-    Strategy=>BruteForce, 
+    Strategy=>Default, 
     Homogeneous => true,  
     MaxCoordinatesToReplace => 1, 
     MaxCoordinatesToTrivalize => infinity,
@@ -427,10 +428,6 @@ randomPointViaLinearIntersection(ZZ, Ideal) := opts -> (n1, I1) -> (
             phiMatrix = getRandomForms(targetSpace, {toTrivialize, 0, c1-toReplace + (d1 - toTrivialize), 0, toReplace}, Homogeneous => false, Verify=>true);
         );
         if (opts.Verbose) or (debugLevel > 0) then print concatenate("randomPointViaLinearIntersection: doing loop with ", toString( phiMatrix));
---        1/0;
---        phiMatrix = apply(#(gens R1)-c1, l -> random(1, targetSpace) + random(0, targetSpace) );
---        apply(c1, t -> phiMatrix = insert(random(#phiMatrix + 1), (gens targetSpace)#t, phiMatrix)); --this trick was stolen from Cremona.
-        --phiMatrix = insert(random(c1), (gens targetSpace)#(random(c1)), apply(#(gens R1)-1, l -> random(1, targetSpace) + random(0, targetSpace) )); --random linear maps, plus one random variable
         if (debugLevel > 0 or opts.Verbose == true) then print concatenate("randomPointViaLinearIntersection:  Doing a loop with:", toString(phiMatrix));
         phi = map(targetSpace, R1, phiMatrix);
         J1 = phi(I1);
@@ -530,7 +527,7 @@ randomPointViaGenericProjection(ZZ, Ideal) := opts -> (n1, I1) -> (
                     if dim(J0) == 0 then( --hopefully the preimage is made of points
                         ptList = random decompose(J0);
                         j = 0;
-                        while (j < #ptList) do ( --points we produced
+                        while (j < #ptList) and (#pointsList < n1) do ( --points we produced
                             myDeg = degree (ptList#j);
                             --print myDeg;
                             if (myDeg == 1) then (
@@ -578,6 +575,146 @@ checkRandomPoint =(I1)->(
     if (tempEval ==0) then return point else return {};
 )*-
 
+randomPointViaDefaultStrategy = method(Options => optRandomPoints);
+randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
+    pointsList := {}; --a list of points to output
+    c1 := opts.Codimension;
+    if (c1 === null) then (c1 = codim I1); --don't compute it if we already know it.
+
+    if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy: starting";
+    --we can do a brute force attempt for hypersurfaces when the field is small
+    if (c1 == 1) then (
+        if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 0): trying BruteForce";
+        kk := coefficientRing ring I1;
+        fieldSize := ((degree (ideal ambient kk)_0)#0);
+        pointsList = pointsList | randomPointsBranching(n1, I1, opts++{Strategy=>BruteForce, PointCheckAttempts=>min(30*n1, 4*n1*fieldSize)});
+    );
+    
+    --lets give a quick generic projection a shot (well, the hybrid version)
+    if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 1): trying a quick projection, coordinates only";
+    pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
+        opts++{ Strategy=>HybridProjectionIntersection,
+                MaxCoordinatesToReplace => 0,
+                Replacement => Binomial,
+                MaxCoordinatesToTrivalize => infinity,
+                ProjectionAttempts => 2,
+                IntersectionAttempts => 2*n1
+            }
+    );
+    if (#pointsList >= n1) then return pointsList;
+
+
+    --next do a very fast intersection with coordinate linear spaces
+    if (#pointsList >= n1) then return pointsList;
+    if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 2): trying a quick linear intersection, coordinates only";
+    pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
+        opts++{ Strategy=>LinearIntersection,
+                MaxCoordinatesToReplace => 0,
+                IntersectionAttempts => 2*n1,
+                MaxCoordinatesToTrivalize => infinity
+            }
+    );
+    if (#pointsList >= n1) then return pointsList;
+    
+    --next do a very fast intersection with nearly coordinate linear spaces
+    if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 3): trying a quick linear intersection, coordinates and one binomial only";
+    pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
+        opts++{ Strategy=>LinearIntersection,
+                MaxCoordinatesToReplace => 1,
+                Replacement => Binomial,
+                MaxCoordinatesToTrivalize => infinity,
+                IntersectionAttempts => 4*n1
+            }
+    );
+    if (#pointsList >= n1) then return pointsList;
+    
+    --next do a fast intersection with slightly less trivial coordinate linear spaces
+    if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 4): trying a quick linear intersection, coordinates and one random term only";
+    pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
+        opts++{ Strategy=>LinearIntersection,
+                MaxCoordinatesToReplace => 1,
+                Replacement => Full,
+                MaxCoordinatesToTrivalize => infinity,
+                IntersectionAttempts => 4*n1
+            }
+    );
+    if (#pointsList >= n1) then return pointsList;
+    
+    --lets give generic projection another shot
+    if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 5): giving projection another shot, coordinates and one binomial only";
+    pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
+        opts++{ Strategy=>HybridProjectionIntersection,
+                MaxCoordinatesToReplace => 1,
+                Replacement => Binomial,
+                MaxCoordinatesToTrivalize => infinity,
+                ProjectionAttempts => 3,
+                IntersectionAttempts => 4*n1
+            }
+    );
+    if (#pointsList >= n1) then return pointsList;
+    
+    --now do a intersection with linear spaces involving fewer coordinates
+    if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 6): trying a quick linear intersection, coordinates and two binomials only";
+    pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
+        opts++{ Strategy=>LinearIntersection,
+                MaxCoordinatesToReplace => 2,
+                Replacement => Binomial,
+                MaxCoordinatesToTrivalize => 4,
+                IntersectionAttempts => 4*n1
+            }
+    );
+    if (#pointsList >= n1) then return pointsList;
+    
+    --first do a slower intersection with linear spaces involving fewer coordinates
+    if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 7): trying a quick linear intersection, coordinates and two linear terms only";
+    pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
+        opts++{ Strategy=>LinearIntersection,
+                MaxCoordinatesToReplace => 2,
+                Replacement => Full,
+                MaxCoordinatesToTrivalize => 2,
+                IntersectionAttempts => 4*n1
+            }
+    );
+    if (#pointsList >= n1) then return pointsList;
+    
+    --lets try another projection
+    if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 8): giving projection another shot, coordinates and two binomials only";
+    pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
+        opts++{ Strategy=>HybridProjectionIntersection,
+                MaxCoordinatesToReplace => 2,
+                Replacement => Binomial,
+                MaxCoordinatesToTrivalize => 2,
+                ProjectionAttempts => 3*n1,
+                IntersectionAttempts => 4*n1
+            }
+    );
+    if (#pointsList >= n1) then return pointsList;
+    
+    --this one is probably quite slow
+    if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 9): trying a linear intersection, binomials only";
+    pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
+        opts++{ Strategy=>LinearIntersection,
+                MaxCoordinatesToReplace => infinity,
+                Replacement => Binomial,
+                MaxCoordinatesToTrivalize => 1,
+                IntersectionAttempts => 4*n1
+            }
+    );
+    if (#pointsList >= n1) then return pointsList;
+    
+    --this one can be extremely slow
+    if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 10): trying a linear intersection, full random";
+    pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
+        opts++{ Strategy=>LinearIntersection,
+                MaxCoordinatesToReplace => infinity,
+                Replacement => Full,
+                MaxCoordinatesToTrivalize => 1,
+                IntersectionAttempts => 4*n1
+            }
+    );
+    return pointsList;
+);
+
 randomPoints = method(TypicalValue => List, Options => optRandomPoints);
 
 randomPoints(ZZ, Ideal) := List => opts -> (n1, I1) ->(
@@ -602,8 +739,10 @@ randomPointsBranching(ZZ, Ideal) := List => opts -> (n1, I) -> (
     
     genList := first entries gens I;
     R := ring I;
-   
-    if (opts.Strategy == BruteForce) 
+    if (opts.Strategy == Default) then (
+        return randomPointViaDefaultStrategy(n1, I, opts)
+    )
+    else if (opts.Strategy == BruteForce) 
     then (
         if (opts.NumThreadsToUse > 1) then return randomPointViaMultiThreads(n1, I, opts)
         else return searchPoints(n1, R, genList, opts);
@@ -624,56 +763,6 @@ randomPointsBranching(ZZ, Ideal) := List => opts -> (n1, I) -> (
     
     else error "randomPoints:  Not a valid Strategy";
 );
-
-
-
-findANonZeroMinor = method(Options => optRandomPoints);
-
-findANonZeroMinor(ZZ, Matrix, Ideal) := opts -> (n,M,I)->(
-    local P;
-    local kk; 
-    local R;
-    local phi;
-    local N; local N1; local N2; local N1new; local N2new;
-    local J; local Mcolumnextract; local Mrowextract;
-    R = ring I;
-    kk = coefficientRing R;
-    P = randomPoints(I, opts);
-    if (#P == 0) then  error "Couldn't find a point. Try Changing Strategy.";
-    P = P#0;
-    phi =  map(kk,R,sub(matrix{P},kk));
-    N = mutableMatrix phi(M);
-    rk := rank(N);
-    if (rk < n) then return ("All minors of given size vanish at the randomly chosen point. Please try again.");
-    N1 = (columnRankProfile(N));
-    Mcolumnextract = M_N1;
-    M11 := mutableMatrix phi(Mcolumnextract);
-    N2 = (rowRankProfile(M11));
-    N1rand := random(N1);
-    N1new = {};
-    for i from  0 to n-1 do(
-	N1new = join(N1new, {N1rand#i});
-    );
-    M3 := mutableMatrix phi(M_N1new);
-    if (rank(M3)<n) then return (P,N1,N2,"Using the the second and third outputs failed to generate a random matrix of the given size, that has full rank when evaluated at the first output.");
-    N2rand := random(rowRankProfile(M3));
-    N2new = {};
-    for i from 0 to n-1 do(
-        N2new = join(N2new, {N2rand#i});
-    );
-    Mspecificrowextract := (M_N1new)^N2new;
-    return (P, N1, N2, Mspecificrowextract);	
-);
-
-extendingIdealByNonVanishingMinor = method(Options=>optRandomPoints);
-extendingIdealByNonVanishingMinor(ZZ,Matrix,Ideal):= opts -> (n, M, I) -> (
-    local O;  local Ifin;
-    O = findANonZeroMinor(n,M,I,opts); 
-    L1 := ideal (det(O#3));
-    Ifin = I + L1;
-    return Ifin;
-);
-
 
 
 randomPointViaMultiThreads = method(TypicalValue => List, Options => optRandomPoints);
@@ -736,6 +825,7 @@ evalAtPointIsZero = (R, genList, point) -> (
     return true;
 );
 
+--a function for multithreads
 mtSearchPoints = (thNum, nn, R, genList, flag) -> (
     local point;
     K := coefficientRing R;
@@ -770,6 +860,58 @@ searchPoints(ZZ, Ring, List) := opts -> (nn, R, genList) -> (
 	);
     return pointList;
 );
+
+
+
+findANonZeroMinor = method(Options => optRandomPoints);
+
+findANonZeroMinor(ZZ, Matrix, Ideal) := opts -> (n,M,I)->(
+    local P;
+    local kk; 
+    local R;
+    local phi;
+    local N; local N1; local N2; local N1new; local N2new;
+    local J; local Mcolumnextract; local Mrowextract;
+    R = ring I;
+    kk = coefficientRing R;
+    P = randomPoints(I, opts);
+    if (#P == 0) then  error "Couldn't find a point. Try Changing Strategy.";
+    P = P#0;
+    phi =  map(kk,R,sub(matrix{P},kk));
+    N = mutableMatrix phi(M);
+    rk := rank(N);
+    if (rk < n) then return ("All minors of given size vanish at the randomly chosen point. Please try again.");
+    N1 = (columnRankProfile(N));
+    Mcolumnextract = M_N1;
+    M11 := mutableMatrix phi(Mcolumnextract);
+    N2 = (rowRankProfile(M11));
+    N1rand := random(N1);
+    N1new = {};
+    for i from  0 to n-1 do(
+	N1new = join(N1new, {N1rand#i});
+    );
+    M3 := mutableMatrix phi(M_N1new);
+    if (rank(M3)<n) then return (P,N1,N2,"Using the the second and third outputs failed to generate a random matrix of the given size, that has full rank when evaluated at the first output.");
+    N2rand := random(rowRankProfile(M3));
+    N2new = {};
+    for i from 0 to n-1 do(
+        N2new = join(N2new, {N2rand#i});
+    );
+    Mspecificrowextract := (M_N1new)^N2new;
+    return (P, N1, N2, Mspecificrowextract);	
+);
+
+extendingIdealByNonVanishingMinor = method(Options=>optRandomPoints);
+extendingIdealByNonVanishingMinor(ZZ,Matrix,Ideal):= opts -> (n, M, I) -> (
+    local O;  local Ifin;
+    O = findANonZeroMinor(n,M,I,opts); 
+    L1 := ideal (det(O#3));
+    Ifin = I + L1;
+    return Ifin;
+);
+
+
+
 
 ---
 
