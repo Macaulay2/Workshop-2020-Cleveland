@@ -31,34 +31,36 @@ assert(not isInvariant(1 + x_1, S3))
 -- The first two tests are of trivial actions, and seem to run into problems. The analogous torusAction test seems to be fine though
 
 TEST ///
-R0 = QQ[x_1]
-T0 = finiteAbelianAction({3},matrix{{0}},R0)
-invariants0 = set {x_1}
-assert(set invariants T0 === invariants0)
-assert(isInvariant(x_1 + x_1^2, T0))
+R = QQ[x_1]
+T = finiteAbelianAction({3}, matrix{{0}}, R)
+invariants0 = set {R_0}
+assert(set invariants T === invariants0)
+assert(isInvariant(R_0 + R_0^2, T))
+///
+
+
+TEST ///
+R = QQ[x_1]
+T = finiteAbelianAction({1}, matrix{{3}}, R)
+invariants0 = set {R_0}
+assert(set invariants T === invariants0)
+assert(isInvariant(R_0 + R_0^2, T))
+///
+
+
+TEST ///
+R = QQ[x_1]
+T = finiteAbelianAction({2},matrix{{1}}, R)
+invariants0 = set {R_0^2}
+assert(set invariants T === invariants0)
+assert(isInvariant(R_0^2, T))
 ///
 
 TEST ///
-R0 = QQ[x_1]
-T0 = finiteAbelianAction({1},matrix{{3}},R0)
-invariants0 = set {x_1}
-assert(set invariants T0 === invariants0)
-assert(isInvariant(x_1 + x_1^2, T0))
-///
-
-TEST ///
-R0 = QQ[x_1]
-T0 = finiteAbelianAction({2},matrix{{1}},R0)
-invariants0 = set {x_1^2}
-assert(set invariants T0 === invariants0)
-assert(isInvariant(x_1^2, T0))
-///
-
-TEST ///
-R1 = QQ[x_1..x_3]
-T1 = finiteAbelianAction({3,3},matrix{{1,0,1},{0,1,1}},R1)
+R = QQ[x_1..x_3]
+T = finiteAbelianAction({3,3},matrix{{1,0,1},{0,1,1}}, R)
 invariants1 = set {x_3^3, x_2^3, x_1^3, x_1*x_2*x_3^2, x_1^2*x_2^2*x_3}
-assert(set invariants T1 === invariants1)
+assert(set invariants T === invariants1)
 ///
 
 

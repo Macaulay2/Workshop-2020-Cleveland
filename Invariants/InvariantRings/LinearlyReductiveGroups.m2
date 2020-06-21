@@ -23,8 +23,8 @@ linearlyReductiveAction (Ideal, Matrix, PolynomialRing) := LinearlyReductiveActi
 -------------------------------------------
 
 net LinearlyReductiveAction := V -> (
-    (net V.ring)|" <- "|(net ring V.groupIdeal)|"/"|(net V.groupIdeal)|
-    " via "|(net V.actionMatrix)
+    stack {(net V.ring)|" <- "|(net ring V.groupIdeal)|"/"|(net V.groupIdeal)|" via ",
+	"", net V.actionMatrix}
     )
 
 actionMatrix = method()

@@ -63,29 +63,35 @@ generators RingOfInvariants := List => null -> S -> S.cache.generators
 -------------------------------------------
 
 --presentation of invariant ring as polynomial ring modulo ideal
-presentation RingOfInvariants := { } >> opts -> (cacheValue (symbol presentation)) (S -> runHooks(RingOfInvariants, symbol presentation, S) )
 
-addHook(RingOfInvariants, symbol presentation, S -> break (
-    	-- get ambient ring and generators of invariant ring
-    	R := ambient S;
-    	L := generators S;
-    	-- get degrees of generators
-    	gdegs := L / degree // flatten;
-    	-- form a presentation of the invariant ring
-    	U := QQ[Variables => #L,--number of variables
--- if next line is uncommented, M2 complains u is unexported
---	    VariableBaseName => symbol u,--symbol
-	    Degrees => gdegs];--degrees
-    	phi := map(R,U,L);
-    	I := ker phi;
-    	presentation(U/I)	
-	))
+definingIdeal = method(Options => {Variable => "u"})
+
+definingIdeal RingOfInvariants := opts -> S -> (
+    u := getSymbol opts.Variable;
+    local J;
+    if S.cache#?definingIdeal then (
+	J = S.cache#definingIdeal;
+	if first baseName first (ring J)_* == u then return J
+	);
+    -- get ambient ring and generators of invariant ring
+    R := ambient S;
+    K := coefficientRing R;
+    L := generators S;
+    n := #L;
+    -- get degrees of generators
+    gdegs := L / degree // flatten;
+    -- form a presentation of the invariant ring
+    U := K[u_1..u_n, Degrees => gdegs];
+    J = ker map(R,U,L);
+    S.cache#(symbol definingIdeal) = J;
+    return J
+    )
 
 
 -------------------------------------------
 
 hilbertSeries RingOfInvariants := Divide => opts -> S -> (
-    hilbertSeries(coker presentation S, Order => opts.Order, Reduce => opts.Reduce)
+    hilbertSeries(ideal S, Order => opts.Order, Reduce => opts.Reduce)
     )
 
 
@@ -104,13 +110,16 @@ reynoldsOperator = method()
 
 reynoldsOperator (RingElement, FiniteGroupAction) := RingElement => (f, G) -> (
     R := ring G;
-    if ring f =!= R then (error "reynoldsOperator: Expected an element from the ring on which 
+    if not instance(f, R) then (error "reynoldsOperator: Expected an element from the ring on which 
 	the group acts.");
     if #(group G)%(char coefficientRing R) == 0 then (error "reynoldsOperator: The Reynolds 
 	operator is not defined when the characteristic of the coefficient field divides the 
 	order of the group.");
     (1/#(group G))*(sum apply(group G, g -> sub(f, (vars R)*(transpose g) ) ) )
     )
+
+reynoldsOperator (RingElement, TorusAction) := RingElement => (f, T) -> sum select(terms f, m -> isInvariant(m, T) )
+reynoldsOperator (RingElement, FiniteAbelianAction) := RingElement => (f, A) -> sum select(terms f, m -> isInvariant(m, A) ) 
 
 -------------------------------------------
 
@@ -171,6 +180,47 @@ invariants TorusAction := List => T -> (
     if S#?(0_(ZZ^r)) then return S#(0_(ZZ^r)) else return {}
     )
 
+invariants FiniteAbelianAction := List => A -> (
+    W := weights A;
+    R := ring A;
+    R = (coefficientRing R)[R_*, MonomialOrder => GLex];
+    d := size A;
+    r := numgens A;
+    n := dim A;
+    t := product d; 
+    
+    reduceWeight := w -> vector apply(r, i -> w_i%d#i);
+    
+    C := apply(n, i -> reduceWeight W_i);
+
+    S := new MutableHashTable from apply(C, w -> w => {});
+    scan(n, i -> S#(reduceWeight W_i) = S#(reduceWeight W_i)|{R_i});
+    U := R_*;
+    
+    local v, local m, local u, local v';
+    
+    while  #U > 0 do(
+	m = min U; 
+	v = first exponents m;
+	k := max positions(v, i -> i > 0);
+	v = reduceWeight(W*(vector v));
+
+	while k < n do(
+	    u = m*R_k;
+	    v' = reduceWeight(v + W_k);
+	    if (not S#?v') then S#v' = {};
+	    if all(S#v', m' -> u%m' =!= 0_R) then (
+		S#v' = S#v'|{u};
+		if first degree u < t then U = U | {u}
+		);
+	    k = k + 1;
+	    );
+	U = delete(m, U);
+	);
+    return apply(S#(0_(ZZ^r)), m -> sub(m, ring A) )
+    )
+
+-*
 invariants FiniteAbelianAction := List => G -> (
     W := weights G;
     R := ring G;
@@ -221,6 +271,8 @@ invariants FiniteAbelianAction := List => G -> (
     );
     return S#(matrix(0_(ZZ^r)))
     )
+
+*-
 
 
 -------------------------------------------
@@ -309,12 +361,12 @@ isInvariant (RingElement, FiniteGroupAction) := Boolean => (f, G) -> reynoldsOpe
     -- reynoldsOperator already checks to see if f is in the ring on which G acts.
 
 isInvariant (RingElement, TorusAction) := Boolean => (f, T) -> (
-    if ring f =!= ring T then (error "isInvariant: Expected an element from the ring on which the group acts.");
+    if not instance(f, ring T) then (error "isInvariant: Expected an element from the ring on which the group acts.");
     return (weights T) * transpose(matrix(exponents(f))) == 0
     )
 
 isInvariant (RingElement, FiniteAbelianAction) := Boolean => (f, A) -> (
-    if ring f =!= ring A then (error "isInvariant: Expected an element from the ring on which the group acts.");
+    if not instance(f, ring A) then (error "isInvariant: Expected an element from the ring on which the group acts.");
     W := weights A;
     V := W * transpose(matrix(exponents(f)));
     n := dim A;

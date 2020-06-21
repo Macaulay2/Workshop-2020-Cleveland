@@ -27,7 +27,12 @@ torusAction (Matrix, PolynomialRing) := TorusAction => (W, R) -> (
 
 -------------------------------------------
 
-net TorusAction := T -> (net T.ring)|" <- "|(net T.actionMatrix)
+net TorusAction := T -> (
+    r := T.rank;
+    torus := (expression coefficientRing T.ring)^(expression "*");
+    if r > 1 then torus = (expression ("("|net torus|")"))^(expression r);
+    stack {(net T.ring)|" <- "|net torus|" via ","", net T.actionMatrix}
+    )
 -- If the weight matrix is huge, consider rewriting to print something else.
 
 rank TorusAction := ZZ => T -> T.rank
@@ -147,7 +152,7 @@ net FiniteAbelianAction := G -> (
 	    else (net ZZ|"/"|net G.size#i|" x ")
 	    )
 	);
-    (net G.ring)|" <- "|(horizontalJoin cyclicGroups)|" via "|net G.actionMatrix
+    stack {(net G.ring)|" <- "|(horizontalJoin cyclicGroups)|" via ","", net G.actionMatrix}
     )
 -- If the weight matrix is huge, consider rewriting to print something else.
 

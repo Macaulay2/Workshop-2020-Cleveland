@@ -92,6 +92,7 @@ export {
     "Abelian",	    	          -- Strategy option for isInvariant   
     "action",	     	     	  -- documented   
     -- ambient	      	      	  -- overloaded
+    "definingIdeal",
     -- generators    	     	  -- overloaded, documented
     -- hilbertSeries	    	  -- overloaded
     "invariants",    	     	  -- documented only for TorusAction, FiniteAbelianAction
@@ -173,7 +174,7 @@ restart
 uninstallPackage "InvariantsDev"
 installPackage "InvariantsDev"
 --installPackage("Invariants", RemakeAllDocumentation=>true)
-check InvariantsDev
+check InvariantRings
 
 B = QQ[a,b,c,d]
 A = ideal(a*d - b*c - 1)
