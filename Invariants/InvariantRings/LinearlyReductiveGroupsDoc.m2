@@ -1,3 +1,74 @@
+document {
+	Key => {actionMatrix, (actionMatrix, LinearlyReductiveAction)},
+	
+	Headline => "matrix of a linearly reductive action",
+	
+	Usage => "actionMatrix V",
+	
+	Inputs => {
+	        "V" => LinearlyReductiveAction => {"on a polynomial ring ", TT "R"},
+		},
+	    
+	Outputs => {
+		Matrix => {"the matrix of the action on ", TT "R"}
+		},
+	    
+	"This function is provided by the package ", TO InvariantRings,
+	".",
+	
+	PARA { 
+	    "Suppose the action ", TT "V", " consists of the linearly
+	    reductive group ", TEX ///Spec$(S/I)$///, " acting on 
+	    the polynomial ring ", TT "R", " via the action matrix ",
+	    TT "M", ". This function returns the action matrix ", TT "M",
+	    ".",
+	    },
+	EXAMPLE {
+		"S = QQ[z]",
+		"I = ideal(z^2 - 1)",
+		"M = matrix{{(z+1)/2, (1-z)/2},{(1-z)/2, (z+1)/2}}",
+		"R = QQ[x,y]",
+		"V = linearlyReductiveAction(I, M, R)",
+		"actionMatrix V",
+		},
+	    }
+
+document {
+	Key => {groupIdeal, (groupIdeal, LinearlyReductiveAction)},
+	
+	Headline => "ideal defining a linearly reductive group",
+	
+	Usage => "groupIdeal V",
+	
+	Inputs => {
+	        "V" => LinearlyReductiveAction => {"of a group ", TEX ///Spec$(S/I)$///},
+		},
+	    
+	Outputs => {
+		Ideal => {TT "I"}
+		},
+	    
+	"This function is provided by the package ", TO InvariantRings,
+	".",
+	
+	PARA { 
+	    "Suppose the action ", TT "V", " consists of the linearly
+	    reductive group ", TEX ///Spec$(S/I)$///, " acting on 
+	    the polynomial ring ", TT "R", " via the action matrix ",
+	    TT "M", ". This function returns the ideal ", TT "I",
+	    ".",
+	    },
+	EXAMPLE {
+		"S = QQ[z]",
+		"I = ideal(z^2 - 1)",
+		"M = matrix{{(z+1)/2, (1-z)/2},{(1-z)/2, (z+1)/2}}",
+		"R = QQ[x,y]",
+		"V = linearlyReductiveAction(I, M, R)",
+		"groupIdeal V",
+		},
+	    }
+
+
 
 document {
 	Key => {hilbertIdeal, (hilbertIdeal, LinearlyReductiveAction)},
@@ -55,8 +126,6 @@ document {
 		},
 	    }
 
-
--- Modify this to document linearlyReductiveAction?
 
 document {
 	Key => {linearlyReductiveAction, (linearlyReductiveAction, Ideal, Matrix, PolynomialRing)},
