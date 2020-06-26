@@ -1,3 +1,9 @@
+--This file contains torus/abelian action methods and Hilbert series methods
+--TODO 6/26/20
+--1. Rename DiagonalActions for clarity
+--2. Check state of documentation
+--3. Check state of tests
+
 TorusAction = new Type of GroupAction
 FiniteAbelianAction = new Type of GroupAction
 
