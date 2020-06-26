@@ -161,40 +161,22 @@ end
 
 
 restart
-uninstallPackage "Invariants"
-installPackage "Invariants"
---installPackage("Invariants", RemakeAllDocumentation=>true)
-check Invariants
+uninstallPackage "InvariantRings"
+installPackage "InvariantRings"
 
--- Local Variables:
--- compile-command: "make -C $M2BUILDDIR/Macaulay2/packages PACKAGES=Invariants pre-install"
--- End:
-
-restart
-uninstallPackage "InvariantsDev"
-installPackage "InvariantsDev"
---installPackage("Invariants", RemakeAllDocumentation=>true)
 check InvariantRings
 
 B = QQ[a,b,c,d]
 A = ideal(a*d - b*c - 1)
 SL2std = matrix{{a,b},{c,d}}
 R1 = QQ[x_1..x_2]
-time V1 = linearlyReductiveAction(idealSL2,SL2std,R1)
+
+time V1 = linearlyReductiveAction(A,SL2std,R1)
 time hilbertIdeal V1
 
-needsPackage "SchurFunctors"
-q = 2 -- 4 takes a second or so, 5 takes a long time (I didn't wait around for it to finish)
-R = QQ[x_0..x_q]
-n = 3
-K = QQ
-l = 4
-M = schur({q}, SL2std)
-time hilbertIdeal Vn
-invariants(Vn)
-isInvariant(x_0,Vn)
 
-needsPackage "InvariantsDev"
+restart
+loadPackage "InvariantRings"
 R1 = QQ[a_1..a_3]
 W = matrix{{1,0,1},{0,1,1}}
 L = {3,3}
