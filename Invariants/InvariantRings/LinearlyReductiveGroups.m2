@@ -1,9 +1,14 @@
-
-LinearlyReductiveAction = new Type of GroupAction  	  
+--This file contains method to compute the Hilbert ideal for linearly reductive action
+--TODO 6/26/20 
+--1. Currently no specific TODO on this file, check code to see if any
+--2. Check state of documentation
+--3. Check state of tests
+	  
 
 -------------------------------------------
 --- LinearlyReductiveAction methods -------
 -------------------------------------------
+LinearlyReductiveAction = new Type of GroupAction  
 
 linearlyReductiveAction = method()
 

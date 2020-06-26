@@ -1,7 +1,12 @@
-RingOfInvariants = new Type of HashTable    	  
+--This file contains methods to compute invariants (weight algorithms) and check invariants
+--TODO 6/26/20 
+--1. Update and check list below: take Molien series code from old InvariantRing 
+--2. Check state of documentation
+--3. Check state of tests
+
+--NOTE
 -- For some reason, InvariantRing already seems to be a protected symbol. 
 -- Not due to the InvariantRing package.
-
 
 -------------------------------------------
 --- RingOfInvariants methods --------------
@@ -9,7 +14,10 @@ RingOfInvariants = new Type of HashTable
 
 -- TO DO: 1. Add hilbertSeries or molienSeries as functions on RingOfInvariants.
 --    	  2. Errors, docs, examples, tests for presentation
---    	  3. Can we pass a symbol as an option for presentation to use as variable base name?
+--    	  3. (?) Can we pass a symbol as an option for presentation to use as variable base name?
+
+
+RingOfInvariants = new Type of HashTable   
 
 invariantRing = method()
 

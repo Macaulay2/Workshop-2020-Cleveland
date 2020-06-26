@@ -1,5 +1,9 @@
+--This file contains finite group action methods improving on old InvariantRing
+--TODO 6/26/20 
+--1. Update and check list below: merge (?) with old InvariantRing
+--2. Check state of documentation
+--3. Check state of tests
 
-FiniteGroupAction = new Type of GroupAction
 
 
 -------------------------------------------
@@ -13,6 +17,8 @@ FiniteGroupAction = new Type of GroupAction
 --    	     that happens to be abelian.  
 --    	  4. Add OrderBound option to prevent infinite loops if passed an infinite group.
 
+
+FiniteGroupAction = new Type of GroupAction
 
 finiteAction = method()
 
