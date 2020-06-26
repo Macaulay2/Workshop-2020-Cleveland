@@ -210,6 +210,112 @@ document {
 	}
 
 document {
+	Key => {
+	    (invariants, LinearlyReductiveAction, ZZ)
+	    },
+	
+	Headline => "basis for graded component of invariant ring",
+	
+	Usage => "invariants(V,d)",
+	
+	Inputs => {  
+	    	"V" => LinearlyReductiveAction,
+		"d" => ZZ => {"a degree"},
+		},
+	Outputs => {
+		"L" => List => {"an additive basis of invariants in degree ", TT "d"}
+		},
+
+	PARA {
+	    "This function is provided by the package ", TO InvariantRings,
+	    },
+	PARA {
+	    "When called on a linearly reductive group action and
+	    a degree, it computes an additive basis for the
+	    invariants of the action in the given degree. This is
+	    an implementation of Algorithm 4.5.1 in:"
+	    },
+       
+       UL { 
+	    {"Derksen, H. & Kemper, G. (2015).", EM "Computational Invariant Theory", 
+	   ". Heidelberg: Springer."}
+        },
+    	PARA {
+	    "The following example examines the action of the
+	    special linear group of degree 2 on the space of
+	    binary quadrics. There is a single invariant of degree
+	    2 but no invariant of degree 3."
+	    },
+    	EXAMPLE {
+	    	"S = QQ[a,b,c,d]",
+		"I = ideal(a*d - b*c - 1)",
+		"A = S[u,v]",
+		"M = (map(S,A)) last coefficients sub(basis(2,A),{u=>a*u+c*v,v=>b*u+d*v})",
+		"R = QQ[x_1..x_3]",
+		"V = linearlyReductiveAction(I,M,R)",
+		"invariants(V,2)",
+		"invariants(V,3)",
+		},
+	   
+    	SeeAlso => {invariantRing, linearlyReductiveAction, isInvariant},
+	}
+
+document {
+	Key => {
+	    (invariants, LinearlyReductiveAction)
+	    },
+	
+	Headline => "invariant generators of Hilbert ideal",
+	
+	Usage => "invariants V",
+	
+	Inputs => {  
+	    	"V" => LinearlyReductiveAction,
+		},
+	Outputs => {
+		"L" => List => {"of invariants generating the Hilbert ideal"}
+		},
+
+	PARA {
+	    "This function is provided by the package ", TO InvariantRings,
+	    },
+	PARA {
+	    "When called on a linearly reductive group action and
+	    a degree, this function returns a list of generators for the
+	    Hilbert ideal that are also invariant under the action.
+	    This function computes the Hilbert ideal first using ",
+	    TO "hilbertIdeal", " then finds invariant generators
+	    degree by degree using ",
+	    TO "invariants(LinearlyReductiveAction,ZZ)", ".",
+	    },
+    	PARA {
+	    "The next example constructs a cyclic group of order 2
+	    as a set of two affine points. Then it introduces an
+	    action of this group on a polynomial ring in two variables
+	    and computes the Hilbert ideal. The action permutes the
+	    variables of the polynomial ring."
+	    },
+    	EXAMPLE {
+		"S = QQ[z]",
+		"I = ideal(z^2 - 1)",
+		"M = matrix{{(z+1)/2, (1-z)/2},{(1-z)/2, (z+1)/2}}",
+		"sub(M,z=>1),sub(M,z=>-1)",
+		"R = QQ[x,y]",
+		"V = linearlyReductiveAction(I, M, R)",
+		"H = hilbertIdeal V",
+		"invariants V",
+		},
+	Caveat => {
+	    "Both ", TO "hilbertIdeal", " and ",
+	    TO "invariants(LinearlyReductiveAction,ZZ)",
+	    " require Groebner bases computations, which could
+	    lead to long running times. The computations for ",
+	    TO "hilbertIdeal", " are typically the bottleneck.",
+	    },
+    	SeeAlso => {hilbertIdeal, invariants},
+	}
+
+document {
 	Key => {isInvariant, 
 	    (isInvariant, RingElement, FiniteGroupAction),
 	    (isInvariant, RingElement, TorusAction),
