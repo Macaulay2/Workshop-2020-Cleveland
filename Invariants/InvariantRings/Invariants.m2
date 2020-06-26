@@ -217,7 +217,7 @@ invariants FiniteAbelianAction := List => A -> (
 	    );
 	U = delete(m, U);
 	);
-    return apply(S#(0_(ZZ^r)), m -> sub(m, ring A) )
+    if S#?(0_(ZZ^r)) then return apply(S#(0_(ZZ^r)), m -> sub(m, ring A) ) else return {}
     )
 
 -*
