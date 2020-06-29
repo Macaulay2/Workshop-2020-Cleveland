@@ -320,17 +320,19 @@ document {
 	    (isInvariant, RingElement, FiniteGroupAction),
 	    (isInvariant, RingElement, TorusAction),
 	    (isInvariant, RingElement, FiniteAbelianAction),
+	    (isInvariant, RingElement, LinearlyReductiveAction),
 	    },
 	
 	Headline => "check whether a polynomial is invariant under a group action",
 	
-	Usage => "isInvariant(f, G), isInvariant(f, T), isInvariant(f, A)",
+	Usage => "isInvariant(f, G), isInvariant(f, T), isInvariant(f, A), isInvariant(f, L)",
 	
 	Inputs => {
 	    	"f" => RingElement => {"a polynomial in the polynomial ring on which the group acts"},
 	    	"G" => FiniteGroupAction,
 		"T" => TorusAction,
-		"A" => FiniteAbelianAction
+		"A" => FiniteAbelianAction,
+		"L" => LinearlyReductiveAction
 		},
 	    
 	Outputs => {
@@ -378,11 +380,30 @@ document {
 	
 	EXAMPLE {
 	    "R = QQ[x_1..x_3]",
-	    "d = {3,3}",
 	    "W = matrix{{1,0,1},{0,1,1}}",
-	    "A = finiteAbelianAction(d, W, R)",
+	    "A = finiteAbelianAction({3,3}, W, R)",
 	    "isInvariant(x_1*x_2*x_3, A)",
 	    "isInvariant((x_1*x_2*x_3)^3, A)"
+		},
+
+         PARA {
+	    "Here is an example with a general linear group
+	    acting by conjugation on a space of matrices:"
+	    },
+	
+	EXAMPLE {
+	    "S = QQ[a,b,c,d,t]",
+	    "I = ideal((a*d-b*c)*t-1)",
+	    "R = QQ[x_(1,1)..x_(2,2)]",
+	    "Q = (S/I)(monoid R);",
+	    "G = transpose genericMatrix(S/I,2,2);",
+	    "X = transpose genericMatrix(Q,x_(1,1),2,2);",
+	    "N = reshape(Q^1,Q^4,transpose(inverse(G)*X*G));",
+	    "phi = map(S,Q);",
+	    "M = phi last coefficients N;",
+	    "L = linearlyReductiveAction(I, M, R)",
+	    "isInvariant(det genericMatrix(R,2,2),L)",
+	    "isInvariant(trace genericMatrix(R,2,2),L)",
 		},
 	    }	
 
