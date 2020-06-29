@@ -583,7 +583,7 @@ subsetToList := (n, subset) -> (
 minimumWeight = method(TypicalValue => ZZ)
 minimumWeight LinearCode := ZZ => C -> (
     M := matrix C.Generators;
-    k := length C.Generators; --Assumes generators are linearly independent?
+    k := rank reduceMatrix(C.GeneratorMatrix);
     n := length C;
     l := ceiling(n/k);
     D := l; --D could probably be modified to be better
@@ -629,15 +629,15 @@ minimumWeight LinearCode := ZZ => C -> (
     dlower := 0;
     while(true) do (
         permutation := join(T_(j-1),toList(0..n-1)-set(T_(j-1)));
-        G := reduceMatrix(M_permutation);
-    	
+	G := reduceMatrix(M_permutation);
+
 	sameWeightWords := apply(subsets(k,w), x -> subsetToList(k,x));
-    	sameWeightWords = flatten apply(sameWeightWords, x -> enumerateVectors(ring(C), x));
-        specialCodewords := apply(sameWeightWords, u -> flatten entries ((matrix {toList u})*G));
+	sameWeightWords = flatten apply(sameWeightWords, x -> enumerateVectors(ring(C), x));
+	specialCodewords := apply(sameWeightWords, u -> flatten entries ((matrix({toList u}))*G));
 
         dupper = min(append(apply(specialCodewords, i->weight i),dupper));
         dlower = sum(toList apply(1..j,i->max(0,w+1-k+r_(i-1))))+sum(toList apply(j+1..D,i->max(0,w-k+r_(i-1))));
-
+	
 	if dlower >= dupper then (
 	    C.cache#"minWeight" = dupper;
 	    return dupper;
