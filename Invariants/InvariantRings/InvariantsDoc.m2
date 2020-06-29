@@ -393,11 +393,11 @@ document {
 	
 	EXAMPLE {
 	    "S = QQ[a,b,c,d,t]",
-	    "I = ideal((a*d-b*c)*t-1)",
+	    "I = ideal((det genericMatrix(S,2,2))*t-1)",
 	    "R = QQ[x_(1,1)..x_(2,2)]",
 	    "Q = (S/I)(monoid R);",
-	    "G = transpose genericMatrix(S/I,2,2);",
-	    "X = transpose genericMatrix(Q,x_(1,1),2,2);",
+	    "G = transpose genericMatrix(S/I,2,2)",
+	    "X = transpose genericMatrix(Q,x_(1,1),2,2)",
 	    "N = reshape(Q^1,Q^4,transpose(inverse(G)*X*G));",
 	    "phi = map(S,Q);",
 	    "M = phi last coefficients N;",
