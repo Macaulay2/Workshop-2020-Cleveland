@@ -3,10 +3,10 @@ document {
 	
 	Headline => "matrix of a linearly reductive action",
 	
-	Usage => "actionMatrix V",
+	Usage => "actionMatrix L",
 	
 	Inputs => {
-	        "V" => LinearlyReductiveAction => {"on a polynomial ring ", TT "R"},
+	        "L" => LinearlyReductiveAction => {"on a polynomial ring ", TT "R"},
 		},
 	    
 	Outputs => {
@@ -17,8 +17,9 @@ document {
 	".",
 	
 	PARA { 
-	    "Suppose the action ", TT "V", " consists of the linearly
-	    reductive group ", TEX ///Spec$(S/I)$///, " acting on 
+	    "Suppose the action ", TT "L", " consists of the linearly
+	    reductive group with coordinate ring ", TT "S/I",
+	    " (where ", TT "S", " is a polynomial ring) acting on 
 	    the polynomial ring ", TT "R", " via the action matrix ",
 	    TT "M", ". This function returns the action matrix ", TT "M",
 	    ".",
@@ -28,8 +29,8 @@ document {
 		"I = ideal(z^2 - 1)",
 		"M = matrix{{(z+1)/2, (1-z)/2},{(1-z)/2, (z+1)/2}}",
 		"R = QQ[x,y]",
-		"V = linearlyReductiveAction(I, M, R)",
-		"actionMatrix V",
+		"L = linearlyReductiveAction(I, M, R)",
+		"actionMatrix L",
 		},
 	    }
 
@@ -38,10 +39,10 @@ document {
 	
 	Headline => "ideal defining a linearly reductive group",
 	
-	Usage => "groupIdeal V",
+	Usage => "groupIdeal L",
 	
 	Inputs => {
-	        "V" => LinearlyReductiveAction => {"of a group ", TEX ///Spec$(S/I)$///},
+	        "L" => LinearlyReductiveAction => {"of a group with coordinate ring ", TT "S/I"},
 		},
 	    
 	Outputs => {
@@ -52,8 +53,9 @@ document {
 	".",
 	
 	PARA { 
-	    "Suppose the action ", TT "V", " consists of the linearly
-	    reductive group ", TEX ///Spec$(S/I)$///, " acting on 
+	    "Suppose the action ", TT "L", " consists of the linearly
+	    reductive group with coordinate ring ", TT "S/I",
+	    " (where ", TT "S", " is a polynomial ring) acting on 
 	    the polynomial ring ", TT "R", " via the action matrix ",
 	    TT "M", ". This function returns the ideal ", TT "I",
 	    ".",
@@ -63,8 +65,8 @@ document {
 		"I = ideal(z^2 - 1)",
 		"M = matrix{{(z+1)/2, (1-z)/2},{(1-z)/2, (z+1)/2}}",
 		"R = QQ[x,y]",
-		"V = linearlyReductiveAction(I, M, R)",
-		"groupIdeal V",
+		"L = linearlyReductiveAction(I, M, R)",
+		"groupIdeal L",
 		},
 	    }
 
@@ -75,10 +77,10 @@ document {
 	
 	Headline => "compute generators for the Hilbert ideal",
 	
-	Usage => "hilbertIdeal V",
+	Usage => "hilbertIdeal L",
 	
 	Inputs => {
-	        "V" => LinearlyReductiveAction,
+	        "L" => LinearlyReductiveAction,
 		},
 	    
 	Outputs => {
@@ -116,9 +118,9 @@ document {
 		"M = matrix{{(z+1)/2, (1-z)/2},{(1-z)/2, (z+1)/2}}",
 		"sub(M,z=>1),sub(M,z=>-1)",
 		"R = QQ[x,y]",
-		"V = linearlyReductiveAction(I, M, R)",
-		"H = hilbertIdeal V",
-		"apply(H_*, f -> isInvariant(f,V))"
+		"L = linearlyReductiveAction(I, M, R)",
+		"H = hilbertIdeal L",
+		"apply(H_*, f -> isInvariant(f,L))"
 		},
     	 Caveat => "The generators of the Hilbert ideal computed
 	 by this function need not be invariant."	    
@@ -169,7 +171,7 @@ document {
 		"M = matrix{{(z+1)/2, (1-z)/2},{(1-z)/2, (z+1)/2}}",
 		"sub(M,z=>1),sub(M,z=>-1)",
 		"R = QQ[x,y]",
-		"V = linearlyReductiveAction(I, M, R)",
+		"L = linearlyReductiveAction(I, M, R)",
 		},
 }
 
