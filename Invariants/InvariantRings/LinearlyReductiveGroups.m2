@@ -12,7 +12,9 @@ LinearlyReductiveAction = new Type of GroupAction
 
 linearlyReductiveAction = method()
 
-linearlyReductiveAction (Ideal, Matrix, PolynomialRing) := LinearlyReductiveAction => (A, M, R) -> (
+linearlyReductiveAction (Ideal, Matrix, PolynomialRing) :=
+linearlyReductiveAction (Ideal, Matrix, QuotientRing) := LinearlyReductiveAction => (A, M, Q) -> (
+    R := ambient Q;
     if not isField coefficientRing R then (error "linearlyReductiveAction: Expected the third argument to be a polynomial ring over a field.");
     if (numColumns M =!= numRows M) or (numRows M =!= #(gens R)) then (error "linearlyReductiveAction: Matrix size does not match polynomial ring.");
     if coefficientRing ring A =!= coefficientRing R then (error "linearlyReductiveAction: Group and polynomial ring not defined over same field.");
@@ -20,7 +22,7 @@ linearlyReductiveAction (Ideal, Matrix, PolynomialRing) := LinearlyReductiveActi
 	cache => new CacheTable,
 	(symbol groupIdeal) => A, 
 	(symbol actionMatrix) => M, 
-	(symbol ring) => R
+	(symbol ring) => Q
 	}
     )
 
