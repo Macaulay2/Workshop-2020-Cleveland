@@ -302,6 +302,7 @@ manualTrim (List) := List => L -> (
 -------------------------------------------
 
 --Computes an *additive* basis for the degree d part of the invariant ring.
+-*
 invariants (LinearlyReductiveAction, ZZ) := List => (V,d) -> (
     M := actionMatrix V;
     R := ring V;
@@ -324,6 +325,33 @@ invariants (LinearlyReductiveAction, ZZ) := List => (V,d) -> (
     B := matrix(apply(m, i -> apply(r, j -> coefficient(monomialsNFDL#i, NFDL#j))));
     KB := gens kernel B;
     return flatten entries sub(L * KB, join(apply(n, i -> x_(i+1) => R_i), apply(l, i -> z_(i+1) => 0)))
+)
+*-
+
+--this is a variation on Xianlong's code above
+--that should work for quotients of polynomial rings
+invariants (LinearlyReductiveAction, ZZ) := List => (V,d) -> (
+    M := actionMatrix V;
+    Q := ring V;
+    A := groupIdeal V;
+    n := #(gens Q);
+    K := coefficientRing ring groupIdeal V;
+    x := local x, z := local z;
+    --X := K[x_1..x_n];
+    
+    l := #(gens ring M);
+    S := Q**K[z_1..z_l];
+    M' := sub(M, apply(l, i -> (ring M)_i => S_(n+i)));
+    A' := sub(A, apply(l, i -> (ring M)_i => S_(n+i)));
+    
+    L := sub(basis(d,Q), S);
+    r := numColumns L;
+    NFDL := apply(r, i -> (sub(L_(0,i), apply(n, j -> S_j => sum(n, k -> M'_(k,j) * S_k))) - L_(0,i)) % A');
+    monomialsNFDL := flatten entries monomials(matrix{NFDL});
+    m := #monomialsNFDL;
+    B := matrix(apply(m, i -> apply(r, j -> coefficient(monomialsNFDL#i, NFDL#j))));
+    KB := gens kernel B;
+    return flatten entries sub(L * KB, join(apply(n, i -> S_i => Q_i), apply(l, i -> z_(i+1) => 0)))
 )
 
 --Uses the preceding function together with hilbertIdeal to compute a set of generating invariants.
