@@ -351,7 +351,7 @@ invariants (LinearlyReductiveAction, ZZ) := List => (V,d) -> (
     m := #monomialsNFDL;
     B := matrix(apply(m, i -> apply(r, j -> coefficient(monomialsNFDL#i, NFDL#j))));
     KB := gens kernel B;
-    return flatten entries sub(L * KB, join(apply(n, i -> S_i => Q_i), apply(l, i -> z_(i+1) => 0)))
+    return flatten entries sub(L * KB, join(apply(n, i -> S_i => Q_i), apply(l, i -> S_(n+i) => 0)))
 )
 
 --Uses the preceding function together with hilbertIdeal to compute a set of generating invariants.
