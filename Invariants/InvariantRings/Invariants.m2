@@ -345,6 +345,8 @@ invariants (LinearlyReductiveAction, ZZ) := List => (V,d) -> (
     A' := sub(A, apply(l, i -> (ring M)_i => S_(n+i)));
     
     L := sub(basis(d,Q), S);
+    if zero L then return {};
+    if L == id_(S^1) then return {1_Q};
     r := numColumns L;
     NFDL := apply(r, i -> (sub(L_(0,i), apply(n, j -> S_j => sum(n, k -> M'_(k,j) * S_k))) - L_(0,i)) % A');
     monomialsNFDL := flatten entries monomials(matrix{NFDL});
