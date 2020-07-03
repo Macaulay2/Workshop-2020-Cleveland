@@ -330,7 +330,8 @@ invariants (LinearlyReductiveAction, ZZ) := List => (V,d) -> (
 
 --this is a variation on Xianlong's code above
 --that should work for quotients of polynomial rings
-invariants (LinearlyReductiveAction, ZZ) := List => (V,d) -> (
+-- degree is passed as a list
+invariants (LinearlyReductiveAction, List) := List => (V,d) -> (
     M := actionMatrix V;
     Q := ring V;
     A := groupIdeal V;
@@ -355,6 +356,11 @@ invariants (LinearlyReductiveAction, ZZ) := List => (V,d) -> (
     KB := gens kernel B;
     return flatten entries sub(L * KB, join(apply(n, i -> S_i => Q_i), apply(l, i -> S_(n+i) => 0)))
 )
+
+-- use this when degree is an integer
+invariants (LinearlyReductiveAction, ZZ) := List => (V,d) -> (
+    invariants(V,{d})
+    )
 
 --Uses the preceding function together with hilbertIdeal to compute a set of generating invariants.
 invariants (LinearlyReductiveAction) := List => V -> (
