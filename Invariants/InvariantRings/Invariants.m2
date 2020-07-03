@@ -359,21 +359,21 @@ invariants (LinearlyReductiveAction, ZZ) := List => (V,d) -> (
 --Uses the preceding function together with hilbertIdeal to compute a set of generating invariants.
 invariants (LinearlyReductiveAction) := List => V -> (
     I := hilbertIdeal V;
-    R := ring V;
-    n := dim V;
+    Q := ring V;
+    n := #(gens Q);
     K := coefficientRing ring groupIdeal V;
     x := local x;
     X := K[x_1..x_n];
     
-    I' := flatten entries gens sub(I, apply(n, i -> (ring I)_i => x_(i+1)));
+    --I' := flatten entries gens sub(I, apply(n, i -> Q_i => x_(i+1)));
     
-    degreeList := sort toList set apply(I', i -> first degree i);
+    degreeList := sort unique apply(I_*, i -> degree i);
     generatorList := {};
     
     local d;
     while (#degreeList > 0) do(
 	d = degreeList#0;
-    	Id := select(I', i -> first degree i == d);
+    	Id := select(I_*, i -> degree i == d);
 	
 	alreadyInv := true;
 	j := 0;
@@ -384,7 +384,7 @@ invariants (LinearlyReductiveAction) := List => V -> (
     	if not alreadyInv then (
 	    generatorList = join(generatorList, invariants(V,d))
 	) else (
-	    generatorList = join(generatorList, apply(Id, f -> sub(f, apply(n, i -> x_(i+1) => R_i))));
+	    generatorList = join(generatorList, Id);
 	);
     	degreeList = drop(degreeList,1)
     );
