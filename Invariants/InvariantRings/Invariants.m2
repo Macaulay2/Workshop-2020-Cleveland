@@ -47,7 +47,7 @@ QuotientRing^LinearlyReductiveAction := RingOfInvariants => (Q, L) -> (
 -------------------------------------------
 
 net RingOfInvariants := S -> (
-    horizontalJoin(
+    n := horizontalJoin(
 	{
 	    (net coefficientRing ambient S),"["
 	    }|
@@ -60,7 +60,11 @@ net RingOfInvariants := S -> (
 	{
 	    "]"
 	    }
-	)
+	);
+    if not zero ideal ambient S then (
+	n = horizontalJoin(n," / ",net ideal ambient S);
+	);
+    return n;
     )
 
 action = method()
