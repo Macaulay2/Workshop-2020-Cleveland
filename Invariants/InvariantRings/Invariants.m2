@@ -39,6 +39,11 @@ PolynomialRing^GroupAction := RingOfInvariants => (R, G) -> (
     invariantRing G
     )
 
+QuotientRing^LinearlyReductiveAction := RingOfInvariants => (Q, L) -> (
+    if ring L =!= Q then (error "Expected the first argument to be the polynomial ring on which the actions acts.");
+    invariantRing L
+    )
+
 -------------------------------------------
 
 net RingOfInvariants := S -> (
