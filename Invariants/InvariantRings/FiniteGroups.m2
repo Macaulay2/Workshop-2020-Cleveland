@@ -198,6 +198,7 @@ addHook(FiniteGroupAction, symbol relations, G -> break (
 -- Currently, this does not keep track of which generators of the group are the minimal generators 
 -- corresponding to the cyclic factors.
 
+-*
 cyclicFactors = G -> (
     if not isAbelian G then (error "cyclicFactors: Expected group to be abelian.");
     relators := relations G;
@@ -211,6 +212,8 @@ cyclicFactors = G -> (
     relators = relations minimalPresentation coker relators;
     apply(numRows relators, i -> relators_i_i)
     )
+
+*-
 
 -------------------------------------------
 

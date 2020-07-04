@@ -19,16 +19,16 @@
 
 RingOfInvariants = new Type of HashTable   
 
-invariantRing = method()
+invariantRing = method(Options => {Strategy => UseNormaliz})
 
-invariantRing GroupAction := RingOfInvariants => G -> (
+invariantRing GroupAction := RingOfInvariants => o -> G -> (
     -- Generating invariants are stored in the cache in case we want to add Options later
     -- that compute invariants only up to a fixed degree similar to 'res'.
     -- Being in the cache should allow the user to gradually update/increase the degree if there are
     -- many invariants.
     
     new RingOfInvariants from {
-	cache => new CacheTable from { (symbol generators) => invariants G },
+	cache => new CacheTable from { (symbol generators) => invariants(G, o) },
 	(symbol ambient) => ring G, 
 	(symbol action) => G
 	}
@@ -137,13 +137,116 @@ reynoldsOperator (RingElement, FiniteGroupAction) := RingElement => (f, G) -> (
     (1/#(group G))*(sum apply(group G, g -> sub(f, (vars R)*(transpose g) ) ) )
     )
 
-reynoldsOperator (RingElement, TorusAction) := RingElement => (f, T) -> sum select(terms f, m -> isInvariant(m, T) )
-reynoldsOperator (RingElement, FiniteAbelianAction) := RingElement => (f, A) -> sum select(terms f, m -> isInvariant(m, A) ) 
+reynoldsOperator (RingElement, DiagonalAction) := RingElement => (f, D) -> sum select(terms f, m -> isInvariant(m, D) )
 
 -------------------------------------------
 
-invariants = method()
+invariants = method(Options => {Strategy => UseNormaliz})
 
+invariants DiagonalAction := List => o -> D -> (
+    (W1, W2) := weights D;
+    R := ring D;
+    R = (coefficientRing R)[R_*, MonomialOrder => GLex];
+    d := cyclicFactors D;
+    r := rank D;
+    g := numgens D;
+    n := dim D;
+    mons := R_*;
+    local C, local S, local U;
+    local v, local m, local v', local u;
+    
+    -- Find invariants of the finite abelian factors. 
+    if g > 0 then (
+	t := product d;
+	
+	reduceWeight := w -> vector apply(g, i -> w_i%d#i);
+	
+	C = apply(n, i -> reduceWeight W2_i);
+	
+	S = new MutableHashTable from apply(C, w -> w => {});
+	scan(#mons, i -> S#(reduceWeight W2_i) = S#(reduceWeight W2_i)|{mons#i});
+	U = R_*;
+	
+	while  #U > 0 do(
+	    m = min U; 
+	    v = first exponents m;
+	    k := max positions(v, i -> i > 0);
+	    v = reduceWeight(W2*(vector v));
+	    
+	    while k < n do(
+	    	u = m*R_k;
+	    	v' = reduceWeight(v + W2_k);
+	    	if (not S#?v') then S#v' = {};
+	    	if all(S#v', m' -> u%m' =!= 0_R) then (
+		    S#v' = S#v'|{u};
+		    if first degree u < t then U = U | {u}
+		    );
+	    	k = k + 1;
+	    	);
+	    U = delete(m, U);
+	    );
+    	if S#?(0_(ZZ^g)) then mons = S#(0_(ZZ^g)) else mons = {}
+    	);
+    if r == 0 then return apply(mons, m -> sub(m, ring D) );
+    
+    -- Find invariants of the torus factors among the abelian invariant monomials.
+    W1 = W1*(transpose matrix (mons/exponents/first));
+    if o.Strategy == UsePolyhedra then (
+	if r == 1 then C = convexHull W1 else C = convexHull( 2*r*W1|(-2*r*W1) );
+	C = (latticePoints C)/vector;
+	)
+    else if o.Strategy == UseNormaliz then (
+	if r == 1 then C = (normaliz(transpose W1, "polytope"))#"gen" 
+	else C = (normaliz(transpose (2*r*W1|(-2*r*W1)), "polytope"))#"gen";
+	C = transpose C_(apply(r, i -> i));
+	C = apply(numColumns C, j -> C_j)
+	);
+    
+    -- Creates a hashtable of lists indexed by the lattice points of the convex hull
+    -- of the (scaled) weight vectors, initialized with the list of each weight vector
+    -- being the corresponding variable in the ring.
+    S = new MutableHashTable from apply(C, w -> w => {});
+    scan(#mons, i -> S#(W1_i) = S#(W1_i)|{mons#i});
+    U = new MutableHashTable from S;
+    
+    nonemptyU := select(keys U, w -> #(U#w) > 0);
+    --iteration := 0; --step by step printing
+    
+    -- While some list of monomials in U is nonempty, picks a monomial in U, multiplies
+    -- it by every variable, and updates the lists of monomials in S and U if the product
+    -- is minimal with respect to divisibility in the list of monomials in S with the same weight.
+    while  #nonemptyU > 0 do(
+	v = first nonemptyU;
+	m = first (U#v);
+	
+	-- Uncomment lines in step by step printing to see steps
+	-- Note: there is one such line before the while loop
+	--print("\n"|"Iteration "|toString(iteration)|".\n"); --step by step printing
+    	--print(net("    Weights: ")|net(W)); --step by step printing
+	--print("\n"|"    Set U of weights/monomials:\n"); --step by step printing
+	--print(net("    ")|net(pairs select(hashTable pairs U,l->l!= {}))); --step by step printing
+	--print("\n"|"    Set S of weights/monomials:\n"); --step by step printing
+	--print(net("    ")|net(pairs select(hashTable pairs S,l->l!= {}))); --step by step printing
+	--iteration = iteration + 1; --step by step printing
+	
+	scan(n, i -> (
+		u := m*R_i;
+        	v' := v + W1_i;
+        	if ((U#?v') and all(S#v', m' -> u%m' =!= 0_R)) then( 
+                    S#v' = S#v'|{u};
+                    U#v' = U#v'|{u};
+		    )
+	    	)
+	    );
+	U#v = delete(m, U#v);
+	nonemptyU = select(keys U, w -> #(U#w) > 0)
+	);
+    
+    if S#?(0_(ZZ^r)) then mons = S#(0_(ZZ^r)) else mons = {};
+    return apply(mons, m -> sub(m, ring D) )
+    )
+
+-*
 invariants TorusAction := List => T -> (
     R := ring T;
     r := rank T;
@@ -198,46 +301,7 @@ invariants TorusAction := List => T -> (
     -- if there are no invariants return an empty list
     if S#?(0_(ZZ^r)) then return S#(0_(ZZ^r)) else return {}
     )
-
-invariants FiniteAbelianAction := List => A -> (
-    W := weights A;
-    R := ring A;
-    R = (coefficientRing R)[R_*, MonomialOrder => GLex];
-    d := size A;
-    r := numgens A;
-    n := dim A;
-    t := product d; 
-    
-    reduceWeight := w -> vector apply(r, i -> w_i%d#i);
-    
-    C := apply(n, i -> reduceWeight W_i);
-
-    S := new MutableHashTable from apply(C, w -> w => {});
-    scan(n, i -> S#(reduceWeight W_i) = S#(reduceWeight W_i)|{R_i});
-    U := R_*;
-    
-    local v, local m, local u, local v';
-    
-    while  #U > 0 do(
-	m = min U; 
-	v = first exponents m;
-	k := max positions(v, i -> i > 0);
-	v = reduceWeight(W*(vector v));
-
-	while k < n do(
-	    u = m*R_k;
-	    v' = reduceWeight(v + W_k);
-	    if (not S#?v') then S#v' = {};
-	    if all(S#v', m' -> u%m' =!= 0_R) then (
-		S#v' = S#v'|{u};
-		if first degree u < t then U = U | {u}
-		);
-	    k = k + 1;
-	    );
-	U = delete(m, U);
-	);
-    if S#?(0_(ZZ^r)) then return apply(S#(0_(ZZ^r)), m -> sub(m, ring A) ) else return {}
-    )
+*-
 
 -*
 invariants FiniteAbelianAction := List => G -> (
@@ -312,8 +376,10 @@ manualTrim (List) := List => L -> (
 
 -------------------------------------------
 
+<<<<<<< HEAD
 -*
-invariants (LinearlyReductiveAction, ZZ) := List => (V,d) -> (
+--Computes an *additive* basis for the degree d part of the invariant ring.
+invariants (LinearlyReductiveAction, ZZ) := List => o -> (V,d) -> (
     M := actionMatrix V;
     R := ring V;
     A := groupIdeal V;
@@ -343,7 +409,7 @@ invariants (LinearlyReductiveAction, ZZ) := List => (V,d) -> (
 -- This is a variation on Xianlong Ni's original code
 -- that should work for quotients of polynomial rings.
 -- Degree is passed as a list or as an integer.
-invariants (LinearlyReductiveAction, List) := List => (V,d) -> (
+invariants (LinearlyReductiveAction, List) := List => o -> (V,d) -> (
     M := actionMatrix V;
     Q := ring V;
     A := groupIdeal V;
@@ -369,12 +435,12 @@ invariants (LinearlyReductiveAction, List) := List => (V,d) -> (
     return flatten entries sub(L * KB, join(apply(n, i -> S_i => Q_i), apply(l, i -> S_(n+i) => 0)))
 )
 
-invariants (LinearlyReductiveAction, ZZ) := List => (V,d) -> (
+invariants (LinearlyReductiveAction, ZZ) := List => o -> (V,d) -> (
     invariants(V,{d})
     )
 
 --Uses the preceding function together with hilbertIdeal to compute a set of generating invariants.
-invariants (LinearlyReductiveAction) := List => V -> (
+invariants (LinearlyReductiveAction) := List => o -> V -> (
     I := hilbertIdeal V;
     Q := ring V;
     n := #(gens Q);
@@ -413,18 +479,15 @@ isInvariant = method()
 isInvariant (RingElement, FiniteGroupAction) := Boolean => (f, G) -> reynoldsOperator(f, G) == f
     -- reynoldsOperator already checks to see if f is in the ring on which G acts.
 
-isInvariant (RingElement, TorusAction) := Boolean => (f, T) -> (
-    if not instance(f, ring T) then (error "isInvariant: Expected an element from the ring on which the group acts.");
-    return (weights T) * transpose(matrix(exponents(f))) == 0
-    )
-
-isInvariant (RingElement, FiniteAbelianAction) := Boolean => (f, A) -> (
-    if not instance(f, ring A) then (error "isInvariant: Expected an element from the ring on which the group acts.");
-    W := weights A;
-    V := W * transpose(matrix(exponents(f)));
-    n := dim A;
-    d := size A;
-    all(numgens A, i -> (V_0_i)%(d#i) == 0)
+isInvariant (RingElement, DiagonalAction) := Boolean => (f, D) -> (
+    if not instance(f, ring D) then (
+	error "isInvariant: Expected an element from the ring on which the group acts."
+	);
+    (W1, W2) := weights D;
+    d := cyclicFactors D;
+    torus := W1 * transpose(matrix (exponents f) ); 
+    finite := W2 * transpose(matrix (exponents f) );
+    return ( torus == 0 and all(#d, i -> finite_0_i%d#i == 0) )
     )
 
 isInvariant (RingElement, LinearlyReductiveAction) := Boolean => (f, V) -> (

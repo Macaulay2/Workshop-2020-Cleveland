@@ -41,7 +41,7 @@ document {
 	
 	EXAMPLE {
 		"R = QQ[x_1..x_4]",
-		"T = torusAction(matrix {{0,1,-1,1},{1,0,-1,-1}}, R)",
+		"T = diagonalAction(matrix {{0,1,-1,1},{1,0,-1,-1}}, R)",
 		"dim T == dim R"
 		},
 	    }
@@ -64,12 +64,10 @@ document {
 	    {TO "FiniteGroupAction", ", the class of 
 	    a finite matrix group action, is created with ",
 	    TO "finiteAction"},
-	    {TO "FiniteAbelianAction", ", the class of the diagonal
-	    action of a finite abelian group, is created with ",
-	    TO "finiteAbelianAction"},
-	    {TO "TorusAction", ", the class of a diagonal
-	    torus action, is created with ",
-	    TO "torusAction"},
+	    {TO "DiagonalAction", ", the class of the diagonal
+	    action of a product of a torus and a finite abelian group, 
+	    is created with ",
+	    TO "diagonalAction"},
 	    {TO "LinearlyReductiveAction", ", the class of a
 	    linearly reductive matrix group action,
 	    is created with ",
@@ -115,8 +113,8 @@ document {
 	
 	EXAMPLE {
 		"R = QQ[x_1..x_4]",
-		"T = torusAction(matrix {{0,1,-1,1},{1,0,-1,-1}}, R)",
-		"ring(T) === R"
+		"T = diagonalAction(matrix {{0,1,-1,1},{1,0,-1,-1}}, R)",
+		"ring T === R"
 		},
 	    }
 

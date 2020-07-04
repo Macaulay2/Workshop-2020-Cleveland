@@ -1,53 +1,112 @@
 --This file contains torus/abelian action methods and Hilbert series methods
---TODO 6/26/20
---1. Rename DiagonalActions for clarity
---2. Check state of documentation
---3. Check state of tests
+--TODO 7/1/20
+--1. Check state of documentation
+--2. Check state of tests
 
-TorusAction = new Type of GroupAction
-FiniteAbelianAction = new Type of GroupAction
+DiagonalAction = new Type of GroupAction
 
 -------------------------------------------
---- TorusAction methods -------------------
+--- DiagonalAction methods -------------------
 -------------------------------------------
 
-torusAction = method()
+diagonalAction = method()
 
-torusAction (Matrix, PolynomialRing) := TorusAction => (W, R) -> (
-    if not isField coefficientRing R then (error "finiteAction: Expected the second argument to be a polynomial ring over a field.");
-    if ring W =!= ZZ then (error "torusAction: Expected the first argument to be a matrix of integer weights.");
-    if numColumns W =!= dim R then (error "torusAction: Expected the number of columns of the matrix to equal the dimension of the polynomial ring."); 
-    r := numRows W;
-    -- coefficient ring for torus characters
+
+-- Constructor for a general diagonal action.
+
+diagonalAction (Matrix, Matrix, List, PolynomialRing) := DiagonalAction => (W1, W2, d, R) -> (
+    if not isField coefficientRing R then (
+	error "diagonalAction: Expected the last argument to be a polynomial ring over a field."
+	);
+    if ring W1 =!= ZZ or ring W2 =!= ZZ then (
+	error "diagonalAction: Expected the first and second arguments to be matrices of integer weights."
+	);
+    if numColumns W1 =!= dim R or numColumns W2 =!= dim R then (
+	error "diagonalAction: Expected the number of columns of each matrix to equal the dimension of the polynomial ring."
+	);
+    if numRows W2 =!= #d then (
+	error "diagonalAction: Expected the number of rows of the second argument to equal the size of the list."
+	);
+    if any(d, j -> not instance(j, ZZ) or j <= 0) then (
+	error "diagonalAction: Expected the second argument to be a list of positive integers."
+	);     
+    -- coefficient ring for group characters
+    r := numRows W1;
+    g := numRows W2;
     z := getSymbol "z";
-    C := ZZ[Variables=>r,VariableBaseName=>z,MonomialOrder=>GroupLex=>r,Inverses=>true];
-    new TorusAction from {
+    --C := ZZ[Variables=> r + g,VariableBaseName=>z, Inverses => true, MonomialOrder=> GroupLex];
+    --if g > 0 then C = C / ideal apply(g, i -> C_(r+i)^(d#i) - 1);
+    --D := newRing(degreesRing R,MonomialOrder=>RevLex,Inverses=>false);
+    new DiagonalAction from {
 	cache => new CacheTable,
-	(symbol actionMatrix) => W,
-	(symbol degreesRing) => C monoid degreesRing R,
+	(symbol cyclicFactors) => d,
+	--(symbol degreesRing) => C monoid D,
+	(symbol numgens) => g, 
 	(symbol ring) => R, 
-	(symbol rank) => r
+	(symbol rank) => r,
+	(symbol weights) => (W1, W2)
 	}
     )
 
+diagonalAction (Matrix, List, PolynomialRing) := DiagonalAction => (W, d, R) -> (
+    if ring W =!= ZZ then (
+	error "diagonalAction: Expected the first argument to be a matrix of integer weights."
+	);
+    r := numRows W - #d;
+    if r < 0 then (
+	error "diagonalAction: The number of rows of the matrix cannot be smaller than the size of the list."
+	); 
+    W1 := W^(apply(r, i -> i));
+    W2 := W^(apply(#d, i -> r + i));
+    diagonalAction(W1, W2, d, R)
+    )
+
+-- Constructor for a diagonal torus action.
+
+diagonalAction (Matrix, PolynomialRing) := DiagonalAction => (W, R) -> diagonalAction(W, {}, R)
+
 
 -------------------------------------------
 
-net TorusAction := T -> (
-    r := T.rank;
-    torus := (expression coefficientRing T.ring)^(expression "*");
-    if r > 1 then torus = (expression ("("|net torus|")"))^(expression r);
-    stack {(net T.ring)|" <- "|net torus|" via ","", net T.actionMatrix}
+net DiagonalAction := D -> (
+    torus := "";
+    cyclicGroups := "";
+    r := D.rank;
+    g := D.numgens;
+    local weightMatrix;
+    if r > 0 then (
+	torus = (expression coefficientRing D.ring)^(expression "*");
+	if r > 1 then torus = (expression ("("|net torus|")"))^(expression r)
+	);
+    if g > 0 then (
+	cyclicGroups = cyclicGroups|horizontalJoin apply(g, i -> (
+		if i == g - 1 then (net ZZ|"/"|net D.cyclicFactors#i)
+		else (net ZZ|"/"|net D.cyclicFactors#i|" x ")
+		)
+	    );
+	if r > 0 then (
+	    torus = torus|" x ";
+	    weightMatrix = D.weights
+	    )
+	else weightMatrix = last D.weights
+	)
+    else weightMatrix = first D.weights;
+    stack {(net D.ring)|" <- "|net torus|net cyclicGroups|" via ","", net weightMatrix}
     )
--- If the weight matrix is huge, consider rewriting to print something else.
 
-rank TorusAction := ZZ => T -> T.rank
+cyclicFactors = method()
+
+cyclicFactors DiagonalAction := List => D -> D.cyclicFactors
+
+degreesRing DiagonalAction := Ring => D -> D.degreesRing
+
+numgens DiagonalAction := ZZ => D -> D.numgens
+
+rank DiagonalAction := ZZ => D -> D.rank
 
 weights = method()
 
-weights TorusAction := Matrix => T -> T.actionMatrix 
-
-degreesRing TorusAction := PolynomialRing => T -> T.degreesRing
+weights DiagonalAction := Matrix => D -> D.weights
 
 
 -------------------------------------------
@@ -65,8 +124,7 @@ degreesRing TorusAction := PolynomialRing => T -> T.degreesRing
 
 equivariantHilbertSeries = method(Options => {Order => infinity}, TypicalValue => Divide)
 
-equivariantHilbertSeries (FiniteAbelianAction) :=
-equivariantHilbertSeries (TorusAction) := op -> T -> (
+equivariantHilbertSeries DiagonalAction := op -> T -> (
     if #(gens degreesRing T) != 1 then
     error "only implemented for standard graded polynomial rings";
     ord := op.Order;
@@ -82,7 +140,7 @@ equivariantHilbertSeries (TorusAction) := op -> T -> (
 -- do not export
 equivariantHilbertRational = T -> (
     n := dim T;
-    W := weights T;
+    W := (first weights T)||(last weights T);
     R := degreesRing T;
     C := coefficientRing R;
     -- tally the weights of the action
@@ -123,50 +181,5 @@ equivariantHilbertPartial = (T, d) -> (
     )
 
 
--------------------------------------------
---- FiniteAbelianAction methods -----------
--------------------------------------------
 
-finiteAbelianAction = method()
-
-finiteAbelianAction (List, Matrix, PolynomialRing) := FiniteAbelianAction => (L, W, R) -> (
-    if not isField coefficientRing R then (error "finiteAbelianAction: Expected the third argument to be a polynomial ring over a field.");
-    if ring W =!= ZZ then (error "finiteAbelianAction: Expected the second argument to be a matrix of integer weights.");
-    if numColumns W =!= dim R then (error "finiteAbelianAction: Expected the number of columns of the matrix to equal the dimension of the polynomial ring.");
-    r := numRows W;
-    if r =!= #L then (error "finiteAbelianAction: Expected the number of rows of the matrix to equal the size of the list."); 
-    -- coefficient ring for group characters
-    z := getSymbol "z";
-    C := ZZ[Variables=>r,VariableBaseName=>z,MonomialOrder=>Lex];
-    C = C / ideal apply(gens C,L,(x,i)->x^i-1);
-    D := newRing(degreesRing R,MonomialOrder=>RevLex,Inverses=>false);
-    new FiniteAbelianAction from {
-	cache => new CacheTable,
-	(symbol actionMatrix) => W,
-	(symbol size) => L,
-	(symbol ring) => R,
-	(symbol numgens) => #L, 
-	(symbol degreesRing) => C monoid D
-	}
-    )
-
--------------------------------------------
-
-net FiniteAbelianAction := G -> (
-    cyclicGroups := apply(G.numgens, i -> (
-	    if i == G.numgens - 1 then (net ZZ|"/"|net G.size#i)
-	    else (net ZZ|"/"|net G.size#i|" x ")
-	    )
-	);
-    stack {(net G.ring)|" <- "|(horizontalJoin cyclicGroups)|" via ","", net G.actionMatrix}
-    )
--- If the weight matrix is huge, consider rewriting to print something else.
-
-numgens FiniteAbelianAction := ZZ => G -> G.numgens
-
-size FiniteAbelianAction := List => G -> G.size
-
-weights FiniteAbelianAction := Matrix => G -> G.actionMatrix
-
-degreesRing FiniteAbelianAction := QuotientRing => G -> G.degreesRing
 
