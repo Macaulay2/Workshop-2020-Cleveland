@@ -61,6 +61,8 @@ net RingOfInvariants := S -> (
 	    "]"
 	    }
 	);
+    -- this is used for linearly reductive actions on quotients
+    -- to print relations on the ring of invariants
     if not zero ideal ambient S then (
 	n = horizontalJoin(n," / ",net ideal ambient S);
 	);
@@ -310,7 +312,6 @@ manualTrim (List) := List => L -> (
 
 -------------------------------------------
 
---Computes an *additive* basis for the degree d part of the invariant ring.
 -*
 invariants (LinearlyReductiveAction, ZZ) := List => (V,d) -> (
     M := actionMatrix V;
@@ -337,9 +338,11 @@ invariants (LinearlyReductiveAction, ZZ) := List => (V,d) -> (
 )
 *-
 
---this is a variation on Xianlong's code above
---that should work for quotients of polynomial rings
--- degree is passed as a list
+-- Computes an *additive* basis for the degree d part of the
+-- invariant ring following Algorithm 4.5.1 of Derksen-Kemper.
+-- This is a variation on Xianlong Ni's original code
+-- that should work for quotients of polynomial rings.
+-- Degree is passed as a list or as an integer.
 invariants (LinearlyReductiveAction, List) := List => (V,d) -> (
     M := actionMatrix V;
     Q := ring V;
@@ -366,7 +369,6 @@ invariants (LinearlyReductiveAction, List) := List => (V,d) -> (
     return flatten entries sub(L * KB, join(apply(n, i -> S_i => Q_i), apply(l, i -> S_(n+i) => 0)))
 )
 
--- use this when degree is an integer
 invariants (LinearlyReductiveAction, ZZ) := List => (V,d) -> (
     invariants(V,{d})
     )
@@ -379,8 +381,6 @@ invariants (LinearlyReductiveAction) := List => V -> (
     K := coefficientRing ring groupIdeal V;
     x := local x;
     X := K[x_1..x_n];
-    
-    --I' := flatten entries gens sub(I, apply(n, i -> Q_i => x_(i+1)));
     
     degreeList := sort unique apply(I_*, i -> degree i);
     generatorList := {};
