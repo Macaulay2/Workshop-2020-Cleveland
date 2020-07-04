@@ -376,7 +376,6 @@ manualTrim (List) := List => L -> (
 
 -------------------------------------------
 
-<<<<<<< HEAD
 -*
 --Computes an *additive* basis for the degree d part of the invariant ring.
 invariants (LinearlyReductiveAction, ZZ) := List => o -> (V,d) -> (

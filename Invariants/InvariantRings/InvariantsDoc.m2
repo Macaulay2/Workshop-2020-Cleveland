@@ -337,8 +337,7 @@ document {
 	Key => {isInvariant, 
 	    (isInvariant, RingElement, FiniteGroupAction),
 	    (isInvariant, RingElement, DiagonalAction),
-	    (isInvariant, RingElement, LinearlyReductiveAction),
-	    (isInvariant, RingElement, DiagonalAction)
+	    (isInvariant, RingElement, LinearlyReductiveAction)
 	    },
 	
 	Headline => "check whether a polynomial is invariant under a group action",
@@ -408,6 +407,7 @@ document {
 	    acting by conjugation on a space of matrices:"
 	    },
 	
+	-*
 	EXAMPLE {
 	    "S = QQ[a,b,c,d,t]",
 	    "I = ideal((det genericMatrix(S,2,2))*t-1)",
@@ -422,6 +422,7 @@ document {
 	    "isInvariant(det genericMatrix(R,2,2),L)",
 	    "isInvariant(trace genericMatrix(R,2,2),L)",
 		},
+	    *-
 	    }	
 
 document {
