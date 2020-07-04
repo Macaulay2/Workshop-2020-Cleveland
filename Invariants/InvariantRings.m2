@@ -67,19 +67,17 @@ export {
     "words",    	       	  -- documented
 
 --AbelianGroups.m2
+    "cyclicFactors",
     -- degreesRings    	       	  -- overloaded
+    "DiagonalAction",	     	  -- exported type name, documented
+    "diagonalAction",	     	  -- documentation needs some work to explain different usages
     "equivariantHilbert",    	  -- cache table key
     -- equivariantHilbertPartial  -- unexported
     -- equivariantHilbertRational -- unexported
-    "equivariantHilbertSeries",      
-    "finiteAbelianAction",    	  -- documented
-    "FiniteAbelianAction",    	  -- exported type name, documented
+    "equivariantHilbertSeries",   -- documented   
     -- numgens	      	      	  -- overloaded, documented
     -- rank    	       	       	  -- overloaded
-    -- size    	       	       	  -- overloaded
-    "torusAction",    	      	  -- documented
-    "TorusAction",    	      	  -- exported type name, documented
-    "weights",	      	      	  -- documented (there are 3 different entries, simplify into 1)
+    "weights",	      	      	  -- documented
 
 --LinearlyReductiveGroups.m2    
     "actionMatrix",
@@ -102,14 +100,16 @@ export {
     "Nonabelian",     	          -- Default strategy option for isInvariant
     -- presentation    	       	  -- overloaded
     "reynoldsOperator",	       	  -- documented   
-    "RingOfInvariants"	       	  -- exported type name    	
+    "RingOfInvariants",	       	  -- exported type name
+    "UseNormaliz",    	      	  -- Strategy option for invariants 
+    "UsePolyhedra"    	      	  -- Strategy option for invariants    	
     }
 --exportMutable {}
 
 
-needsPackage("Polyhedra", Reload => true)
-needsPackage("Elimination", Reload => true)
-
+needsPackage("Elimination")
+needsPackage("Normaliz")
+needsPackage("Polyhedra")
 
 GroupAction = new Type of HashTable
 

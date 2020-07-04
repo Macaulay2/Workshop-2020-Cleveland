@@ -24,7 +24,7 @@ document {
     	
 	EXAMPLE {
 		"R = QQ[x_1..x_4]",
-		"T = torusAction(matrix {{0,1,-1,1},{1,0,-1,-1}}, R)",
+		"T = diagonalAction(matrix {{0,1,-1,1},{1,0,-1,-1}}, R)",
 		"S = R^T",
 		"action S"
 		},
@@ -54,7 +54,7 @@ document {
 	EXAMPLE {
 		"R = QQ[x_1..x_4]",
 		"W = matrix{{0,1,-1,1},{1,0,-1,-1}}",
-		"T = torusAction(W, R)",
+		"T = diagonalAction(W, R)",
 		"S = R^T",
 		"gens S",
 		},
@@ -88,7 +88,7 @@ document {
 	EXAMPLE {
 		"R = QQ[x_1..x_4]",
 		"W = matrix{{0,1,-1,1},{1,0,-1,-1}}",
-		"T = torusAction(W, R)",
+		"T = diagonalAction(W, R)",
 		"S = invariantRing T",
 		},
 	    
@@ -111,25 +111,25 @@ document {
 document {
 	Key => {
 	    invariants, 
-	    (invariants, TorusAction),
-	    (invariants, FiniteAbelianAction)
+	    (invariants, DiagonalAction),
 	    },
 	
 	Headline => "compute the generating invariants of a group action",
 	
-	Usage => "invariants T \n invariants A",
+	Usage => "invariants D",
 	
 	Inputs => {  
-	    	"T" => TorusAction => {"a diagonal action of a torus on a polynomial ring"},
-		"A" => FiniteAbelianAction => {"a diagonal action of a finite abelian group on a polynomial ring"}
+	    	"D" => DiagonalAction => {"a diagonal action on a polynomial ring"}
 		},
 	Outputs => {
 		"L" => List => {"a minimal set of generating invariants for the group action"}
 		},
 
 	PARA {
-	    "This function is provided by the package ", TO InvariantRings, ". It implements algorithms to compute minimal sets 
-	    of generating invariants for diagonal actions of tori and finite abelian groups.  The algorithm for tori due to 
+	    "This function is provided by the package ", TO InvariantRings, 
+	    ". It implements algorithms to compute minimal sets 
+	    of generating invariants for diagonal actions of products of tori 
+	    and finite abelian groups.  The algorithm for tori due to 
 	    Derksen and Kemper can be found in:"
 	    },
        
@@ -139,35 +139,50 @@ document {
         },
     
        PARA {
-	    "The algorithm for tori computes a minimal set of generating monomial invariants for an action of a torus",
-	    TEX /// $(k^\times)^r$ ///,
+	    "The algorithm for tori computes a minimal set of generating monomial 
+	    invariants for an action of an abelian group",
+	    TEX /// $(k^*)^r \times \times \mathbb{Z}/d_1 \times \cdots \times \mathbb{Z}/d_g$ ///,
 	    " on a polynomial ring ",
-	    TEX /// $R = k[x_1,\ldots,x_n]$.///,
-	    " We assume that the torus action is diagonal, in the sense that ",
-	    TEX /// $(t_1,\ldots,t_r) \in (k^\times)^r$ ///,
+	    TEX /// $R = k[x_1, \dots, x_n]$.///,
+	    " Saying the action is diagonal means that ",
+	    TEX /// $(t_1,\ldots,t_r) \in (k^*)^r$ ///,
 	    " acts by",
-	    TEX /// $$(t_1,\ldots,t_r) \cdot x_j = t_1^{w_{1j}}\cdots t_r^{w_{rj}} x_j$$ ///,
+	    TEX /// $$(t_1,\ldots,t_r) \cdot x_j = t_1^{w_{1,j}}\cdots t_r^{w_{r,j}} x_j$$ ///,
 	    "for some integers ",
-	    TEX /// $w_{ij}$. ///,
-	    "These are the entries of the input matrix ", TT "W",
-	    " for the torus action. In other words, the j-th column of ", TT "W", " is the weight vector of",
+	    TEX /// $w_{i,j}$ ///, 
+	    " and the generators ",
+	    TEX /// $u_1, \dots, u_g$ ///,
+	    " of the cyclic abelian factors act by",
+	    TEX /// $$u_i \cdot x_j = \zeta_i^{w_{r+i,j}} x_j$$ ///,
+	    "for ",
+	    TEX /// $\zeta_i$ ///,
+	    " a primitive ",
+	    TEX /// $d_i$///,
+	    "-th root of unity. The integers",
+	    TEX /// $w_{i,j}$ ///,
+	    "comprise the weight matrix ", TT "W",
+	    ". In other words, the j-th column of ", TT "W", 
+	    " is the weight vector of",
 	    TEX /// $x_j$. ///
 	},
     
     	PARA {
-	    "Here is an example of a one-dimensional torus acting on a two-dimensional vector space:"
+	    "Here is an example of a one-dimensional torus acting on a 
+	    two-dimensional vector space:"
 	},
     
     	EXAMPLE {
 	    	"R = QQ[x_1,x_2]",
 		"W = matrix{{1,-1}}",
-		"T = torusAction(W, R)",
+		"T = diagonalAction(W, R)",
 		"invariants T"
 		},
 	   
 	PARA {
-	    "The algorithm for finite abelian groups due to Gandini is based on the Derksen-Kemper algorithm for tori,
-	     with some adjustments and optimizations for the finite group case.  A description of this algorithm can be found in: "
+	    "The algorithm for finite abelian groups due to Gandini 
+	    is based on the Derksen-Kemper algorithm for tori,
+	     with some adjustments and optimizations for the finite group case.  
+	     A description of this algorithm can be found in: "
 	     },
 	 
         UL { 
@@ -175,38 +190,24 @@ document {
 	   ". Thesis (Ph.D.)-University of Michigan. 2019. ISBN: 978-1392-76291-2. pp 29-34."}
         },
     
-    	PARA {	 
-	     "Writing the finite abelian group as",
-	    TEX /// $\mathbb{Z}/d_1 \oplus \cdots \oplus \mathbb{Z}/d_r$, ///,
-	    "the input ", TT "A", " is a finite abelian action which consists of ", TT "d", " the list ", TT "{d_1,d_2,...,d_r}, ", 
-	    TT "W", " a weight matrix, and ",  TT "R"," a polynomial ring. We assume that the group acts diagonally on the polynomial ring",
-	    TEX /// $R = k[x_1,\ldots,x_n]$, ///,
-	    "which is to say that if we denote the evident generators of the group by",
-	    TEX /// $g_1,\ldots,g_r$ ///,
-	    "then we have",
-	    TEX /// $$g_i \cdot x_j = \zeta_i^{w_{ij}} x_j$$ ///,
-	    "for",
-	    TEX /// $\zeta_i$ ///,
-	    "a primitive",
-	    TEX /// $d_i$///,
-	    "-th root of unity. The integers",
-	    TEX /// $w_{ij}$ ///,
-	    "comprise the weight matrix ", TT "W", "."  
-	},
-    
     	PARA {
-	    "Here is an example of a product of two cyclic groups of order 3 acting on a three-dimensional vector space:"
+	    "Here is an example of a product of two cyclic groups of 
+	    order 3 acting on a three-dimensional vector space:"
 	},
 	
 	EXAMPLE {
 	    "R = QQ[x_1..x_3]",
 	    "d = {3,3}",
 	    "W = matrix{{1,0,1},{0,1,1}}",
-	    "A = finiteAbelianAction(d, W, R)",
+	    "A = diagonalAction(W, d, R)",
 	    "invariants A"
 		},
     
-    	SeeAlso => {invariantRing, torusAction, finiteAbelianAction, isInvariant},	
+    	SeeAlso => {
+	    diagonalAction,
+	    invariantRing, 
+	    isInvariant
+	    }	
 	}
 
 document {
@@ -229,6 +230,7 @@ document {
 	PARA {
 	    "This function is provided by the package ", TO InvariantRings,
 	    },
+	
 	PARA {
 	    "When called on a linearly reductive group action and
 	    a degree, it computes an additive basis for the
@@ -240,12 +242,14 @@ document {
 	    {"Derksen, H. & Kemper, G. (2015).", EM "Computational Invariant Theory", 
 	   ". Heidelberg: Springer."}
         },
+    
     	PARA {
 	    "The following example examines the action of the
 	    special linear group of degree 2 on the space of
 	    binary quadrics. There is a single invariant of degree
 	    2 but no invariant of degree 3."
 	    },
+	
     	EXAMPLE {
 	    	"S = QQ[a,b,c,d]",
 		"I = ideal(a*d - b*c - 1)",
@@ -257,7 +261,11 @@ document {
 		"invariants(V,3)",
 		},
 	   
-    	SeeAlso => {invariantRing, linearlyReductiveAction, isInvariant},
+    	SeeAlso => {
+	    invariantRing, 
+	    isInvariant,
+	    linearlyReductiveAction
+	    }
 	}
 
 document {
@@ -279,6 +287,7 @@ document {
 	PARA {
 	    "This function is provided by the package ", TO InvariantRings,
 	    },
+	
 	PARA {
 	    "When called on a linearly reductive group action and
 	    a degree, this function returns a list of generators for the
@@ -288,6 +297,7 @@ document {
 	    degree by degree using ",
 	    TO "invariants(LinearlyReductiveAction,ZZ)", ".",
 	    },
+	
     	PARA {
 	    "The next example constructs a cyclic group of order 2
 	    as a set of two affine points. Then it introduces an
@@ -295,6 +305,7 @@ document {
 	    and computes the Hilbert ideal. The action permutes the
 	    variables of the polynomial ring."
 	    },
+	
     	EXAMPLE {
 		"S = QQ[z]",
 		"I = ideal(z^2 - 1)",
@@ -305,6 +316,7 @@ document {
 		"H = hilbertIdeal V",
 		"invariants V",
 		},
+	    
 	Caveat => {
 	    "Both ", TO "hilbertIdeal", " and ",
 	    TO "invariants(LinearlyReductiveAction,ZZ)",
@@ -312,29 +324,32 @@ document {
 	    lead to long running times. The computations for ",
 	    TO "hilbertIdeal", " are typically the bottleneck.",
 	    },
-    	SeeAlso => {hilbertIdeal, invariants},
+	
+    	SeeAlso => {
+	    hilbertIdeal, 
+	    invariants
+	    },
 	}
 
 document {
 	Key => {isInvariant, 
 	    (isInvariant, RingElement, FiniteGroupAction),
-	    (isInvariant, RingElement, TorusAction),
-	    (isInvariant, RingElement, FiniteAbelianAction),
+	    (isInvariant, RingElement, DiagonalAction)
 	    },
 	
 	Headline => "check whether a polynomial is invariant under a group action",
 	
-	Usage => "isInvariant(f, G), isInvariant(f, T), isInvariant(f, A)",
+	Usage => "isInvariant(f, G), isInvariant(f, D)",
 	
 	Inputs => {
 	    	"f" => RingElement => {"a polynomial in the polynomial ring on which the group acts"},
 	    	"G" => FiniteGroupAction,
-		"T" => TorusAction,
-		"A" => FiniteAbelianAction
+		"D" => DiagonalAction
 		},
 	    
 	Outputs => {
-		Boolean => "whether the given polynomial is invariant under the given group action"
+		Boolean => "whether the given polynomial is invariant under 
+		the given group action"
 		},
 	    
 	"This function is provided by the package ", TO InvariantRings,". ",
@@ -365,8 +380,8 @@ document {
 	
 	EXAMPLE {
 	    "R = QQ[x_1..x_4]",
-	    "W = matrix{{0,1,-1,1},{1,0,-1,-1}}",
-	    "T = torusAction(W, R)",
+	    "W = matrix{{0,1,-1,1}, {1,0,-1,-1}}",
+	    "T = diagonalAction(W, R)",
 	    "isInvariant(x_1*x_2*x_3, T)",
 	    "isInvariant(x_1*x_2*x_4, T)"
 		},
@@ -378,9 +393,9 @@ document {
 	
 	EXAMPLE {
 	    "R = QQ[x_1..x_3]",
-	    "d = {3,3}",
-	    "W = matrix{{1,0,1},{0,1,1}}",
-	    "A = finiteAbelianAction(d, W, R)",
+	    "d = {3, 3}",
+	    "W = matrix{{1,0,1}, {0,1,1}}",
+	    "A = diagonalAction(W, d, R)",
 	    "isInvariant(x_1*x_2*x_3, A)",
 	    "isInvariant((x_1*x_2*x_3)^3, A)"
 		},
@@ -394,8 +409,8 @@ document {
 	Usage => "reynoldsOperator(f, G)",
 	
 	Inputs => {
-	    	"G" => FiniteGroupAction,
-		"f" => RingElement => {"a polynomial in the polynomial ring of the given group action"}
+	    	"f" => RingElement => {"a polynomial in the polynomial ring of the given group action"},
+	    	"G" => FiniteGroupAction
 		},
 	    
 	Outputs => {

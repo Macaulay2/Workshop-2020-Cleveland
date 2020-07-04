@@ -2,6 +2,7 @@
 --- FiniteGroupAction TESTS ---------------
 -------------------------------------------
 
+-- Test 0
 TEST ///
 R = QQ[x_1]
 G = finiteAction({matrix{{-1}}}, R)
@@ -12,6 +13,7 @@ assert(isInvariant(1 + x_1^4 + x_1^6, G))
 assert(not isInvariant(1 + x_1^5 + x_1^4, G))
 ///
 
+-- Test 1
 TEST ///
 R = QQ[x_1..x_3]
 L = apply(2, i -> permutationMatrix(3, [i + 1, i + 2] ) )
@@ -25,76 +27,77 @@ assert(not isInvariant(1 + x_1, S3))
 
 
 -------------------------------------------
---- FiniteAbelianAction TESTS -------------
+--- DiagonalAction TESTS -------------
 -------------------------------------------
 
 -- The first two tests are of trivial actions, and seem to run into problems. The analogous torusAction test seems to be fine though
 
+-- Test 2
 TEST ///
 R = QQ[x_1]
-T = finiteAbelianAction({3}, matrix{{0}}, R)
+T = diagonalAction(matrix{{0}}, {3}, R)
 invariants0 = set {R_0}
 assert(set invariants T === invariants0)
 assert(isInvariant(R_0 + R_0^2, T))
 ///
 
-
+-- Test 3
 TEST ///
 R = QQ[x_1]
-T = finiteAbelianAction({1}, matrix{{3}}, R)
+T = diagonalAction(matrix{{3}}, {1}, R)
 invariants0 = set {R_0}
 assert(set invariants T === invariants0)
 assert(isInvariant(R_0 + R_0^2, T))
 ///
 
-
+-- Test 4
 TEST ///
 R = QQ[x_1]
-T = finiteAbelianAction({2},matrix{{1}}, R)
+T = diagonalAction(matrix{{1}}, {2}, R)
 invariants0 = set {R_0^2}
 assert(set invariants T === invariants0)
 assert(isInvariant(R_0^2, T))
 ///
 
+-- Test 5
 TEST ///
 R = QQ[x_1..x_3]
-T = finiteAbelianAction({3,3},matrix{{1,0,1},{0,1,1}}, R)
+T = diagonalAction(matrix{{1,0,1},{0,1,1}}, {3,3}, R)
 invariants1 = set {x_3^3, x_2^3, x_1^3, x_1*x_2*x_3^2, x_1^2*x_2^2*x_3}
 assert(set invariants T === invariants1)
 ///
 
-
--------------------------------------------
---- TorusAction TESTS ---------------------
--------------------------------------------
-
+-- Test 6
 TEST ///
 R = QQ[x_1]
-T = torusAction(matrix{{0}}, R)
+T = diagonalAction(matrix{{0}}, R)
 invariants0 = set {x_1}
-assert(weights T === matrix{{0}})
+assert(first weights T === matrix{{0}})
 assert(set invariants T === invariants0)
 ///
 
+-- Test 7
 TEST ///
 R0 = QQ[x_1..x_2]
-T0 = torusAction(matrix{{1,1}}, R0)
+T0 = diagonalAction(matrix{{1,1}}, R0)
 invariants0 = set {}
-assert(weights T0 === matrix{{1,1}})
+assert(first weights T0 === matrix{{1,1}})
 assert(set invariants T0 === invariants0)
 ///
 
+-- Test 8
 TEST ///
 R1 = QQ[x_1..x_4]
-T1 = torusAction(matrix {{-3, -1, 1, 2}}, R1)
+T1 = diagonalAction(matrix {{-3, -1, 1, 2}}, R1)
 invariants1 =  set {x_2*x_3, x_2^2*x_4, x_1*x_3*x_4, x_1*x_2*x_4^2, x_1^2*x_4^3, x_1*x_3^3}
-assert(weights T1 === matrix{{-3, -1, 1, 2}})
+assert(first weights T1 === matrix{{-3, -1, 1, 2}})
 assert(set invariants T1 === invariants1)
 ///
 
+-- Test 9
 TEST ///
 R2 = QQ[x_1..x_4]
-T2 = torusAction(matrix{{0,1,-1,1},{1,0,-1,-1}}, R2)
+T2 = diagonalAction(matrix{{0,1,-1,1},{1,0,-1,-1}}, R2)
 invariants2 = set {x_1*x_2*x_3,x_1^2*x_3*x_4}
 assert(set invariants T2 === invariants2)
 ///
