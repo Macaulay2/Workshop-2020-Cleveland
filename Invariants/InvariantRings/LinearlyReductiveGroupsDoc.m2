@@ -128,21 +128,23 @@ document {
 
 
 document {
-	Key => {linearlyReductiveAction, (linearlyReductiveAction, Ideal, Matrix, PolynomialRing)},
+	Key => {linearlyReductiveAction, (linearlyReductiveAction, Ideal, Matrix, PolynomialRing),
+	    (linearlyReductiveAction, Ideal, Matrix, QuotientRing)},
 	
 	Headline => "Linearly reductive group action",
 	
-	Usage => "linearlyReductiveAction(I, M, R)",
+	Usage => "linearlyReductiveAction(I, M, R) \n linearlyReductiveAction(I, M, Q) ",
 	
 	Inputs => {
 	        "I" => Ideal => {"of a polynomial ring ", TT "S", " defining a group as an affine variety"},
 		"M" => Matrix => {"whose entries are in ", TT "S", ", that encodes the group action on ", TT "R"},
 	    	"R" => PolynomialRing => {"on which the group acts"},
+	    	"Q" => QuotientRing => {"on which the group acts"},
 		},
 	    
 	Outputs => {
 		LinearlyReductiveAction => {"the linearly reductive action of ", TT "S/I",
-		    " on ", TT "R", " via the matrix ", TT "M"}
+		    " on ", TT "R", " or ", TT "Q", " via the matrix ", TT "M"}
 		},
 	    
 	"This function is provided by the package ", TO InvariantRings, ".",
@@ -172,6 +174,19 @@ document {
 		"sub(M,z=>1),sub(M,z=>-1)",
 		"R = QQ[x,y]",
 		"L = linearlyReductiveAction(I, M, R)",
+		},
+	PARA {
+	    "This function is also used to define linearly reductive
+	    group actions on quotients of polynomial rings.
+	    We illustrate by a slight variation on the previous example."
+	    },
+	EXAMPLE {
+		"S = QQ[z]",
+		"I = ideal(z^2 - 1)",
+		"M = matrix{{(z+1)/2, (1-z)/2},{(1-z)/2, (z+1)/2}}",
+		"sub(M,z=>1),sub(M,z=>-1)",
+		"Q = QQ[x,y] / ideal(x*y)",
+		"L = linearlyReductiveAction(I, M, Q)",
 		},
 }
 

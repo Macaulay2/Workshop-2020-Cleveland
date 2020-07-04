@@ -63,7 +63,8 @@ document {
 document {
 	Key => {invariantRing, 
 	    (invariantRing, GroupAction),
-	    (symbol ^, PolynomialRing, GroupAction)},
+	    (symbol ^, PolynomialRing, GroupAction),
+	    (symbol ^, QuotientRing, LinearlyReductiveAction)},
 	
 	Headline => "the ring of invariants of a group action",
 	
@@ -211,7 +212,8 @@ document {
 
 document {
 	Key => {
-	    (invariants, LinearlyReductiveAction, ZZ)
+	    (invariants, LinearlyReductiveAction, ZZ),
+	    (invariants, LinearlyReductiveAction, List)
 	    },
 	
 	Headline => "basis for graded component of invariant ring",
@@ -220,10 +222,10 @@ document {
 	
 	Inputs => {  
 	    	"V" => LinearlyReductiveAction,
-		"d" => ZZ => {"a degree"},
+		"d" => ZZ => {"a degree or multidegree"},
 		},
 	Outputs => {
-		"L" => List => {"an additive basis of invariants in degree ", TT "d"}
+		"L" => List => {"an additive basis for a graded component of the ring of invariants"}
 		},
 
 	PARA {
@@ -231,7 +233,7 @@ document {
 	    },
 	PARA {
 	    "When called on a linearly reductive group action and
-	    a degree, it computes an additive basis for the
+	    a (multi)degree, it computes an additive basis for the
 	    invariants of the action in the given degree. This is
 	    an implementation of Algorithm 4.5.1 in:"
 	    },
@@ -309,8 +311,8 @@ document {
 	    "Both ", TO "hilbertIdeal", " and ",
 	    TO "invariants(LinearlyReductiveAction,ZZ)",
 	    " require Groebner bases computations, which could
-	    lead to long running times. The computations for ",
-	    TO "hilbertIdeal", " are typically the bottleneck.",
+	    lead to long running times. It might be helpful to
+	    run these functions separately.",
 	    },
     	SeeAlso => {hilbertIdeal, invariants},
 	}
