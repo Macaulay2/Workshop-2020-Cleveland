@@ -252,7 +252,7 @@ document {
 	    	"S = QQ[a,b,c,d]",
 		"I = ideal(a*d - b*c - 1)",
 		"A = S[u,v]",
-		"M = (map(S,A)) last coefficients sub(basis(2,A),{u=>a*u+c*v,v=>b*u+d*v})",
+		"M = transpose (map(S,A)) last coefficients sub(basis(2,A),{u=>a*u+b*v,v=>c*u+d*v})",
 		"R = QQ[x_1..x_3]",
 		"V = linearlyReductiveAction(I,M,R)",
 		"invariants(V,2)",
