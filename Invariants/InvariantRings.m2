@@ -80,10 +80,10 @@ export {
     "weights",	      	      	  -- documented
 
 --LinearlyReductiveGroups.m2    
-    "actionMatrix",
-    "groupIdeal",
+    "actionMatrix",    	       	  -- documented
+    "groupIdeal",    	     	  -- documented
     "hilbertIdeal",    	       	  -- documented
-    "linearlyReductiveAction",
+    "linearlyReductiveAction",	  -- documented
     "LinearlyReductiveAction",	  -- exported type name
     
 --Invariants.m2 
@@ -93,7 +93,7 @@ export {
     "definingIdeal",
     -- generators    	     	  -- overloaded, documented
     -- hilbertSeries	    	  -- overloaded
-    "invariants",    	     	  -- documented only for TorusAction, FiniteAbelianAction
+    "invariants",    	     	  -- documented only for TorusAction, FiniteAbelianAction, LinearlyReductiveAction
     "invariantRing",	    	  -- documented
     "isInvariant",    	      	  -- documented
     -- manualTrim    	     	  -- unexported (why is this a method if it's not exported?)

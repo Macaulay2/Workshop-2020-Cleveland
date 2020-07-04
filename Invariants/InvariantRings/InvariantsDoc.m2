@@ -63,7 +63,8 @@ document {
 document {
 	Key => {invariantRing, 
 	    (invariantRing, GroupAction),
-	    (symbol ^, PolynomialRing, GroupAction)},
+	    (symbol ^, PolynomialRing, GroupAction),
+	    (symbol ^, QuotientRing, LinearlyReductiveAction)},
 	
 	Headline => "the ring of invariants of a group action",
 	
@@ -212,7 +213,8 @@ document {
 
 document {
 	Key => {
-	    (invariants, LinearlyReductiveAction, ZZ)
+	    (invariants, LinearlyReductiveAction, ZZ),
+	    (invariants, LinearlyReductiveAction, List)
 	    },
 	
 	Headline => "basis for graded component of invariant ring",
@@ -221,10 +223,10 @@ document {
 	
 	Inputs => {  
 	    	"V" => LinearlyReductiveAction,
-		"d" => ZZ => {"a degree"},
+		"d" => ZZ => {"a degree or multidegree"},
 		},
 	Outputs => {
-		"L" => List => {"an additive basis of invariants in degree ", TT "d"}
+		"L" => List => {"an additive basis for a graded component of the ring of invariants"}
 		},
 
 	PARA {
@@ -233,7 +235,7 @@ document {
 	
 	PARA {
 	    "When called on a linearly reductive group action and
-	    a degree, it computes an additive basis for the
+	    a (multi)degree, it computes an additive basis for the
 	    invariants of the action in the given degree. This is
 	    an implementation of Algorithm 4.5.1 in:"
 	    },
@@ -254,7 +256,7 @@ document {
 	    	"S = QQ[a,b,c,d]",
 		"I = ideal(a*d - b*c - 1)",
 		"A = S[u,v]",
-		"M = (map(S,A)) last coefficients sub(basis(2,A),{u=>a*u+c*v,v=>b*u+d*v})",
+		"M = transpose (map(S,A)) last coefficients sub(basis(2,A),{u=>a*u+b*v,v=>c*u+d*v})",
 		"R = QQ[x_1..x_3]",
 		"V = linearlyReductiveAction(I,M,R)",
 		"invariants(V,2)",
@@ -321,8 +323,8 @@ document {
 	    "Both ", TO "hilbertIdeal", " and ",
 	    TO "invariants(LinearlyReductiveAction,ZZ)",
 	    " require Groebner bases computations, which could
-	    lead to long running times. The computations for ",
-	    TO "hilbertIdeal", " are typically the bottleneck.",
+	    lead to long running times. It might be helpful to
+	    run these functions separately.",
 	    },
 	
     	SeeAlso => {
@@ -334,17 +336,17 @@ document {
 document {
 	Key => {isInvariant, 
 	    (isInvariant, RingElement, FiniteGroupAction),
-	    (isInvariant, RingElement, DiagonalAction)
+	    (isInvariant, RingElement, DiagonalAction),
+	    (isInvariant, RingElement, LinearlyReductiveAction)
 	    },
 	
 	Headline => "check whether a polynomial is invariant under a group action",
-	
-	Usage => "isInvariant(f, G), isInvariant(f, D)",
-	
+	Usage => "isInvariant(f, G), isInvariant(f, D), isInvariant(f, L)",
 	Inputs => {
 	    	"f" => RingElement => {"a polynomial in the polynomial ring on which the group acts"},
 	    	"G" => FiniteGroupAction,
-		"D" => DiagonalAction
+		"D" => DiagonalAction,
+		"L" => LinearlyReductiveAction
 		},
 	    
 	Outputs => {
@@ -399,6 +401,28 @@ document {
 	    "isInvariant(x_1*x_2*x_3, A)",
 	    "isInvariant((x_1*x_2*x_3)^3, A)"
 		},
+
+         PARA {
+	    "Here is an example with a general linear group
+	    acting by conjugation on a space of matrices:"
+	    },
+	
+	-*
+	EXAMPLE {
+	    "S = QQ[a,b,c,d,t]",
+	    "I = ideal((det genericMatrix(S,2,2))*t-1)",
+	    "R = QQ[x_(1,1)..x_(2,2)]",
+	    "Q = (S/I)(monoid R);",
+	    "G = transpose genericMatrix(S/I,2,2)",
+	    "X = transpose genericMatrix(Q,x_(1,1),2,2)",
+	    "N = reshape(Q^1,Q^4,transpose(inverse(G)*X*G));",
+	    "phi = map(S,Q);",
+	    "M = phi last coefficients N;",
+	    "L = linearlyReductiveAction(I, M, R)",
+	    "isInvariant(det genericMatrix(R,2,2),L)",
+	    "isInvariant(trace genericMatrix(R,2,2),L)",
+		},
+	    *-
 	    }	
 
 document {

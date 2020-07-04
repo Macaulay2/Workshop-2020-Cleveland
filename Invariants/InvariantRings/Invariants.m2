@@ -39,10 +39,15 @@ PolynomialRing^GroupAction := RingOfInvariants => (R, G) -> (
     invariantRing G
     )
 
+QuotientRing^LinearlyReductiveAction := RingOfInvariants => (Q, L) -> (
+    if ring L =!= Q then (error "Expected the first argument to be the polynomial ring on which the actions acts.");
+    invariantRing L
+    )
+
 -------------------------------------------
 
 net RingOfInvariants := S -> (
-    horizontalJoin(
+    n := horizontalJoin(
 	{
 	    (net coefficientRing ambient S),"["
 	    }|
@@ -55,7 +60,13 @@ net RingOfInvariants := S -> (
 	{
 	    "]"
 	    }
-	)
+	);
+    -- this is used for linearly reductive actions on quotients
+    -- to print relations on the ring of invariants
+    if not zero ideal ambient S then (
+	n = horizontalJoin(n," / ",net ideal ambient S);
+	);
+    return n;
     )
 
 action = method()
@@ -365,6 +376,7 @@ manualTrim (List) := List => L -> (
 
 -------------------------------------------
 
+-*
 --Computes an *additive* basis for the degree d part of the invariant ring.
 invariants (LinearlyReductiveAction, ZZ) := List => o -> (V,d) -> (
     M := actionMatrix V;
@@ -389,25 +401,59 @@ invariants (LinearlyReductiveAction, ZZ) := List => o -> (V,d) -> (
     KB := gens kernel B;
     return flatten entries sub(L * KB, join(apply(n, i -> x_(i+1) => R_i), apply(l, i -> z_(i+1) => 0)))
 )
+*-
+
+-- Computes an *additive* basis for the degree d part of the
+-- invariant ring following Algorithm 4.5.1 of Derksen-Kemper.
+-- This is a variation on Xianlong Ni's original code
+-- that should work for quotients of polynomial rings.
+-- Degree is passed as a list or as an integer.
+invariants (LinearlyReductiveAction, List) := List => o -> (V,d) -> (
+    M := actionMatrix V;
+    Q := ring V;
+    A := groupIdeal V;
+    n := #(gens Q);
+    K := coefficientRing ring groupIdeal V;
+    x := local x, z := local z;
+    --X := K[x_1..x_n];
+    
+    l := #(gens ring M);
+    S := Q**K[z_1..z_l];
+    M' := sub(M, apply(l, i -> (ring M)_i => S_(n+i)));
+    A' := sub(A, apply(l, i -> (ring M)_i => S_(n+i)));
+    
+    L := sub(basis(d,Q), S);
+    if zero L then return {};
+    if L == id_(S^1) then return {1_Q};
+    r := numColumns L;
+    NFDL := apply(r, i -> (sub(L_(0,i), apply(n, j -> S_j => sum(n, k -> M'_(k,j) * S_k))) - L_(0,i)) % A');
+    monomialsNFDL := flatten entries monomials(matrix{NFDL});
+    m := #monomialsNFDL;
+    B := matrix(apply(m, i -> apply(r, j -> coefficient(monomialsNFDL#i, NFDL#j))));
+    KB := gens kernel B;
+    return flatten entries sub(L * KB, join(apply(n, i -> S_i => Q_i), apply(l, i -> S_(n+i) => 0)))
+)
+
+invariants (LinearlyReductiveAction, ZZ) := List => o -> (V,d) -> (
+    invariants(V,{d})
+    )
 
 --Uses the preceding function together with hilbertIdeal to compute a set of generating invariants.
 invariants (LinearlyReductiveAction) := List => o -> V -> (
     I := hilbertIdeal V;
-    R := ring V;
-    n := dim V;
+    Q := ring V;
+    n := #(gens Q);
     K := coefficientRing ring groupIdeal V;
     x := local x;
     X := K[x_1..x_n];
     
-    I' := flatten entries gens sub(I, apply(n, i -> (ring I)_i => x_(i+1)));
-    
-    degreeList := sort toList set apply(I', i -> first degree i);
+    degreeList := sort unique apply(I_*, i -> degree i);
     generatorList := {};
     
     local d;
     while (#degreeList > 0) do(
 	d = degreeList#0;
-    	Id := select(I', i -> first degree i == d);
+    	Id := select(I_*, i -> degree i == d);
 	
 	alreadyInv := true;
 	j := 0;
@@ -418,7 +464,7 @@ invariants (LinearlyReductiveAction) := List => o -> V -> (
     	if not alreadyInv then (
 	    generatorList = join(generatorList, invariants(V,d))
 	) else (
-	    generatorList = join(generatorList, apply(Id, f -> sub(f, apply(n, i -> x_(i+1) => R_i))));
+	    generatorList = join(generatorList, Id);
 	);
     	degreeList = drop(degreeList,1)
     );

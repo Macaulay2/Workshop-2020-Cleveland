@@ -12,7 +12,9 @@ LinearlyReductiveAction = new Type of GroupAction
 
 linearlyReductiveAction = method()
 
-linearlyReductiveAction (Ideal, Matrix, PolynomialRing) := LinearlyReductiveAction => (A, M, R) -> (
+linearlyReductiveAction (Ideal, Matrix, PolynomialRing) :=
+linearlyReductiveAction (Ideal, Matrix, QuotientRing) := LinearlyReductiveAction => (A, M, Q) -> (
+    R := ambient Q;
     if not isField coefficientRing R then (error "linearlyReductiveAction: Expected the third argument to be a polynomial ring over a field.");
     if (numColumns M =!= numRows M) or (numRows M =!= #(gens R)) then (error "linearlyReductiveAction: Matrix size does not match polynomial ring.");
     if coefficientRing ring A =!= coefficientRing R then (error "linearlyReductiveAction: Group and polynomial ring not defined over same field.");
@@ -20,7 +22,7 @@ linearlyReductiveAction (Ideal, Matrix, PolynomialRing) := LinearlyReductiveActi
 	cache => new CacheTable,
 	(symbol groupIdeal) => A, 
 	(symbol actionMatrix) => M, 
-	(symbol ring) => R
+	(symbol ring) => Q
 	}
     )
 
@@ -50,7 +52,8 @@ hilbertIdeal LinearlyReductiveAction := { } >> opts -> (cacheValue (symbol hilbe
 addHook(LinearlyReductiveAction, symbol hilbertIdeal, V -> break (
     A := groupIdeal V;
     M := actionMatrix V;
-    R := ring V;
+    R := ambient ring V;
+    U := ideal ring V;
     if (numColumns M =!= numRows M) or (numRows M =!= #(gens R)) then print "Matrix size does not match polynomial ring";
     -- first, some information about the inputs:
     n := #(gens R);
@@ -62,15 +65,17 @@ addHook(LinearlyReductiveAction, symbol hilbertIdeal, V -> break (
     S := K[z_1..z_l, x_1..x_n, y_1..y_n];
     M' := sub(M, apply(l, i -> (ring M)_i => z_(i+1)));
     A' := sub(A, apply(l, i -> (ring M)_i => z_(i+1)));
+    Ux' := sub(U, apply(n, i -> R_i => x_(i+1)));
+    Uy' := sub(U, apply(n, i -> R_i => y_(i+1)));
     
     -- the actual algorithm follows
     J' := apply(n, i -> y_(i+1) - sum(n, j -> M'_(j,i) * x_(j+1)));
-    J := A' + ideal(J');
+    J := A' + ideal(J') + Ux' + Uy';
     I := eliminate(apply(l, i -> z_(i+1)),J);
     II := sub(I, apply(n, i -> y_(i+1) => 0));
     
-    -- return the result back in the user's input ring R
-    trim(sub(II, join(apply(n, i -> x_(i+1) => R_i),apply(n, i -> y_(i+1) => 0), apply(l, i -> z_(i+1) => 0))))
+    -- return the result back in the user's input ring
+    trim(sub(II, join(apply(n, i -> x_(i+1) => (ring V)_i),apply(n, i -> y_(i+1) => 0), apply(l, i -> z_(i+1) => 0))))
     ))
 
 
