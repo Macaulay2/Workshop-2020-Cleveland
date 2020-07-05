@@ -128,20 +128,8 @@ document {
 
 	PARA {
 	    "This function is provided by the package ", TO InvariantRings, 
-	    ". It implements algorithms to compute minimal sets 
-	    of generating invariants for diagonal actions of products of tori 
-	    and finite abelian groups.  The algorithm for tori due to 
-	    Derksen and Kemper can be found in:"
-	    },
-       
-       UL { 
-	    {"Derksen, H. & Kemper, G. (2015).", EM "Computational Invariant Theory", 
-	   ". Heidelberg: Springer. pp 159-164"}
-        },
-    
-       PARA {
-	    "The algorithm for tori computes a minimal set of generating monomial 
-	    invariants for an action of an abelian group",
+	    ". It implements an algorithm to computes a minimal set of generating 
+	    monomial invariants for a diagonal action of an abelian group",
 	    TEX /// $(k^*)^r \times \times \mathbb{Z}/d_1 \times \cdots \times \mathbb{Z}/d_g$ ///,
 	    " on a polynomial ring ",
 	    TEX /// $R = k[x_1, \dots, x_n]$.///,
@@ -165,7 +153,27 @@ document {
 	    ". In other words, the j-th column of ", TT "W", 
 	    " is the weight vector of",
 	    TEX /// $x_j$. ///
-	},
+	    },
+	 
+	PARA {    
+	    "The algorithm combines a modified version of an algorithm for tori 
+	    due to Derksen and Kemper which can be found in: "
+	    },
+       
+       UL { 
+	    {"Derksen, H. & Kemper, G. (2015).", EM "Computational Invariant Theory", 
+	   ". Heidelberg: Springer. pp 159-164"}
+        },
+    
+       PARA {
+	    "together with an algorithm for finite abelian groups due to Gandini 
+	    which can be found in: "
+	     },
+	 
+        UL { 
+	    {"Gandini, F. ", EM "Ideals of Subspace Arrangements", 
+	   ". Thesis (Ph.D.)-University of Michigan. 2019. ISBN: 978-1392-76291-2. pp 29-34."}
+        },    
     
     	PARA {
 	    "Here is an example of a one-dimensional torus acting on a 
@@ -178,18 +186,6 @@ document {
 		"T = diagonalAction(W, R)",
 		"invariants T"
 		},
-	   
-	PARA {
-	    "The algorithm for finite abelian groups due to Gandini 
-	    is based on the Derksen-Kemper algorithm for tori,
-	     with some adjustments and optimizations for the finite group case.  
-	     A description of this algorithm can be found in: "
-	     },
-	 
-        UL { 
-	    {"Gandini, F. ", EM "Ideals of Subspace Arrangements", 
-	   ". Thesis (Ph.D.)-University of Michigan. 2019. ISBN: 978-1392-76291-2. pp 29-34."}
-        },
     
     	PARA {
 	    "Here is an example of a product of two cyclic groups of 
@@ -202,6 +198,21 @@ document {
 	    "W = matrix{{1,0,1},{0,1,1}}",
 	    "A = diagonalAction(W, d, R)",
 	    "invariants A"
+		},
+
+    	PARA {
+	    "Here is an example of a diagoanl action by the product of
+	     a two-dimensional torus with a cyclic group of order 3 
+	    acting on a two-dimensional vector space:"
+	},
+    
+	EXAMPLE {
+	    "R = QQ[x_1, x_2]",
+	    "d = {3}",
+	    "W1 = matrix{{1,-1}, {-1,1}}",
+	    "W2 = matrix {{1,0}}",
+	    "D = diagonalAction(W1, W2, d, R)",
+	    "invariants D"
 		},
     
     	SeeAlso => {
@@ -401,13 +412,13 @@ document {
 	    "isInvariant(x_1*x_2*x_3, A)",
 	    "isInvariant((x_1*x_2*x_3)^3, A)"
 		},
-
+    	 -*
          PARA {
 	    "Here is an example with a general linear group
 	    acting by conjugation on a space of matrices:"
 	    },
 	
-	-*
+	
 	EXAMPLE {
 	    "S = QQ[a,b,c,d,t]",
 	    "I = ideal((det genericMatrix(S,2,2))*t-1)",

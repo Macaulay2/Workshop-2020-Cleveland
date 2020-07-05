@@ -85,7 +85,7 @@ net DiagonalAction := D -> (
 		)
 	    );
 	if r > 0 then (
-	    torus = torus|" x ";
+	    torus = net torus|" x ";
 	    weightMatrix = D.weights
 	    )
 	else weightMatrix = last D.weights
