@@ -229,10 +229,23 @@ invariants DiagonalAction := List => o -> D -> (
 	--print(net("    ")|net(pairs select(hashTable pairs S,l->l!= {}))); --step by step printing
 	--iteration = iteration + 1; --step by step printing
 	
-	scan(n, i -> (
-		u := m*R_i;
+	scan(#mons, i -> (
+		u := m*mons#i;
         	v' := v + W1_i;
-        	if ((U#?v') and all(S#v', m' -> u%m' =!= 0_R)) then( 
+		-- Checks whether the monomial u is not divisible by some monomial m' already
+		-- found such that the quotient m'' is invariant under the finite abelian action.
+        	if ((U#?v') and all(S#v', m' -> (
+			    if u%m' =!= 0_R then true
+			    else if g > 0 then (
+				m'' := u//m';
+			    	v'' := reduceWeight(W2*(vector first exponents m''));
+			    	v'' =!= 0_(ZZ^g)
+				)
+			    else false
+			    )
+			)
+		    ) 
+		then( 
                     S#v' = S#v'|{u};
                     U#v' = U#v'|{u};
 		    )
