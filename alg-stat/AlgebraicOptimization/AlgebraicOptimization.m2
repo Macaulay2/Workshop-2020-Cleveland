@@ -369,10 +369,10 @@ sectionEDDegree Ideal := ZZ => opts -> I -> (
 
   c := codim I';
   linSpace := ideal apply(c, i -> random(1,R));
-  projCenter := projectiveDual(sub(ideal drop(linSpace_*, 1),R) ,S);  
-  
+  projCenter := projectiveDual(sub(ideal drop(linSpace_*, 1),R) ,S);
+
   Isection := I + linSpace;
-  
+
   T' := ring I' / I';
   L := symbol L;
   lastDual := kernel map(T', (coefficientRing R)[L_0..L_(#projCenter_* - 1)], projCenter_*);
@@ -442,11 +442,11 @@ MLequationsIdeal = method()
 MLequationsIdeal (Ideal,List) := (I,u)-> (
     if not (isHomogeneous I) then error("The Ideal isn't Homogeneous");
     if not (isPrime I) then error("The Ideal isn't Prime");
-    
+
     c := codim I;
     jacI := transpose jacobian I;
     Q := minors(c, jacI);
-    
+
     R := ring I;
     numVars := #gens R;
     i1 := for i from 1 to numVars list 1;
@@ -454,7 +454,7 @@ MLequationsIdeal (Ideal,List) := (I,u)-> (
     diagM := diagonalMatrix gens R;
     J' := J * diagM;
     M := ker sub(J', R/I); -- compute kernel of J' over the coordinate ring
-    
+
     g := generators M;
     g' := matrix drop(entries g,-numrows g+#u);
     Iu' := sub(ideal (matrix {u} * g'), R); -- put the ideal Iu' back in the original ring R
@@ -862,7 +862,7 @@ TEST///
 A = matrix {{1,1,1,0,0,0,0,0,0}, {0,0,0,1,1,1,0,0,0},{0,0,0,0,0,0,1,1,1},
     {1,0,0,1,0,0,1,0,0},{0,1,0,0,1,0,0,1,0}};
 assert(39 == toricEDDegree(A));
-    
+
 ///
 
 --Used to find WI symbollically without using randomization.
@@ -990,7 +990,7 @@ Headline
   Package for algebraic optimization
 Description
   Text
-    The AlgebraicOptimization package provides methods for determining the algebraic degree of 
+    The AlgebraicOptimization package provides methods for determining the algebraic degree of
     an optimization problem.
     The algebraic degree of an optimization problem is an important invariant in applied
     algebraic geometry. It gives an algebraic measure of complexity to a problem and has been
@@ -1008,7 +1008,7 @@ Description
     Martin  Helmer,  Serkan  Ho ̧sten,  Evan  D.  Nash,Jose  Israel  Rodriguez,
     and  Daniel  Smolkin.  The  maximum  likelihood  degree  of  toric  varieties.
     Journal  of  SymbolicComputation, 5 (2009), 92:222–242. \break
-    [5] Martin Helmer and Bernd Sturmfels. 
+    [5] Martin Helmer and Bernd Sturmfels.
     Nearest points on toric varieties. MATHEMATICA SCANDINAVICA, 4 (2018), 122(2):213.
 --Example
 --  todo
@@ -1564,7 +1564,7 @@ Outputs
 Description
   Text
     Let $X$ be a projective variety in $\mathbb{P}^n$ of dimension $d$, and let $H_1, \dots, H_{d-1}$ be generic hyperplanes.
-    By Bertini's theorem, the intersection of $Y = X \cap H_1 \cap \dots \cap H_{d-1}$ is a curve. 
+    By Bertini's theorem, the intersection of $Y = X \cap H_1 \cap \dots \cap H_{d-1}$ is a curve.
     Under some regularity assumptions (see Caveat), there is a relation between the ED-degree $X$ and $Y$ given in @TO2{AlgebraicOptimization,"[2, Cor. 6.4.]"}@.
 
     This function computes the @TO2 {projectiveDual, "projective dual"}@ of $X$ and projects the dual such that the codimension is 1.
@@ -1652,8 +1652,8 @@ Usage
   probabilisticMultidegreeEDDegree(I)
 Description
   Text
-    Computes the ED degree by taking the sum of multidegrees of the conormal ideal 
-    @TO2{AlgebraicOptimization,"[2, Th. 5.4]"}@. The multidegree is computed probabilistically 
+    Computes the ED degree by taking the sum of multidegrees of the conormal ideal
+    @TO2{AlgebraicOptimization,"[2, Th. 5.4]"}@. The multidegree is computed probabilistically
     by looking at degrees of complementary dimensional linear slices of the conormal variety in $\mathbb P^n \times P^n$.
 
   Example
@@ -1685,7 +1685,7 @@ Outputs
     the likelihoood ideal of $I$
 Description
   Text
-    Computes the maximum likelihood ideal by taking an Ideal and List 
+    Computes the maximum likelihood ideal by taking an Ideal and List
     of numerical data when the ideal is homogeneous and prime. @TO2{AlgebraicOptimization,"[3, Alg. 6][1]"}@
   Example
     R = QQ[p0, p1, p2, p12]
@@ -1750,12 +1750,12 @@ Outputs
     the parametric ML-ideal of $F$
 Description
   Text
-    Let $F:\mathbb{R}^d \rightarrow \mathbb{R}^{n+1}$ be a polynomial map whose image is parametric model. 
-    Each coordinate $f_i$ of $F$ is a polynomial in the model parameters $\theta = (\theta_0,..., \theta_d)$. 
-    Assuming the summation of $f_i$'s is equal to one, the likelihood function is 
+    Let $F:\mathbb{R}^d \rightarrow \mathbb{R}^{n+1}$ be a polynomial map whose image is parametric model.
+    Each coordinate $f_i$ of $F$ is a polynomial in the model parameters $\theta = (\theta_0,..., \theta_d)$.
+    Assuming the summation of $f_i$'s is equal to one, the likelihood function is
     $f_0(\theta)^{u_0} f_1(\theta)^{u_1} ··· f_n(\theta)^{u_n}$ where $u = (u_0,... , u_n)$ is a vector of natural numbers.
-    This function Computes the parametric likelihood ideal 
-    of this model by taking F as List of Polynomials and List of numerical data when 
+    This function Computes the parametric likelihood ideal
+    of this model by taking F as List of Polynomials and List of numerical data when
     summation F equal to 1. @TO2{AlgebraicOptimization,"[3, Alg. 18]"}@
   Example
     R = QQ[t]
@@ -1788,9 +1788,9 @@ Outputs
     the ML-degree of $F$
 Description
   Text
-    Let $F:\mathbb{R}^d \rightarrow \mathbb{R}^{n+1}$ be a polynomial map whose image is parametric model. 
-    Each coordinate $f_i$ of $F$ is a polynomial in the model parameters $\theta = (\theta_0,..., \theta_d)$. 
-    Assuming the summation of $f_i$'s is equal to one, the likelihood function is 
+    Let $F:\mathbb{R}^d \rightarrow \mathbb{R}^{n+1}$ be a polynomial map whose image is parametric model.
+    Each coordinate $f_i$ of $F$ is a polynomial in the model parameters $\theta = (\theta_0,..., \theta_d)$.
+    Assuming the summation of $f_i$'s is equal to one, the likelihood function is
     $f_0(\theta)^{u_0} f_1(\theta)^{u_1} ··· f_n(\theta)^{u_n}$ where $u = (u_0,... , u_n)$ is a vector of natural numbers.
     This function computes the maximum likelihood degree of parametric model by taking F as List of Polynomials
     when summation of polynomials is equal to one. In other words,
@@ -1971,7 +1971,7 @@ Description
     associated to the matrix $A$. The generic ED degree is greater than or equal to the ED Degree @TO2{AlgebraicOptimization,"[5, Eqn. 33]"}@.
   CannedExample
     i3 : A = matrix {{1,1,1,0,0,0}, {1,0,0,1,1,0}, {0,1,0,1,0,1}, {0,0,1,0,1,1}}
-     
+
     o3 = | 1 1 1 0 0 0 |
          | 1 0 0 1 1 0 |
          | 0 1 0 1 0 1 |
@@ -2049,12 +2049,12 @@ Description
     o7 = 2
   Text
     References:\break
-    [1]Martin Helmer and Bernd Sturmfels. 
+    [1]Martin Helmer and Bernd Sturmfels.
     Nearest points on toric varieties. MATHEMATICA SCANDINAVICA, 122(2):213,Apr 2018.
 Caveat
-    The vector $(1,1,\ldots 1)$ must be in the rowspan of A. This methods computes the generic ED degree 
+    The vector $(1,1,\ldots 1)$ must be in the rowspan of A. This methods computes the generic ED degree
     which may differ from the ED degree if the weight vector $(1,1,\ldots, 1)$ if the principal A-determinant
-    vanishes at $(1,1,\ldots 1)$ @TO2{AlgebraicOptimization,"[5, Prop 4.1]"}@. 
+    vanishes at $(1,1,\ldots 1)$ @TO2{AlgebraicOptimization,"[5, Prop 4.1]"}@.
 -- todo
 SeeAlso
     edDeg
@@ -2267,7 +2267,7 @@ Headline
 --  Item
 Description
   Text
-    The option coeffRing is the ring of coefficients for the computation to be performed over. 
+    The option coeffRing is the ring of coefficients for the computation to be performed over.
     By default this ring is QQ
 --  Code
 --  Pre
@@ -2282,7 +2282,7 @@ doc ///
 Key
   Data
 Headline
-  optional argument 
+  optional argument
 --Usage
 --Inputs
 --Outputs
