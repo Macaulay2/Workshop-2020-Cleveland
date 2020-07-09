@@ -110,7 +110,7 @@ definingIdeal RingOfInvariants := opts -> S -> (
 -------------------------------------------
 
 hilbertSeries RingOfInvariants := Divide => opts -> S -> (
-    hilbertSeries(ideal S, Order => opts.Order, Reduce => opts.Reduce)
+    hilbertSeries(definingIdeal S, Order => opts.Order, Reduce => opts.Reduce)
     )
 
 
