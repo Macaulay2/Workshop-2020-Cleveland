@@ -406,18 +406,17 @@ document {
 	
 	EXAMPLE {
 	    "R = QQ[x_1..x_3]",
-	    "d = {3, 3}",
 	    "W = matrix{{1,0,1}, {0,1,1}}",
-	    "A = diagonalAction(W, d, R)",
+	    "A = diagonalAction(W, {3,3}, R)",
 	    "isInvariant(x_1*x_2*x_3, A)",
 	    "isInvariant((x_1*x_2*x_3)^3, A)"
 		},
-    	 -*
+
          PARA {
 	    "Here is an example with a general linear group
-	    acting by conjugation on a space of matrices:"
+	    acting by conjugation on a space of matrices
+	    (determinant and trace are invariants)."
 	    },
-	
 	
 	EXAMPLE {
 	    "S = QQ[a,b,c,d,t]",
@@ -431,9 +430,9 @@ document {
 	    "M = phi last coefficients N;",
 	    "L = linearlyReductiveAction(I, M, R)",
 	    "isInvariant(det genericMatrix(R,2,2),L)",
-	    "isInvariant(trace genericMatrix(R,2,2),L)",
-		},
-	    *-
+	    "isInvariant(trace genericMatrix(R,2,2),L)"
+		}
+
 	    }	
 
 document {
