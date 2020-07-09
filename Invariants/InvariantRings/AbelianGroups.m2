@@ -34,13 +34,13 @@ diagonalAction (Matrix, Matrix, List, PolynomialRing) := DiagonalAction => (W1, 
     r := numRows W1;
     g := numRows W2;
     z := getSymbol "z";
-    --C := ZZ[Variables=> r + g,VariableBaseName=>z, Inverses => true, MonomialOrder=> GroupLex];
-    --if g > 0 then C = C / ideal apply(g, i -> C_(r+i)^(d#i) - 1);
-    --D := newRing(degreesRing R,MonomialOrder=>RevLex,Inverses=>false);
+    C := ZZ[Variables=> r + g,VariableBaseName=>z,
+	MonomialOrder=> {GroupLex => r,GroupLex => g},
+	Inverses=>true];
     new DiagonalAction from {
 	cache => new CacheTable,
 	(symbol cyclicFactors) => d,
-	--(symbol degreesRing) => C monoid D,
+	(symbol degreesRing) => C monoid degreesRing R,
 	(symbol numgens) => g, 
 	(symbol ring) => R, 
 	(symbol rank) => r,
@@ -140,12 +140,18 @@ equivariantHilbertSeries DiagonalAction := op -> T -> (
 -- do not export
 equivariantHilbertRational = T -> (
     n := dim T;
-    W := (first weights T)||(last weights T);
+    W1 := first weights T;
+    W2 := last weights T;
+    -- reduce entries of W2 mod group orders so they are >=0
+    d := cyclicFactors T;
+    W2 = matrix apply(entries W2,d,(row,m)->apply(row,i->i%m));
+    -- stack weights into one matrix
+    W := W1 || W2;
     R := degreesRing T;
     C := coefficientRing R;
     -- tally the weights of the action
     p := pairs tally entries transpose W;
-    -- for each weight form the 1-zT factor with the right powr
+    -- for each weight form 1-zT factor with power from tally
     -- then multiply them into a product expression
     den := Product apply(sort apply(p, (w,e) -> {1 - C_w * R_0,e}), t -> Power t);
     -- return the rational function as an expression
@@ -166,20 +172,45 @@ equivariantHilbertPartial = (T, d) -> (
     -- compute higher degrees recursively
     if (d > currentDeg) then (
 	R := degreesRing T;
+	r := rank T;
+	g := numgens T;
+	cf := cyclicFactors T;
     	den := value denominator equivariantHilbertSeries T;
     	denDeg := first degree den;
 	B := last coefficients den;
+	-- this map sends coefficients of the Hilbert series
+	-- to their own ring without the variable T
+	CR := coefficientRing R;
+	phi := map(CR,R);
+	-- next map gets rid of the torus characters
+	-- by substituting 1 into them
+	-- it also takes abelian characters mod cyclic factors
+	CRab := ZZ[Variables=>g];
+	CRab = CRab / ideal apply(g,i -> CRab_i^(cf_i)-1);
+	psi := map(CRab,CR,toList(r:1)|(gens CRab));
+	-- next map 'goes back' into ring of all characters
+	psi' := map(CR,CRab,apply(g, i-> CR_(r+i)));
+	-- now reduce the existing coefficients
+	(m,c) := coefficients(phi B,Variables=>apply(g, i-> CR_(r+i)));
+	m = psi' psi m;
+	B = m*c;
 	for i from currentDeg+1 to d do (
+	    -- coefficient of the next degree in the recursion
+	    p := -sum(1..min(i,denDeg),k -> C_(i-k,0)*B_(k,0) );
+	    -- send p to the ring without T and get coefficients
+	    (m,c) = coefficients(phi p,Variables=>apply(g, i-> CR_(r+i)));
+	    -- applying psi reduces exponents as desired
+	    -- applying psi' brings back to ring with other vars
+	    m = psi' psi m;
+	    -- monomials*(new coeffs)=desired poly
+	    p = (m*c)_(0,0);
+	    -- add this new coeff and the power of T
 	    M = M | matrix{{R_0^i}};
-	    C = C || matrix{{-sum(1..min(i,denDeg),k -> C_(i-k,0)*B_(k,0) )}};
+	    C = C || matrix{{p}};
 	    );
 	);
     -- compute expansion up to desired degree
-    p := first flatten entries (M_{0..d}*C^{0..d});
+    q := first flatten entries (M_{0..d}*C^{0..d});
     -- store and return
-    T.cache.equivariantHilbert = p
+    T.cache.equivariantHilbert = q
     )
-
-
-
-
