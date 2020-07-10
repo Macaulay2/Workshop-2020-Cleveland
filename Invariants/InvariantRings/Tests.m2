@@ -160,9 +160,6 @@ d = {3,3}
 D = diagonalAction(W1,W2,d,R)
 degRing = degreesRing D
 e = equivariantHilbertSeries D
-assert(denominator e === new Product from {new Power from
-      {1-z_0^(-1)*z_1^(-1)*z_2*z_3*T,1},new Power from
-      {1-z_1*z_2*T,1},new Power from {1-z_0*z_3*T,1}})
 assert(value denominator e === 
     1+(-z_0*z_3-z_1*z_2-z_0^(-1)*z_1^(-1)*z_2*z_3)*T+(z_0*z_1*z_
       2*z_3+z_1^(-1)*z_2*z_3^2+z_0^(-1)*z_2^2*z_3)*T^2-z_2^2*z_3^2
@@ -196,9 +193,6 @@ W = matrix{{0,1,-1,1},{1,0,-1,-1}}
 D = diagonalAction(W, R)
 degRing = degreesRing D
 e = equivariantHilbertSeries D
-assert(denominator e === new Product from {new Power from
-     {1-z_0^(-1)*z_1^(-1)*T,1},new Power from {1-z_1*T,1},new
-     Power from {1-z_0*z_1^(-1)*T,1},new Power from {1-z_0*T,1}})
 assert(value denominator e ===
     1+(-z_0-z_0*z_1^(-1)-z_1-z_0^(-1)*z_1^(-1))*T+(z_0^2*z_1^(-1
       )+z_0*z_1+z_0+z_1^(-1)+z_1^(-2)+z_0^(-1))*T^2+(-z_0^2-z_0*z_
@@ -230,4 +224,24 @@ assert(equivariantHilbertSeries(D,Order=>6) ===
       z_0^(-1)*z_1^(-5)+z_0^(-2)*z_1+z_0^(-2)*z_1^(-2)+z_0^(-2)*z_
       1^(-3)+z_0^(-3)*z_1^(-1)+z_0^(-3)*z_1^(-4)+z_0^(-3)*z_1^(-5
       )+z_0^(-4)*z_1^(-3)+z_0^(-5)*z_1^(-5))*T^5)
+///
+
+-- Test 15
+-- abelian action
+TEST ///
+R = QQ[x_1..x_3]
+d = {3,3}
+W = matrix{{1,0,1},{0,1,1}}
+D = diagonalAction(W, d, R)
+degRing = degreesRing D
+e = equivariantHilbertSeries D
+assert(value denominator e ===
+    1+(-z_0*z_1-z_0-z_1)*T+(z_0^2*z_1+z_0*z_1^2+z_0*z_1)*T^2-z_0
+      ^2*z_1^2*T^3)
+assert(equivariantHilbertSeries(D,Order=>6) ===
+    1+(z_0*z_1+z_0+z_1)*T+(z_0^2*z_1^2+z_0^2*z_1+z_0^2+z_0*z_1^2
+      +z_0*z_1+z_1^2)*T^2+(z_0^2*z_1^2+z_0^2*z_1+z_0^2+z_0*z_1^2+z
+      _0+z_1^2+z_1+3)*T^3+(z_0^2*z_1^2+z_0^2*z_1+z_0^2+z_0*z_1^2+3
+      *z_0*z_1+3*z_0+z_1^2+3*z_1+1)*T^4+(3*z_0^2*z_1^2+3*z_0^2*z_1
+      +3*z_0^2+3*z_0*z_1^2+3*z_0*z_1+z_0+3*z_1^2+z_1+1)*T^5)
 ///
