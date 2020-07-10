@@ -144,7 +144,9 @@ equivariantHilbertRational = T -> (
     W2 := last weights T;
     -- reduce entries of W2 mod group orders so they are >=0
     d := cyclicFactors T;
-    W2 = matrix apply(entries W2,d,(row,m)->apply(row,i->i%m));
+    if not zero W2 then (
+    	W2 = matrix apply(entries W2,d,(row,m)->apply(row,i->i%m));
+    	);
     -- stack weights into one matrix
     W := W1 || W2;
     R := degreesRing T;
@@ -178,32 +180,37 @@ equivariantHilbertPartial = (T, d) -> (
     	den := value denominator equivariantHilbertSeries T;
     	denDeg := first degree den;
 	B := last coefficients den;
-	-- this map sends coefficients of the Hilbert series
-	-- to their own ring without the variable T
-	CR := coefficientRing R;
-	phi := map(CR,R);
-	-- next map gets rid of the torus characters
-	-- by substituting 1 into them
-	-- it also takes abelian characters mod cyclic factors
-	CRab := ZZ[Variables=>g];
-	CRab = CRab / ideal apply(g,i -> CRab_i^(cf_i)-1);
-	psi := map(CRab,CR,toList(r:1)|(gens CRab));
-	-- next map 'goes back' into ring of all characters
-	psi' := map(CR,CRab,apply(g, i-> CR_(r+i)));
-	-- now reduce the existing coefficients
-	(m,c) := coefficients(phi B,Variables=>apply(g, i-> CR_(r+i)));
-	m = psi' psi m;
-	B = m*c;
+	-- if there are cyclic factors, need to reduce exponents
+	if cf =!= {} then (
+	    -- this map sends coefficients of the Hilbert series
+	    -- to their own ring without the variable T
+	    CR := coefficientRing R;
+	    phi := map(CR,R);
+	    -- next map gets rid of the torus characters
+	    -- by substituting 1 into them
+	    -- it also takes abelian characters mod cyclic factors
+	    CRab := ZZ[Variables=>g];
+	    CRab = CRab / ideal apply(g,i -> CRab_i^(cf_i)-1);
+	    psi := map(CRab,CR,toList(r:1)|(gens CRab));
+	    -- next map 'goes back' into ring of all characters
+	    psi' := map(CR,CRab,apply(g, i-> CR_(r+i)));
+	    -- now reduce the existing coefficients
+	    (m,c) := coefficients(phi B,Variables=>apply(g, i-> CR_(r+i)));
+	    m = psi' psi m;
+	    B = m*c;
+	    );
 	for i from currentDeg+1 to d do (
 	    -- coefficient of the next degree in the recursion
 	    p := -sum(1..min(i,denDeg),k -> C_(i-k,0)*B_(k,0) );
-	    -- send p to the ring without T and get coefficients
-	    (m,c) = coefficients(phi p,Variables=>apply(g, i-> CR_(r+i)));
-	    -- applying psi reduces exponents as desired
-	    -- applying psi' brings back to ring with other vars
-	    m = psi' psi m;
-	    -- monomials*(new coeffs)=desired poly
-	    p = (m*c)_(0,0);
+	    if cf =!= {} then (
+	    	-- send p to the ring without T and get coefficients
+	    	(m,c) = coefficients(phi p,Variables=>apply(g, i-> CR_(r+i)));
+	    	-- applying psi reduces exponents as desired
+	    	-- applying psi' brings back to ring with other vars
+	    	m = psi' psi m;
+	    	-- monomials*(new coeffs)=desired poly
+	    	p = (m*c)_(0,0);
+	    	);
 	    -- add this new coeff and the power of T
 	    M = M | matrix{{R_0^i}};
 	    C = C || matrix{{p}};
