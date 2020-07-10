@@ -61,7 +61,7 @@ export {
     "group",	    	    	  -- documented
     "isAbelian",    	    	  -- documented
     -- numgens	      	      	  -- overloaded, documented
-    "permutationMatrix",
+    "permutationMatrix",          -- documented
     -- relations    	    	  -- overloaded
     "schreierGraph",	    	  -- documented
     "words",    	       	  -- documented
@@ -163,7 +163,6 @@ end
 restart
 uninstallPackage "InvariantRings"
 installPackage "InvariantRings"
-
 check InvariantRings
 
 B = QQ[a,b,c,d]
