@@ -285,4 +285,52 @@ document {
 	
 	SeeAlso => {group, schreierGraph, relations}
 	    }
-
+	
+	
+document {
+	Key => {permutationMatrix, 
+	    (permutationMatrix, String),
+	    (permutationMatrix, ZZ, Array),
+	    (permutationMatrix, ZZ, List),
+	    (permutationMatrix, Array),
+	    (permutationMatrix, List)
+	    },
+	
+	Headline => "convert a one-line notation or cyclic notation of a permutation to a matrix representation",
+	
+	Usage => "permutationMatrix s, permutationMatrix(n , c)",
+	Inputs => {
+	    	"s" => String =>  {"an array or a list of arrays giving a one-line notation or cyclic notation of a permutation"},
+		"n" => ZZ => {"giving the number of intergers getting permuted"},
+		"c" => List => {"of arrays giving a cyclic notation of a permutation"}
+		},
+	Outputs => {
+		Matrix => {"the matrix representation of the permutation"}
+		},
+	
+	"This function is provided by the package ", TO InvariantRings,".",
+	
+	PARA {
+	    "The following example converts the one-line notation of a transposition into a matrix representation. "
+	    },
+	
+	EXAMPLE {
+		"M = permutationMatrix toString 213",
+		},
+	
+	PARA {
+	    "The following example converts the cyclic notation of the same transposition into a matrix representation. Without ",TT "n"," the function assumes ",TT "n"," is largest integer appears in your array or list of arrays."
+	    },
+	
+	EXAMPLE {
+		"M = permutationMatrix(3,[1,2])",
+		"M = permutationMatrix [1,2]",
+		},
+	PARA {
+	    "The following example converts the cyclic notation of a permutation of 4 into a matrix representation."
+	    },    
+	EXAMPLE {
+	    	"M = permutationMatrix(4,{[1,2],[3,4]})",
+		"M = permutationMatrix {[1,2],[3,4]}",
+	    },
+	    }
