@@ -107,6 +107,7 @@ assert(set invariants T2 === invariants2)
 --- LinearlyReductiveAction TESTS ---------
 -------------------------------------------
 
+-- Test 10
 TEST ///
 A = QQ[z]
 I = ideal(z^2 - 1)
@@ -116,6 +117,7 @@ V = linearlyReductiveAction(I,M,R)
 assert(hilbertIdeal V == ideal(x_1 + x_2, x_2^2))
 ///
 
+-- Test 11
 TEST ///
 R = QQ[a,b,c,d]
 idealSL2 = ideal(a*d - b*c - 1)
@@ -129,10 +131,17 @@ R2 = QQ[x_1..x_3]
 V2 = linearlyReductiveAction(idealSL2,SL2Sym2,R2)
 assert(set invariants V2 === set {x_2^2-x_1*x_3})
 ///
-  
-       
 
-
-
-
-
+-- Test 12
+-- This tests invariants for an action on a quotient ring
+TEST ///
+S = QQ[z]
+I = ideal(z^2 - 1)
+M = matrix{{(z+1)/2, (1-z)/2},{(1-z)/2, (z+1)/2}}
+Q = QQ[x,y] / ideal(x*y)
+L = linearlyReductiveAction(I, M, Q)
+assert(invariants L === {x+y})
+assert(hilbertIdeal L === ideal(x+y))
+assert(invariants(L,2) === {x^2+y^2})
+assert(isInvariant(x^3+y^3,L))
+///
