@@ -147,7 +147,7 @@ assert(isInvariant(x^3+y^3,L))
 ///
 
 -------------------------------------------
---- equivariantHilbertSeries TESTS ---------
+--- equivariantHilbertSeries TESTS --------
 -------------------------------------------
 
 -- Test 13
