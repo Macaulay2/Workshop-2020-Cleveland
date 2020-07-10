@@ -468,7 +468,8 @@ document {
 	    }
 
 document {
-	Key => (definingIdeal, RingOfInvariants),
+	Key => {definingIdeal,
+	     (definingIdeal, RingOfInvariants)},
 	
 	Headline => "presentation of a ring of invariants as polynomial ring modulo defining ideal",
 	
@@ -476,6 +477,7 @@ document {
 	
 	Inputs => {
 	    	"S" => RingOfInvariants,
+		Variable => "name of the varibles in the polynomial ring."
 		},
 	    
 	Outputs => {
@@ -485,7 +487,7 @@ document {
 	"This function is provided by the package ", TO InvariantRings,". ",
 	
 	PARA {
-	    "This method presents the ring of invariants as a polynomial ring modulo the defining ideal. The default variable name in the polynomial ring is ",TT "u_i","."
+	    "This method presents the ring of invariants as a polynomial ring modulo the defining ideal. The default variable name in the polynomial ring is ",TT "u_i",". You can pass the variable name you want as optional input."
 	    },
     	
 	EXAMPLE {
