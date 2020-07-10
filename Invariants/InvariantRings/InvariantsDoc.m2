@@ -467,4 +467,33 @@ document {
 		},
 	    }
 
+document {
+	Key => (definingIdeal, RingOfInvariants),
+	
+	Headline => "presentation of a ring of invariants as polynomial ring modulo defining ideal",
+	
+	Usage => "definingIdeal S",
+	
+	Inputs => {
+	    	"S" => RingOfInvariants,
+		},
+	    
+	Outputs => {
+		Ideal => {"which defines the ring of invariants as a polynomial ring modulo the ideal."}
+		},
+	    
+	"This function is provided by the package ", TO InvariantRings,". ",
+	
+	PARA {
+	    "This method presents the ring of invariants as a polynomial ring modulo the defining ideal. The default variable name in the polynomial ring is ",TT "u_i","."
+	    },
+    	
+	EXAMPLE {
+		"R = QQ[x_1..x_4]",
+		"W = matrix{{0,1,-1,1},{1,0,-1,-1}}",
+		"T = diagonalAction(W, R)",
+		"S = R^T",
+		"definingIdeal S",
+		},
+	    }
 
