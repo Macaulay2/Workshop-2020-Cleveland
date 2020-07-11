@@ -18,6 +18,7 @@
 
 -* Porting notes:
 
+o Applies to FiniteGroupAction rather than RingOfInvariants
 o TODO: original code checked characteristic is nonzero.
   Should we check this when group is constructed?
   Does this work in pos char in the non modular case?
