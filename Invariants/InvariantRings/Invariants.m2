@@ -40,7 +40,7 @@ PolynomialRing^GroupAction := RingOfInvariants => (R, G) -> (
     )
 
 QuotientRing^LinearlyReductiveAction := RingOfInvariants => (Q, L) -> (
-    if ring L =!= Q then (error "Expected the first argument to be the polynomial ring on which the actions acts.");
+    if ring L =!= Q then (error "Expected the first argument to be the ring on which the actions acts.");
     invariantRing L
     )
 
