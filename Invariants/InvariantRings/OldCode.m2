@@ -18,12 +18,6 @@
 
 -* Porting notes:
 
-o Method applies to FiniteGroupAction instead of List
-o Removed checks on input since constructor finiteAction takes
-  care of these.
-o Field of matrix entries is obtained as ring of coefficients
-  of the polynomial ring being acted upon. Size of matrices is
-  obtained as the number of generators of the polynomial ring.
 o TODO: original code checked characteristic is nonzero.
   Should we check this when group is constructed?
   Does this work in pos char in the non modular case?
@@ -31,7 +25,6 @@ o Original code distinguished cases when coefficient ring K is QQ
   from other fields because frac(K[U]) is not implemented when
   K is a finite field extension of QQ created as quotient ring.
   New code treats all fields as the most general one.
-o Group matrices are generated via 'group' (not passed).
 
 *-
 
@@ -47,10 +40,10 @@ molienSeries FiniteGroupAction:= G -> (
      L:=apply(group G, M->(det(In-U*sub(M,Ku)))); 
      -- L is a list {p_1(U),...,p_m(U)}, say, (with m=#G), of reciprocals of 
      -- summands in the Molien series expansion.
-     numerat=sum(#L,i->product(drop(L,{i,i})));  
+     numerat:=sum(#L,i->product(drop(L,{i,i})));  
      -- in above notation, (and using LaTeX syntax):
      -- numerat=numerator of \frac{1}{p_1(U)}+...+\frac{1}{p_m(U)}.
-     denominat=(#G)*product(L); 
+     denominat:=#(group G)*product(L); 
      A:=degreesRing(1);
      -- A is the ring containing the numerator and denominator of the
      -- Hilbert series
