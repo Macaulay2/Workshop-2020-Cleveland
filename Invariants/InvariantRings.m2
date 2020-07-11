@@ -102,7 +102,10 @@ export {
     "reynoldsOperator",	       	  -- documented   
     "RingOfInvariants",	       	  -- exported type name
     "UseNormaliz",    	      	  -- Strategy option for invariants 
-    "UsePolyhedra"    	      	  -- Strategy option for invariants    	
+    "UsePolyhedra",    	      	  -- Strategy option for invariants    	
+
+--OldCode.m2    
+    "molienSeries"
     }
 --exportMutable {}
 
@@ -134,6 +137,9 @@ load "./InvariantRings/AbelianGroups.m2"
 load "./InvariantRings/LinearlyReductiveGroups.m2"
 
 load "./InvariantRings/Invariants.m2"
+
+-- code ported from Hawes' version 1.1.0
+load "./InvariantRings/OldCode.m2"
 
 beginDocumentation()
 
