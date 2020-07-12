@@ -1,6 +1,14 @@
 -- This file contains code that is being ported from the original
 -- InvariantRing package by Thomas Hawes.
 
+-* Functions not ported:
+
+o 'generateGroup' applied to a List of matrices is replaced by
+  'group' applied to FiniteGroupAction. The new function uses
+  schreierGraph which is more efficient than brute-force.
+
+*-
+
 ------------------------------------------------
 -- molienSeries
 -- Calculates the Molien (Hilbert) series of the invariant ring of a finite 
