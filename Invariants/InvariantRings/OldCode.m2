@@ -6,6 +6,7 @@
 o 'generateGroup' applied to a List of matrices is replaced by
   'group' applied to FiniteGroupAction. The new function uses
   schreierGraph which is more efficient than brute-force.
+o 'reynoldsOperator' code was rewritten slightly.
 
 *-
 
@@ -24,7 +25,7 @@ o 'generateGroup' applied to a List of matrices is replaced by
 -- York: Springer-Verlag, 2008.        
 ------------------------------------------------
 
--* Porting notes:
+-* Porting notes on molienSeries:
 
 o Applies to FiniteGroupAction rather than RingOfInvariants
 o Original code distinguished cases when coefficient ring K is QQ
