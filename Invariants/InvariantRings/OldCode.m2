@@ -19,19 +19,20 @@
 -* Porting notes:
 
 o Applies to FiniteGroupAction rather than RingOfInvariants
-o TODO: original code checked characteristic is nonzero.
-  Should we check this when group is constructed?
-  Does this work in pos char in the non modular case?
 o Original code distinguished cases when coefficient ring K is QQ
   from other fields because frac(K[U]) is not implemented when
   K is a finite field extension of QQ created as quotient ring.
   New code treats all fields as the most general one.
+o FUTURE TODO: extend to pos char in the non modular case
 
 *-
 
 molienSeries = method();
 molienSeries FiniteGroupAction:= G -> (
      K:=coefficientRing ring G;
+     if(isField K == false or char K =!= 0) then(
+	  error "Action matrices must be defined over a field of characteristic zero"
+	  );
      U:=symbol U;
      -- frac of a general number field is not implemented yet in Macaulay2. So
      -- need to calculate fractions and sum of fractions 'manually'. 
