@@ -158,7 +158,6 @@ permuteMatrixRows(Matrix,List)  := (M,P) -> (
     return matrix((entries M)_P)
     )
 
-
 permuteToStandardForm = method()
 permuteToStandardForm(Matrix) := M -> (
     -- input: matrix M
