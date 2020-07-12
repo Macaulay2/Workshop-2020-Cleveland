@@ -113,7 +113,7 @@ export {
     "syndromeDecode",
     "shortestPath",
     "minimumWeight",
-    "matroidPartition",
+--    "matroidPartition",
     "weight",
     "enumerateVectors"
     }
@@ -157,7 +157,6 @@ permuteMatrixRows(Matrix,List)  := (M,P) -> (
     -- permute the columns via P:
     return matrix((entries M)_P)
     )
-
 
 permuteToStandardForm = method()
 permuteToStandardForm(Matrix) := M -> (
@@ -438,9 +437,8 @@ linearCode(Matrix) := LinearCode => opts -> M -> (
       
     )
 
-net LinearCode := c -> (
-     "Code with Generator Matrix: " | net c.GeneratorMatrix
-     )
+--net LinearCode := c -> (
+--     "Code with Generator Matrix: " | net c.GeneratorMatrix)
 toString LinearCode := c -> toString c.Generators
 
 -----------------------------------------------
@@ -703,9 +701,8 @@ evaluationCode(Ring,List,Matrix) := EvaluationCode => opts -> (F,P,M) -> (
     evaluationCode(F,P,S)
     )
 
-net EvaluationCode := c -> (
-    c.LinearCode
-    )
+--net EvaluationCode := c -> (
+--    c.LinearCode)
 
 dualCode = method()
 dualCode(LinearCode) := LinearCode => C -> (
@@ -1731,7 +1728,12 @@ assert(minimumWeight(C) == 8);
 ///
 
 TEST ///
+-- shortestPath
+D = digraph ({{1,2},{2,3},{3,4},{1,4},{3,5}}, EntryMode => "edges");
+assert(length shortestPath (D,1,{3,5}) ==3)
+///
 
+TEST ///
 -- syndromeDecode test
 R := GF(2);
 -- The binary Golay code. It can correct 3 errors.
@@ -2142,6 +2144,13 @@ C=linearCode(random(F^3,F^5))
 assert(field C===F)
 ///
 
+TEST ///
+-- toString
+L = {{0, 1, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 1, 0, 1, 1, 0, 1, 0, 0}, {1, 1, 0, 0, 0, 1, 0, 0, 1, 0}, {1, 0, 0, 1, 0, 0, 0, 1, 1, 1}}
+C = linearCode(GF(2),L)
+assert(length toString C == 128)
+///
+
 
 TEST ///
 -- genericCode
@@ -2398,8 +2407,8 @@ document {
 	SUBSECTION "Modified Methods",
 	
 	UL {
-	    TO "random(GaloisField, ZZ, ZZ)", -- not sure how to cite this properly.
-	    TO "ring(LinearCode)" -- not sure how to cite this properly.
+	    TO "random(GaloisField,ZZ,ZZ)",
+	    TO "ring(LinearCode)"
 
 	}
     	
@@ -2979,28 +2988,29 @@ doc ///
 	   shorten(C, 3)
 ///
 
+
 doc ///
    Key
        (random, GaloisField, ZZ, ZZ)
    Headline
-       a random linear code 
+       A random linear code 
    Usage
        random(GaloisField, ZZ, ZZ)
    Inputs
         F:GaloisField
 	n:ZZ
-	    an integer $n$ as the code length. 
+	    an integer $n$ as the length of the code. 
 	k:ZZ
-	    an integer $k$ as the code dimension.
-	    
+	    an integer $k$ as the dimension of the code.
    Outputs
-       :LinearCode
-           a random linear code of length $n$ and dimension $k$. 
+       C:LinearCode
+           A random linear code of length $n$ and dimension at most $k$. 
    Description
        Example
        	   F = GF(2, 4)
 	   C = random ( F , 3, 5 )
 ///
+
 doc ///
    Key
        (ring, LinearCode)
@@ -3018,6 +3028,26 @@ doc ///
        Example
        	   C = HammingCode(2, 3)
 	   ring(C)
+///
+
+doc ///
+   Key
+       (toString, LinearCode)
+   Headline
+       A string with the vectors of the generator matrix.
+   Usage
+       toString(LinearCode)
+   Inputs
+        C:LinearCode
+	    the linear code $C$.
+   Outputs
+       S:String
+           A string that contains the rows of the generator matrix of C.
+   Description
+       Example
+              L = {{0, 1, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 1, 0, 1, 1, 0, 1, 0, 0}, {1, 1, 0, 0, 0, 1, 0, 0, 1, 0}, {1, 0, 0, 1, 0, 0, 0, 1, 1, 1}}
+	      C = linearCode(GF(2),L)
+	      S=toString C
 ///
 
 doc ///
@@ -3056,6 +3086,8 @@ document {
     Headline => "Computes the minimum weight of a linear code.",
     Usage => "minimumWeight(C)",
     "Returns the minimum weight of a non-zero codeword of the linear code C. The linear code C may be over any finite field.",
+    "NOTE: For the best of our knowledge, the algorithm is well-implemented. Unfortunately sometimes it is slow.",
+    "It may be because it depends on the Matroid package or an error on the implementation.",
     Inputs => {
 	"C" => LinearCode => {"The linear code whose minimum distance to compute."}
 	},
@@ -3065,7 +3097,26 @@ document {
     EXAMPLE {
 	"minimumWeight(HammingCode(2,3))"
 	}
-    }	 
+    }
+
+document {
+    Key => {shortestPath, (shortestPath, Digraph, Thing, List)},
+    Headline => "Shorthest path in a digraph.",
+    Usage => "shortestPath (D,start,finishSet)",
+    "Finds the shorthest path between a vertex and a set of vertices in a digraph.",
+    Inputs => {
+	"D" => Digraph => {"A digraph."},
+	"start" => Thing => {"A vertex."},
+	"finishSet" => List => {"List of vertices."}
+	},
+    Outputs => {
+	List => {"The shorthest path in D from start to finishSet."}
+	},
+    EXAMPLE {
+	"D = digraph ({x,y,z,u,v}, matrix {{0,1,0,1,0},{0,0,1,0,0},{0,0,0,1,1},{0,0,0,0,0},{0,0,0,0,0}})",
+	"shortestPath (D,x,{z,v})"
+	}
+    }
 
 document {
     Key => {enumerateVectors, (enumerateVectors, Ring, List)},
@@ -3508,7 +3559,7 @@ document {
 
 document {
     Key => {vectorSpace, (vectorSpace,LinearCode)},
-    Headline => "Vector Space genearted by a generator matrix of a linear code",
+    Headline => "Vector Space generated by a generator matrix of a linear code",
     Usage => "vectorSpace C",
     Inputs => {
 	"C" => LinearCode => {"A linear code over a Galois field."},
@@ -3853,6 +3904,13 @@ document {
     Key => ExponentsMatrix,
     Headline => "Specifies the matrix of exponents. Exponent vectors are rows.",
     TT "ExponentsMatrix", " -- Specifies the matrix of exponents.",
+    PARA{"This symbol is provided by the package ", TO CodingTheory, "."}
+    }
+
+document {
+    Key => IncidenceMatrix,
+    Headline => "Specifies the incident matrix of a graph.",
+    TT "IncidenceMatrix", " -- Gives the incidence matrix of a graph.",
     PARA{"This symbol is provided by the package ", TO CodingTheory, "."}
     }
 --------------- Documentation PolynomialSet-----------------
