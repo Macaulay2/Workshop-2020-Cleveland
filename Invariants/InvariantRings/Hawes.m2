@@ -1,6 +1,10 @@
 -- This file contains code that is being ported from the original
 -- InvariantRing package by Thomas Hawes.
 
+-- IMPORTANT TODO:
+-- molienSeries only works on standard graded polynomial rings
+-- add an error when the ring is not standard graded
+
 -* Functions not ported:
 
 o 'generateGroup' applied to a List of matrices is replaced by
