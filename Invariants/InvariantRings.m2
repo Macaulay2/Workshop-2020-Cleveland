@@ -105,7 +105,10 @@ export {
     "UsePolyhedra",    	      	  -- Strategy option for invariants    	
 
 --OldCode.m2    
-    "molienSeries"
+    "molienSeries",
+    "primaryInvariants",
+    "Dade",
+    "DegreeVector"
     }
 --exportMutable {}
 
