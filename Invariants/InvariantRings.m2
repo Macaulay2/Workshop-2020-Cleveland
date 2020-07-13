@@ -104,7 +104,7 @@ export {
     "UseNormaliz",    	      	  -- Strategy option for invariants 
     "UsePolyhedra",    	      	  -- Strategy option for invariants    	
 
---OldCode.m2    
+--Hawes.m2    
     "molienSeries",
     "primaryInvariants",
     "secondaryInvariants",
@@ -144,7 +144,7 @@ load "./InvariantRings/LinearlyReductiveGroups.m2"
 load "./InvariantRings/Invariants.m2"
 
 -- code ported from Hawes' version 1.1.0
-load "./InvariantRings/OldCode.m2"
+load "./InvariantRings/Hawes.m2"
 
 beginDocumentation()
 
