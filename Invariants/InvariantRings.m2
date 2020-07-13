@@ -158,6 +158,8 @@ load "./InvariantRings/LinearlyReductiveGroupsDoc.m2"
 
 load "./InvariantRings/InvariantsDoc.m2"
 
+load "./InvariantRings/HawesDoc.m2"
+
 -- TESTS
 
 load "./InvariantRings/Tests.m2"
