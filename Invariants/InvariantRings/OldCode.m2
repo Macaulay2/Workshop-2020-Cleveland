@@ -99,9 +99,9 @@ primaryInvariants(FiniteGroupAction):=o->G->(
 	  then(
 	       if KK.order<=((#G)^(n-1)) then(
 		    s:=read "Warning, your field may be too small for the Dade
-		    algorithm to terminate successfully. Are you sure you want
-		    to continue? (Enter `y' to continue, `n' to stop execution
-		    of function.): ";
+algorithm to terminate successfully. Are you sure you want
+to continue? (Enter `y' to continue, `n' to stop execution
+of function.): ";
 		    if s=!="y" then error "Use a bigger field."
 	       	    )
 	       );
@@ -114,7 +114,7 @@ primaryInvariants(FiniteGroupAction):=o->G->(
 	       	    or a large finite field of type GaloisField or 
 		    QuotientRing."
 	       );
-     return dadeHSOP(R,G)
+     return dadeHSOP G
      );
      if o.DegreeVector=!=0 then(
 	  return optimalHSOP(G,DegreeVector=>(o.DegreeVector)) 
@@ -472,8 +472,8 @@ optimalHSOP(FiniteGroupAction):= o->G->(
 ------------------------------------------------
 
 dadeHSOP=method();
-dadeHSOP(PolynomialRing,List):= (R,G)-> ( 
-     -- R - polynomial ring; G - list of matrices
+dadeHSOP(FiniteGroupAction):= G-> ( 
+     R := ring G;
      n:=numgens R;
      dadebasis:=new MutableHashTable; 
      -- integer keys, d=>d'th Dade basis vector  
@@ -483,7 +483,7 @@ dadeHSOP(PolynomialRing,List):= (R,G)-> (
      -- integer keys, d=>orb(v_0) x ... x orb(v_{d-1}), d=0...n-1
      d:=0;
      dadebasis#d=((random(R^1,R^{-1}))_(0,0)); -- make a random linear form
-     orbits#d=toList(set groupAct(dadebasis#d,G));
+     orbits#d=toList(set groupAct(dadebasis#d,group G));
      -- assigns to d the orbit of the d'th Dade basis vector  
      tuples#d=(cart((orbits#d),{{}})); -- the orbit of the 0th DBV in this case
      while d<(n-1) do(
@@ -517,7 +517,7 @@ dadeHSOP(PolynomialRing,List):= (R,G)-> (
 	       ); 
 	  -- if we successfully made it through all tuples, break loop,
 	  -- increment d and take u to be our new DBV
-	  orbits#d=groupAct(dadebasis#d,G);
+	  orbits#d=groupAct(dadebasis#d,group G);
 	  -- create the orbit of the new DBV
 	  if #(keys dadebasis)<n then tuples#d=cart((orbits#d),tuples#(d-1)); 
 	  -- create new set of tuples only if we still need DBVs
@@ -542,5 +542,5 @@ dadeHSOP(PolynomialRing,List):= (R,G)-> (
 		    )*g
 	       )
 	  ) 
--- apply pruning to coefficients if ground field of R is QQ
+      -- apply pruning to coefficients if ground field of R is QQ
      );
