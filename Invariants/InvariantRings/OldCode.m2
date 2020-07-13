@@ -7,6 +7,10 @@ o 'generateGroup' applied to a List of matrices is replaced by
   'group' applied to FiniteGroupAction. The new function uses
   schreierGraph which is more efficient than brute-force.
 o a 'reynoldsOperator' was written separately for the new types.
+o 'OrderBound' optional argument is not ported. It would need to
+  be reimplemented into our group generation function.
+o 'IsGroup' optional argument is not ported because our methods
+  compute the group in advance.
 o 'invariantRing' is currently not ported. It is very easy to port
   but we have to decide how to incorporate it in our package.
   Because it outputs two lists of invariants (primary, secondary),
