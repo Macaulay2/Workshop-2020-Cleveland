@@ -124,6 +124,127 @@ of function.): ";
 
 
 ------------------------------------------------
+-- secondaryInvariants
+-- Given a list of primary invariants for the invariant ring of a group, finds 
+-- secondary invariants
+------------------------------------------------
+
+-* Porting notes on primaryInvariants
+
+o applies to a list of primary invariants + FiniteGroupAction
+
+*-
+   
+secondaryInvariants=method(Options=>{PrintDegreePolynomial=>false});
+secondaryInvariants(List,FiniteGroupAction):=o->(P,G)->(
+     -- P - List of primary invariants, G - FiniteGroupAction
+     R := ring G;
+     n:=numgens R;
+     KK:=coefficientRing R;
+     if(isField KK == false or char KK =!= 0) then(
+	  error "Expected action over a field of characteristic zero"
+	  );
+     for g in P do(if ring(g) =!= R then(
+	       error "All polynomials must be in the ring on which the group acts"
+	       )
+	  );
+     molnum:=value numerator molienSeries G; 
+     -- numerator of Molien series H(G,T)
+     moldenom:=value denominator molienSeries G;
+     -- denominator of Molien series H(G,T)
+     A:=ring moldenom; 
+     -- the ring H(G,T) lives in. Note T is invertible in this ring.
+     t:=symbol t; B:=ZZ[t]; -- note t does not have an inverse in B
+     F:=map(B,A,{t}); 
+     -- F sends the variable T in A to t in B
+     -- Note that this will send negative powers of T to zero
+     -- This does not matter, because molnum and moldenom are concentrated in
+     -- non-negative degrees
+     pol:=(F(molnum)*(product apply(P,f->(1-t^((degree f)_0)))))//(F(moldenom)); 
+     -- pol = H(G,t)*(1-t^{d_1})*...*(1-t^{d_n}) where d_i are degrees of
+     -- primary invariants in P
+     -- pol is used to calculate the number of secondary invariants of 
+     -- certain degrees. 
+     degscoeffs:=apply(
+	  apply(
+	       flatten entries ((coefficients pol)#0),degree
+	       ),
+	  D->{D,coefficient((sub(t,ZZ[t]))^(D_0),pol)}
+	  );
+     -- outputs a list of lists of the form {{d},c} where d is a featuring 
+     -- degree in pol and c is the corresponding coefficient. Thus there 
+     -- are c secondary invariants of degree d.
+     I:=ideal P;
+     normforms:=new MutableHashTable;
+     secondary:=new MutableHashTable;
+     for dc in degscoeffs do(
+	  d:=(dc#0)#0;
+	  bas:=basis(d,R); 
+	  -- For this to work polynomials in P must have coefficients in a field 
+	  -- (and Macaulay 2 know it is a field)
+	  mons:=flatten entries bas; 
+	  -- List of monomials of R of degree d 
+	  bas2:=sub(basis(d,R/I),R); 
+	  -- lifts a basis of degree d graded piece of R/I to elements of R
+	  i:=1;
+	  B:=matrix{{}};
+	  for m in mons do(v:=(reynoldsOperator(m,G));
+	      if((coefficientRing R)===QQ and v=!=sub(0,R)) then(
+		   v=lcm(
+			apply(
+			     flatten entries transpose((coefficients(v))#1),
+			     l->(denominator(sub(l,QQ)))
+			     )
+			)*v;
+		   v=(1/gcd(
+			     apply(
+				  flatten entries transpose((coefficients v)#1),
+				  l->sub(l,ZZ)
+				  )
+			     )
+			)*v
+		   ); 
+	      -- If coefficient ring of R is QQ and v nonzero, prune v to get 
+	      -- rid of fractions with denominators and leave coprime integer 
+	      -- coefficients. 
+	      nfv:=(v % I); -- find normal form of reynoldsOperator(m,G) mod I
+	      if nfv==0 then continue else( 
+		   -- if zero, discard and go to next monomial
+	      	     if i==1 then(
+			  normforms#(d,i)=nfv; 
+			  secondary#(d,i)=v; 
+			  B=((coefficients(nfv,Monomials=>bas2))#1); 
+			  i=i+1
+			  -- if nfv is first non zero normal form, then store 
+			  -- in normforms, store reynoldsOperator(m,G) in 
+			  -- secondary, add coefficients of nfv to B and 
+			  -- do i=i+1
+			  ) else(   
+			  A:=B|((coefficients(nfv,Monomials=>bas2))#1); 
+			  -- add coefficients of nfv to matrix of coefficients 
+			  -- of stored normal forms
+			  if rank(A)==i then(
+			       B=B|((coefficients(nfv,Monomials=>bas2))#1); 
+			       normforms#(d,i)=nfv; 
+			       secondary#(d,i)=v; 
+			       i=i+1
+			       ) else continue 
+			  -- a linear independence test. If nfv is linearly 
+			  -- dependent on previously stored normal forms, then 
+			  -- discard v. Else store v with the other secondary 
+			  -- invariants found. 
+			  );
+		     );
+		if i==(1+(dc#1)) then break() 
+		-- break loop once c secondary invariants of degree d 
+		-- have been found
+		);
+	  );
+     if o.PrintDegreePolynomial == true then print pol;
+     return sort values secondary
+     );
+
+------------------------------------------------
 -- FUNCTIONS NOT EXPORTED --
 -- (Can be viewed via listLocalSymbols command)
 ------------------------------------------------

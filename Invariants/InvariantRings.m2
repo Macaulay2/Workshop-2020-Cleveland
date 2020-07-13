@@ -107,8 +107,10 @@ export {
 --OldCode.m2    
     "molienSeries",
     "primaryInvariants",
+    "secondaryInvariants",
     "Dade",
-    "DegreeVector"
+    "DegreeVector",
+    "PrintDegreePolynomial"
     }
 --exportMutable {}
 
