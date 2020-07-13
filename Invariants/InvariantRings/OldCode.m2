@@ -6,7 +6,15 @@
 o 'generateGroup' applied to a List of matrices is replaced by
   'group' applied to FiniteGroupAction. The new function uses
   schreierGraph which is more efficient than brute-force.
-o 'reynoldsOperator' code was slightly rewritten.
+o a 'reynoldsOperator' was written separately for the new types.
+o 'invariantRing' is currently not ported. It is very easy to port
+  but we have to decide how to incorporate it in our package.
+  Because it outputs two lists of invariants (primary, secondary),
+  the output is not consistent with our 'invariants' method.
+  Storing primary and secondary invariants might be a bad idea
+  because there are different sets of primary invariants that can
+  be computed (or produced by the user) and the secondary invariants
+  depend on the primary ones.
 
 *-
 
@@ -32,6 +40,10 @@ o Original code distinguished cases when coefficient ring K is QQ
   from other fields because frac(K[U]) is not implemented when
   K is a finite field extension of QQ created as quotient ring.
   New code treats all fields as the most general one.
+o Fred suggests caching the result of molienSeries in the
+  FiniteGroupAction because 1) it is computed independently of the
+  ring of invariants, and 2) it is called upon by the methods for
+  primary and secondary invariants.
 o FUTURE TODO: extend to pos char in the non modular case
 
 *-
@@ -129,7 +141,7 @@ of function.): ";
 -- secondary invariants
 ------------------------------------------------
 
--* Porting notes on primaryInvariants
+-* Porting notes on secondaryInvariants
 
 o applies to a list of primary invariants + FiniteGroupAction
 
