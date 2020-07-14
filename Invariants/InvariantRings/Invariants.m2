@@ -508,6 +508,10 @@ invariants FiniteGroupAction := List => o -> G -> (
 	M := select(flatten entries (basis(d,R)%I),m->not zero m);
 	-- if all monomials reduce to zero, done
 	if M === {} then (
+	    -- in characteristic zero remove denominators
+	    if char(R) == 0 then (
+		S = apply(S,s->(mingens ideal s)_(0,0));
+		);
 	    return S;
 	    ) else (
 	    for m in M do (
