@@ -506,16 +506,10 @@ invariants FiniteGroupAction := List => o -> G -> (
 	-- take all degree d monomials and reduce modulo I
 	-- does not require Groebner bases
 	-- empirical evidence suggests reversing order of list
-	-- produces nicer looking invariants
+	-- produces nicer looking invariants for GRevLex
 	M := reverse select(flatten entries (basis(d,R)%I),m->not zero m);
 	-- if all monomials reduce to zero, done
-	if M === {} then (
-	    -- in characteristic zero remove denominators
-	    if char(R) == 0 then (
-		S = apply(S,s->(mingens ideal s)_(0,0));
-		);
-	    return S;
-	    ) else (
+	if M === {} then break else (
 	    for m in M do (
 	    	f := reynoldsOperator(m,G);
 	    	g := f % Gb;
@@ -526,9 +520,11 @@ invariants FiniteGroupAction := List => o -> G -> (
 		);
 	    );
     	);
-    -- should the for loop complete without triggering termination
-    -- we return an error
-    error "Algorithm did not terminate as expected";
+    -- in characteristic zero remove denominators
+    if char(R) == 0 then (
+	S = apply(S,s->(mingens ideal s)_(0,0));
+	);
+    return S;
     )
 
 
