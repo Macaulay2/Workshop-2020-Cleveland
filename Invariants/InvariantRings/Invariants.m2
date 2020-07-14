@@ -485,6 +485,50 @@ invariants (LinearlyReductiveAction) := List => o -> V -> (
 )
 
 -------------------------------------------
+-- invariants for finite groups
+-------------------------------------------
+
+-- Below is an implementation of King's algorithm following
+-- Derksen-Kemper Algorithm 3.8.2 for the non-modular case
+invariants FiniteGroupAction := List => o -> G -> (
+    R := ring G; -- ring with group action
+    S := {}; -- list of minimal generating invariants
+    b := #(group G); -- bound for algorithm termination
+    if ( char(R) != 0 and b % char(R) == 0 ) then 
+    error "Not implemented in the modular case";
+    if unique degrees R =!= {{1}} then
+    error "only implemented for standard graded polynomial rings";
+    -- growing monomial ideal for computations
+    LMs := monomialIdeal leadTerm Gb;
+    for d from 1 to b do (
+	-- growing GB for computations
+    	Gb := gb(promote(ideal S,R),DegreeLimit=>d);
+	-- get leading terms
+	I := monomialIdeal leadTerm Gb;
+	-- take all degree d monomials and reduce modulo I
+	-- does not require Groebner bases
+	M := select(flatten entries (basis(d,R)%I),m->not zero m);
+	-- if all monomials reduce to zero, done
+	if M === {} then (
+	    return S;
+	    ) else (
+	    for m in M do (
+	    	f := reynoldsOperator(m,G);
+	    	g := f % Gb;
+	    	if not zero g then (
+		    S = S | {f};
+		    Gb = forceGB ( (gens Gb) | matrix{{g}} );
+	    	    );
+		);
+	    );
+    	);
+    -- should the for loop complete without triggering termination
+    -- we return an error
+    error "Algorithm did not terminate as expected";
+    )
+
+
+-------------------------------------------
 
 isInvariant = method()
 
