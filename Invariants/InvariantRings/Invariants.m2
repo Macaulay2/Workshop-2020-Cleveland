@@ -497,7 +497,7 @@ invariants FiniteGroupAction := List => o -> G -> (
     if ( char(R) != 0 and b % char(R) == 0 ) then 
     error "Not implemented in the modular case";
     if unique degrees R =!= {{1}} then
-    error "only implemented for standard graded polynomial rings";
+    error "Only implemented for standard graded polynomial rings";
     for d from 1 to b do (
 	-- growing GB for computations
     	Gb := gb(promote(ideal S,R),DegreeLimit=>d);
