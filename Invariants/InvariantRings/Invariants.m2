@@ -505,7 +505,9 @@ invariants FiniteGroupAction := List => o -> G -> (
 	I := monomialIdeal leadTerm Gb;
 	-- take all degree d monomials and reduce modulo I
 	-- does not require Groebner bases
-	M := select(flatten entries (basis(d,R)%I),m->not zero m);
+	-- empirical evidence suggests reversing order of list
+	-- produces nicer looking invariants
+	M := reverse select(flatten entries (basis(d,R)%I),m->not zero m);
 	-- if all monomials reduce to zero, done
 	if M === {} then (
 	    -- in characteristic zero remove denominators
