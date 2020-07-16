@@ -102,7 +102,12 @@ primaryInvariants=method(Options=>{Dade=>false, DegreeVector=>0})
 primaryInvariants(FiniteGroupAction):=o->G->( 
      -- R - polynomial ring over a number field; 
      R := ring G;
-     -- G - list of matrices defined over same field as ground field of R
+     -- V2.0 note: the optimal HSOP method only works with standard grading
+     -- It might be possible to make the Dade algorithm work with other
+     -- gradings but this will require further consideration.
+     -- For now, we throw an error if not in the standard graded case.
+     if unique degrees R =!= {{1}} then
+     error "Only implemented for standard graded polynomial rings";
      n:=numgens R;
      KK:=coefficientRing R;
      if(isField KK == false or (o.Dade==false and char KK =!= 0)) then(
@@ -158,6 +163,8 @@ secondaryInvariants=method(Options=>{PrintDegreePolynomial=>false});
 secondaryInvariants(List,FiniteGroupAction):=o->(P,G)->(
      -- P - List of primary invariants, G - FiniteGroupAction
      R := ring G;
+     if unique degrees R =!= {{1}} then
+     error "Only implemented for standard graded polynomial rings";
      n:=numgens R;
      KK:=coefficientRing R;
      if(isField KK == false or char KK =!= 0) then(
@@ -623,6 +630,7 @@ dadeHSOP(FiniteGroupAction):= G-> (
      -- integer keys, d=>orb(v_0) x ... x orb(v_{d-1}), d=0...n-1
      d:=0;
      dadebasis#d=((random(R^1,R^{-1}))_(0,0)); -- make a random linear form
+     -- V2.0 note: this way of making linear forms requires standard grading
      orbits#d=toList(set groupAct(dadebasis#d,group G));
      -- assigns to d the orbit of the d'th Dade basis vector  
      tuples#d=(cart((orbits#d),{{}})); -- the orbit of the 0th DBV in this case
