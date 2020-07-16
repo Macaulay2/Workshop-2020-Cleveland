@@ -118,9 +118,7 @@ hilbertSeries RingOfInvariants := Divide => opts -> S -> (
 --- Computing invariants ------------------
 -------------------------------------------
 
--- TO DO: 1. Implement invariants(FiniteGroupAction) after porting remaining
---    	     methods from the package "InvariantRing".
---    	  2. After writing code to extract the weights from a finite group action 
+-- TO DO: 2. After writing code to extract the weights from a finite group action 
 --    	     that happens to be abelian, add a Strategy option to invariants(FiniteGroupAction)
 --    	     to let user decided whether to use invariants(FiniteAbelianAction).
 --    	  3. Add error checking to isInvariant(LinearlyReductiveGroup).
