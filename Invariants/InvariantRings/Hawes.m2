@@ -1,10 +1,6 @@
 -- This file contains code that is being ported from the original
 -- InvariantRing package by Thomas Hawes.
 
--- IMPORTANT TODO:
--- molienSeries only works on standard graded polynomial rings
--- add an error when the ring is not standard graded
-
 -* Functions not ported:
 
 o 'generateGroup' applied to a List of matrices is replaced by
@@ -62,10 +58,13 @@ molienSeries FiniteGroupAction:= G -> (
      if(isField K == false or char K =!= 0) then(
 	  error "Action matrices must be defined over a field of characteristic zero"
 	  );
+     R:= ring G;
+     if unique degrees R =!= {{1}} then
+     error "Only implemented for standard graded polynomial rings";
      U:=symbol U;
      -- frac of a general number field is not implemented yet in Macaulay2. So
      -- need to calculate fractions and sum of fractions 'manually'. 
-     n:= numgens ring G;
+     n:= numgens R;
      Ku:= K[U]; 
      In:= id_(Ku^n);
      L:=apply(group G, M->(det(In-U*sub(M,Ku)))); 
