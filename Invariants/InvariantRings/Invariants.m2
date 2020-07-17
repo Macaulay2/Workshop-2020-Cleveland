@@ -490,12 +490,12 @@ invariants (LinearlyReductiveAction) := List => o -> V -> (
 -- Derksen-Kemper Algorithm 3.8.2 for the non-modular case
 invariants FiniteGroupAction := List => o -> G -> (
     R := ring G; -- ring with group action
+    S := {}; -- list of minimal generating invariants
+    b := #(group G); -- bound for algorithm termination
     if ( char(R) != 0 and b % char(R) == 0 ) then 
     error "Not implemented in the modular case";
     if unique degrees R =!= {{1}} then
     error "Only implemented for standard graded polynomial rings";
-    S := {}; -- list of minimal generating invariants
-    b := #(group G); -- bound for algorithm termination
     for d from 1 to b do (
 	-- growing GB for computations
     	Gb := gb(promote(ideal S,R),DegreeLimit=>d);
