@@ -73,7 +73,7 @@ molienSeries FiniteGroupAction:= G -> (
      numerat:=sum(#L,i->product(drop(L,{i,i})));  
      -- in above notation, (and using LaTeX syntax):
      -- numerat=numerator of \frac{1}{p_1(U)}+...+\frac{1}{p_m(U)}.
-     denominat:=#(group G)*product(L); 
+     denominat:=#(group G)*product(L);
      A:=degreesRing(1);
      -- A is the ring containing the numerator and denominator of the
      -- Hilbert series
@@ -81,7 +81,27 @@ molienSeries FiniteGroupAction:= G -> (
      f:=map(A,Ku,{T}); -- Ring map K[U] -> A that sends U to T
      -- Note that any non-integer elements of K would be sent to zero.  
      h:=new Divide from {f(numerat),factor(f(denominat))};
-     return reduceHilbert h;
+     -- FG 6/17/2020, this code attempts a factorization
+     -- of the denominator of the Molien series that prioritizes
+     -- factors of the form (1-T^i)
+     -- if this is not desired, uncomment the next line
+     -- return reduceHilbert h;
+     d := first degree denominat;
+     h = reduceHilbert h;
+     den := value(h#1);
+     factors := {}; -- list of factors in the denominator
+     while d>0 do (
+	 e := 0;
+	 while (den % (1-T^d) == 0) do (
+	     e = e+1;
+	     den = den // (1-T^d);
+	     );
+	 if e != 0 then (
+	     factors = {new Power from {1-T^d,e}} | factors;
+	     );
+	 d = d-1;
+	 );
+     return new Divide from {h#0,new Product from factors};
      );
 
 ------------------------------------------------
