@@ -528,7 +528,7 @@ invariants FiniteGroupAction := List => o -> G -> (
 -- the following is an implementation of the linear algebra
 -- method to compute invariants of a given degree for finite groups
 -- following §3.1.1 of Derksen-Kemper
-invariants(FiniteGroupAction, ZZ) := List => o -> (G,d) -> (
+invariants(FiniteGroupAction, List) := List => o -> (G,d) -> (
     R := ring G;
     K := coefficientRing R;
     B := basis(d,R);
@@ -545,6 +545,11 @@ invariants(FiniteGroupAction, ZZ) := List => o -> (G,d) -> (
     I := B*sub(C,R);
     -- return the entries of the matrix
     flatten entries I
+    )
+
+-- this allows to pass degree as integer instead of list
+invariants(FiniteGroupAction, ZZ) := List => o -> (G,d) -> (
+    invariants(G,{d})
     )
 
 -------------------------------------------
