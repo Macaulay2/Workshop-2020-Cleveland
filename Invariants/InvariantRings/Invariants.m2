@@ -139,7 +139,7 @@ reynoldsOperator (RingElement, DiagonalAction) := RingElement => (f, D) -> sum s
 
 -------------------------------------------
 
-invariants = method(Options => {Strategy => UseNormaliz})
+invariants = method(Options => {Strategy => UseNormaliz, Reynolds => true})
 
 invariants DiagonalAction := List => o -> D -> (
     (W1, W2) := weights D;
@@ -490,12 +490,12 @@ invariants (LinearlyReductiveAction) := List => o -> V -> (
 -- Derksen-Kemper Algorithm 3.8.2 for the non-modular case
 invariants FiniteGroupAction := List => o -> G -> (
     R := ring G; -- ring with group action
-    S := {}; -- list of minimal generating invariants
-    b := #(group G); -- bound for algorithm termination
     if ( char(R) != 0 and b % char(R) == 0 ) then 
     error "Not implemented in the modular case";
     if unique degrees R =!= {{1}} then
     error "Only implemented for standard graded polynomial rings";
+    S := {}; -- list of minimal generating invariants
+    b := #(group G); -- bound for algorithm termination
     for d from 1 to b do (
 	-- growing GB for computations
     	Gb := gb(promote(ideal S,R),DegreeLimit=>d);
@@ -508,16 +508,26 @@ invariants FiniteGroupAction := List => o -> G -> (
 	M := reverse select(flatten entries (basis(d,R)%I),m->not zero m);
 	-- if all monomials reduce to zero, done
 	if M === {} then break else (
-	    for m in M do (
-	    	f := reynoldsOperator(m,G);
-	    	g := f % Gb;
-	    	if not zero g then (
-		    S = S | {f};
-		    Gb = forceGB ( (gens Gb) | matrix{{g}} );
-	    	    );
-		);
-	    );
-    	);
+	    if o.Reynolds then (
+	    	for m in M do (
+	    	    f := reynoldsOperator(m,G);
+	    	    g := f % Gb;
+	    	    if not zero g then (
+		    	S = S | {f};
+		    	Gb = forceGB ( (gens Gb) | matrix{{g}} );
+	    	    	);
+		    );
+	    	) else (
+		for f in invariants(G,d) do (
+	    	    g := f % Gb;
+	    	    if not zero g then (
+		    	S = S | {f};
+		    	Gb = forceGB ( (gens Gb) | matrix{{g}} );
+	    	    	);
+		    );
+	    	);
+    	    );
+	);
     -- in characteristic zero remove denominators
     if char(R) == 0 then (
 	S = apply(S,s->(mingens ideal s)_(0,0));
