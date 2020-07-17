@@ -1,4 +1,37 @@
 ------------------------------------------------
+-- molienSeries
+------------------------------------------------
+
+document {
+    Key => {molienSeries,(molienSeries,FiniteGroupAction)},
+    Headline => "computes the Molien (Hilbert) series of the invariant ring 
+    of a finite group",
+    Usage => "molienSeries G",
+    Inputs =>{"G"=> FiniteGroupAction},
+    Outputs =>{
+    	Divide=>{
+	    "the Molien series of the invariant ring of G as a rational 
+	    function"
+	    }
+	},  
+    PARA{
+	"This function is provided by the package ", TO InvariantRings, "."
+	},
+    PARA{
+	"The example below computes the Molien series for the dihedral 
+	group with 6 elements. ", TT "K", " is the field obtained by 
+	adjoining a primitive third root of unity to ", TO QQ, "."
+	}, 
+    EXAMPLE {
+	"K=toField(QQ[a]/(a^2+a+1));",
+	"A=matrix{{a,0},{0,a^2}};",
+	"B=sub(matrix{{0,1},{1,0}},K);",
+	"D6=finiteAction({A,B},K[x,y])",
+	"molienSeries D6"
+	}
+    }
+
+------------------------------------------------
 -- primaryInvariants
 -- Optional invariants: Dade, DegreeVector
 ------------------------------------------------
