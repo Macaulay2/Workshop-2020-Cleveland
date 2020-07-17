@@ -525,6 +525,27 @@ invariants FiniteGroupAction := List => o -> G -> (
     return S;
     )
 
+-- the following is an implementation of the linear algebra
+-- method to compute invariants of a given degree for finite groups
+-- following §3.1.1 of Derksen-Kemper
+invariants(FiniteGroupAction, ZZ) := List => o -> (G,d) -> (
+    R := ring G;
+    K := coefficientRing R;
+    B := basis(d,R);
+    -- for each group generator g and monomial m of degree d
+    -- compute g*m-m, then extract coefficients relative to basis B
+    L := apply(gens G, g -> sub(B,(vars R)*(transpose g)) - B);
+    L = apply(L, l -> last coefficients l);
+    -- stack coefficients into single matrix
+    -- then move to field and compute kernel
+    M := sub(matrix pack(L,1),K);
+    C := gens ker M;
+    -- multiply kernel generators by variables to get a matrix of
+    -- invariants
+    I := B*sub(C,R);
+    -- return the entries of the matrix
+    flatten entries I
+    )
 
 -------------------------------------------
 
