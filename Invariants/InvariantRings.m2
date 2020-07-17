@@ -106,7 +106,7 @@ export {
     "UsePolyhedra",    	      	  -- Strategy option for invariants    	
 
 --Hawes.m2    
-    "molienSeries",
+    "molienSeries",    	       	  -- documented
     "primaryInvariants",    	  -- documented
     "secondaryInvariants",    	  -- documented
     "Dade",    	       	       	  -- option for primaryInvariants
