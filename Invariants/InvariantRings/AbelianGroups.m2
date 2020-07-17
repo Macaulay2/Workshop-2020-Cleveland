@@ -125,8 +125,8 @@ weights DiagonalAction := Matrix => D -> D.weights
 equivariantHilbertSeries = method(Options => {Order => infinity}, TypicalValue => Divide)
 
 equivariantHilbertSeries DiagonalAction := op -> T -> (
-    if #(gens degreesRing T) != 1 then
-    error "only implemented for standard graded polynomial rings";
+    if unique degrees ring T =!= {{1}} then
+    error "Only implemented for standard graded polynomial rings";
     ord := op.Order;
     if ord === infinity then (
 	equivariantHilbertRational(T)
