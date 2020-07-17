@@ -139,7 +139,11 @@ reynoldsOperator (RingElement, DiagonalAction) := RingElement => (f, D) -> sum s
 
 -------------------------------------------
 
-invariants = method(Options => {Strategy => UseNormaliz, Reynolds => true})
+invariants = method(Options => {
+	Strategy => UseNormaliz,
+	Reynolds => true,
+	DegreeBound => infinity
+	})
 
 invariants DiagonalAction := List => o -> D -> (
     (W1, W2) := weights D;
@@ -496,6 +500,9 @@ invariants FiniteGroupAction := List => o -> G -> (
     error "Not implemented in the modular case";
     if unique degrees R =!= {{1}} then
     error "Only implemented for standard graded polynomial rings";
+    -- if user provides a DegreeBound smaller than the order of
+    -- the group, then use that
+    if o.DegreeBound < b then b = o.DegreeBound;
     for d from 1 to b do (
 	-- growing GB for computations
     	Gb := gb(promote(ideal S,R),DegreeLimit=>d);

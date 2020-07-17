@@ -90,7 +90,8 @@ export {
     "Abelian",	    	          -- Strategy option for isInvariant   
     "action",	     	     	  -- documented   
     -- ambient	      	      	  -- overloaded
-    "definingIdeal",              -- documented 
+    "definingIdeal",              -- documented
+    "DegreeBound",    	      	  -- option for invariants
     -- generators    	     	  -- overloaded, documented
     -- hilbertSeries	    	  -- overloaded
     "invariants",    	     	  -- documented only for TorusAction, FiniteAbelianAction, LinearlyReductiveAction
