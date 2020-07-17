@@ -224,6 +224,67 @@ document {
 
 document {
 	Key => {
+	    (invariants, FiniteGroupAction, ZZ),
+	    (invariants, FiniteGroupAction, List),
+	    },
+	
+	Headline => "basis for graded component of invariant ring",
+	
+	Usage => "invariants(G,d)",
+	
+	Inputs => {  
+	    	"G" => FiniteGroupAction,
+		"d" => ZZ => {"a degree or multidegree"},
+		},
+	Outputs => {
+		"L" => List => {"an additive basis for a graded component of the ring of invariants"}
+		},
+
+	PARA {
+	    "This function is provided by the package ", TO InvariantRings,
+	    },
+	
+	PARA {
+	    "When called on a finite group action  and
+	    a (multi)degree, it computes an additive basis for the
+	    invariants of the action in the given degree."},
+	PARA {
+	    "This function
+	    uses an implementation of the Linear Algebra Method
+	    described in §3.1.1 of"
+	    },
+       	UL { 
+	    {"Derksen, H. & Kemper, G. (2015).", EM "Computational Invariant Theory", 
+	   ". Heidelberg: Springer."}
+        },
+	PARA { "For example, consider the following
+	    action of a dihedral group."
+	    },
+    	EXAMPLE {
+	    	"K=toField(QQ[a]/(a^2+a+1));",
+	    	"R = K[x,y]",
+		"A=matrix{{a,0},{0,a^2}};",
+		"B=sub(matrix{{0,1},{1,0}},K);",
+		"D6=finiteAction({A,B},R)",
+		"invariants(D6,20)",
+		},
+	PARA { "It is important to note that this implementation
+	    uses the group generators provided by the user,
+	    which can be recovered using ", TO (gens,FiniteGroupAction),
+	    ". To improve efficiency the user should provide
+	    a generating set for the group that is as small as
+	    possible."
+	    },
+	   
+    	SeeAlso => {
+	    invariantRing, 
+	    isInvariant,
+	    finiteAction
+	    }
+	}
+
+document {
+	Key => {
 	    (invariants, LinearlyReductiveAction, ZZ),
 	    (invariants, LinearlyReductiveAction, List)
 	    },
@@ -247,22 +308,21 @@ document {
 	PARA {
 	    "When called on a linearly reductive group action and
 	    a (multi)degree, it computes an additive basis for the
-	    invariants of the action in the given degree. This is
-	    an implementation of Algorithm 4.5.1 in:"
+	    invariants of the action in the given degree."},
+	PARA {
+	    "This function uses an implementation of Algorithm
+	    4.5.1 in:"
 	    },
-       
-       UL { 
+       	UL { 
 	    {"Derksen, H. & Kemper, G. (2015).", EM "Computational Invariant Theory", 
 	   ". Heidelberg: Springer."}
         },
-    
     	PARA {
 	    "The following example examines the action of the
 	    special linear group of degree 2 on the space of
 	    binary quadrics. There is a single invariant of degree
 	    2 but no invariant of degree 3."
 	    },
-	
     	EXAMPLE {
 	    	"S = QQ[a,b,c,d]",
 		"I = ideal(a*d - b*c - 1)",
