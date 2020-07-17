@@ -107,11 +107,11 @@ export {
 
 --Hawes.m2    
     "molienSeries",
-    "primaryInvariants",
-    "secondaryInvariants",
-    "Dade",
-    "DegreeVector",
-    "PrintDegreePolynomial"
+    "primaryInvariants",    	  -- documented
+    "secondaryInvariants",    	  -- documented
+    "Dade",    	       	       	  -- option for primaryInvariants
+    "DegreeVector",    	       	  -- option for primaryInvariants
+    "PrintDegreePolynomial"    	  -- option for secondaryInvariants
     }
 --exportMutable {}
 
