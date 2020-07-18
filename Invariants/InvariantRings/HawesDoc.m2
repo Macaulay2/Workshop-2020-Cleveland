@@ -238,7 +238,7 @@ document {
      }
 
 document {
-     Key => {[primaryInvariants, DegreeVector],DegreeVector},
+     Key => {[primaryInvariants, DegreeVector],[hironakaDecomposition,DegreeVector],DegreeVector},
      Headline=> "an optional argument for primaryInvariants that finds invariants 
      of certain degrees",
      Usage=> "primaryInvariants G",
@@ -488,7 +488,7 @@ document {
 	}
 
 document {
-     Key => {[secondaryInvariants, PrintDegreePolynomial],PrintDegreePolynomial},
+     Key => {[secondaryInvariants, PrintDegreePolynomial],[hironakaDecomposition, PrintDegreePolynomial],PrintDegreePolynomial},
      Headline => "an optional argument for secondaryInvariants that determines 
      the printing of an informative polynomial",
      Usage => "secondaryInvariants(P,G)",

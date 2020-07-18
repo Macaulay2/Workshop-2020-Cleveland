@@ -101,13 +101,13 @@ export {
     "Nonabelian",     	          -- Default strategy option for isInvariant
     -- presentation    	       	  -- overloaded
     "reynoldsOperator",	       	  -- documented   
-    "LinearAlgebra",	       	  -- Option for invariants
+    "LinearAlgebraMethod",     	  -- Option for invariants
     "RingOfInvariants",	       	  -- exported type name
     "UseNormaliz",    	      	  -- Strategy option for invariants 
     "UsePolyhedra",    	      	  -- Strategy option for invariants    	
 
 --Hawes.m2    
-    "hironakaDecomposition",   	  --
+    "hironakaDecomposition",   	  -- documented
     "molienSeries",    	       	  -- documented
     "primaryInvariants",    	  -- documented
     "secondaryInvariants",    	  -- documented
