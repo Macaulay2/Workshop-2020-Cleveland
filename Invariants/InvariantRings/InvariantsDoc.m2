@@ -308,7 +308,7 @@ document {
 
 document {
 	Key => {
-	    [invariants, Reynolds], Reynolds
+	    [invariants, LinearAlgebra], LinearAlgebra
 	    },
 	Headline => "strategy for computing invariants of finite groups",
 	Usage => "invariants G",
@@ -324,7 +324,7 @@ document {
 	    compute generating invariants of a finite group action.
 	    The default strategy uses the Reynolds operator, however
 	    this may be slow for large groups. Setting this argument
-	    to ", TO false, " uses the linear algebra method for
+	    to ", TO true, " uses the linear algebra method for
 	    computing invariants of a given degree by calling ",
 	    TO (invariants, FiniteGroupAction, ZZ), ". This may
 	    provide a speedup at lower degrees, especially if the
@@ -332,14 +332,16 @@ document {
 	    },
 	PARA {
 	    "The following example computes the invariants of the
-	    symmetric group on 4 elements."
+	    symmetric group on 4 elements. Note that using
+	    different strategies may lead to a different set of 
+	    generating invariants."
 	    },
     EXAMPLE {
 	"R = QQ[x_1..x_4]",
 	"L = apply({\"2134\",\"2341\"},permutationMatrix);",
 	"S4 = finiteAction(L,R)",
 	"elapsedTime invariants S4",
-	"elapsedTime invariants(S4,Reynolds=>false)"
+	"elapsedTime invariants(S4,LinearAlgebra=>true)"
 	},
     
     	SeeAlso => {

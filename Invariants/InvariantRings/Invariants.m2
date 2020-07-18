@@ -141,7 +141,7 @@ reynoldsOperator (RingElement, DiagonalAction) := RingElement => (f, D) -> sum s
 
 invariants = method(Options => {
 	Strategy => UseNormaliz,
-	Reynolds => true,
+	LinearAlgebra => false,
 	DegreeBound => infinity
 	})
 
@@ -516,9 +516,8 @@ invariants FiniteGroupAction := List => o -> G -> (
 	M := reverse select(flatten entries (basis(d,R)%I),m->not zero m);
 	-- if all monomials reduce to zero, done
 	if M === {} then break else (
-	    if o.Reynolds then (
-	    	for m in M do (
-	    	    f := reynoldsOperator(m,G);
+	    if o.LinearAlgebra then (
+		for f in invariants(G,d) do (
 	    	    g := f % Gb;
 	    	    if not zero g then (
 		    	S = S | {f};
@@ -526,7 +525,8 @@ invariants FiniteGroupAction := List => o -> G -> (
 	    	    	);
 		    );
 	    	) else (
-		for f in invariants(G,d) do (
+	    	for m in M do (
+	    	    f := reynoldsOperator(m,G);
 	    	    g := f % Gb;
 	    	    if not zero g then (
 		    	S = S | {f};

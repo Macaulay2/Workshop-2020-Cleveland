@@ -101,7 +101,7 @@ export {
     "Nonabelian",     	          -- Default strategy option for isInvariant
     -- presentation    	       	  -- overloaded
     "reynoldsOperator",	       	  -- documented   
-    "Reynolds",	       	       	  -- Option for invariants
+    "LinearAlgebra",	       	  -- Option for invariants
     "RingOfInvariants",	       	  -- exported type name
     "UseNormaliz",    	      	  -- Strategy option for invariants 
     "UsePolyhedra",    	      	  -- Strategy option for invariants    	
