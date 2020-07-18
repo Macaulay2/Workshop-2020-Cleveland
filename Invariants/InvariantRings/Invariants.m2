@@ -503,6 +503,7 @@ invariants FiniteGroupAction := List => o -> G -> (
     -- if user provides a DegreeBound smaller than the order of
     -- the group, then use that
     if o.DegreeBound < b then b = o.DegreeBound;
+    local M;
     for d from 1 to b do (
 	-- print d; -- for checking purposes
 	-- growing GB for computations
@@ -513,7 +514,7 @@ invariants FiniteGroupAction := List => o -> G -> (
 	-- does not require Groebner bases
 	-- empirical evidence suggests reversing order of list
 	-- produces nicer looking invariants for GRevLex
-	M := reverse select(flatten entries (basis(d,R)%I),m->not zero m);
+	M = reverse select(flatten entries (basis(d,R)%I),m->not zero m);
 	-- if all monomials reduce to zero, done
 	if M === {} then break else (
 	    if o.LinearAlgebra then (
@@ -536,6 +537,12 @@ invariants FiniteGroupAction := List => o -> G -> (
 	    	);
     	    );
 	);
+    -- if terminating condition was not met, warn the user
+    if M =!= {} then print"
+Warning: stopping condition not met!
+Output does not generate the entire ring of invariants.
+Increase value of DegreeBound.
+";
     -- in characteristic zero remove denominators
     if char(R) == 0 then (
 	S = apply(S,s->(mingens ideal s)_(0,0));

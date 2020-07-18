@@ -298,7 +298,12 @@ document {
 	"elapsedTime invariants S4",
 	"elapsedTime invariants(S4,DegreeBound=>4)"
 	},
-    
+    	Caveat => {
+	    "If the value provided for this option is too small,
+	    then the output list does not generate
+	    the entire ring of invariants. A warning message
+	    is produced to notify the user of the issue."
+	    },
     	SeeAlso => {
 	    finiteAction,
 	    invariantRing, 
