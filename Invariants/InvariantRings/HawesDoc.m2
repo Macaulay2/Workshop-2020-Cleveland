@@ -1,4 +1,74 @@
 ------------------------------------------------
+-- hironakaDecomposition (renamed from invariantRing)
+-- Optional arguments: DegreeVector, PrintDegreePolynomial
+------------------------------------------------
+ 
+document {
+     Key =>{hironakaDecomposition,(hironakaDecomposition,FiniteGroupAction)},
+     Headline => "calculates a Hironaka decomposition for the invariant ring of
+     a finite group",
+     Usage => "hironakaDecomposition G",
+     Inputs => {"G"=> FiniteGroupAction},
+     Outputs => {
+          Sequence =>{
+	       TT "(P,S)", ", where ", TT "P", " is a ", TO List, " of primary 
+	       invariants (i.e. an homogeneous system of parameters for the 
+	       invariant ring) and ", TT "S", " is a ", TO List, " of
+               corresponding secondary invariants"
+	       }
+          },
+     PARA{
+	  TO hironakaDecomposition, "  makes use of the functions ",
+     	  TO primaryInvariants, " and ", TO secondaryInvariants,
+     	  " in order to compute a Hironaka decomposition of
+	  the invariant ring of a finite group ", TT "G", " acting
+	  on a polynomial ring ", TT "R", ". It outputs a sequence ",
+	  TT "({f", SUB TT "1", TT ",...," , TT "f", SUB TT "n",
+	  TT "}, {g", SUB TT "1", TT ",...," , TT "g", SUB TT "r", TT"})",
+	  " of primary and secondary invariants such that ",
+	  TT "R", SUP TT "G", TT "=A", TT "g", SUB TT "1", TEX "\\oplus", 
+	  TT "...", TEX "\\oplus", TT "A", TT "g", SUB TT "r", ", where ", TT "A=K[", 
+	  TT "f", SUB TT "1", TT ",...," , TT "f", SUB TT "n", TT "]",
+	  " and ", TT "K", " is the field of coefficients of ",
+	  TT "R", "."
+	  },
+     PARA{
+	  "All of the optional arguments of ", 
+	  TO hironakaDecomposition, " play the same role as for the functions ",
+	  TO primaryInvariants, " and ", TO secondaryInvariants,
+	  ". By default, the function ",
+          TO hironakaDecomposition, " calls upon ", TO primaryInvariants, ", with the
+     	  optional argument ", TO Dade, " set to ", TO false, ", to compute a set
+    	  of primary invariants, resulting in Kemper's 'optimal' algorithm being
+     	  used (see ", TO "hsop algorithms", " for more information)."
+          }, 
+     PARA{
+	  "The example below computes a set of primary and secondary invariants 
+	  for an action of the cyclic group of order 4 on ", TT "QQ[x,y]", "."
+	  },
+     EXAMPLE {
+          "C4=finiteAction({matrix{{0,-1},{1,0}}},QQ[x,y])",
+	  "hironakaDecomposition C4"
+          },  
+     PARA{
+	  "From the output one sees that ", TT "QQ[x,y]", SUP(TT "C4"), 
+	  TT "=QQ[f", SUB(TT "1"), TT "f", SUB(TT "2"), TT "]", TEX "\\oplus", TT "QQ[f", 
+	  SUB(TT "1"), TT "f", SUB(TT "2"), TT "](x", SUP(TT "4"), TT "+y", 
+	  SUP(TT "4"), TT ")", ", where ", TT "f", SUB(TT "1"), TT "=x", SUP(TT "2"), 
+	  TT "+y", SUP(TT "2"), " and ",TT "f", SUB(TT "2"), TT "=xy", 
+	  SUP(TT "3"), TT "-x", SUP(TT "3"), TT "y", "."
+	  }, 
+     Caveat=>{
+	  "Currently hironakaDecomposition can only calculate with polynomial rings and 
+	  matrices over fields of characteristic 0."
+	  },
+     SeeAlso=>{"hsop algorithms"},
+     PARA{
+	  "This function is provided by the package ", TO InvariantRings, "."
+	  }  
+     }
+
+------------------------------------------------
 -- molienSeries
 ------------------------------------------------
 

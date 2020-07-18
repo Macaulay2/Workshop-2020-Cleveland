@@ -11,14 +11,6 @@ o 'OrderBound' optional argument is not ported. It would need to
   be reimplemented into our group generation function.
 o 'IsGroup' optional argument is not ported because our methods
   compute the group in advance.
-o 'invariantRing' is currently not ported. It is very easy to port
-  but we have to decide how to incorporate it in our package.
-  Because it outputs two lists of invariants (primary, secondary),
-  the output is not consistent with our 'invariants' method.
-  Storing primary and secondary invariants might be a bad idea
-  because there are different sets of primary invariants that can
-  be computed (or produced by the user) and the secondary invariants
-  depend on the primary ones.
 
 *-
 
@@ -290,6 +282,39 @@ secondaryInvariants(List,FiniteGroupAction):=o->(P,G)->(
      return sort values secondary
      );
 
+------------------------------------------------
+-- invariantRing
+-- Encorportates the primaryInvariants and secondaryInvariants methods into 
+-- one method.
+------------------------------------------------
+
+-* Porting notes on hironakaDecomposition
+
+o this function is renamed from invariantRing to
+  hironakaDecomposition to provide consistent outputs for the
+  invariantRing method
+o applies to a FiniteGroupAction, although would it be better
+  if it applied to the ring of invariants?
+
+*-
+   
+hironakaDecomposition=method(
+     Options=>{
+	  DegreeVector=>0,
+	  PrintDegreePolynomial=>false
+	  }
+     );
+hironakaDecomposition(FiniteGroupAction):=o->G->(
+     L:=G;
+--     if o.IsGroup==false then L=generateGroup(G,coefficientRing R);
+     P:=primaryInvariants(G,DegreeVector=>(o.DegreeVector));
+     S:=secondaryInvariants(P,G,PrintDegreePolynomial=>(
+	       o.PrintDegreePolynomial
+	       )
+	  ); 
+     return((P,S))
+     );
+     
 ------------------------------------------------
 -- FUNCTIONS NOT EXPORTED --
 -- (Can be viewed via listLocalSymbols command)

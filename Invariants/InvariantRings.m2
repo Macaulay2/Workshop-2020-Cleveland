@@ -107,6 +107,7 @@ export {
     "UsePolyhedra",    	      	  -- Strategy option for invariants    	
 
 --Hawes.m2    
+    "hironakaDecomposition",   	  --
     "molienSeries",    	       	  -- documented
     "primaryInvariants",    	  -- documented
     "secondaryInvariants",    	  -- documented
