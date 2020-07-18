@@ -504,6 +504,7 @@ invariants FiniteGroupAction := List => o -> G -> (
     -- the group, then use that
     if o.DegreeBound < b then b = o.DegreeBound;
     for d from 1 to b do (
+	-- print d; -- for checking purposes
 	-- growing GB for computations
     	Gb := gb(promote(ideal S,R),DegreeLimit=>d);
 	-- get leading terms

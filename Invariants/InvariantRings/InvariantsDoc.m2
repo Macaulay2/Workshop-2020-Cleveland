@@ -224,6 +224,133 @@ document {
 
 document {
 	Key => {
+	    (invariants, FiniteGroupAction),
+	    },
+	Headline => "compute the generating invariants of a group action",
+	Usage => "invariants G",
+	Inputs => {"G" => FiniteGroupAction},
+	Outputs => {
+		"L" => List => {"a minimal set of generating invariants for the group action"}
+		},
+	PARA {
+	    "This function is provided by the package ", TO InvariantRings, "."
+	    },
+	PARA {
+	    "It implements King's algorithm to compute a minimal
+	    set of generating invariants for the action of a
+	    finite group on a polynomial ring following Algorithm
+	    3.8.2 in:"
+	    },
+       	UL { 
+	    {"Derksen, H. & Kemper, G. (2015).",
+		EM "Computational Invariant Theory", 
+	   ". Heidelberg: Springer."}
+        },
+	PARA {
+	    "The following example computes the invariants of the
+	    alternating group on 4 elements."
+	    },
+    EXAMPLE {
+	"R = QQ[x_1..x_4]",
+	"L = apply({\"2314\",\"2143\"},permutationMatrix);",
+	"A4 = finiteAction(L,R)",
+	"netList invariants A4"
+	},
+    
+    	SeeAlso => {
+	    finiteAction,
+	    invariantRing, 
+	    isInvariant
+	    }	
+	}
+
+document {
+	Key => {
+	    [invariants, DegreeBound], DegreeBound
+	    },
+	Headline => "degree bound for invariants of finite groups",
+	Usage => "invariants G",
+	Inputs => {"G" => FiniteGroupAction},
+	Outputs => {
+		"L" => List => {"a minimal set of generating invariants for the group action"}
+		},
+	PARA {
+	    "This function is provided by the package ", TO InvariantRings, "."
+	    },
+	PARA {
+	    "This optional argument allows the user to provide
+	    an upper bound for the degree of the generating
+	    invariants of a finite group action.
+	    If no upper bound is provided, the order of the group
+	    is used as an upper bound. Providing a smaller
+	    upper bound may speedup the computation of invariants.
+	    However, if the value provided is too small the
+	    resulting list may not generate the ring of invariants."
+	    },
+	PARA {
+	    "The following example computes the invariants of the
+	    symmetric group on 4 elements."
+	    },
+    EXAMPLE {
+	"R = QQ[x_1..x_4]",
+	"L = apply({\"2134\",\"2341\"},permutationMatrix);",
+	"S4 = finiteAction(L,R)",
+	"elapsedTime invariants S4",
+	"elapsedTime invariants(S4,DegreeBound=>4)"
+	},
+    
+    	SeeAlso => {
+	    finiteAction,
+	    invariantRing, 
+	    isInvariant
+	    }	
+	}
+
+document {
+	Key => {
+	    [invariants, Reynolds], Reynolds
+	    },
+	Headline => "strategy for computing invariants of finite groups",
+	Usage => "invariants G",
+	Inputs => {"G" => FiniteGroupAction},
+	Outputs => {
+		"L" => List => {"a minimal set of generating invariants for the group action"}
+		},
+	PARA {
+	    "This function is provided by the package ", TO InvariantRings, "."
+	    },
+	PARA {
+	    "This optional argument determines the strategy used to
+	    compute generating invariants of a finite group action.
+	    The default strategy uses the Reynolds operator, however
+	    this may be slow for large groups. Setting this argument
+	    to ", TO false, " uses the linear algebra method for
+	    computing invariants of a given degree by calling ",
+	    TO (invariants, FiniteGroupAction, ZZ), ". This may
+	    provide a speedup at lower degrees, especially if the
+	    user-provided generating set for the group is small."
+	    },
+	PARA {
+	    "The following example computes the invariants of the
+	    symmetric group on 4 elements."
+	    },
+    EXAMPLE {
+	"R = QQ[x_1..x_4]",
+	"L = apply({\"2134\",\"2341\"},permutationMatrix);",
+	"S4 = finiteAction(L,R)",
+	"elapsedTime invariants S4",
+	"elapsedTime invariants(S4,Reynolds=>false)"
+	},
+    
+    	SeeAlso => {
+	    finiteAction,
+	    invariantRing, 
+	    isInvariant
+	    }	
+	}
+
+document {
+	Key => {
 	    (invariants, FiniteGroupAction, ZZ),
 	    (invariants, FiniteGroupAction, List),
 	    },
