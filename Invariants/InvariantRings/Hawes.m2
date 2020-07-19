@@ -44,8 +44,12 @@ o FUTURE TODO: extend to pos char in the non modular case
 
 *-
 
-molienSeries = method();
-molienSeries FiniteGroupAction:= G -> (
+molienSeries = method()
+
+molienSeries FiniteGroupAction := { } >> opts -> (cacheValue (symbol molienSeries)) (G -> runHooks(FiniteGroupAction, symbol molienSeries, G) )
+
+addHook(FiniteGroupAction, symbol molienSeries, G -> break (
+--molienSeries FiniteGroupAction:= G -> (
      K:=coefficientRing ring G;
      if(isField K == false or char K =!= 0) then(
 	  error "Action matrices must be defined over a field of characteristic zero"
@@ -93,8 +97,8 @@ molienSeries FiniteGroupAction:= G -> (
 	     );
 	 d = d-1;
 	 );
-     return new Divide from {h#0,new Product from factors};
-     );
+     new Divide from {h#0,new Product from factors}
+     ))
 
 ------------------------------------------------
 -- primaryInvariants
