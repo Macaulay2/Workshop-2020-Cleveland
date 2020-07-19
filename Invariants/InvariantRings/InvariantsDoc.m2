@@ -313,7 +313,7 @@ document {
 
 document {
 	Key => {
-	    [invariants, LinearAlgebraMethod], LinearAlgebraMethod
+	    [invariants, UseLinearAlgebra], UseLinearAlgebra
 	    },
 	Headline => "strategy for computing invariants of finite groups",
 	Usage => "invariants G",
@@ -346,7 +346,7 @@ document {
 	"L = apply({\"2134\",\"2341\"},permutationMatrix);",
 	"S4 = finiteAction(L,R)",
 	"elapsedTime invariants S4",
-	"elapsedTime invariants(S4,LinearAlgebraMethod=>true)"
+	"elapsedTime invariants(S4,UseLinearAlgebra=>true)"
 	},
     
     	SeeAlso => {
