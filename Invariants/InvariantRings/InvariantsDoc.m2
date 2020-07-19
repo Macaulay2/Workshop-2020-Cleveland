@@ -266,7 +266,7 @@ document {
 
 document {
 	Key => {
-	    [invariants, DegreeBound], DegreeBound
+	    [invariants, DegreeBound], [invariantRing, DegreeBound], DegreeBound
 	    },
 	Headline => "degree bound for invariants of finite groups",
 	Usage => "invariants G",
@@ -313,7 +313,7 @@ document {
 
 document {
 	Key => {
-	    [invariants, UseLinearAlgebra], UseLinearAlgebra
+	    [invariants, UseLinearAlgebra], [invariantRing, UseLinearAlgebra], UseLinearAlgebra
 	    },
 	Headline => "strategy for computing invariants of finite groups",
 	Usage => "invariants G",

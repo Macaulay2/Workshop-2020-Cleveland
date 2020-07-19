@@ -19,7 +19,11 @@
 
 RingOfInvariants = new Type of HashTable   
 
-invariantRing = method(Options => {Strategy => UseNormaliz})
+invariantRing = method(Options => {
+	Strategy => UseNormaliz,
+	UseLinearAlgebra => false,
+	DegreeBound => infinity
+	})
 
 invariantRing GroupAction := RingOfInvariants => o -> G -> (
     -- Generating invariants are stored in the cache in case we want to add Options later
