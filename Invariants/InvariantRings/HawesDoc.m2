@@ -18,6 +18,9 @@ document {
 	       }
           },
      PARA{
+	  "This function is provided by the package ", TO InvariantRings, "."
+	  },
+     PARA{
 	  TO hironakaDecomposition, "  makes use of the functions ",
      	  TO primaryInvariants, " and ", TO secondaryInvariants,
      	  " in order to compute a Hironaka decomposition of
@@ -62,10 +65,7 @@ document {
 	  "Currently hironakaDecomposition can only calculate with polynomial rings and 
 	  matrices over fields of characteristic 0."
 	  },
-     SeeAlso=>{"hsop algorithms"},
-     PARA{
-	  "This function is provided by the package ", TO InvariantRings, "."
-	  }  
+     SeeAlso=>{"hsop algorithms"}
      }
 
 ------------------------------------------------
