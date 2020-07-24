@@ -70,7 +70,7 @@ export {
     "cyclicFactors",
     -- degreesRings    	       	  -- overloaded
     "DiagonalAction",	     	  -- exported type name, documented
-    "diagonalAction",	     	  -- documentation needs some work to explain different usages
+    "diagonalAction",	     	  -- documentation
     "equivariantHilbert",    	  -- cache table key
     -- equivariantHilbertPartial  -- unexported
     -- equivariantHilbertRational -- unexported
@@ -94,7 +94,7 @@ export {
     "DegreeBound",    	      	  -- option for invariants
     -- generators    	     	  -- overloaded, documented
     -- hilbertSeries	    	  -- overloaded
-    "invariants",    	     	  -- documented only for TorusAction, FiniteAbelianAction, LinearlyReductiveAction
+    "invariants",    	     	  -- documented
     "invariantRing",	    	  -- documented
     "isInvariant",    	      	  -- documented
     -- manualTrim    	     	  -- unexported (why is this a method if it's not exported?)
