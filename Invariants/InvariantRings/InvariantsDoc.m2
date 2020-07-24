@@ -122,7 +122,7 @@ document {
 	
 	Inputs => {  
 	    	"D" => DiagonalAction => {"a diagonal action on a polynomial ring"},
-		Strategy => {"the strategy used to compute the ring of invariants, options are UsePolyhedra or UseNormalize."}
+		Strategy => {"the strategy used to compute the ring of invariants, options are UsePolyhedra or UseNormaliz."}
 		},
 	Outputs => {
 		"L" => List => {"a minimal set of generating invariants for the group action"}
