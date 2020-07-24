@@ -122,7 +122,7 @@ document {
 	
 	Inputs => {  
 	    	"D" => DiagonalAction => {"a diagonal action on a polynomial ring"},
-		Strategy => {"the strategy used to compute the ring of invariants"}
+		Strategy => {"the strategy used to compute the ring of invariants, options are UsePolyhedra or UseNormalize."}
 		},
 	Outputs => {
 		"L" => List => {"a minimal set of generating invariants for the group action"}
@@ -493,7 +493,7 @@ document {
 	
 	Inputs => {  
 	    	"V" => LinearlyReductiveAction,
-		Strategy => {"the strategy used to compute the ring of invariants"}
+		Strategy => {"the strategy used to compute the ring of invariants."}
 		},
 	Outputs => {
 		"L" => List => {"of invariants generating the Hilbert ideal"}
@@ -754,6 +754,36 @@ document {
 		"T = diagonalAction(matrix {{0,1,-1,1},{1,0,-1,-1}}, R)",
 		"S = R^T",
 		"ambient S"
+		},
+	    }
+	
+document {
+	Key => {(hilbertSeries, RingOfInvariants)},
+	
+	Headline => "hilbert series of the invariant ring",
+	
+	Usage => "hilbertSeries S",
+	
+	Inputs => {
+	    	"S" => RingOfInvariants,
+		},
+	    
+	Outputs => {
+		Divide => {"the hilbert series of the invariant ring as a module over the ambient polynomial ring."}
+		},
+	    
+	"This function is provided by the package ", TO InvariantRings,". ",
+	
+	PARA {
+	    "This method computes the hilbert series of the ring of invariant."
+	    },
+    	
+	EXAMPLE {
+		"R = QQ[x_1..x_4]",
+		"W = matrix{{0,1,-1,1},{1,0,-1,-1}}",
+		"T = diagonalAction(W, R)",
+		"S = R^T",
+		"hilbertSeries S",
 		},
 	    }
 
