@@ -126,7 +126,7 @@ document {
 	    yields other useful information about the group besides just its elements."
 	    },
 	
-	SeeAlso => {schreierGraph, relations, words}
+	SeeAlso => {schreierGraph, words}
 	    }
 
 document {
@@ -283,7 +283,7 @@ document {
 	    the Schreier graph of the group yields other useful information about the group."
 	    },
 	
-	SeeAlso => {group, schreierGraph, relations}
+	SeeAlso => {group, schreierGraph}
 	    }
 	
 	
@@ -333,4 +333,35 @@ document {
 	    	"M = permutationMatrix(4,{[1,2],[3,4]})",
 		"M = permutationMatrix {[1,2],[3,4]}",
 	    },
+	    }
+document {
+	Key => {(relations, FiniteGroupAction)},
+	Headline => "relations of a finite group",
+	Usage => "relations G",
+	Inputs => {
+	    	"G" => FiniteGroupAction =>
+		{"the action of a finite group"},
+		},
+	Outputs => {
+		List => {"a list of relations of the group"}
+		},
+	"This function is provided by the package ", TO InvariantRings,". ",
+
+    	PARA {
+	    "Use this function to get the relations among elements of a group. Each element is represented by a word of minimal length in the Coxter generators. And each relation is represented by a list of two words that equates the group element represented by those two words."
+	},
+    
+    	PARA { "The following example defines the permutation action
+	    of a symmetric group on three elements using three
+	    transpositions."  },
+	
+	EXAMPLE {
+	    "R = QQ[x_1..x_3]",
+	    "L = {matrix {{0,1,0},{1,0,0},{0,0,1}}, matrix {{0,0,1},{0,1,0},{1,0,0}}, matrix {{1,0,0},{0,0,1},{0,1,0}} }",
+	    "G = finiteAction(L, R)",
+	    "relations G"
+	    },
+	
+	SeeAlso => {group, schreierGraph, words}
+	    
 	    }

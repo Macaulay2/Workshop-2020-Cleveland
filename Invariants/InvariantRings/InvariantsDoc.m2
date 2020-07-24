@@ -72,6 +72,7 @@ document {
 	Inputs => {
 	    	"G" => GroupAction,
 	    	"R" => PolynomialRing => {"on which the group acts"},
+		Strategy => {"the strategy used to compute the invariant ring"}
 		},
 	Outputs => {
 		RingOfInvariants => {"the ring of invariants of the given group action"}
@@ -120,7 +121,8 @@ document {
 	Usage => "invariants D",
 	
 	Inputs => {  
-	    	"D" => DiagonalAction => {"a diagonal action on a polynomial ring"}
+	    	"D" => DiagonalAction => {"a diagonal action on a polynomial ring"},
+		Strategy => {"the strategy used to compute the ring of invariants"}
 		},
 	Outputs => {
 		"L" => List => {"a minimal set of generating invariants for the group action"}
@@ -228,7 +230,10 @@ document {
 	    },
 	Headline => "compute the generating invariants of a group action",
 	Usage => "invariants G",
-	Inputs => {"G" => FiniteGroupAction},
+	Inputs => {
+	    "G" => FiniteGroupAction,
+	    Strategy => {"the strategy used to compute the ring of invariants"}
+	    },
 	Outputs => {
 		"L" => List => {"a minimal set of generating invariants for the group action"}
 		},
@@ -369,6 +374,7 @@ document {
 	Inputs => {  
 	    	"G" => FiniteGroupAction,
 		"d" => ZZ => {"a degree or multidegree"},
+		Strategy => {"the strategy used to compute the ring of invariants"}
 		},
 	Outputs => {
 		"L" => List => {"an additive basis for a graded component of the ring of invariants"}
@@ -430,6 +436,7 @@ document {
 	Inputs => {  
 	    	"V" => LinearlyReductiveAction,
 		"d" => ZZ => {"a degree or multidegree"},
+		Strategy => {"the strategy used to compute the ring of invariants"}
 		},
 	Outputs => {
 		"L" => List => {"an additive basis for a graded component of the ring of invariants"}
@@ -486,6 +493,7 @@ document {
 	
 	Inputs => {  
 	    	"V" => LinearlyReductiveAction,
+		Strategy => {"the strategy used to compute the ring of invariants"}
 		},
 	Outputs => {
 		"L" => List => {"of invariants generating the Hilbert ideal"}
@@ -630,20 +638,21 @@ document {
 	    }	
 
 document {
-	Key => {reynoldsOperator, (reynoldsOperator, RingElement, FiniteGroupAction)},
+	Key => {reynoldsOperator, (reynoldsOperator, RingElement, FiniteGroupAction),(reynoldsOperator, RingElement, DiagonalAction)},
 	
 	Headline => "the image of a polynomial under the Reynolds operator",
 	
-	Usage => "reynoldsOperator(f, G)",
+	Usage => "reynoldsOperator(f, G), reynoldsOperator(f, D)",
 	
 	Inputs => {
 	    	"f" => RingElement => {"a polynomial in the polynomial ring of the given group action"},
-	    	"G" => FiniteGroupAction
+	    	"G" => FiniteGroupAction,
+		"D" => DiagonalAction
 		},
 	    
 	Outputs => {
 		RingElement => {"the invariant polynomial which is the image of the given 
-		    polynomial under the Reynolds operator of the given finite group action"}
+		    polynomial under the Reynolds operator of the given finite group action or the given torus action"}
 		},
 	    
 	"This function is provided by the package ", TO InvariantRings,". ",
@@ -659,6 +668,19 @@ document {
 	    "C7 = finiteAction(P, R)",
 	    "reynoldsOperator(x_0*x_1*x_2^2, C7)",
 		},
+       PARA {
+	    "Here is an example computing the image of a polynomial under the Reynolds operator for a two-dimensional torus
+	    acting on polynomial ring in four variables:"
+	    },
+	
+	EXAMPLE {
+	    "R = QQ[x_1..x_4]",
+	    "W = matrix{{0,1,-1,1}, {1,0,-1,-1}}",
+	    "T = diagonalAction(W, R)",
+	    "reynoldsOperator(x_1*x_2*x_3 + x_1*x_2*x_4, T)",
+		},
+	        
+	
 	    }
 
 document {
@@ -690,6 +712,48 @@ document {
 		"T = diagonalAction(W, R)",
 		"S = R^T",
 		"definingIdeal S",
+		},
+	    }
+	
+	
+document {
+	Key => {RingOfInvariants},
+	
+	Headline => "the class of the ring of invariants under the action of a finite group, Abelian group or a linearly reductive group",
+	
+	"This class is provided by the package ", TO InvariantRings,".",
+	
+	PARA {
+	    	TT "RingOfInvariants", " is the class of ring of invariants when a finite group, Abelian group or a linearly reductive group acting on a polynomial ring."
+	    },
+	}
+    
+    
+document {
+	Key => {(ambient, RingOfInvariants)},
+	
+	Headline => "the ambient polynomial ring where the group acted upon",
+	
+	Usage => "ambient S",
+	
+	Inputs => {
+	    	"S" => RingOfInvariants => {"of the group action being returned"},
+		},
+	
+	Outputs => {
+		PolynomialRing => {"where the group acted upon"}
+		},
+	"This function is provided by the package ", TO InvariantRings,".",
+	
+	PARA {
+	    "This example shows how to recover the polynomial ring when a torus acted upon."
+	    },
+    	
+	EXAMPLE {
+		"R = QQ[x_1..x_4]",
+		"T = diagonalAction(matrix {{0,1,-1,1},{1,0,-1,-1}}, R)",
+		"S = R^T",
+		"ambient S"
 		},
 	    }
 

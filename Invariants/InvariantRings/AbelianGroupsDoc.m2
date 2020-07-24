@@ -98,6 +98,7 @@ document {
 	Usage => "equivariantHilbertSeries D",
 	Inputs => {
 	    	"D" => DiagonalAction,
+		Order => ZZ => {"stopping degree of the equivariant Hilbert series"}
 		},
 	Outputs => {
 		Divide => {"the equivariant Hilbert series"}
@@ -132,7 +133,7 @@ document {
 	    "."
 	},
 	
-	-*
+	
 	EXAMPLE {
 	    "R = QQ[x_1..x_3]",
 	    "W = matrix{{-1,0,1},{0,-1,1}}",
@@ -141,7 +142,7 @@ document {
 	    "S = equivariantHilbertSeries(T, Order => 7)",
 	    "sub(S, {z_0 => 0, z_1 => 0})"
 		},
-	 *-
+	 
 	    }
 
 document {
@@ -228,6 +229,117 @@ document {
 	    "A = diagonalAction(W, d, R)",
 	    "weights A"
 	    },    
+	    
+	SeeAlso => {
+	    DiagonalAction,
+	    diagonalAction
+	    }      
+	}
+    
+document {
+	Key => { cyclicFactors,
+	    (cyclicFactors, DiagonalAction)
+	    },
+	Headline => "of a diagonal action",
+	Usage => "cyclicFactors D",
+	Inputs => {
+	    	"D" => DiagonalAction
+		},
+	Outputs => {
+		List => {"of orders of cyclic abelian factors in the decomposition of the diagonal group"}
+		},
+	"This function is provided by the package ", TO InvariantRings,". ",
+	    
+	PARA {
+	    "Use this function to recover the cyclic abelian factors of a
+	    diagonal action on a polynomial ring."
+	    },
+	
+    	PARA {
+	    "The following example defines an action of a product of two cyclic groups of order 3 acting on a three-dimensional vector space."
+	    },
+        	
+	EXAMPLE {
+	    "R = QQ[x_1..x_3]",
+	    "d = {3,3}",
+	    "W = matrix{{1,0,1},{0,1,1}}",
+	    "A = diagonalAction(W, d, R)",
+	    "cyclicFactors A"
+	    },  
+
+	SeeAlso => {
+	    DiagonalAction,
+	    diagonalAction
+	    }      
+	}
+    
+    
+document {
+	Key => { (rank, DiagonalAction)
+	    },
+	Headline => "of a diagonal action",
+	Usage => "rank D",
+	Inputs => {
+	    	"D" => DiagonalAction
+		},
+	Outputs => {
+		ZZ => {"the rank of the torus factor of a diagonal action "}
+		},
+	"This function is provided by the package ", TO InvariantRings,". ",
+	    
+	PARA {
+	    "Use this function to recover the rank of the torus factor of a diagonal action."
+	    },
+	
+    	PARA {
+	    "The following example defines an action of a 
+	    two-dimensional torus on a polynomial ring in four
+	    variables."
+	    },
+        	
+	EXAMPLE {
+	    "R = QQ[x_1..x_4]",
+	    "W = matrix{{0,1,-1,1},{1,0,-1,-1}}",
+	    "T = diagonalAction(W, R)",
+	    "rank T"
+	    },      
+	    
+	SeeAlso => {
+	    DiagonalAction,
+	    diagonalAction
+	    }      
+	}
+    
+ document {
+	Key => { (degreesRing, DiagonalAction)
+	    },
+	Headline => "of a diagonal action",
+	Usage => "degreesRing D",
+	Inputs => {
+	    	"D" => DiagonalAction
+		},
+	Outputs => {
+		Ring => {"where the equivariant Hilbert series of the diagonal group action lives in"}
+		},
+	"This function is provided by the package ", TO InvariantRings,". ",
+	    
+	PARA {
+	    "Use this function to get the ring where the equivariant Hilbert series of the diagonal group action lives in."
+	    },
+	
+    	PARA {
+	    "The following example defines an action of the product of a 
+	    two-dimensional torus and two cyclic group of order 3 on a polynomial ring in four
+	    variables."
+	    },
+        	
+	EXAMPLE {
+	    "R = QQ[x_1..x_4]",
+	    "W = matrix{{0,1,-1,1},{1,0,-1,-1}}",
+	    "W1 = matrix{{1,0,1,0},{0,1,1,0}}",
+	    "T = diagonalAction(W,W1,{3,3},R)",
+	    "degreesRing T"
+	    },      
 	    
 	SeeAlso => {
 	    DiagonalAction,
