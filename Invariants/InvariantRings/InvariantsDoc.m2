@@ -130,7 +130,19 @@ document {
 
 	PARA {
 	    "This function is provided by the package ", TO InvariantRings, 
-	    ". It implements an algorithm to computes a minimal set of generating 
+	    ". This function could be used to compute the generating invariants of a diagonal group action, finite group action or linearly reductive group action.
+	    It could also be used to compute a basis of a graded component of the invariant ring. 
+	    There are several ways to use this function. This page illustrates one of the way to 
+	    use it. For other ways to use this function, see:"
+	    },
+	UL{
+	    {TO (invariants, FiniteGroupAction), ": compute the generating invariants of a group action"},
+	    {TO (invariants, LinearlyReductiveAction), ": compute the generating invariants of a linearly reductive action"},
+	    {TO (invariants, FiniteGroupAction, ZZ)," or ", TO (invariants, FiniteGroupAction, List), ": compute a basis for graded component of the invariant ring of a finite group action"},
+	    {TO (invariants, LinearlyReductiveAction, ZZ)," or ", TO (invariants, LinearlyReductiveAction, List), ": compute a basis for graded component of the invariant ring of a linearly reductive group action"},
+	    },
+	PARA{    
+	    "It implements an algorithm to computes a minimal set of generating 
 	    monomial invariants for a diagonal action of an abelian group",
 	    TEX /// $(k^*)^r \times \times \mathbb{Z}/d_1 \times \cdots \times \mathbb{Z}/d_g$ ///,
 	    " on a polynomial ring ",
