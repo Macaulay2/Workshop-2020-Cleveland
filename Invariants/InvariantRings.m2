@@ -67,7 +67,7 @@ export {
     "words",    	       	  -- documented
 
 --AbelianGroups.m2
-    "cyclicFactors",
+    "cyclicFactors",	    	  -- ??
     -- degreesRings    	       	  -- overloaded
     "DiagonalAction",	     	  -- exported type name, documented
     "diagonalAction",	     	  -- documentation
@@ -101,8 +101,9 @@ export {
     "Nonabelian",     	          -- Default strategy option for isInvariant
     -- presentation    	       	  -- overloaded
     "reynoldsOperator",	       	  -- documented   
-    "UseLinearAlgebra",     	  -- Option for invariants
+    "UseLinearAlgebra",     	  -- Option for invariants/invariantRing, documented
     "RingOfInvariants",	       	  -- exported type name
+    "UseCoefficientRing",    	  -- Option for invariants/invariantRing, documented
     "UseNormaliz",    	      	  -- Strategy option for invariants 
     "UsePolyhedra",    	      	  -- Strategy option for invariants    	
 

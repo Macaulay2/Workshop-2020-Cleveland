@@ -29,7 +29,11 @@ diagonalAction (Matrix, Matrix, List, PolynomialRing) := DiagonalAction => (W1, 
 	);
     if any(d, j -> not instance(j, ZZ) or j <= 0) then (
 	error "diagonalAction: Expected the second argument to be a list of positive integers."
-	);     
+	);
+    p := char R;
+    if p > 0 and any(d, j -> j%p == 0) then (
+	error "diagonalAction: Diagonal action is not defined when the characteristic divides the order of one of the cyclic factors."
+	);    
     -- coefficient ring for group characters
     r := numRows W1;
     g := numRows W2;

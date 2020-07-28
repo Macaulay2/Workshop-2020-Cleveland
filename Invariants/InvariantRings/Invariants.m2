@@ -22,6 +22,7 @@ RingOfInvariants = new Type of HashTable
 invariantRing = method(Options => {
 	Strategy => UseNormaliz,
 	UseLinearAlgebra => false,
+	UseCoefficientRing => false,
 	DegreeBound => infinity
 	})
 
@@ -146,15 +147,28 @@ reynoldsOperator (RingElement, DiagonalAction) := RingElement => (f, D) -> sum s
 invariants = method(Options => {
 	Strategy => UseNormaliz,
 	UseLinearAlgebra => false,
+	UseCoefficientRing => false,
 	DegreeBound => infinity
 	})
 
 invariants DiagonalAction := List => o -> D -> (
     (W1, W2) := weights D;
     R := ring D;
-    R = (coefficientRing R)[R_*, MonomialOrder => GLex];
+    kk := coefficientRing R;
+    p := char kk;
     d := cyclicFactors D;
     r := rank D;
+    if p > 0 and o.UseCoefficientRing then (
+	q := kk#order;
+	if any(d, j -> q%j =!= 1) then (
+	    print "-- Diagonal action is not defined over the given coefficient ring. \n-- Returning invariants over an infinite extension field over which the action is defined."
+	    )
+	else (
+	    D' := diagonalAction(W1||W2, apply(r, i -> q - 1)|d, R);
+	    return invariants D'
+	    )
+    	);
+    R = kk[R_*, MonomialOrder => GLex];
     g := numgens D;
     n := dim D;
     mons := R_*;
@@ -264,117 +278,6 @@ invariants DiagonalAction := List => o -> D -> (
     if S#?(0_(ZZ^r)) then mons = S#(0_(ZZ^r)) else mons = {};
     return apply(mons, m -> sub(m, ring D) )
     )
-
--*
-invariants TorusAction := List => T -> (
-    R := ring T;
-    r := rank T;
-    n := dim R;
-    W := weights T;
-    local C;
-    if r == 1 then C = convexHull W else C = convexHull( 2*r*W|(-2*r*W) );
-    C = (latticePoints C)/vector;
-    
-    -- Creates a hashtable of lists indexed by the lattice points of the convex hull
-    -- of the (scaled) weight vectors, initialized with the list of each weight vector
-    -- being the corresponding variable in the ring.
-    S := new MutableHashTable from apply(C, w -> w => {});
-    scan(n, i -> S#(W_i) = S#(W_i)|{R_i});
-    U := new MutableHashTable from S;
-    
-    local v, local m, local v', local u;
-    nonemptyU := select(keys U, w -> #(U#w) > 0);
-    --iteration := 0; --step by step printing
-    
-    -- While some list of monomials in U is nonempty, picks a monomial in U, multiplies
-    -- it by every variable, and updates the lists of monomials in S and U if the product
-    -- is minimal with respect to divisibility in the list of monomials in S with the same weight.
-    while  #nonemptyU > 0 do(
-	v = first nonemptyU;
-	m = first (U#v);
-	
-	-- Uncomment lines in step by step printing to see steps
-	-- Note: there is one such line before the while loop
-	--print("\n"|"Iteration "|toString(iteration)|".\n"); --step by step printing
-    	--print(net("    Weights: ")|net(W)); --step by step printing
-	--print("\n"|"    Set U of weights/monomials:\n"); --step by step printing
-	--print(net("    ")|net(pairs select(hashTable pairs U,l->l!= {}))); --step by step printing
-	--print("\n"|"    Set S of weights/monomials:\n"); --step by step printing
-	--print(net("    ")|net(pairs select(hashTable pairs S,l->l!= {}))); --step by step printing
-	--iteration = iteration + 1; --step by step printing
-	
-	scan(n, i -> (
-        u := m*R_i;
-        v' := v + W_i;
-        if ((U#?v') and all(S#v', m' -> u%m' =!= 0_R)) then( 
-                S#v' = S#v'|{u};
-                U#v' = U#v'|{u};
-		)
-	    )
-	);
-	U#v = delete(m, U#v);
-	nonemptyU = select(keys U, w -> #(U#w) > 0)
-	);
-    
-    -- The generating invariant monomials are the monomials in S of weight 0.
-    -- if there are no invariants return an empty list
-    if S#?(0_(ZZ^r)) then return S#(0_(ZZ^r)) else return {}
-    )
-*-
-
--*
-invariants FiniteAbelianAction := List => G -> (
-    W := weights G;
-    R := ring G;
-    L := size G;
-    r := numRows W;
-    n := numColumns W;
-    temp1 := matrix{apply(flatten entries W^{0},i->i%L#0)};
-    scan(r-1,i->temp1 = temp1 || matrix{apply(flatten entries W^{i+1},j->j%L#(i+1))});
-    W = temp1;
-    t := 1; -- t is the size of abelian group
-    --sanity check 
-    if #L =!= r then error "abelianInvariants: Expected size of the group to match the weight matrix.";
-    scan(L,i->t = t*i);
-    local C; -- C is a list of all possible weights
-    for i from 0 to #L-1 do(
-	if i == 0 then(
-	    C = apply(L_i,j-> matrix {{j}});
-	) else (
-	temp := flatten apply(L_i,j->apply(C,M->M || matrix {{j}}));
-	C = temp;
-        );
-    );
-    S := new MutableHashTable from apply(C, w -> w => {});
-    scan(n, i -> S#(W_i) = S#(W_i)|{R_i});
-    U := flatten entries vars R;
-    local v, local m, local u, local v';
-    while  #U > 0 do(
-    m = min U; 
-    v = vector(apply(n,i->degree(R_i,m))); --degree vector of m
-    v = W*v; --weight vector of m
-    j := 0;
-    scan(n,i->if m % R_i == 0 then (j = i+1;break));
-    k := j;
-    while k > 0 do(
-        u = m*R_(k-1);
-        temp := flatten entries (v + W_(k-1));
-	temp = apply(#temp,i -> temp_i % L_i);
-	v' = matrix(vector temp);
-        if all(S#v', m' -> u%m' =!= 0_R) then (
-	    S#v' = S#v'|{u};
-            if first degree u < t then(
-		U = U | {u}; ---only testing monomials of degree < #G
-            );
-        );
-        k = k - 1;
-    );
-    U = delete(m, U);
-    );
-    return S#(matrix(0_(ZZ^r)))
-    )
-
-*-
 
 
 -------------------------------------------

@@ -76,7 +76,14 @@ document {
 		},
 	Outputs => {
 		RingOfInvariants => {"the ring of invariants of the given group action"}
-		},
+		},    
+	Caveat => {
+	    "By default, the invariants of a diagonal group action are computed over an infinite 
+	    extension of the ground field specified by the user over which the action is defined.  
+	    Provided the action is defined, it is possible to compute invariants literally over 
+	    the specified ground field in prime characteristic using the option ", 
+	    TO UseCoefficientRing, "."
+	    },  
 	    
 	"This function is provided by the package ", TO InvariantRings,". ",
 	
@@ -112,8 +119,43 @@ document {
 
 document {
 	Key => {
-	    invariants, 
-	    (invariants, DiagonalAction),
+	    invariants
+	    },
+	
+	Headline => "compute the generating invariants of a group action",
+	
+	Usage => "invariants G",
+	
+	Inputs => {  
+	    	"G" => GroupAction => {"a specific type of group action on a polynomial ring"}
+		},
+	Outputs => {
+		"L" => List => {"a minimal set of generating invariants for the group action"}
+		},
+
+	PARA {
+	    "This function is provided by the package ", TO InvariantRings, 
+	    ". This function can be used to compute the generating invariants of a diagonal group action, finite group action or linearly reductive group action.
+	    It can also be used to compute a basis of a graded component of the invariant ring. 
+	    Below is a list of the many ways to use this function:"
+	    },
+	UL{
+	    {TO (invariants, FiniteGroupAction), ": compute the generating invariants of a finite group action"},
+	    {TO (invariants, DiagonalAction), ": compute the generating invariants of a diagonal group action"},
+	    {TO (invariants, LinearlyReductiveAction), ": compute the generating invariants of a linearly reductive action"},
+	    {TO (invariants, FiniteGroupAction, ZZ)," or ", TO (invariants, FiniteGroupAction, List), ": compute a basis for graded component of the invariant ring of a finite group action"},
+	    {TO (invariants, LinearlyReductiveAction, ZZ)," or ", TO (invariants, LinearlyReductiveAction, List), ": compute a basis for graded component of the invariant ring of a linearly reductive group action"},
+	    },
+    
+    	SeeAlso => {
+	    invariantRing, 
+	    isInvariant
+	    }	
+	}
+
+document {
+	Key => { 
+	    (invariants, DiagonalAction)
 	    },
 	
 	Headline => "compute the generating invariants of a group action",
@@ -127,22 +169,16 @@ document {
 	Outputs => {
 		"L" => List => {"a minimal set of generating invariants for the group action"}
 		},
+	Caveat => {
+	    "By default, the invariants are computed over an infinite extension of the ground field
+	    specified by the user over which the action is defined.  Provided the action is defined,
+	    it is possible to compute invariants literally over the specified ground field in prime
+	    characteristic using the option ", TO UseCoefficientRing, "."
+	    }, 
 
 	PARA {
 	    "This function is provided by the package ", TO InvariantRings, 
-	    ". This function could be used to compute the generating invariants of a diagonal group action, finite group action or linearly reductive group action.
-	    It could also be used to compute a basis of a graded component of the invariant ring. 
-	    There are several ways to use this function. This page illustrates one of the way to 
-	    use it. For other ways to use this function, see:"
-	    },
-	UL{
-	    {TO (invariants, FiniteGroupAction), ": compute the generating invariants of a group action"},
-	    {TO (invariants, LinearlyReductiveAction), ": compute the generating invariants of a linearly reductive action"},
-	    {TO (invariants, FiniteGroupAction, ZZ)," or ", TO (invariants, FiniteGroupAction, List), ": compute a basis for graded component of the invariant ring of a finite group action"},
-	    {TO (invariants, LinearlyReductiveAction, ZZ)," or ", TO (invariants, LinearlyReductiveAction, List), ": compute a basis for graded component of the invariant ring of a linearly reductive group action"},
-	    },
-	PARA{    
-	    "It implements an algorithm to computes a minimal set of generating 
+	    ". It implements an algorithm to computes a minimal set of generating 
 	    monomial invariants for a diagonal action of an abelian group",
 	    TEX /// $(k^*)^r \times \times \mathbb{Z}/d_1 \times \cdots \times \mathbb{Z}/d_g$ ///,
 	    " on a polynomial ring ",
@@ -187,7 +223,7 @@ document {
         UL { 
 	    {"Gandini, F. ", EM "Ideals of Subspace Arrangements", 
 	   ". Thesis (Ph.D.)-University of Michigan. 2019. ISBN: 978-1392-76291-2. pp 29-34."}
-        },    
+        },   
     
     	PARA {
 	    "Here is an example of a one-dimensional torus acting on a 
@@ -330,6 +366,60 @@ document {
 
 document {
 	Key => {
+	    [invariants, UseCoefficientRing], [invariantRing, UseCoefficientRing], UseCoefficientRing
+	    },
+	Headline => "option to compute invariants over the given coefficient ring",
+	Usage => "invariants G",
+	Inputs => {"D" => DiagonalAction},
+	Outputs => {
+		"L" => List => {"a minimal set of generating invariants for the group action"}
+		},
+	
+	PARA {
+	    "This function is provided by the package ", TO InvariantRings, "."
+	    },
+	
+	PARA {
+	    "By default, the invariants of a diagonal action are
+	    computed over an infinite extension of the coefficient
+	    field specified by the user over which the action is defined.
+	    Setting this optional argument to ", TO true, " will compute
+	    the invariants of the action literally over the finite field
+	    specified by the user in prime characteristic, provided the 
+	    action is defined."
+	    },
+	
+	PARA {
+	    "The following example computes the invariants of a
+	    1-dimensional torus action literally over the specified finite 
+	    field."
+	    },
+	
+	EXAMPLE {
+	    "R = (GF 9)[x, y]",
+	    "W = matrix {{7, -5}}",
+	    "T = diagonalAction(W, R)",
+	    "invariantRing(T,UseCoefficientRing => true)"
+	    },
+	
+	PARA {
+	    "Over an infinite extension of the given ground field, there
+	    are fewer invariants."
+	    },
+	
+	EXAMPLE {
+	    "invariantRing T"
+	    },
+    
+    	SeeAlso => {
+	    diagonalAction,
+	    invariants,
+	    invariantRing
+	    }	
+	}
+
+document {
+	Key => {
 	    [invariants, UseLinearAlgebra], [invariantRing, UseLinearAlgebra], UseLinearAlgebra
 	    },
 	Headline => "strategy for computing invariants of finite groups",
@@ -338,9 +428,11 @@ document {
 	Outputs => {
 		"L" => List => {"a minimal set of generating invariants for the group action"}
 		},
+	
 	PARA {
 	    "This function is provided by the package ", TO InvariantRings, "."
 	    },
+	
 	PARA {
 	    "This optional argument determines the strategy used to
 	    compute generating invariants of a finite group action.
@@ -352,18 +444,20 @@ document {
 	    provide a speedup at lower degrees, especially if the
 	    user-provided generating set for the group is small."
 	    },
+	
 	PARA {
 	    "The following example computes the invariants of the
 	    symmetric group on 4 elements. Note that using
 	    different strategies may lead to a different set of 
 	    generating invariants."
 	    },
-    EXAMPLE {
-	"R = QQ[x_1..x_4]",
-	"L = apply({\"2134\",\"2341\"},permutationMatrix);",
-	"S4 = finiteAction(L,R)",
-	"elapsedTime invariants S4",
-	"elapsedTime invariants(S4,UseLinearAlgebra=>true)"
+	
+	EXAMPLE {
+	    "R = QQ[x_1..x_4]",
+	    "L = apply({\"2134\",\"2341\"},permutationMatrix);",
+	    "S4 = finiteAction(L,R)",
+	    "elapsedTime invariants S4",
+	    "elapsedTime invariants(S4,UseLinearAlgebra=>true)"
 	},
     
     	SeeAlso => {
