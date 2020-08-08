@@ -1,8 +1,8 @@
 
 newPackage(
         "RandomRationalPoints",
-    	Version => "1.2",
-    	Date => "June 6th, 2020",
+    	Version => "1.3",
+    	Date => "August 8th, 2020",
     	Authors => {
 	     {Name => "Sankhaneel Bisui", Email => "sbisu@tulane.edu", HomePage=>"https://sites.google.com/view/sankhaneelbisui/home"},
 	     {Name=> "Thai Nguyen", Email =>"tnguyen11@tulane.edu", HomePage=>"https://sites.google.com/view/thainguyenmath "},
@@ -21,15 +21,14 @@ newPackage(
 export {
 	"genericProjection", --documented, tested
 	"projectionToHypersurface", --documented, tested
-    "projectionToHypersurfaceV2", --documented, tested
+    --"projectionToHypersurfaceV2", --documented, tested
 	"randomCoordinateChange", --documented, tested
 	"randomPoints", 
-	"extendingIdealByNonVanishingMinor",
+	"extendIdealByNonZeroMinor",
 	"findANonZeroMinor",
-    "randomPointViaLinearIntersection", --these are here for debugging purposes
-    "randomPointViaLinearIntersectionOld", --these are here for debugging purposes
+    --"randomPointViaLinearIntersection", --these are here for debugging purposes
+    --"randomPointViaLinearIntersectionOld", --these are here for debugging purposes
     "getRandomForms", --here for debugging purposes
-	"MyOption",
 	"NumPointsToCheck", 
 	"Codimension",
 	"MaxCoordinatesToReplace",
@@ -924,8 +923,8 @@ findANonZeroMinor(ZZ, Matrix, Ideal) := opts -> (n,M,I)->(
     return (P, N1, N2, Mspecificrowextract);	
 );
 
-extendingIdealByNonVanishingMinor = method(Options=>optRandomPoints);
-extendingIdealByNonVanishingMinor(ZZ,Matrix,Ideal):= opts -> (n, M, I) -> (
+extendIdealByNonZeroMinor = method(Options=>optRandomPoints);
+extendIdealByNonZeroMinor(ZZ,Matrix,Ideal):= opts -> (n, M, I) -> (
     local O;  local Ifin;
     O = findANonZeroMinor(n,M,I,opts); 
     L1 := ideal (det(O#3));
@@ -948,6 +947,70 @@ document {
         Headline => "Give a random point in a variety",
         EM "RandomRationalPoints", "Give a random point inside a affine space that lies inside a variety ."
 }
+
+doc ///
+    Key
+        getRandomForms
+        (getRandomForms, Ring, List)
+        [getRandomForms, Verify]
+        [getRandomForms, Homogeneous]
+        [getRandomForms, Verbose]
+    Headline
+        retrieve a set of random forms of specified types
+    Usage
+        getRandomForms(R, L)
+    Inputs
+        R:Ring
+            the ring where the forms should live
+        L:List
+            a list with 5 entries, each a number of types of forms.  Constant forms, monomial forms (plus a constant term if {\tt Homogeneous => false}), monomial forms, binomial forms, and random forms.
+    Outputs
+        :List
+            a list of random forms of the specified types
+    Description
+        Text
+            This will give you a list of random forms (ring elements) of the specified types.  
+///
+
+doc ///
+    Key
+        Codimension
+        [extendIdealByNonZeroMinor, Codimension]
+        [findANonZeroMinor, Codimension]
+        [randomPointViaLinearIntersection, Codimension]        
+    Headline
+        an option to specify the codimension so as not to compute it
+    Usage
+        Codimension => n
+    Inputs
+        n:ZZ
+            an integer, or null
+    Description
+        Text
+            Various functions need to know the codimension/height of the scheme/ideal it is working with.  Setting this to be an integer will tell the function not to compute the codimension and to use this value instead.  The default value is {\tt null}, in which case the function will compute the codimension.
+///
+
+doc ///
+    Key
+        ExtendField
+        [randomPoints, ExtendField]
+        [findANonZeroMinor, ExtendField]      
+        [extendIdealByNonZeroMinor, ExtendField]  
+    Headline
+        an option used to specify if extending the finite field is permissable here
+    Usage
+        ExtendField => b
+    Inputs
+        b:Boolean
+            whether or not the base field is allowed to be extended
+    Description
+        Text
+            Various functions which produce points, or call functions which produce points, may naturally find scheme theoretic points that are not rational over the base field (for example, by intersecting with a random linear space).  Setting {\tt ExtendField => true} will tell the function that such points are valid.  Setting {\tt ExtendField => false} will tell the function ignore such points.  This sometimes can slow computation, and other times can speed it up.  In some cases, points over extended fields may also have better randomness properties for applications.
+    SeeAlso
+        randomPoints
+        findANonZeroMinor
+        extendIdealByNonZeroMinor
+///
 
 doc ///
     Key
@@ -1184,7 +1247,8 @@ doc ///
     Key
         [randomPoints, Strategy]
         [findANonZeroMinor, Strategy]
-        [extendingIdealByNonVanishingMinor, Strategy]
+        [extendIdealByNonZeroMinor, Strategy]
+        Default
         BruteForce
         GenericProjection
         LinearIntersection
@@ -1201,6 +1265,8 @@ doc ///
             {\tt LinearIntersection} intersects with an appropriately random linear space.
 	    
             {\tt HybridProjectionIntersection} does a generic projection, followed by a linear intersection. Notice that speed, or success, varies depending on the strategy.
+
+            {\tt Default} performs a sequence of different strategies, depending on the context.
     SeeAlso
         randomPoints
         randomKRationalPoint
@@ -1244,7 +1310,7 @@ doc///
     Key 
         PointCheckAttempts
         [randomPoints, PointCheckAttempts]
-        [extendingIdealByNonVanishingMinor,PointCheckAttempts ]
+        [extendIdealByNonZeroMinor,PointCheckAttempts ]
         [findANonZeroMinor, PointCheckAttempts]
     Headline
         Number of times the the function will search for a point 
@@ -1258,17 +1324,16 @@ doc///
             randomPoints(I, PointCheckAttempts=>1000)
     SeeAlso
         randomPoints
-        extendingIdealByNonVanishingMinor
+        extendIdealByNonZeroMinor
         findANonZeroMinor
 ///
 
 doc ///
     Key
         randomPoints
-	(randomPoints, Ideal)
+        (randomPoints, Ideal)
         (randomPoints, ZZ, Ideal)
-        [randomPoints, Homogeneous]
-        [randomPoints, ExtendField]
+        [randomPoints, Homogeneous]        
         [randomPoints, Codimension]
     Headline
         a function to find random points  in a variety. 
@@ -1365,14 +1430,14 @@ doc ///
 
 doc ///
     Key
-        extendingIdealByNonVanishingMinor
-        (extendingIdealByNonVanishingMinor, ZZ, Matrix, Ideal)
+        extendIdealByNonZeroMinor
+        (extendIdealByNonZeroMinor, ZZ, Matrix, Ideal)
     Headline
         extends the ideal to aid finding singular locus
     Usage
-        extendingIdealByNonvanishingMinor(n,M,I)
-        extendingIdealByNonVanishingMinor(n,M,I, Strategy => GenericProjection)
-        extendingIdealByNonVanishingMinor(n,M,I, Strategy => LinearIntersection)
+        extendIdealByNonZeroMinor(n,M,I)
+        extendIdealByNonZeroMinor(n,M,I, Strategy => GenericProjection)
+        extendIdealByNonZeroMinor(n,M,I, Strategy => LinearIntersection)
         enxtendingIdealByNonVanishingMinor(n,M,I, Strategy => HybridProjectionIntersection)
     Inputs
         I: Ideal
@@ -1397,7 +1462,7 @@ doc ///
             R = ZZ/5[x,y,z];
             I = ideal(random(3,R)-2, random(2,R));
             M = jacobian(I);
-            extendingIdealByNonVanishingMinor(2,M,I, Strategy => LinearIntersection)
+            extendIdealByNonZeroMinor(2,M,I, Strategy => LinearIntersection)
     SeeAlso
         findANonZeroMinor
 ///
@@ -1504,11 +1569,11 @@ assert(det(phi(Output#3))!=0)
 
 
 TEST///
----this tests extendingIdealByNonVanishingMinor---
+---this tests extendIdealByNonZeroMinor---
 R = ZZ/7[t_1..t_3];
 I = ideal(t_1,t_2+t_3);
 M = jacobian I;           
-assert(dim extendingIdealByNonVanishingMinor(2,M,I,Strategy => LinearIntersection) < 1)
+assert(dim extendIdealByNonZeroMinor(2,M,I,Strategy => LinearIntersection) < 1)
 ///
 
 
