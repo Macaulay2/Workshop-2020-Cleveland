@@ -28,11 +28,10 @@ export {
 	"findANonZeroMinor",
     --"randomPointViaLinearIntersection", --these are here for debugging purposes
     --"randomPointViaLinearIntersectionOld", --these are here for debugging purposes
-    "getRandomForms", --here for debugging purposes
-	"NumPointsToCheck", 
+    "getRandomLinearForms", --here for debugging purposes
 	"Codimension",
 	"MaxCoordinatesToReplace",
-    "MaxCoordinatesToTrivalize",
+    "MaxCoordinatesToTrivialize",
     "Replacement",
     "Full", 
     "Default", --a valid value for [RandomPoint, Strategy]
@@ -58,7 +57,7 @@ optRandomPoints := {
     Strategy=>Default, 
     Homogeneous => true,  
     MaxCoordinatesToReplace => 1, 
-    MaxCoordinatesToTrivalize => infinity,
+    MaxCoordinatesToTrivialize => infinity,
     Replacement => Binomial,
     Codimension => null,
     IntersectionAttempts => 20,
@@ -157,9 +156,9 @@ randomCoordinateChange(Ring) := opts -> (R1) -> (
     d1 := #gens R1;
     local genList;
     if (opts.Replacement == Binomial) then (
-        genList = getRandomForms(R1, {0, max(d1 - opts.MaxCoordinatesToReplace, 0), 0, min(d1, opts.MaxCoordinatesToReplace), 0}, Homogeneous => opts.Homogeneous, Verbose=>opts.Verbose, Verify=>true); )
+        genList = getRandomLinearForms(R1, {0, max(d1 - opts.MaxCoordinatesToReplace, 0), 0, min(d1, opts.MaxCoordinatesToReplace), 0}, Homogeneous => opts.Homogeneous, Verbose=>opts.Verbose, Verify=>true); )
     else if (opts.Replacement == Full) then (
-        genList = getRandomForms(R1, {0, max(d1 - opts.MaxCoordinatesToReplace, 0), 0, 0, min(d1, opts.MaxCoordinatesToReplace)}, Homogeneous => opts.Homogeneous, Verbose=>opts.Verbose, Verify=>true); );
+        genList = getRandomLinearForms(R1, {0, max(d1 - opts.MaxCoordinatesToReplace, 0), 0, 0, min(d1, opts.MaxCoordinatesToReplace)}, Homogeneous => opts.Homogeneous, Verbose=>opts.Verbose, Verify=>true); );
 --    genList = random apply(genCount, t -> if (t < opts.MaxCoordinatesToReplace) then replacementFunction(genList#t) else genList#t);
     return map(R1, S1, genList);
 );
@@ -218,9 +217,9 @@ genericProjectionByKernel(ZZ, Ideal) := opts -> (n1, I1) -> (
     d2 := #myVars;
     local genList;
     if (opts.Replacement == Binomial) then (
-        genList = getRandomForms(R1, {0, max(d2 - opts.MaxCoordinatesToReplace, 0), 0, min(d2, opts.MaxCoordinatesToReplace), 0}, Homogeneous => opts.Homogeneous, Verbose=>opts.Verbose, Verify=>true); )
+        genList = getRandomLinearForms(R1, {0, max(d2 - opts.MaxCoordinatesToReplace, 0), 0, min(d2, opts.MaxCoordinatesToReplace), 0}, Homogeneous => opts.Homogeneous, Verbose=>opts.Verbose, Verify=>true); )
     else if (opts.Replacement == Full) then (
-        genList = getRandomForms(R1, {0, max(d2 - opts.MaxCoordinatesToReplace, 0), 0, 0, min(d2, opts.MaxCoordinatesToReplace)}, Homogeneous => opts.Homogeneous, Verbose=>opts.Verbose, Verify=>true); );
+        genList = getRandomLinearForms(R1, {0, max(d2 - opts.MaxCoordinatesToReplace, 0), 0, 0, min(d2, opts.MaxCoordinatesToReplace)}, Homogeneous => opts.Homogeneous, Verbose=>opts.Verbose, Verify=>true); );
 --    genList = random apply(genCount, t -> if (t < opts.MaxCoordinatesToReplace) then replacementFunction(genList#t) else genList#t);
     psi = map(R1, Rs, genList);
     myMap := map(R1/I1, Rs, genList);
@@ -284,9 +283,9 @@ projectionToHypersurface(Ideal) := opts -> (I1) -> (
     --build the replacement map
     local genList;
     if (opts.Replacement == Binomial) then (
-        genList = getRandomForms(R1, {0, max(d2 - opts.MaxCoordinatesToReplace, 0), 0, min(d2, opts.MaxCoordinatesToReplace), 0}, Homogeneous => opts.Homogeneous, Verbose=>opts.Verbose, Verify=>true); )
+        genList = getRandomLinearForms(R1, {0, max(d2 - opts.MaxCoordinatesToReplace, 0), 0, min(d2, opts.MaxCoordinatesToReplace), 0}, Homogeneous => opts.Homogeneous, Verbose=>opts.Verbose, Verify=>true); )
     else if (opts.Replacement == Full) then (
-        genList = getRandomForms(R1, {0, max(d2 - opts.MaxCoordinatesToReplace, 0), 0, 0, min(d2, opts.MaxCoordinatesToReplace)}, Homogeneous => opts.Homogeneous, Verbose=>opts.Verbose, Verify=>true); );
+        genList = getRandomLinearForms(R1, {0, max(d2 - opts.MaxCoordinatesToReplace, 0), 0, 0, min(d2, opts.MaxCoordinatesToReplace)}, Homogeneous => opts.Homogeneous, Verbose=>opts.Verbose, Verify=>true); );
 --    genList = random apply(genCount, t -> if (t < opts.MaxCoordinatesToReplace) then replacementFunction(genList#t) else genList#t);
     psi := map(R1, Rs, genList);
     myMap := map(R1/I1, Rs, genList);
@@ -345,9 +344,9 @@ verifyPoint(List, Ideal) := opts -> (finalPoint, I1) -> (
 
 --The following gets a list of random forms in a ring.  You specify how many.  
 --if Verify is true, it will check to for linear independence of the monomial, binomial and randForms 
-getRandomForms = method(Options => {Verify => false, Homogeneous => false, Verbose=>false});
-getRandomForms(Ring, List) := opts -> (R1, L1) ->(
-    if (opts.Verbose) or (debugLevel > 0) then print "getRandomForms: starting";
+getRandomLinearForms = method(Options => {Verify => false, Homogeneous => false, Verbose=>false});
+getRandomLinearForms(Ring, List) := opts -> (R1, L1) ->(
+    if (opts.Verbose) or (debugLevel > 0) then print "getRandomLinearForms: starting";
     constForms := L1#0;
     monomialForms := L1#1;
     trueMonomialForms := L1#2; --forced to be monomial whether or not Homogeneous is true
@@ -363,7 +362,7 @@ getRandomForms(Ring, List) := opts -> (R1, L1) ->(
         if (#tempList < monomialForms + trueMonomialForms + binomialForms) then (tempList = tempList | apply(monomialForms + trueMonomialForms + binomialForms - #tempList, i->(genList)#(random d)));
     );
     if (opts.Homogeneous) then (
-        if (opts.Verbose) or (debugLevel > 0) then print "getRandomForms: generating homogeneous forms.";
+        if (opts.Verbose) or (debugLevel > 0) then print "getRandomLinearForms: generating homogeneous forms.";
         if (opts.Verify) then (formList = formList | apply(monomialForms, i -> (tempList)#i);)
         else (formList = formList | apply(monomialForms, i -> (genList)#(random(d))););
         if (opts.Verify) then (formList = formList | apply(trueMonomialForms, i -> (tempList)#(i+monomialForms));)
@@ -373,7 +372,7 @@ getRandomForms(Ring, List) := opts -> (R1, L1) ->(
         formList = formList | apply(randForms, i-> random(1, R1));
     )
     else(
-        if (opts.Verbose) or (debugLevel > 0) then print "getRandomForms: generating non-homogeneous forms.";
+        if (opts.Verbose) or (debugLevel > 0) then print "getRandomLinearForms: generating non-homogeneous forms.";
         if (opts.Verify) then (formList = formList | apply(monomialForms, i -> random(0, R1) + (tempList)#i);)
         else (formList = formList | apply(monomialForms, i -> random(0, R1) + (genList)#(random(d))););
         if (opts.Verify) then (formList = formList | apply(trueMonomialForms, i -> (tempList)#(i+monomialForms));)
@@ -386,8 +385,8 @@ getRandomForms(Ring, List) := opts -> (R1, L1) ->(
         J1 := jacobian ideal formList;
         val := min(d, #formList);
         if (rank J1 < val) then ( 
-            if (opts.Verbose) or (debugLevel > 0) then print "getRandomForms: forms were not random enough, trying again recusrively.";            
-            return getRandomForms(R1, L1, opts);
+            if (opts.Verbose) or (debugLevel > 0) then print "getRandomLinearForms: forms were not random enough, trying again recusrively.";            
+            return getRandomLinearForms(R1, L1, opts);
         );
     );
     formList = formList | apply(constForms, i -> random(0, R1));
@@ -421,15 +420,15 @@ randomPointViaLinearIntersection(ZZ, Ideal) := opts -> (n1, I1) -> (
     kk = coefficientRing(R1);
     varList := drop(gens R1, d1);
     toReplace := max(0, min(opts.MaxCoordinatesToReplace, c1));
-    toTrivialize := min(d1, opts.MaxCoordinatesToTrivalize);
+    toTrivialize := min(d1, opts.MaxCoordinatesToTrivialize);
     while(i < opts.IntersectionAttempts) and (#returnPointsList < n1) do (
         targetSpace = kk[varList];
         
         if (opts.Replacement == Binomial) then (
-            phiMatrix = getRandomForms(targetSpace, {toTrivialize, 0, c1-toReplace + (d1 - toTrivialize), toReplace, 0}, Homogeneous => false, Verify=>true);
+            phiMatrix = getRandomLinearForms(targetSpace, {toTrivialize, 0, c1-toReplace + (d1 - toTrivialize), toReplace, 0}, Homogeneous => false, Verify=>true);
         )
         else if (opts.Replacement == Full) then (
-            phiMatrix = getRandomForms(targetSpace, {toTrivialize, 0, c1-toReplace + (d1 - toTrivialize), 0, toReplace}, Homogeneous => false, Verify=>true);
+            phiMatrix = getRandomLinearForms(targetSpace, {toTrivialize, 0, c1-toReplace + (d1 - toTrivialize), 0, toReplace}, Homogeneous => false, Verify=>true);
         );
         if (opts.Verbose) or (debugLevel > 0) then print concatenate("randomPointViaLinearIntersection: doing loop with ", toString( phiMatrix));
         if (debugLevel > 0 or opts.Verbose == true) then print concatenate("randomPointViaLinearIntersection:  Doing a loop with:", toString(phiMatrix));
@@ -600,7 +599,7 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
         opts++{ Strategy=>HybridProjectionIntersection,
                 MaxCoordinatesToReplace => 0,
                 Replacement => Binomial,
-                MaxCoordinatesToTrivalize => infinity,
+                MaxCoordinatesToTrivialize => infinity,
                 ProjectionAttempts => 2,
                 IntersectionAttempts => 2*n1
             }
@@ -616,7 +615,7 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
             opts++{ Strategy=>LinearIntersection,
                     MaxCoordinatesToReplace => 0,
                     IntersectionAttempts => 2*n1,
-                    MaxCoordinatesToTrivalize => infinity
+                    MaxCoordinatesToTrivialize => infinity
                 }
         );
     );
@@ -628,7 +627,7 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
         opts++{ Strategy=>LinearIntersection,
                 MaxCoordinatesToReplace => 1,
                 Replacement => Binomial,
-                MaxCoordinatesToTrivalize => infinity,
+                MaxCoordinatesToTrivialize => infinity,
                 IntersectionAttempts => 4*n1
             }
     );
@@ -640,7 +639,7 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
         opts++{ Strategy=>LinearIntersection,
                 MaxCoordinatesToReplace => 1,
                 Replacement => Full,
-                MaxCoordinatesToTrivalize => infinity,
+                MaxCoordinatesToTrivialize => infinity,
                 IntersectionAttempts => 4*n1
             }
     );
@@ -653,7 +652,7 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
             opts++{ Strategy=>HybridProjectionIntersection,
                     MaxCoordinatesToReplace => 1,
                     Replacement => Binomial,
-                    MaxCoordinatesToTrivalize => infinity,
+                    MaxCoordinatesToTrivialize => infinity,
                     ProjectionAttempts => 3,
                     IntersectionAttempts => 4*n1
                 }
@@ -667,7 +666,7 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
         opts++{ Strategy=>LinearIntersection,
                 MaxCoordinatesToReplace => 2,
                 Replacement => Binomial,
-                MaxCoordinatesToTrivalize => 4,
+                MaxCoordinatesToTrivialize => 4,
                 IntersectionAttempts => 4*n1
             }
     );
@@ -679,7 +678,7 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
         opts++{ Strategy=>LinearIntersection,
                 MaxCoordinatesToReplace => 2,
                 Replacement => Full,
-                MaxCoordinatesToTrivalize => 2,
+                MaxCoordinatesToTrivialize => 2,
                 IntersectionAttempts => 4*n1
             }
     );
@@ -692,7 +691,7 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
             opts++{ Strategy=>HybridProjectionIntersection,
                     MaxCoordinatesToReplace => 2,
                     Replacement => Binomial,
-                    MaxCoordinatesToTrivalize => 2,
+                    MaxCoordinatesToTrivialize => 2,
                     ProjectionAttempts => 3*n1,
                     IntersectionAttempts => 4*n1
                 }
@@ -706,7 +705,7 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
         opts++{ Strategy=>LinearIntersection,
                 MaxCoordinatesToReplace => infinity,
                 Replacement => Binomial,
-                MaxCoordinatesToTrivalize => 1,
+                MaxCoordinatesToTrivialize => 1,
                 IntersectionAttempts => 4*n1
             }
     );
@@ -718,7 +717,7 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
         opts++{ Strategy=>LinearIntersection,
                 MaxCoordinatesToReplace => infinity,
                 Replacement => Full,
-                MaxCoordinatesToTrivalize => 1,
+                MaxCoordinatesToTrivialize => 1,
                 IntersectionAttempts => 4*n1
             }
     );
@@ -948,28 +947,64 @@ document {
         EM "RandomRationalPoints", "Give a random point inside a affine space that lies inside a variety ."
 }
 
+
+
 doc ///
     Key
-        getRandomForms
-        (getRandomForms, Ring, List)
-        [getRandomForms, Verify]
-        [getRandomForms, Homogeneous]
-        [getRandomForms, Verbose]
+        getRandomLinearForms
+        (getRandomLinearForms, Ring, List)
+        [getRandomLinearForms, Verify]
+        [getRandomLinearForms, Homogeneous]
+        [getRandomLinearForms, Verbose]
     Headline
-        retrieve a set of random forms of specified types
+        retrieve a list of random degree 1 and 0 forms of specified types
     Usage
-        getRandomForms(R, L)
+        getRandomLinearForms(R, L)
     Inputs
         R:Ring
             the ring where the forms should live
         L:List
             a list with 5 entries, each a number of types of forms.  Constant forms, monomial forms (plus a constant term if {\tt Homogeneous => false}), monomial forms, binomial forms, and random forms.
+        Verify => Boolean
+            whether to check if the output linear forms have Jacobian of maximal rank
+        Verbose => Boolean
+            turn on or off verbose output
+        Homogeneous => Boolean
+            allows constant terms on some linear forms if true
     Outputs
         :List
             a list of random forms of the specified types
     Description
         Text
-            This will give you a list of random forms (ring elements) of the specified types.  
+            This will give you a list of random forms (ring elements) of the specified types.  This is useful, because in many cases, for instance when doing generic projection, you only need a a certain number of the forms in the map to be fully random.  Furthermore, at the cost of some randomness, using monomial or binomial forms can be much faster.            
+
+            The types of form are specified via the second argument, a list with 5 entries.  The first entry is how many constant forms are allowed.
+        Example
+            R = ZZ/31[a,b,c]
+            getRandomLinearForms(R, {2,0,0,0,0})
+        Text
+            The second entry in the list is how many monomial forms are returned.  Note if {\tt Homogeneous=>false} then these forms will usually have constant terms.
+        Example
+            getRandomLinearForms(R, {0,2,0,0,0}, Homogeneous=>true)
+            getRandomLinearForms(R, {0,2,0,0,0}, Homogeneous=>false)
+        Text
+            Next, the third entry is how many monomial forms (without constant terms, even if {\tt Homogeneous=>false}).
+        Example
+            getRandomLinearForms(R, {0,0,2,0,0}, Homogeneous=>false)
+        Text
+            The fourth entry is how many binomial forms should be returned.
+        Example
+            getRandomLinearForms(R, {0,0,0,1,0}, Homogeneous=>true)
+            getRandomLinearForms(R, {0,0,0,1,0}, Homogeneous=>false)
+        Text
+            The ultimate entry is how many truly random forms to produce.
+        Example
+            getRandomLinearForms(R, {0,0,0,0,1}, Homogeneous=>true)
+            getRandomLinearForms(R, {0,0,0,0,1}, Homogeneous=>false)
+        Text
+            You may combine the different specifications to create a list of the desired type.  The order is randomized.
+
+            If the option {\tt Verify=>true}, then this will check the jacobian of the list of forms (discounting the constant forms), to make sure it has maximal rank.  Random forms in small numbers of variables over small fields will produce non-injective ring maps occasionally otherwise.        
 ///
 
 doc ///
@@ -1169,30 +1204,40 @@ doc ///
     SeeAlso
         genericProjection
 ///
+
 doc///
     Key
         ProjectionAttempts
         [randomPoints, ProjectionAttempts]
+        [extendIdealByNonZeroMinor, ProjectionAttempts]
+        [findANonZeroMinor, ProjectionAttempts]
     Headline
-         Number of projection trials using in the Strategy GenericProjection
+         Number of projection trials using in randomPoints when doing generic projection
     Description
         Text
-            When calling the Strategy {\tt GenericProjection} or {\tt HybridProjectionIntersection} from {\tt randomPoints}, this option denotes the number of trials before giving up.
+            When calling the Strategy {\tt GenericProjection} or {\tt HybridProjectionIntersection} from {\tt randomPoints}, this option denotes the number of trials before giving up.  This option is also passed to randomPoints by other functions.
     SeeAlso
         randomPoints
 ///
 
-doc///
+
+doc ///
     Key
         IntersectionAttempts
         [randomPoints, IntersectionAttempts]
+        [extendIdealByNonZeroMinor, IntersectionAttempts]
+        [findANonZeroMinor, IntersectionAttempts]
     Headline
-        Number of intersection trials using in the Strategy LinearIntersection
+        an option which controls how many linear intersections are attempted when looking for rational points
+    Usage
+        IntersectionAttempts => n
+    Inputs
+        n:ZZ
+            the maximum attempts to make
     Description
         Text
-            When calling the Strategy {\tt LinearIntersection}  it denotes the number of trials whose default value is 20.
-    SeeAlso
-        randomPoints
+            This option is used by {\tt randomPoints} in some strategies to determine the maximum number of attempts to intersect with a linear space when looking for random rational points.  Other functions pass this option through to {\tt randomPoints}.
+    
 ///
 
 doc///
@@ -1201,6 +1246,9 @@ doc///
         [randomCoordinateChange, MaxCoordinatesToReplace]
         [randomPoints, MaxCoordinatesToReplace]
         [genericProjection, MaxCoordinatesToReplace]
+        [extendIdealByNonZeroMinor, MaxCoordinatesToReplace]
+        [findANonZeroMinor, MaxCoordinatesToReplace]        
+        [projectionToHypersurface, MaxCoordinatesToReplace]        
     Headline
         The maximum number of coordinates to turn into non-monomial functions when calling {\tt randomCoordinateChange}
     Description
@@ -1220,6 +1268,9 @@ doc ///
         [randomCoordinateChange, Replacement]
         [genericProjection, Replacement]
         [projectionToHypersurface, Replacement]
+        [findANonZeroMinor, Replacement]
+        [randomPoints, Replacement]
+        [extendIdealByNonZeroMinor, Replacement]
         Full
     Headline
         When changing coordinates, whether to replace variables by general degre 1 forms or binomials
@@ -1292,15 +1343,17 @@ doc///
     Key 
         NumThreadsToUse
         [randomPoints, NumThreadsToUse]
+        [extendIdealByNonZeroMinor, NumThreadsToUse]
+        [findANonZeroMinor, NumThreadsToUse]
     Headline
-        Number of threads the the function will use to search for a point 
+        number of threads the the function will use in a brute force search for a point 
     Description
         Text
             When calling {\tt randomPoints}, and functions that call it, with a {\tt BruteForce} strategy, this denotes the number of threads for brute force point checking.
         Example
             R = ZZ/11[x,y,z];
             I = ideal(x,y);
-	    allowableThreads = 8;
+            allowableThreads = 8;
             randomPoints(I, NumThreadsToUse=>4)
     SeeAlso
         randomPoints
@@ -1326,6 +1379,19 @@ doc///
         randomPoints
         extendIdealByNonZeroMinor
         findANonZeroMinor
+///
+
+doc ///
+    Key
+        MaxCoordinatesToTrivialize
+        [extendIdealByNonZeroMinor, MaxCoordinatesToTrivialize]
+        [findANonZeroMinor, MaxCoordinatesToTrivialize]
+        [randomPoints, MaxCoordinatesToTrivialize]
+    Headline
+        the number of coordinates to set to random values when doing a linear intersection
+    Description
+        Text
+            When calling {\tt randomPoints} and performing an intersection with a linear space, this is the number of defining equations of the linear space of the form $x_i - a_i$.  Having a large number of these will provide faster intersections.
 ///
 
 doc ///
@@ -1383,6 +1449,8 @@ doc ///
     Key
         findANonZeroMinor
         (findANonZeroMinor, ZZ, Matrix, Ideal)
+        [findANonZeroMinor, Verbose]
+        [findANonZeroMinor, Homogeneous]
     Headline
         finds a non-vanishing minor at some randomly chosen point 
     Usage
@@ -1400,6 +1468,10 @@ doc ///
             one non-vanishing minor 
         Strategy => String
             to specify whether to use method of Linear Intersection, GenericProjection or HybridProjectionIntersection
+        Verbose => Boolean
+            set to true for verbose output
+        Homogeneous => Boolean
+            controls if the computations are homogeneous (in calls to {\tt randomPoints})
     Outputs
         : Sequence
             The functions outputs the following:
@@ -1432,6 +1504,7 @@ doc ///
     Key
         extendIdealByNonZeroMinor
         (extendIdealByNonZeroMinor, ZZ, Matrix, Ideal)
+        [extendIdealByNonZeroMinor, Homogeneous]        
     Headline
         extends the ideal to aid finding singular locus
     Usage
@@ -1449,6 +1522,10 @@ doc ///
             one non-vanishing minor 
         Strategy => String
             to specify whether to use method of Linear Intersection, GenericProjection or HybridProjectionIntersection
+        Homogeneous => Boolean
+            controls if the computations are homogeneous (in calls to {\tt randomPoints})
+        Verbose => Boolean
+            turns on or off verbose output
     Outputs
         : Ideal
             the original ideal extended by the determinant of 
