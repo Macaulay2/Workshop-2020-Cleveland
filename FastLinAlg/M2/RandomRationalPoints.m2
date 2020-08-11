@@ -928,7 +928,7 @@ findANonZeroMinor(ZZ, Matrix, Ideal) := opts -> (n,M,I)->(
 	    N1new = join(N1new, {N1rand#i});
     );
     M3 := mutableMatrix phi(M_N1new);
-    if (rank(M3)<n) then return (P,N1,N2,"findANonZeroMinor: Using the the second and third outputs failed to generate a random matrix of the given size, that has full rank when evaluated at the first output.");
+    --if (rank(M3)<n) then return (P,N1,N2,"findANonZeroMinor: Using the the second and third outputs failed to generate a random matrix of the given size, that has full rank when evaluated at the first output.");
     N2rand := random(rowRankProfile(M3));
     N2new = {};
     for i from 0 to n-1 do(
