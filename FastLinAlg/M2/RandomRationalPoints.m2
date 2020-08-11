@@ -2,7 +2,7 @@
 newPackage(
         "RandomRationalPoints",
     	Version => "1.3",
-    	Date => "August 8th, 2020",
+    	Date => "August 10th, 2020",
     	Authors => {
 	     {Name => "Sankhaneel Bisui", Email => "sbisu@tulane.edu", HomePage=>"https://sites.google.com/view/sankhaneelbisui/home"},
 	     {Name=> "Thai Nguyen", Email =>"tnguyen11@tulane.edu", HomePage=>"https://sites.google.com/view/thainguyenmath "},
@@ -20,8 +20,7 @@ newPackage(
 -- must be placed in one of the following two lists
 export {
 	"genericProjection", --documented, tested
-	"projectionToHypersurface", --documented, tested
-    --"projectionToHypersurfaceV2", --documented, tested
+	"projectionToHypersurface", --documented, tested    
 	"randomCoordinateChange", --documented, tested
 	"randomPoints", 
 	"extendIdealByNonZeroMinor",
@@ -39,12 +38,11 @@ export {
     "GenericProjection",  --a valid value for [RandomPoint, Strategy]
     "HybridProjectionIntersection", --a valid value for [RandomPoint, Strategy]
     "LinearIntersection",  --a valid value for [RandomPoint, Strategy]
---    "LinearProjection", --a valid value for [RandomPoint, Strategy]
-    --"MultiThreads",  --a valid value for [RandomPoint, Strategy]
 	"ProjectionAttempts", --used in the GenericProjection strategy
     "IntersectionAttempts", --used in the LinearIntersection strategy
     "ExtendField", --used in GenericProjection and LinearIntersection strategy
     "PointCheckAttempts",
+    "MinorPointAttempts",
     "NumThreadsToUse" -- used in the BruteForce strategy
     }
 exportMutable {}
@@ -67,6 +65,8 @@ optRandomPoints := {
     NumThreadsToUse => 1,
     Verbose => false
 };
+
+optFindANonZeroMinor := optRandomPoints | {MinorPointAttempts => 5}
 
 optCoorindateChange := {
     Verbose => false, 
@@ -884,10 +884,10 @@ searchPoints(ZZ, Ring, List) := opts -> (nn, R, genList) -> (
 
 
 
-findANonZeroMinor = method(Options => optRandomPoints);
+findANonZeroMinor = method(Options => optFindANonZeroMinor);
 
 findANonZeroMinor(ZZ, Matrix, Ideal) := opts -> (n,M,I)->(
-    local P;
+    P := {};
     local kk; 
     local R;
     local phi;
@@ -895,13 +895,29 @@ findANonZeroMinor(ZZ, Matrix, Ideal) := opts -> (n,M,I)->(
     local J; local Mcolumnextract; local Mrowextract;
     R = ring I;
     kk = coefficientRing R;
-    P = randomPoints(I, opts);
-    if (#P == 0) then  error "Couldn't find a point. Try Changing Strategy.";
-    P = P#0;
-    phi =  map(kk,R,sub(matrix{P},kk));
-    N = mutableMatrix phi(M);
-    rk := rank(N);
-    if (rk < n) then return ("All minors of given size vanish at the randomly chosen point. Please try again.");
+    i := 0;
+    rk := -1;
+    mutOptions := new MutableHashTable from opts;
+    remove(mutOptions, MinorPointAttempts);
+    ptOpts := new OptionTable from mutOptions;
+    while (i < opts.MinorPointAttempts) and (rk < n) do (
+        if opts.Verbose then print concatenate("findANonZeroMinor: Finding a point on the given ideal, attempt #", toString i);
+        P = randomPoints(I, ptOpts);
+        if #P > 0 then (
+            P = P#0;
+            if opts.Verbose then print concatenate("findANonZeroMinor: Found a point.");
+            phi =  map(kk,R,sub(matrix{P},kk));    
+            N = mutableMatrix phi(M);
+            rk = rank(N);
+            if (rk < n) then print "findANonZeroMinor: The matrix didn't have the desired rank at this point.  We may try again";
+        )
+        else(
+            if opts.Verbose then print concatenate("findANonZeroMinor: Failed to find a point, we may try again.");
+        );
+        i = i+1;
+    );    
+    if (rk < n) then error "findANonZeroMinor: All minors of given size vanish at the randomly chosen points. You may want to increase MinorPointAttempts, or change Strategy.";    
+    if opts.Verbose then print "findANonZeroMinor:  The point had full rank.  Now finding the submatrix.";
     N1 = (columnRankProfile(N));
     Mcolumnextract = M_N1;
     M11 := mutableMatrix phi(Mcolumnextract);
@@ -909,10 +925,10 @@ findANonZeroMinor(ZZ, Matrix, Ideal) := opts -> (n,M,I)->(
     N1rand := random(N1);
     N1new = {};
     for i from  0 to n-1 do(
-	N1new = join(N1new, {N1rand#i});
+	    N1new = join(N1new, {N1rand#i});
     );
     M3 := mutableMatrix phi(M_N1new);
-    if (rank(M3)<n) then return (P,N1,N2,"Using the the second and third outputs failed to generate a random matrix of the given size, that has full rank when evaluated at the first output.");
+    if (rank(M3)<n) then return (P,N1,N2,"findANonZeroMinor: Using the the second and third outputs failed to generate a random matrix of the given size, that has full rank when evaluated at the first output.");
     N2rand := random(rowRankProfile(M3));
     N2new = {};
     for i from 0 to n-1 do(
@@ -922,7 +938,7 @@ findANonZeroMinor(ZZ, Matrix, Ideal) := opts -> (n,M,I)->(
     return (P, N1, N2, Mspecificrowextract);	
 );
 
-extendIdealByNonZeroMinor = method(Options=>optRandomPoints);
+extendIdealByNonZeroMinor = method(Options=>optFindANonZeroMinor);
 extendIdealByNonZeroMinor(ZZ,Matrix,Ideal):= opts -> (n, M, I) -> (
     local O;  local Ifin;
     O = findANonZeroMinor(n,M,I,opts); 
@@ -1355,6 +1371,8 @@ doc///
             I = ideal(x,y);
             allowableThreads = 8;
             randomPoints(I, NumThreadsToUse=>4)
+    Caveat
+        Currently multi threading creates instability.  Use at your own risk.
     SeeAlso
         randomPoints
 ///
@@ -1405,10 +1423,7 @@ doc ///
         a function to find random points  in a variety. 
     Usage
         randomPoints(I) 
-        randomPoints(n, I)
-        randomPoints(n, I, Strategy => GenericProjection)
-        randomPoints(n, I, Strategy => LinearIntersection)
-        randomPoints(n, I, Strategy => HybridProjectionIntersection)
+        randomPoints(n, I)        
     Inputs
         n: ZZ
             an integer denoting the number of desired points.
@@ -1416,8 +1431,8 @@ doc ///
             inside a polynomial ring.
         R:Ring
             a polynomial ring
-        Strategy => String
-            to specify which strategy to use, BruteForce, LinearIntersection, GenericProjection, HybridProjectionIntersection
+        Strategy => Symbol
+            to specify which strategy to use, Default, BruteForce, LinearIntersection, GenericProjection, HybridProjectionIntersection
         ProjectionAttempts => ZZ
             see @TO ProjectionAttempts@
         MaxCoordinatesToReplace => ZZ
@@ -1425,12 +1440,13 @@ doc ///
         Codimension => ZZ
             see @TO Codimension@
         ExtendField => Boolean
+            whether to allow points not rational over the base field
         IntersectionAttempts => ZZ
             see @TO IntersectionAttempts@
-	PointCheckAttempts => ZZ
-	    points to search in total, see @TO PointCheckAttempts@
+	    PointCheckAttempts => ZZ
+	        points to search in total, see @TO PointCheckAttempts@
         NumThreadsToUse => ZZ
-	    number of threads to use, see @TO NumThreadsToUse@
+	        number of threads to use in the BruteForce strategy, see @TO NumThreadsToUse@
     Outputs
         :List
             a list of points in the variety with possible repetitions.
@@ -1441,6 +1457,7 @@ doc ///
             R = ZZ/5[t_1..t_3];
             I = ideal(t_1,t_2+t_3);
             randomPoints(3, I)
+            randomPoints(4, I, Strategy => Default)
             randomPoints(4, I, Strategy => GenericProjection)
             randomPoints(4, I, Strategy => LinearIntersection)
 ///
@@ -1450,28 +1467,28 @@ doc ///
         findANonZeroMinor
         (findANonZeroMinor, ZZ, Matrix, Ideal)
         [findANonZeroMinor, Verbose]
-        [findANonZeroMinor, Homogeneous]
+        [findANonZeroMinor, Homogeneous]        
+        [findANonZeroMinor, MinorPointAttempts]
+        MinorPointAttempts
     Headline
         finds a non-vanishing minor at some randomly chosen point 
     Usage
-        findANonZeroMinor(n,M,I)
-        findANonZeroMinor(n,M,I, Strategy => GenericProjection)
-        findANonZeroMinor(n,M,I, Strategy => LinearIntersection)
-        findANonZeroMinor(n,M,I, Strategy => HybridProjectionIntersection)
+        findANonZeroMinor(n,M,I)        
     Inputs
         I: Ideal
             in a polynomial ring over QQ or ZZ/p for p prime 
         M: Matrix
             over the polynomial ring
         n: ZZ
-            the size of the minors to look at to find
-            one non-vanishing minor 
-        Strategy => String
-            to specify whether to use method of Linear Intersection, GenericProjection or HybridProjectionIntersection
+            the size of the minors to consider
+        Strategy => Symbol
+            to specify which strategy to use when calling @TO randomPoints@
         Verbose => Boolean
             set to true for verbose output
         Homogeneous => Boolean
             controls if the computations are homogeneous (in calls to {\tt randomPoints})
+        MinorPointAttempts => ZZ
+            how many points to check the rank of the matrix at
     Outputs
         : Sequence
             The functions outputs the following:
@@ -1489,12 +1506,14 @@ doc ///
             {\tt randomPoints} function to find a point in 
             $V(I)$. Then it plugs the point in the matrix and tries to find
             a non-zero  minor of size equal to the given integer. It outputs the point and also one of the submatrices of interest
-            along with the column and row indices that were used sequentially. 
+            along with the column and row indices that were used sequentially.              
         Example
             R = ZZ/5[x,y,z];
             I = ideal(random(3,R)-2, random(2,R));
             M = jacobian(I);
             findANonZeroMinor(2,M,I, Strategy => GenericProjection)
+        Text
+            The option {\tt MinorPointAttempts} is how many points to attempt before giving up.
     SeeAlso
         randomPoints
 ///
@@ -1505,27 +1524,26 @@ doc ///
         extendIdealByNonZeroMinor
         (extendIdealByNonZeroMinor, ZZ, Matrix, Ideal)
         [extendIdealByNonZeroMinor, Homogeneous]        
+        [extendIdealByNonZeroMinor, MinorPointAttempts]        
     Headline
         extends the ideal to aid finding singular locus
     Usage
-        extendIdealByNonZeroMinor(n,M,I)
-        extendIdealByNonZeroMinor(n,M,I, Strategy => GenericProjection)
-        extendIdealByNonZeroMinor(n,M,I, Strategy => LinearIntersection)
-        enxtendingIdealByNonVanishingMinor(n,M,I, Strategy => HybridProjectionIntersection)
+        extendIdealByNonZeroMinor(n,M,I)        
     Inputs
         I: Ideal
             in a polynomial ring over QQ or ZZ/p for p prime 
         M: Matrix
             over the polynomial ring
         n: ZZ
-            the size of the minors to look at to find
-            one non-vanishing minor 
-        Strategy => String
-            to specify whether to use method of Linear Intersection, GenericProjection or HybridProjectionIntersection
+            the size of the minors to consider            
+        Strategy => Symbol
+            specify which strategy to use when calling @TO randomPoints@
         Homogeneous => Boolean
             controls if the computations are homogeneous (in calls to {\tt randomPoints})
         Verbose => Boolean
             turns on or off verbose output
+        MinorPointAttempts => ZZ
+            how many points to check the rank of the matrix at            
     Outputs
         : Ideal
             the original ideal extended by the determinant of 
