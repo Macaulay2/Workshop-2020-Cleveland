@@ -131,14 +131,16 @@ bettiTablesWithHilbertFunction = method(
 	Count => false,
 	BoundGenerators => -1,
 	FirstBetti => "",
-	GradedBettis => ""
+	GradedBettis => "",
+	SquareFree => false
 	}
     );
 bettiTablesWithHilbertFunction (List, Ring) := o -> (D, R) -> (
     M := monomialIdealsWithHilbertFunction(D, R, 
 	BoundGenerators => o.BoundGenerators, 
 	FirstBetti => o.FirstBetti, 
-	GradedBettis => o.GradedBettis);
+	GradedBettis => o.GradedBettis,
+	SquareFree => o.SquareFree);
     if o.Count then(
 	tally apply(M, m -> betti res m)
 	)
@@ -816,7 +818,7 @@ doc ///
   monomialIdealsWithHilbertFunction(L, R, SquareFree => x)
  Inputs
   L: List
-   $\{h(0), h(1), \ldots, h(d)\}$, the values of a valid Hilbert function of a graded ring for degrees $0\ldots d$.
+   $\{h(0), h(1), \ldots, h(d)\}$, the values of a valid Hilbert function for $R$ for degrees $0\ldots d$.
   R: Ring
    a polynomial ring
   a: ZZ
@@ -889,6 +891,87 @@ doc ///
   isSquareFree
   LexIdeals
 ///
+
+doc ///
+ Key
+  bettiTablesWithHilbertFunction
+  (bettiTablesWithHilbertFunction, List, Ring)
+  [bettiTablesWithHilbertFunction, BoundGenerators]
+  [bettiTablesWithHilbertFunction, FirstBetti]
+  [bettiTablesWithHilbertFunction, GradedBettis]
+  [bettiTablesWithHilbertFunction, SquareFree]
+  [bettiTablesWithHilbertFunction, Count]
+ Headline
+  list or tally all Betti tables that can be obtained from monomial ideals with a particular (partial or complete) Hilbert function
+ Usage
+  bettiTablesWithHilbertFunction(L, R)
+  bettiTablesWithHilbertFunction(L, R, BoundGenerators => a)
+  bettiTablesWithHilbertFunction(L, R, FirstBetti => b)
+  bettiTablesWithHilbertFunction(L, R, GradedBettis => B)
+  bettiTablesWithHilbertFunction(L, R, SquareFree => x)
+  bettiTablesWithHilbertFunction(L, R, Count => y)
+ Inputs
+  L: List
+   $\{h(0), h(1), \ldots, h(d)\}$, the values of a valid Hilbert function for $R$ for degrees $0\ldots d$.
+  R: Ring
+   a polynomial ring
+  a: ZZ
+   a degree bound on the monomial generators
+  b: ZZ
+   a specified first total Betti number
+  B: List
+   $\{b_0, b_1, \ldots, b_d\}$, the first graded Betti numbers for degrees $0,\ldots, d$.
+  x: Boolean
+   whether or not to consider squarefree monomial ideals only
+  y: Boolean
+   whether or not to return the count of unique tables instead of all values
+ Outputs
+   :List
+    all unique Betti tables that can be obtained from monomial ideals of $R$ with Hilbert function beginning with $L$, or
+   :Tally
+    the same set of Betti tables, with the number of unique monomial ideals producing each one
+ Description
+  Text
+   This function calls @TO monomialIdealsWithHilbertFunction@ with the specified options, determines the
+   Betti table of each feasible monomial ideal, then lists or tallies the Betti tables encountered. 
+   The Count option does not fundamentally change how the computation is performed, only how the
+   results are reported.
+  Example
+   ScipPrintLevel = 0; --to suppress printing of extra solving info
+   R = QQ[x,y,z]; L = {1, 3, 5, 5, 4};
+   bettiTablesWithHilbertFunction(L, R)
+   bettiTablesWithHilbertFunction(L, R, Count => true)
+  Text
+   Some more examples showing usage of various optional inputs.
+  Example
+   --BoundGenerators option
+   bettiTablesWithHilbertFunction(L, R, BoundGenerators => 3, Count => true)
+   bettiTablesWithHilbertFunction(L, R, BoundGenerators => 3)
+   --SquareFree option
+   S = QQ[a..f]
+   bettiTablesWithHilbertFunction({1, 6, 19, 45, 86}, S, SquareFree => true)
+   --FirstBetti option
+   bettiTablesWithHilbertFunction({1, 3, 6, 5, 4, 4}, R, FirstBetti => 5)
+   --GradedBettis option
+   bettiTablesWithHilbertFunction({1, 3, 4, 2, 1}, R, GradedBettis => {0, 0, 2, 2, 1}, Count => true)
+   --FirstBetti and BoundGenerators
+   bettiTablesWithHilbertFunction({1, 3, 6, 7, 6, 5, 4, 4, 4}, R, FirstBetti => 6, BoundGenerators => 5, Count => true)
+   --FirstBetti and SquareFree
+   bettiTablesWithHilbertFunction({1, 4, 7, 10, 13}, S, SquareFree => true, FirstBetti => 5)
+   --GradedBettis and Squarefree
+   bettiTablesWithHilbertFunction({1, 4, 7, 10, 13}, S, SquareFree => true, GradedBettis => {0, 2, 3, 1, 0})   
+ SeeAlso
+  monomialIdealsWithHilbertFunction
+  (betti,GradedModule)
+  BettiTally
+  HashTable
+  tally
+  hilbertFunct
+  isHF
+  isSquareFree
+  LexIdeals
+///
+
 
 doc ///
  Key
@@ -1124,14 +1207,17 @@ assert(#S == #(unique S))
 TEST /// --bettis
 R = QQ[x,y,z];
 assert(#bettiTablesWithHilbertFunction({1,2,1,0}, R) == 2)
-assert(values bettiTablesWithHilbertFunction({1,2,1,0}, R, Count => true) == {3, 6})
+assert(set values bettiTablesWithHilbertFunction({1,2,1,0}, R, Count => true) === set{3, 6})
 assert(#bettiTablesWithHilbertFunction({1,3,4,2,1,0}, R) == 8)
-assert(values bettiTablesWithHilbertFunction({1,3,4,2,1,0}, R, Count => true) == {54, 30, 24, 18, 9, 6, 12, 3})
+assert(set values bettiTablesWithHilbertFunction({1,3,4,2,1,0}, R, Count => true) === set{54, 30, 24, 18, 9, 6, 12, 3})
 R = QQ[x,y,z,w];
 assert(#bettiTablesWithHilbertFunction({1,4,3,1,0}, R) == 10)
 b = new BettiTally from {(0,{0},0) => 1, (1,{2},2) => 7, (1,{3},3) => 1, (2,{3},3) => 10, (2,{4},4) => 4, (2,{5},5) => 1, (3,{4},4) => 5, (3,{5},5) => 4, (3,{6},6) => 2, (4,{5},5) => 1, (4,{6},6) => 1, (4,{7},7) => 1} 
 assert(member(b, bettiTablesWithHilbertFunction({1,4,3,1,0}, R)))
 assert(bettiTablesWithHilbertFunction({1,4,10,19,31}, R) == {new BettiTally from {(0,{0},0) => 1, (1,{3},3) => 1}})
+assert(#bettiTablesWithHilbertFunction({1, 4, 7, 10, 13}, S, SquareFree => true, FirstBetti => 5) == 1)
+assert(set values bettiTablesWithHilbertFunction({1, 3, 6, 7, 6, 5, 4, 4, 4}, R, FirstBetti => 6, BoundGenerators => 5, Count => true) === set{48, 522, 12, 72})
+assert(bettiTablesWithHilbertFunction({1, 6, 19, 45, 86}, S, SquareFree => true) == {new BettiTally from {(0,{0},0) => 1, (1,{2},2) => 2, (1,{4},4) => 4, (2,{3},3) => 1, (2,{5},5) => 7, (3,{6},6) => 3}})
 ///
 
 TEST /// --top min primes
@@ -1169,4 +1255,4 @@ loadPackage("MonomialIntegerPrograms", Configuration => {"CustomScipPrintLevel" 
 help("ScipPrintLevel")
 needsPackage("MonomialIntegerPrograms")
 check("MonomialIntegerPrograms")
-help monomialIdealsWithHilbertFunction
+help bettiTablesWithHilbertFunction
