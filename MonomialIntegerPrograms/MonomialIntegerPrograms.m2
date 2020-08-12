@@ -1292,6 +1292,10 @@ assert(monomialIdealsWithHilbertFunction({1, 3, 3}, R, FirstBetti => 200) == {})
 ///
 
 
+TEST /// --infeasible IPs in bettiTables...
+R = QQ[x,y,z];
+assert(bettiTablesWithHilbertFunction({1, 3, 3}, R, FirstBetti => 200) == {})
+///
 
 end--
 
