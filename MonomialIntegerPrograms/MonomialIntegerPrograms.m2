@@ -805,92 +805,89 @@ doc ///
   BoundGenerators
   FirstBetti
   GradedBettis
+  SquareFree
  Headline
   find all monomial ideals in a polynomial ring with a particular (partial or complete) Hilbert function
  Usage
   monomialIdealsWithHilbertFunction(L, R)
+  monomialIdealsWithHilbertFunction(L, R, BoundGenerators => a)
+  monomialIdealsWithHilbertFunction(L, R, FirstBetti => b)
+  monomialIdealsWithHilbertFunction(L, R, GradedBettis => B)
+  monomialIdealsWithHilbertFunction(L, R, SquareFree => x)
  Inputs
   L: List
    $\{h(0), h(1), \ldots, h(d)\}$, the values of a valid Hilbert function of a graded ring for degrees $0\ldots d$.
   R: Ring
    a polynomial ring
+  a: ZZ
+   a degree bound on the monomial generators
+  b: ZZ
+   a specified first total Betti number
+  B: List
+   $\{b_0, b_1, \ldots, b_d\}$, the first graded Betti numbers for degrees $0,\ldots, d$.
+  x: Boolean
+   whether or not to consider squarefree monomial ideals only
  Outputs
    :List
     all ideals $I$ of $R$ that satisfy $HF(R/I, i) = h(i)$ for all $0\le i\le d$
  Description
   Text
-   Macaulay's Theorem characterizes all integer sequences which may be the Hilbert function of a graded ring. The package
-   @TO LexIdeals@ has several functions based on this theorem, including the function @TO isHF@ which takes an integer 
-   sequence and returns true if it is a valid (partial) Hilbert function, and false otherwise.
-   
-   When you call @TT"monomialIdealsWithHilbertFunction(L, R)"@, first the function @TT"isHF L"@ is called to make sure
-   that the problem is feasible. 
-   
-   Another useful function from the @TO LexIdeals@ package is @TO hilbertFunct@, which returns the first
-   few values of the Hilbert function of a homogeneous ideal as a list. The default degree limit
-   is 20, but this can be adjusted by the user.
+   For example, count the monomial ideals in $\mathbb{Q}[x,y,z]$, generated in degrees up to 5, whose Hilbert
+   function begins with $\{1, 3, 6, 5, 4, 4\}$:
   Example
-   needsPackage("LexIdeals");
-   R = QQ[x,y,z];
-   I = monomialIdeal(x*y*z, x^2*y, y^2*z, x^3, y^3);
-   hilbertFunct I
-   L = hilbertFunct(I, MaxDegree => 5)
-  Text
-   As an example, let's find all monomial ideals of $R$, generated in degrees at
-   most 5, with the same  Hilbert function as $I$. Because there are many, we'll print the first
-   few only. The list of monomial ideals has no particular order.
-  Example
-   ScipPrintLevel = 0;
+   ScipPrintLevel = 0; --to suppress printing of extra solving info
+   R = QQ[x,y,z]; L = {1, 3, 6, 5, 4, 4};
    M = monomialIdealsWithHilbertFunction(L, R);
    #M
    netList take(M, 5)
   Text
-   This function can generate interesting data, such as all possible Betti tables of ideals with
-   a given Hilbert function (and bounded generating degrees), along with their frequency.
+   By default, the degrees of generators are bounded by the length of $L$. A lower bound can be set
+   manually with the BoundGenerators option.
   Example
-   tally apply(M, m -> betti res m)   
+   M2 = monomialIdealsWithHilbertFunction(L, R, BoundGenerators => 3);
+   #M2
+   netList take(M2, 5)
+  Text 
+   There is also an option to enumerate squarefree monomial ideals only.
+  Example
+   S = QQ[a..f]
+   I = monomialIdealsWithHilbertFunction({1, 6, 19, 45, 86}, S, SquareFree => true);
+   #I
+   first random I
   Text
-   In the previous example, the list $L$ determines a unique Hilbert function, i.e.
-   the only Hilbert function beginning with $\{1,3,6,5,4,4\}$ is the one
-   which is constantly 4 after that point. However, uniqueness is not
-   necessary to use this function. For instance, let's truncate the same Hilbert function
-   at degree 4 and see what happens.
+   To specify the total number of minimal generators, use FirstBetti.
   Example
-   L' = hilbertFunct(I, MaxDegree => 4)
-   M' = monomialIdealsWithHilbertFunction(L', R);
-   #M'
-   tally apply(M', m -> hilbertFunct(m, MaxDegree => 10))
+   #monomialIdealsWithHilbertFunction({1, 3, 6, 5, 4, 4}, R, FirstBetti => 5)
+   #monomialIdealsWithHilbertFunction({1, 3, 6, 5, 4, 4}, R, FirstBetti => 6)
   Text
-   By using a partial Hilbert function, we get all possible completions of the
-   function that correspond to ideals generated in degrees at most 4, in our
-   ring, along with the number of monomial ideals corresponding
-   to each. We can see that the 306 ideals whose Hilbert function is
-   eventually constantly 4 appear in the list, but there are others too.
-   
-   By default, the degrees of the generators are bounded by the length of the list.
-   To set a different degree bound, use the @TT"BoundGenerators"@ option.
-   The next example shows that there are 156 monomial ideals in $k[x,y,z]$ 
-   with Hilbert function beginning $(1,3,4,2,1)$ generated in degree at most
-   4, but only 48 generated in degree at most 3.
+   Alternatively, specify the number of minimal generators in each degree using GradedBettis. The
+   length of the list of graded (first) Betti numbers should match the length of the partial
+   Hilbert function.
   Example
-   #monomialIdealsWithHilbertFunction({1,3,4,2,1}, R)
-   #monomialIdealsWithHilbertFunction({1,3,4,2,1}, R, BoundGenerators => 4)   
-   #monomialIdealsWithHilbertFunction({1,3,4,2,1}, R, BoundGenerators => 3)
+   #monomialIdealsWithHilbertFunction({1, 3, 4, 2, 1}, R, GradedBettis => {0, 0, 2, 2, 1})
   Text
-   To specify the total number of minimal generators, use @TO FirstBetti@.
-   For example, to find all the ideals with exactly $5$ generators:
+   Notice that the GradedBettis option totally constrains the degrees of generators already, so do 
+   not use it with the BoundGenerators option.
   Example
-   #monomialIdealsWithHilbertFunction({1,3,4,2,1}, R, FirstBetti => 5)
+   #monomialIdealsWithHilbertFunction({1, 3, 4, 2, 1}, R, GradedBettis => {0, 0, 2, 3, 0})
+   --already bounds generators to degree 3 or below
   Text
-   To specify the number of minimal generators in each degree, use @TO GradedBettis@:
+   You can combine BoundGenerators with FirstBetti, however, since FirstBetti does not constrain degrees.
   Example
-   #monomialIdealsWithHilbertFunction({1,3,4,2,1}, R, GradedBettis => {0,0,2,2,1})
+   #monomialIdealsWithHilbertFunction({1, 3, 6, 7, 6, 5, 4, 4, 4}, R, FirstBetti => 6, BoundGenerators => 5)
+   #monomialIdealsWithHilbertFunction({1, 3, 6, 7, 6, 5, 4, 4, 4}, R, FirstBetti => 6, BoundGenerators => 6)
+  Text
+   The SquareFree option can be used with any of the other options.
+  Example
+   #monomialIdealsWithHilbertFunction({1, 4, 7, 10, 13}, S, SquareFree => true, FirstBetti => 5)
+   #monomialIdealsWithHilbertFunction({1, 4, 7, 10, 13}, S, SquareFree => true, FirstBetti => 6, BoundGenerators => 3)
+   #monomialIdealsWithHilbertFunction({1, 4, 7, 10, 13}, S, SquareFree => true, GradedBettis => {0, 2, 3, 1, 0})   
  SeeAlso
+  bettiTablesWithHilbertFunction
   hilbertFunct
   isHF
+  isSquareFree
   LexIdeals
-  MonomialIntegerPrograms
-  symbol ScipPrintLevel
 ///
 
 doc ///
@@ -1236,3 +1233,4 @@ help("sample session in Monomial Integer Programs")
 help("ScipPrintLevel")
 needsPackage("MonomialIntegerPrograms")
 check("MonomialIntegerPrograms")
+help monomialIdealsWithHilbertFunction
