@@ -160,18 +160,15 @@ monomialIdealsWithHilbertFunction = method(
 	}
     );
 monomialIdealsWithHilbertFunction (List, Ring) := o -> (D, R) -> (
-    if not isHF D then error(
-	"impossible values for a Hilbert function! Make sure your Hilbert function corresponds to the QUOTIENT of a homogeneous ideal"
-	);
-    if o.FirstBetti =!= null and o.GradedBettis =!= null then error(
-	"cannot specify FirstBetti and GradedBettis options simultaneously"
-	);
-    n := numgens R;
-    Dlist := apply(#D, i -> binomial(n+i-1,i)-D#i);
-    if all(Dlist, d -> d==0) then return {monomialIdeal(0_R)};
-    (dir, zimplFile, solFile, errorFile, detailsFile) := tempDirectoryAndFiles("hilbert");            
-    zimplFile << hilbertIPFormulation(Dlist, n, o) << close;
-    run(concatenate("(",ScipPath, 
+    if not isHF D then(if ScipPrintLevel >= 1 then print("Impossible Hilbert function values."); {})
+    else(
+	if o.FirstBetti =!= null and o.GradedBettis =!= null then error("cannot specify FirstBetti and GradedBettis options simultaneously");
+	n := numgens R;
+    	Dlist := apply(#D, i -> binomial(n+i-1,i)-D#i);
+    	if all(Dlist, d -> d==0) then return {monomialIdeal(0_R)};
+    	(dir, zimplFile, solFile, errorFile, detailsFile) := tempDirectoryAndFiles("hilbert");            
+    	zimplFile << hilbertIPFormulation(Dlist, n, o) << close;
+    	run(concatenate("(",ScipPath, 
 	    " -c 'set emphasis counter'",
 	    " -c 'set constraints countsols collect TRUE'",     
 	    " -c 'read ", zimplFile,
@@ -183,8 +180,9 @@ monomialIdealsWithHilbertFunction (List, Ring) := o -> (D, R) -> (
 	    detailsFile,
 	    " 2>",
 	    errorFile));
-    printStatement({zimplFile, solFile, errorFile, "Hilbert", dir});
-    readAllMonomialIdeals(solFile, R)
+        printStatement({zimplFile, solFile, errorFile, "Hilbert", dir});
+    	readAllMonomialIdeals(solFile, R)
+	)
     )
 
 
@@ -1296,6 +1294,14 @@ TEST /// --infeasible IPs in bettiTables...
 R = QQ[x,y,z];
 assert(bettiTablesWithHilbertFunction({1, 3, 3}, R, FirstBetti => 200) == {})
 ///
+
+TEST /// --infeasible Hilbert functions
+R = QQ[x,y,z];
+assert(monomialIdealsWithHilbertFunction({1, 3, 7}, R) == {})
+assert(monomialIdealsWithHilbertFunction({1, 3, 7}, R, FirstBetti => 200) == {})
+assert(bettiTablesWithHilbertFunction({1, 3, 7}, R) == {})
+///
+
 
 end--
 
