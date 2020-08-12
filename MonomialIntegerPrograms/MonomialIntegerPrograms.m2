@@ -687,7 +687,7 @@ doc ///
    If a @TT"KnownDim"@ is not provided, @TT"degreeIP"@ will first
    call @TO dimensionIP@ to compute the dimension.
    Additionally, before doing any computation, the cache of
-   @TT cokernel generators I@ is checked to see if the degree has been previously computed.
+   @TT"cokernel generators I"@ is checked to see if the degree has been previously computed.
    
    An integer programming formulation of the degree problem is
    written to a temporary file directory, then the SCIP
