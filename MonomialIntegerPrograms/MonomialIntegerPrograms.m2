@@ -365,15 +365,15 @@ printStatement (List) := L -> (
 readAllMonomialIdeals = method()
 readAllMonomialIdeals (String, Ring) := (solFile, R) -> (
     n := numgens R;
-    L := lines get solFile;
-    L = apply(L, l -> separate(",",l));
-    yIndices := positions(L#0, a -> select("Y",a)=!={});
-    exps := for y in yIndices list drop(separate("#",L#0#y),1);
-    mons := apply(exps, e -> product apply(n, i-> R_i^(value e_i)));
-    L = drop(L, 1);
-    allSolutions := apply(L, 
-	ln -> monomialIdeal mons_(positions(ln_yIndices, i -> value i == 1))
+    try(L := lines get solFile;
+	L = apply(L, l -> separate(",",l));
+	yIndices := positions(L#0, a -> select("Y",a)=!={});
+    	exps := for y in yIndices list drop(separate("#",L#0#y),1);
+    	mons := apply(exps, e -> product apply(n, i-> R_i^(value e_i)));
+    	L = drop(L, 1);
+    	apply(L, ln -> monomialIdeal mons_(positions(ln_yIndices, i -> value i == 1)))
 	)
+    else(if ScipPrintLevel >= 1 then print("Infeasible IP; no solutions"); {} )
     )
 
 readAllPrimes = method()
@@ -1246,6 +1246,13 @@ L = monomialIdeal(y^12, x*y^3, z*w^3, z*v*y^10, z*x^10, v*z^10, w*v^10, y*v*x*z*
 assert(set(minimalPrimesIP L) === set(minimalPrimes L) )
 ///
 
+TEST /// --infeasible IPs in monomialIdeals...
+R = QQ[x,y,z];
+assert(monomialIdealsWithHilbertFunction({1, 3, 3}, R, FirstBetti => 200) == {})
+///
+
+
+
 end--
 
 restart
@@ -1255,4 +1262,6 @@ loadPackage("MonomialIntegerPrograms", Configuration => {"CustomScipPrintLevel" 
 help("ScipPrintLevel")
 needsPackage("MonomialIntegerPrograms")
 check("MonomialIntegerPrograms")
-help bettiTablesWithHilbertFunction
+viewHelp bettiTablesWithHilbertFunction
+
+
