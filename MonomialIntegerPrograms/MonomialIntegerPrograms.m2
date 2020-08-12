@@ -622,20 +622,38 @@ doc ///
    {\bf 5} all the above, plus print any other information sent by 
    SCIP to stdout during the solve, if any
 
-   The default value of ScipPrintLevel, set every time
-   the package is loaded, is 1.
+   The default value of ScipPrintLevel is 1. To load the package with a different
+   default value for ScipPrintLevel, imitate the following example.
+  CannedExample
+   i1: loadPackage("MonomialIntegerPrograms", Configuration => {"CustomScipPrintLevel" => "0"});
+   --loading configuration for package "MonomialIntegerPrograms" from file <foo>
+   Using default executable name "scip".
+   To change this, load package using CustomPath option.
+
+   o1 = MonomialIntegerPrograms
+
+   o1 : Package
+
+   i2 : ScipPrintLevel
+
+   o2 = 0
+  Text
+   Replace "0" above  with any custom choice. Note that the string "0" is used, not an integer.
+   
    
    {\bf Why am I getting warnings/why does the solver report infeasibility for
    the degree count?}
 
+   This often happens when ScipPrintLevel is set to 2 or above and is not an error, but a consequence
+   of the normal solving behavior of SCIP. 
    Computing the degree of a monomial ideal is done by counting the number of feasible solutions
-   to a certain integer program. SCIP is generally designed to find a single optimal or feasible
-   solution, so to count them it uses the following "trick": every time SCIP encounters a feasible
-   solution or branch, it is recorded, then a constraint is added to make the new solution/branch infeasible, and the 
-   search is continued. Eventually, all the solutions are recorded and the entire problem has been 
+   to a certain integer program. SCIP is generally programmed to find a single optimal or feasible
+   solution and then terminate, so to count them it uses the following "trick": Every time SCIP encounters a feasible
+   solution or branch, it is recorded, then a constraint is added to make the new solution/branch 
+   infeasible, so the search can continue. Eventually, all the solutions are recorded and the entire problem has been 
    made "infeasible." Thus the solving details for the degree problem print a final result of 
-   "problem is infeasible," but the correct count has been taken. For more details, see the SCIP
-   documentation page @HREF"https://scip.zib.de/doc/html/COUNTER.php"@.
+   "problem is infeasible," but the correct count has been taken. For more details, see this
+   specific SCIP documentation page: @HREF"https://scip.zib.de/doc/html/COUNTER.php"@.
 
  SeeAlso
   MonomialIntegerPrograms
@@ -1212,8 +1230,9 @@ end--
 
 restart
 uninstallPackage("MonomialIntegerPrograms")
-installPackage("MonomialIntegerPrograms")
+installPackage("MonomialIntegerPrograms", MakeDocumentation => true)
 loadPackage("MonomialIntegerPrograms", Configuration => {"CustomScipPrintLevel" => "0"})
-viewHelp("sample session in Monomial Integer Programs")
+help("sample session in Monomial Integer Programs")
+help("ScipPrintLevel")
 needsPackage("MonomialIntegerPrograms")
 check("MonomialIntegerPrograms")
