@@ -7,8 +7,8 @@ newPackage (
       },
   Headline => "using integer programming for fast computations with monomial ideals",
   Configuration => {
-      "CustomPath" => "",
-      "CustomScipPrintLevel" => ""
+      "CustomPath" => null,
+      "CustomScipPrintLevel" => null
       },
   PackageImports => {"LexIdeals"},
   DebuggingMode => true
@@ -41,13 +41,13 @@ exportMutable {
 
 userPath = MonomialIntegerPrograms#Options#Configuration#"CustomPath";
 
-ScipPath = if userPath == "" then(
+ScipPath = if userPath === null then(
     print("Using default executable name \"scip\".\nTo change this, load package using CustomPath option.");
     "scip") else userPath;
 
 userPrintLevel = MonomialIntegerPrograms#Options#Configuration#"CustomScipPrintLevel";
 
-ScipPrintLevel = if userPrintLevel == "" then(
+ScipPrintLevel = if userPrintLevel === null then(
     print("Current value of ScipPrintLevel is 1.\nTo set a custom default value, load package using CustomScipPrintLevel option.");
     1) else value userPrintLevel;
 ------------------------
@@ -130,8 +130,8 @@ bettiTablesWithHilbertFunction = method(
     Options => {
 	Count => false,
 	BoundGenerators => -1,
-	FirstBetti => "",
-	GradedBettis => "",
+	FirstBetti => null,
+	GradedBettis => null,
 	SquareFree => false
 	}
     );
@@ -154,8 +154,8 @@ bettiTablesWithHilbertFunction (List, Ring) := o -> (D, R) -> (
 monomialIdealsWithHilbertFunction = method(
     Options => {
 	BoundGenerators => -1,
-	FirstBetti => "",
-	GradedBettis => "",
+	FirstBetti => null,
+	GradedBettis => null,
 	SquareFree => false
 	}
     );
@@ -163,7 +163,7 @@ monomialIdealsWithHilbertFunction (List, Ring) := o -> (D, R) -> (
     if not isHF D then error(
 	"impossible values for a Hilbert function! Make sure your Hilbert function corresponds to the QUOTIENT of a homogeneous ideal"
 	);
-    if o.FirstBetti =!= "" and o.GradedBettis =!= "" then error(
+    if o.FirstBetti =!= null and o.GradedBettis =!= null then error(
 	"cannot specify FirstBetti and GradedBettis options simultaneously"
 	);
     n := numgens R;
@@ -280,8 +280,8 @@ codimensionIPFormulation (MonomialIdeal) := (I) -> (
 hilbertIPFormulation = method(
     Options => {
 	BoundGenerators => -1,
-	FirstBetti => "",
-	GradedBettis => "",
+	FirstBetti => null,
+	GradedBettis => null,
 	SquareFree => false
 	}
     );
@@ -300,7 +300,7 @@ hilbertIPFormulation (List, ZZ) := o -> (D, n) -> (
 	    "    Y[",varsCommas,"] == 0;"
 	    });
     );
-    if o.GradedBettis =!= "" then (
+    if o.GradedBettis =!= null then (
 	G := o.GradedBettis; 
 	if #G-1 > db then error("degrees of generators cannot be higher than degree bound");
 	bettiLines = concatenate({
@@ -310,7 +310,7 @@ hilbertIPFormulation (List, ZZ) := o -> (D, n) -> (
 	    "    sum <", varsCommas, "> in M with ", varsPluses, " == degree: Y[",varsCommas,"] == Q[degree];\n"
 	    })
     );
-    if o.FirstBetti =!= "" then (
+    if o.FirstBetti =!= null then (
     	bettiLines = concatenate({"\nsubto totalBetti: sum <", varsCommas, "> in M: Y[",varsCommas,"] == ",toString o.FirstBetti, ";\n"})
 	);
     concatenate({
@@ -674,18 +674,18 @@ doc ///
   d = degreeIP(I)
   d = degreeIP(I, KnownDim => k)
  Inputs
-  I:MonomialIdeal
-  k:ZZ
-   if known, the dimension of the ideal (optional)
+  I : MonomialIdeal
+  KnownDim => ZZ
+   the dimension, @TT"k"@, of the ideal
  Outputs
   d:ZZ
-   the degree of $I$. That is, if $k$ is the maximum dimension of
-   a coordinate subspace in the variety of $I$, then $degree(I)$ is
-   the number of $k$-dimensional subspaces in the variety.
+   the degree of @TT"I"@. That is, if @TT"k"@ is the maximum dimension of
+   a coordinate subspace in the variety of @TT"I"@, then @TT"degree(I)"@ is
+   the number of @TT"k"@-dimensional subspaces in the variety.
  Description
   Text
    If a @TT"KnownDim"@ is not provided, @TT"degreeIP"@ will first
-   call {@TO dimensionIP@}($I$) to compute the dimension.
+   call @TO dimensionIP@ to compute the dimension.
    
    An integer programming formulation of the degree problem is
    written to a temporary file directory, then the SCIP
@@ -821,13 +821,13 @@ doc ///
    $\{h(0), h(1), \ldots, h(d)\}$, the values of a valid Hilbert function for $R$ for degrees $0\ldots d$.
   R: Ring
    a polynomial ring
-  a: ZZ
+  BoundGenerators => ZZ
    a degree bound on the monomial generators
-  b: ZZ
+  FirstBetti => ZZ
    a specified first total Betti number
-  B: List
-   $\{b_0, b_1, \ldots, b_d\}$, the first graded Betti numbers for degrees $0,\ldots, d$.
-  x: Boolean
+  GradedBettis => List
+   if the form $\{b_0, b_1, \ldots, b_d\}$, where $b_i$ is the first graded Betti numbers with degree $i$.
+  SquareFree => Boolean
    whether or not to consider squarefree monomial ideals only
  Outputs
    :List
@@ -920,7 +920,7 @@ doc ///
   FirstBetti => ZZ
    a specified first total Betti number
   GradedBettis => List
-   $\{b_0, b_1, \ldots, b_d\}$, the first graded Betti numbers for degrees $0,\ldots, d$.
+   if the form $\{b_0, b_1, \ldots, b_d\}$, where $b_i$ is the first graded Betti numbers with degree $i$.
   SquareFree => Boolean
    whether or not to consider squarefree monomial ideals only
   Count => Boolean
@@ -984,10 +984,13 @@ doc ///
  Usage
   topMinimalPrimesIP(I)
   topMinimalPrimesIP(I, KnownDim => k)
+  topMinimalPrimesIP(I, IgnorePrimes => P)
  Inputs
   I:MonomialIdeal
-  k:ZZ
-   if known, the dimension of the ideal (optional)
+  KnownDim => ZZ
+   the dimension, @TT"k"@, of the ideal
+  IgnorePrimes => List
+    a list of primes to not include the the result. See @TO IgnorePrimes@.
  Outputs
   L:List
    all minimal associated primes of dimension $k$
@@ -1140,6 +1143,41 @@ doc ///
         IgnorePrimes
 ///
 
+
+
+
+
+
+doc ///
+  Key
+    FirstBetti
+  SeeAlso
+    [monomialIdealsWithHilbertFunction, FirstBetti]
+///
+doc ///
+  Key
+    GradedBettis
+  SeeAlso
+    [monomialIdealsWithHilbertFunction, GradedBettis]
+///
+doc ///
+  Key
+    BoundGenerators
+  SeeAlso
+    [monomialIdealsWithHilbertFunction, BoundGenerators]
+///
+doc ///
+  Key
+    SquareFree
+  SeeAlso
+    [monomialIdealsWithHilbertFunction, SquareFree]
+///
+doc ///
+  Key
+    Count
+  SeeAlso
+    [bettiTablesWithHilbertFunction, SquareFree]
+///
 
 
 -----------
