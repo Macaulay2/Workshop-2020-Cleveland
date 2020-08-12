@@ -915,15 +915,15 @@ doc ///
    $\{h(0), h(1), \ldots, h(d)\}$, the values of a valid Hilbert function for $R$ for degrees $0\ldots d$.
   R: Ring
    a polynomial ring
-  a: ZZ
+  BoundGenerators => ZZ
    a degree bound on the monomial generators
-  b: ZZ
+  FirstBetti => ZZ
    a specified first total Betti number
-  B: List
+  GradedBettis => List
    $\{b_0, b_1, \ldots, b_d\}$, the first graded Betti numbers for degrees $0,\ldots, d$.
-  x: Boolean
+  SquareFree => Boolean
    whether or not to consider squarefree monomial ideals only
-  y: Boolean
+  Count => Boolean
    whether or not to return the count of unique tables instead of all values
  Outputs
    :List
