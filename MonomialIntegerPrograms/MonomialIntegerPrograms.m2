@@ -964,69 +964,6 @@ doc ///
   This may not be faster than simply using @TO minimalPrimes@ and counting generators.
 ///
 
-
-
-doc ///
- Key
-  "sample session in Monomial Integer Programs"
- Description
-  Example
-   R = QQ[x,y];
-   L = {1,2,3,4,4,3,2,1,1};
-   M = monomialIdealsWithHilbertFunction(L, R); 
-   #M
-   member(monomialIdeal(x^5*y, x^2*y^2, x*y^4, y^7), M)
-  Text
-   To look at all possible Betti tables for this Hilbert function:
-  Example
-   T = tally apply(M, m -> betti res m); 
-   netList({keys T, values T}, Alignment => Center, HorizontalSpace => 1)
-  Text
-   To specify the total number of minimal generators:
-  Example
-   monomialIdealsWithHilbertFunction(L, R, FirstBetti => 2)
-  Text
-   The symbol @TT"ScipPrintLevel"@ controls how much of the inner workings of
-   the package are visible to the user. At level 3, for instance, the IP passed
-   to SCIP is printed to the screen, as are any warnings or errors sent to stderr
-   by SCIP, before returning the answer.
-  Example
-   ScipPrintLevel = 3;
-   monomialIdealsWithHilbertFunction(L, R, FirstBetti => 2)
-   ScipPrintLevel = 0; --don't even display the temporary file directory
-  Text
-   To find the probability of having Hilbert function $L = \{1,2,3,4,4,3,2,1,1,...\}$:
-  Example
-   S = QQ[p];
-   probL = sum apply(M, m -> p^(numgens m)*(1-p)^(-1+sum L));
-   factor probL
-   substitute(probL, p => 0.2)
-  Text
-   To find the probability of Hilbert function $L$ and graded Betti numbers $\{0,0,0,0,1,1,1,1,0\}$:
-  Example
-   B = {0,0,0,0,1,1,1,1,0};
-   M' = monomialIdealsWithHilbertFunction(L, R, GradedBettis => B);
-   probLB = #M'*p^(sum B)*(1-p)^(-1+sum L);
-   factor probLB
-   substitute(probLB, p => 0.2)
-  Text
-   Here is a more complicated example.
-  Example
-   R = QQ[x,y,z];
-   needsPackage("RandomIdeals");
-   I = monomialIdeal randomMonomialIdeal({3,3,3,4,4,4,5,5,5,6,6,6},R)
-   H = apply(7, i -> hilbertFunction(i,I))
-   elapsedTiming(M = monomialIdealsWithHilbertFunction(H, R);)
-   #M
-   B = for j from 0 to 6 list number(apply(flatten entries mingens I, i -> first degree i), i -> i==j)
-   elapsedTiming(M' = monomialIdealsWithHilbertFunction(H, R, GradedBettis => B);)
-   #M'
-   tally(apply(M', m -> betti res m))
- SeeAlso
-  MonomialIntegerPrograms
-///
-
-
 doc ///
  Key
   loadBuiltinCodimAndDegree
@@ -1229,7 +1166,6 @@ restart
 uninstallPackage("MonomialIntegerPrograms")
 installPackage("MonomialIntegerPrograms", MakeDocumentation => true)
 loadPackage("MonomialIntegerPrograms", Configuration => {"CustomScipPrintLevel" => "0"})
-help("sample session in Monomial Integer Programs")
 help("ScipPrintLevel")
 needsPackage("MonomialIntegerPrograms")
 check("MonomialIntegerPrograms")
