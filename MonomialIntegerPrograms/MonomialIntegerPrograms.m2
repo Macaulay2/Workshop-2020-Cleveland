@@ -356,10 +356,10 @@ monIdealToSupportSets (MonomialIdeal) := (I) -> (
 printStatement = method();
 printStatement (List) := L -> (
     (zimplFile, solFile, errorFile, nickname, dir) := toSequence L;
-    if ScipPrintLevel >= 3 then print(get zimplFile);
-    if ScipPrintLevel >= 4 then print(get solFile);
-    if ScipPrintLevel >= 2 then print(get errorFile);
     if ScipPrintLevel >= 1 then print(nickname|" files saved in directory: "|dir);
+    if ScipPrintLevel >= 2 then try print(get errorFile) else print("No SCIP errors reported.");
+    if ScipPrintLevel >= 3 then try print(get zimplFile) else print("ZIMPL file not found! This might be an error or bug.");
+    if ScipPrintLevel >= 4 then try print(get solFile) else print("SCIP solution file not found! This is probably due to an infeasible IP.");
 )
 
 readAllMonomialIdeals = method()
@@ -1296,10 +1296,11 @@ end--
 restart
 uninstallPackage("MonomialIntegerPrograms")
 installPackage("MonomialIntegerPrograms", MakeDocumentation => true)
-loadPackage("MonomialIntegerPrograms", Configuration => {"CustomScipPrintLevel" => "0"})
+loadPackage("MonomialIntegerPrograms")
 help("ScipPrintLevel")
 needsPackage("MonomialIntegerPrograms")
 check("MonomialIntegerPrograms")
 viewHelp bettiTablesWithHilbertFunction
 
+ScipPrintLevel = 4
 
