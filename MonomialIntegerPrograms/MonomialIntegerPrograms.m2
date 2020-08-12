@@ -802,10 +802,10 @@ doc ///
  Key
   monomialIdealsWithHilbertFunction
   (monomialIdealsWithHilbertFunction, List, Ring)
-  BoundGenerators
-  FirstBetti
-  GradedBettis
-  SquareFree
+  [monomialIdealsWithHilbertFunction, BoundGenerators]
+  [monomialIdealsWithHilbertFunction, FirstBetti]
+  [monomialIdealsWithHilbertFunction, GradedBettis]
+  [monomialIdealsWithHilbertFunction, SquareFree]
  Headline
   find all monomial ideals in a polynomial ring with a particular (partial or complete) Hilbert function
  Usage
