@@ -578,7 +578,10 @@ doc ///
    The functions @TO codim@, and @TO degree@ are overwritten for inputs with
    type @TO MonomialIdeal@. Specifically, @TO loadSCIPCodimAndDegree@ is run
    when the package is loaded.
-     
+ Caveat
+  These methods are designed and tested for ideals and polynomial rings with a
+  field as the coefficients ring. For other rings, the behavior of these methods
+  is unspecified.
  SeeAlso
   codimensionIP
   degreeIP
