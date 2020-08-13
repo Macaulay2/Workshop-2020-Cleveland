@@ -361,7 +361,7 @@ printStatement (List) := L -> (
 )
 
 readAllMonomialIdeals = method()
-readAllMonomialIdeals (String, Ring) := (solFile, R) -> (
+readAllMonomialIdeals (String, PolynomialRing) := (solFile, R) -> (
     n := numgens R;
     try(L := lines get solFile;
 	L = apply(L, l -> separate(",",l));
@@ -375,7 +375,7 @@ readAllMonomialIdeals (String, Ring) := (solFile, R) -> (
     )
 
 readAllPrimes = method()
-readAllPrimes (String, Ring) := (solFile, R) -> (
+readAllPrimes (String, PolynomialRing) := (solFile, R) -> (
   n := numgens R;
   L := lines get solFile;
   mons := apply(select("X#([[:digit:]]+)", L#0), a -> R_(value substring(a, 2)));
@@ -475,7 +475,7 @@ dimensionIPWithConstraints (MonomialIdeal, String) := (I, constraints) -> (
 
 
 unPolarize = method();
-unPolarize (MonomialIdeal, Ring) := (I, R) -> (
+unPolarize (MonomialIdeal, PolynomialRing) := (I, R) -> (
   --This reverses the effect of polarize.
   --I is the ideal we wish to unpolarize.
   --R is the ring that we want to map I too.
@@ -490,7 +490,7 @@ unPolarize (MonomialIdeal, Ring) := (I, R) -> (
 
 
 unPolarizeSome = method();
-unPolarizeSome (List, Ring) := (L, R) -> (
+unPolarizeSome (List, PolynomialRing) := (L, R) -> (
   --This applies unPolarize to the ideals in L where all the last indices are 0.
   for I in L list (                                               --loop through the list
     if not all(I_*, zero@@last@@last@@baseName) then continue;    --If one of the last indices is zero, we skip this and go to the next ideal and add nothing.
