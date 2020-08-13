@@ -7,8 +7,8 @@ newPackage (
       },
   Headline => "using integer programming for fast computations with monomial ideals",
   Configuration => {
-      "CustomPath" => null,
-      "CustomScipPrintLevel" => null
+      "CustomPath" => "",
+      "CustomScipPrintLevel" => ""
       },
   PackageImports => {"LexIdeals"},
   DebuggingMode => true
@@ -41,15 +41,15 @@ exportMutable {
 
 userPath = MonomialIntegerPrograms#Options#Configuration#"CustomPath";
 
-ScipPath = if userPath === null then(
+ScipPath = if userPath === "" then(
     print("Using default executable name \"scip\".\nTo change this, load package using CustomPath option.");
     "scip") else userPath;
 
 userPrintLevel = MonomialIntegerPrograms#Options#Configuration#"CustomScipPrintLevel";
 
-ScipPrintLevel = if userPrintLevel === null then(
-    print("Current value of ScipPrintLevel is 1.\nTo set a custom default value, load package using CustomScipPrintLevel option.");
-    1) else value userPrintLevel;
+ScipPrintLevel = if userPrintLevel === "" then(
+    print("Current value of ScipPrintLevel is 0.\nTo set a custom default value, load package using CustomScipPrintLevel option.");
+    0) else value userPrintLevel;
 ------------------------
 -- codim, dim, degree --
 ------------------------
@@ -937,7 +937,6 @@ doc ///
    The Count option does not fundamentally change how the computation is performed, only how the
    results are reported.
   Example
-   ScipPrintLevel = 0; --to suppress printing of extra solving info
    R = QQ[x,y,z]; L = {1, 3, 5, 5, 4};
    bettiTablesWithHilbertFunction(L, R)
    bettiTablesWithHilbertFunction(L, R, Count => true)
