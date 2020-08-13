@@ -135,7 +135,7 @@ bettiTablesWithHilbertFunction = method(
 	SquareFree => false
 	}
     );
-bettiTablesWithHilbertFunction (List, Ring) := o -> (D, R) -> (
+bettiTablesWithHilbertFunction (List, PolynomialRing) := o -> (D, R) -> (
     M := monomialIdealsWithHilbertFunction(D, R, 
 	BoundGenerators => o.BoundGenerators, 
 	FirstBetti => o.FirstBetti, 
@@ -159,7 +159,7 @@ monomialIdealsWithHilbertFunction = method(
 	SquareFree => false
 	}
     );
-monomialIdealsWithHilbertFunction (List, Ring) := o -> (D, R) -> (
+monomialIdealsWithHilbertFunction (List, PolynomialRing) := o -> (D, R) -> (
     if not isHF D then(if ScipPrintLevel >= 1 then print("Impossible Hilbert function values."); {})
     else(
 	if o.FirstBetti =!= null and o.GradedBettis =!= null then error("cannot specify FirstBetti and GradedBettis options simultaneously");
@@ -513,23 +513,6 @@ doc ///
   A package for fast monomial ideal computations using constraint integer programming
  Description
   Text
-   This package uses integer program reformulations to perform faster
-   computations on monomial ideals. The functions currently available
-   are:
-   
-   @TO codimensionIP@--codimension of a monomial ideal
-   
-   @TO dimensionIP@--dimension of a monomial ideal
-   
-   @TO degreeIP@--degree of a monomial ideal, currently for squarefree only
-   
-   @TO topMinimalPrimesIP@--lists all minimal primes of maximum dimension
-   
-   @TO monomialIdealsWithHilbertFunction@--lists all monomial ideals in a given ring
-   with a given Hilbert function
-   
-   Additional functions are in development.
-  
    {\bf Installation and licensing information.}
    
    This package relies on the constraint integer program solver SCIP, which
@@ -806,7 +789,7 @@ doc ///
 doc ///
  Key
   monomialIdealsWithHilbertFunction
-  (monomialIdealsWithHilbertFunction, List, Ring)
+  (monomialIdealsWithHilbertFunction, List, PolynomialRing)
   [monomialIdealsWithHilbertFunction, BoundGenerators]
   [monomialIdealsWithHilbertFunction, FirstBetti]
   [monomialIdealsWithHilbertFunction, GradedBettis]
@@ -822,8 +805,7 @@ doc ///
  Inputs
   L: List
    $\{h(0), h(1), \ldots, h(d)\}$, the values of a valid Hilbert function for $R$ for degrees $0\ldots d$.
-  R: Ring
-   a polynomial ring
+  R: PolynomialRing
   BoundGenerators => ZZ
    a degree bound on the monomial generators
   FirstBetti => ZZ
@@ -974,7 +956,7 @@ doc ///
 doc ///
  Key
   bettiTablesWithHilbertFunction
-  (bettiTablesWithHilbertFunction, List, Ring)
+  (bettiTablesWithHilbertFunction, List, PolynomialRing)
   [bettiTablesWithHilbertFunction, BoundGenerators]
   [bettiTablesWithHilbertFunction, FirstBetti]
   [bettiTablesWithHilbertFunction, GradedBettis]
@@ -992,8 +974,7 @@ doc ///
  Inputs
   L: List
    $\{h(0), h(1), \ldots, h(d)\}$, the values of a valid Hilbert function for $R$ for degrees $0\ldots d$.
-  R: Ring
-   a polynomial ring
+  R: PolynomialRing
   BoundGenerators => ZZ
    a degree bound on the monomial generators
   FirstBetti => ZZ
