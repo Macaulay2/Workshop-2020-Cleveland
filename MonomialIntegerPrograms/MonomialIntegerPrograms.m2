@@ -1566,7 +1566,6 @@ assert(degreeIP monomialIdeal(K_*) == degree monomialIdeal(K_*))
 TEST /// --hilbert
 R = QQ[x,y,z];
 assert(#monomialIdealsWithHilbertFunction({1,2,1,0}, R) == 9)
-assert(#monomialIdealsWithHilbertFunction({1,3,4,2,1,0}, R) == 156)
 assert(#monomialIdealsWithHilbertFunction({1,3,4,2,1,0}, R, FirstBetti => 6) == 72)
 assert(b = {0,0,2,3,0,1}; Mb = monomialIdealsWithHilbertFunction({1,3,4,2,1,0}, R, GradedBettis => b); #Mb == 30)
 R = QQ[x,y,z,w];
@@ -1576,8 +1575,8 @@ assert(all(monomialIdealsWithHilbertFunction({1,4,10,19,31}, R), I -> numgens I 
 
 TEST /// -- squarefree and bound generators
 R = QQ[x,y,z,w];
-M = monomialIdealsWithHilbertFunction({1,4,9,14,19}, R, BoundGenerators => 4);
-SF = monomialIdealsWithHilbertFunction({1,4,9,14,19}, R, BoundGenerators => 4, SquareFree => true);
+M = monomialIdealsWithHilbertFunction({1,4,5,6,7}, R, BoundGenerators => 2);
+SF = monomialIdealsWithHilbertFunction({1,4,5,6,7}, R, BoundGenerators => 2, SquareFree => true);
 assert(#SF == 6)
 assert(set select(M, isSquareFree) === set SF) 
 -- squarefree and first betti
@@ -1589,27 +1588,20 @@ sf7 = monomialIdealsWithHilbertFunction({1,5,10,15}, R, SquareFree => true, Firs
 assert(set sf7 === set select(sf, m -> numgens m == 7))
 assert(member(monomialIdeal (x*y, x*z, y*z, y*w, y*v, x*w*v, z*w*v), sf7))
 -- squarefree and graded bettis
-R = QQ[a..f]
-I = monomialIdeal (b*d,  a*b*c*e, d*e, a*c*d*f, a*b*e*f, a*c*e*f)
-S = monomialIdealsWithHilbertFunction({1,6,19,45,86}, R, SquareFree => true, GradedBettis => {0,0,2,0,4});
-assert(member(I,S))
-assert(#S == #(unique S))
+sf8 = monomialIdealsWithHilbertFunction({1,5,10,15}, R, SquareFree => true, GradedBettis => {0,0,5,2});
+assert(#sf8 == 30)
+assert(member(monomialIdeal (x*y, x*z, y*z, y*w, y*v, x*w*v, z*w*v), sf8))
 ///
 
 TEST /// --bettis
 R = QQ[x,y,z];
 assert(#bettiTablesWithHilbertFunction({1,2,1,0}, R) == 2)
 assert(set values bettiTablesWithHilbertFunction({1,2,1,0}, R, Count => true) === set{3, 6})
-assert(#bettiTablesWithHilbertFunction({1,3,4,2,1,0}, R) == 8)
-assert(set values bettiTablesWithHilbertFunction({1,3,4,2,1,0}, R, Count => true) === set{54, 30, 24, 18, 9, 6, 12, 3})
 R = QQ[x,y,z,w];
-assert(#bettiTablesWithHilbertFunction({1,4,3,1,0}, R) == 10)
-b = new BettiTally from {(0,{0},0) => 1, (1,{2},2) => 7, (1,{3},3) => 1, (2,{3},3) => 10, (2,{4},4) => 4, (2,{5},5) => 1, (3,{4},4) => 5, (3,{5},5) => 4, (3,{6},6) => 2, (4,{5},5) => 1, (4,{6},6) => 1, (4,{7},7) => 1} 
-assert(member(b, bettiTablesWithHilbertFunction({1,4,3,1,0}, R)))
 assert(bettiTablesWithHilbertFunction({1,4,10,19,31}, R) == {new BettiTally from {(0,{0},0) => 1, (1,{3},3) => 1}})
-assert(#bettiTablesWithHilbertFunction({1, 4, 7, 10, 13}, S, SquareFree => true, FirstBetti => 5) == 1)
-assert(set values bettiTablesWithHilbertFunction({1, 3, 6, 7, 6, 5, 4, 4, 4}, R, FirstBetti => 6, BoundGenerators => 5, Count => true) === set{48, 522, 12, 72})
-assert(bettiTablesWithHilbertFunction({1, 6, 19, 45, 86}, S, SquareFree => true) == {new BettiTally from {(0,{0},0) => 1, (1,{2},2) => 2, (1,{4},4) => 4, (2,{3},3) => 1, (2,{5},5) => 7, (3,{6},6) => 3}})
+assert(#bettiTablesWithHilbertFunction({1, 4, 7, 10, 13}, R, SquareFree => true, FirstBetti => 4) == 1)
+assert(#(values bettiTablesWithHilbertFunction({1, 2, 2, 1}, R, GradedBettis => {0,2,1,1}, Count => true)) == 2)
+
 ///
 
 TEST /// --top min primes
