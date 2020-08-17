@@ -580,6 +580,7 @@ checkRandomPoint =(I1)->(
 
 randomPointViaDefaultStrategy = method(Options => optRandomPoints);
 randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
+    local fieldSize;
     pointsList := {}; --a list of points to output
     c1 := opts.Codimension;
     if (c1 === null) then (c1 = codim I1); --don't compute it if we already know it.
@@ -589,7 +590,15 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
     if (c1 == 1) then (
         if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 0): trying BruteForce";
         kk := coefficientRing ring I1;
-        fieldSize := ((degree (ideal ambient kk)_0)#0);
+        if (instance(kk, GaloisField)) then (
+            fieldSize = ((degree (ideal ambient kk)_0)#0);
+        )
+        else if (ambient kk === ZZ) then (
+            fieldSize = char kk;
+        )
+        else(
+            error "You must be working over ZZ/p or a GaloisField";
+        );
         pointsList = pointsList | randomPointsBranching(n1, I1, opts++{Strategy=>BruteForce, PointCheckAttempts=>min(30*n1, 4*n1*fieldSize)});
     );
     
@@ -889,6 +898,7 @@ findANonZeroMinor = method(Options => optFindANonZeroMinor);
 findANonZeroMinor(ZZ, Matrix, Ideal) := opts -> (n,M,I)->(
     P := {};
     local kk; 
+    local kk2;
     local R;
     local phi;
     local N; local N1; local N2; local N1new; local N2new;
@@ -905,11 +915,12 @@ findANonZeroMinor(ZZ, Matrix, Ideal) := opts -> (n,M,I)->(
         P = randomPoints(I, ptOpts);
         if #P > 0 then (
             P = P#0;
-            if opts.Verbose then print concatenate("findANonZeroMinor: Found a point.");
-            phi =  map(kk,R,sub(matrix{P},kk));    
+            if opts.Verbose then print concatenate("findANonZeroMinor: Found a point over the ring ", toString(kk2));
+            kk2 = ring P#0;            
+            phi =  map(kk2,R,sub(matrix{P},kk2));    
             N = mutableMatrix phi(M);
             rk = rank(N);
-            if (rk < n) then print "findANonZeroMinor: The matrix didn't have the desired rank at this point.  We may try again";
+            if opts.Verbose and  (rk < n) then print "findANonZeroMinor: The matrix didn't have the desired rank at this point.  We may try again";
         )
         else(
             if opts.Verbose then print concatenate("findANonZeroMinor: Failed to find a point, we may try again.");
@@ -943,7 +954,8 @@ findANonZeroMinor(ZZ, Matrix, Ideal) := opts -> (n,M,I)->(
 
 extendIdealByNonZeroMinor = method(Options=>optFindANonZeroMinor);
 extendIdealByNonZeroMinor(ZZ,Matrix,Ideal):= opts -> (n, M, I) -> (
-    local O;  local Ifin;
+    local O;  
+    local Ifin;
     O = findANonZeroMinor(n,M,I,opts); 
     L1 := ideal (det(O#3));
     Ifin = I + L1;
@@ -1561,6 +1573,21 @@ doc ///
             I = ideal(random(3,R)-2, random(2,R));
             M = jacobian(I);
             extendIdealByNonZeroMinor(2,M,I, Strategy => LinearIntersection)
+        Text
+            One use for this function can be in showing a certain rings are R1 (regular in codimension 1).  Consider the following example which is R1 where computing the dimension of the singular locus takes around 30 seconds as there are 15500 minors of size $4 \times 4$ in the associated $7 \times 12$ Jacobian matrix.  However, we can use this function to quickly find interesting minors.  
+        Example
+            T = ZZ/101[x1,x2,x3,x4,x5,x6,x7];
+            I =  ideal(x5*x6-x4*x7,x1*x6-x2*x7,x5^2-x1*x7,x4*x5-x2*x7,x4^2-x2*x6,x1*x4-x2*x5,x2*x3^3*x5+3*x2*x3^2*x7+8*x2^2*x5+3*x3*x4*x7-8*x4*x7+x6*x7,x1*x3^3*x5+3*x1*x3^2*x7+8*x1*x2*x5+3*x3*x5*x7-8*x5*x7+x7^2,x2*x3^3*x4+3*x2*x3^2*x6+8*x2^2*x4+3*x3*x4*x6-8*x4*x6+x6^2,x2^2*x3^3+3*x2*x3^2*x4+8*x2^3+3*x2*x3*x6-8*x2*x6+x4*x6,x1*x2*x3^3+3*x2*x3^2*x5+8*x1*x2^2+3*x2*x3*x7-8*x2*x7+x4*x7,x1^2*x3^3+3*x1*x3^2*x5+8*x1^2*x2+3*x1*x3*x7-8*x1*x7+x5*x7);
+            M = jacobian I;
+            i = 0;
+            J = I;
+            elapsedTime(while (i < 10) and dim J > 1 do (i = i+1; J = extendIdealByNonZeroMinor(4, M, J)) );
+            dim J
+            i
+        Text
+            In this particular example, there tend to be about 5 associated primes when adding the first minor to J, and so one would expect about 5 steps as each minor computed most likely will eliminate one of those primes.
+        Text
+            There is some similar functionality obtained via heuristics (as opposed to actually finding rational points) in the package "FastLinAlg".
     SeeAlso
         findANonZeroMinor
 ///
@@ -1674,6 +1701,14 @@ M = jacobian I;
 assert(dim extendIdealByNonZeroMinor(2,M,I,Strategy => LinearIntersection) < 1)
 ///
 
+TEST///
+---this tests whether extending the field works
+R = ZZ/5[x];
+I = ideal(x^2+x+1); --irreducible
+assert(#randomPoints(1, I) == 0);
+assert(#randomPoints(1, I, Strategy=>BruteForce) == 0);
+assert(#randomPoints(1, I, ExtendField=>true) > 0);
+///
 
 end
 
