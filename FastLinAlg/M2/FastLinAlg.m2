@@ -70,6 +70,8 @@ export{
 protect MutableSmallest;
 protect MutableLargest;
 
+needsPackage "RandomRationalPoints";
+
 
 --***********************************
 --*****Control options universally***
