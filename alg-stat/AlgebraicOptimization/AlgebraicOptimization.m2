@@ -819,6 +819,7 @@ assert(2==degree WCI)
 toricMLIdeal = method(Options => {CoeffRing => QQ})
 toricMLIdeal(Matrix, List, List) := Ideal => opts -> (A, c, u) -> (
     if not (rank A == min(numgens target A, numgens source A)) then error("The matrix is not full rank.");
+    if (rank A < numgens target A) then error("This parameterization is not algebraically identifiable");
     t := symbol t;
     n := #c;
     R := (opts.CoeffRing)[t_1..t_(numgens target A)];
@@ -833,6 +834,7 @@ toricMLIdeal(Matrix, List, List) := Ideal => opts -> (A, c, u) -> (
 toricMLDegree = method(Options => {CoeffRing => QQ, Data => null})
 toricMLDegree(Matrix, List) := Number => opts -> (A,c) -> (
     if not (rank A == min(numgens target A, numgens source A)) then error("The matrix is not full rank.");
+    if (rank A < numgens target A) then error("This parameterization is not algebraically identifiable");
     u := if opts.Data === null then for i from 0 to #c-1 list random(1, 10^5) else opts.Data;
     D := smithNormalForm(A, ChangeMatrix => {false, false}, KeepZeroes => false);
     MLIdeal := toricMLIdeal(A, c, u, CoeffRing => opts.CoeffRing);
@@ -851,6 +853,7 @@ assert(3 == toricMLDegree(A,c));
 
 ///
 
+
 toricEDDegree = method(Options => {ForceAMat => false, OutputText => "Quiet", OutputType => List})
 toricEDDegree(Matrix) := ZZ => opts -> A -> (
     ed := edDeg(A,ForceAmat => opts.ForceAMat, Output => opts.OutputType, TextOutput => opts.OutputText);
@@ -864,6 +867,8 @@ A = matrix {{1,1,1,0,0,0,0,0,0}, {0,0,0,1,1,1,0,0,0},{0,0,0,0,0,0,1,1,1},
 assert(39 == toricEDDegree(A));
 
 ///
+
+
 
 --Used to find WI symbollically without using randomization.
 --Instead: We could also take a random linear combination.
