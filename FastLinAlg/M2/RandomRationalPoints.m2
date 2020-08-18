@@ -974,8 +974,21 @@ extendIdealByNonZeroMinor(ZZ,Matrix,Ideal):= opts -> (n, M, I) -> (
 beginDocumentation()
 document {
         Key => RandomRationalPoints,
-        Headline => "Give a random point in a variety",
-        EM "RandomRationalPoints", "Give a random point inside a affine space that lies inside a variety ."
+        Headline => "Obtain random points in a variety",
+        EM "RandomRationalPoints", "Find random points inside a variety.",
+        BR{},BR{},
+        "This package provides tools for quickly finding a point (rational, or over a field extension) in the vanishing set of an ideal.  The search is highly customizable.  This package also includes tools for finding submatrices of a given rank at some point.  Furthermore, it provides tools for generic projections and producing collections of linear forms with specified properties.",
+        BR{},
+        BOLD "Core functions:",
+        UL {
+            {TO "randomPoints", ":  This tries to find a point in the vanishing set of an ideal."},
+            {TO "findANonZeroMinor", ":  This finds a submatrix of a given matrix that is nonsingular at a point of a given ideal."},            
+            {TO "extendIdealByNonZeroMinor", ":  This extends an ideal by a minor produced by ", TO "findANonZeroMinor", "."},
+            {TO "projectionToHypersurface", " and ", TO "genericProjection", ":  These functions provide customizable projection."}
+	    },
+        BR{},BR{},
+	    BOLD "Acknowledgements:",BR{},BR{},
+	    "The authors would like to thank David Eisenbud and Mike Stillman for useful conversations and comments on the development of this package.  The authors began work on this package at the virtual Cleveland 2020 Macaulay2 workshop."
 }
 
 
@@ -1221,10 +1234,10 @@ doc ///
             set to true for verbose output
     Outputs
         :RingMap
-            a list with two entries, the generic projection map, and the ideal if I was provided, or the ring if R was provided
+            a list with two entries, the generic projection map, and the ideal if {\tt I} was provided, or the ring if {\tt R} was provided
     Description
         Text
-            This creates a projection to a hypersurface.  It essentially calls {\tt genericProjection(codim I - 1, I)}.  
+            This creates a projection to a hypersurface.  It differs from {\tt genericProjection(codim I - 1, I)} as it only tries to find a hypersurface equation that vanishes along the projection, instead of finding one that vanishes exactly at the projection.  This can be faster, and can be useful for finding points.
         Example
             R=ZZ/5[x,y,z];
             I = ideal(random(3,R)-2, random(2,R));
