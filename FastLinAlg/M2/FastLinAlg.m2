@@ -1,5 +1,5 @@
 newPackage( "FastLinAlg",
-Version => "0.2", Date => "April 30th, 2020", Authors => {
+Version => "1.0", Date => "August 18th, 2020", Authors => {
     {Name => "Boyana Martinova",
     Email=> "u1056124@utah.edu"
     },
@@ -42,8 +42,9 @@ export{
   "RandomNonzero",
   "GRevLexLargest",
   "GRevLexSmallest",
-  "GRevLexSmallestTerm",
+  "GRevLexSmallestTerm",  
   "MaxMinors",
+  "Points",
   "Rank", --a value for Strategy in isRankAtLeast
  -- "MutableSmallest",
  -- "MutableLargest",
@@ -59,10 +60,12 @@ export{
   "Recursive",
   "StrategyDefault",
   "StrategyDefaultNonRandom",
+  "StrategyDefaultWithPoints",
   "StrategyGRevLexSmallest",
   "StrategyLexSmallest",
   "StrategyRandom",
-  "StrategyCurrent",
+  "StrategyPoints",
+  "StrategyCurrent",  
   "SPairsFunction",
   "UseOnlyFastCodim"
 }
@@ -84,7 +87,8 @@ StrategyDefault = new HashTable from {
     GRevLexSmallest => 16,
     GRevLexLargest => 0,
     Random => 16,
-    RandomNonzero => 16
+    RandomNonzero => 16,
+    Points => 0,
 };
 
 StrategyDefaultNonRandom = new HashTable from {
@@ -95,18 +99,31 @@ StrategyDefaultNonRandom = new HashTable from {
     GRevLexSmallest => 25,
     GRevLexLargest => 0,
     Random => 0,
-    RandomNonzero => 0
+    RandomNonzero => 0,
+    Points => 0
 };
---protect nanosleep;
---if (not isGlobalSymbol "nanosleep") then protect getSymbol("nanosleep");
+
+StrategyDefaultWithPoints = new HashTable from {
+    LexLargest => 0,
+    LexSmallestTerm => 16,
+    LexSmallest => 16,
+    GRevLexSmallestTerm => 16,
+    GRevLexSmallest => 16,
+    GRevLexLargest => 0,
+    Random => 0,
+    RandomNonzero => 0,
+    Points => 32
+};
 
 StrategyCurrent = new MutableHashTable from StrategyDefault;
 
-StrategyGRevLexSmallest = new HashTable from {LexLargest=>0, LexSmallestTerm => 0, LexSmallest=>0, GRevLexSmallestTerm => 50, GRevLexSmallest => 50, GRevLexLargest=>0,Random=>0,RandomNonzero=>0};
+StrategyGRevLexSmallest = new HashTable from {LexLargest=>0, LexSmallestTerm => 0, LexSmallest=>0, GRevLexSmallestTerm => 50, GRevLexSmallest => 50, GRevLexLargest=>0,Random=>0,RandomNonzero=>0, Points => 0};
 
-StrategyLexSmallest = new HashTable from {LexLargest=>0, LexSmallestTerm => 50, LexSmallest=>50, GRevLexSmallestTerm=>0, GRevLexSmallest=>0, GRevLexLargest=>0,Random=>0,RandomNonzero=>0};
+StrategyLexSmallest = new HashTable from {LexLargest=>0, LexSmallestTerm => 50, LexSmallest=>50, GRevLexSmallestTerm=>0, GRevLexSmallest=>0, GRevLexLargest=>0,Random=>0,RandomNonzero=>0, Points => 0};
 
-StrategyRandom = new HashTable from {LexLargest=>0, LexSmallestTerm => 0, LexSmallest=>0, GRevLexSmallestTerm=>0, GRevLexSmallest=>0, GRevLexLargest=>0,Random=>100,RandomNonzero=>0};
+StrategyRandom = new HashTable from {LexLargest=>0, LexSmallestTerm => 0, LexSmallest=>0, GRevLexSmallestTerm=>0, GRevLexSmallest=>0, GRevLexLargest=>0,Random=>100,RandomNonzero=>0, Points => 0};
+
+StrategyPoints = new HashTable from {LexLargest=>0, LexSmallestTerm => 0, LexSmallest=>0, GRevLexSmallestTerm=>0, GRevLexSmallest=>0, GRevLexLargest=>0,Random=>0, RandomNonzero=>0, Points => 100};
 
 optRn := {
     Verbose => false,
@@ -661,19 +678,22 @@ verifyStrategy := (passedStrat) -> (
     if not (passedStrat #? GRevLexLargest) then return false;
     if not (passedStrat #? Random) then return false;
     if not (passedStrat #? RandomNonzero) then return false;
+    if not (passedStrat #? Points) then return false;
     return true;
 );
 
 --an internal function which chooses a minor, based on chance
 internalChooseMinor = method(Options=>optInternalChooseMinor);
 
-internalChooseMinor(ZZ, Ring, Matrix, Matrix) := opts -> (minorSize, ambR, nonzeroM, M1) -> (
+internalChooseMinor(ZZ, Ideal, Matrix, Matrix) := opts -> (minorSize, I1, nonzeroM, M1) -> (
     --if (opts.Verbose or (debugLevel > 0)) then print "internalChooseMinor: starting.";
-    totalPercent :=  opts.Strategy#LexSmallest + opts.Strategy#LexSmallestTerm + opts.Strategy#LexLargest + opts.Strategy#GRevLexSmallest + opts.Strategy#GRevLexSmallestTerm + opts.Strategy#GRevLexLargest + opts.Strategy#Random + opts.Strategy#RandomNonzero;
+    totalPercent :=  opts.Strategy#LexSmallest + opts.Strategy#LexSmallestTerm + opts.Strategy#LexLargest + opts.Strategy#GRevLexSmallest + opts.Strategy#GRevLexSmallestTerm + opts.Strategy#GRevLexLargest + opts.Strategy#Random + opts.Strategy#RandomNonzero + opts.Strategy#Points;
     myRandom := random(totalPercent);
     submatrixS1 := null;
+    ambR := ring I1;
     local R2;
     local f;
+    local o;
     mutM2 := opts.MutableSmallest;
     mutM1 := opts.MutableLargest;
     local M2;
@@ -683,12 +703,14 @@ internalChooseMinor(ZZ, Ring, Matrix, Matrix) := opts -> (minorSize, ambR, nonze
         f = map(R2, ambR);
         M2 = f(nonzeroM);
         submatrixS1 = chooseSubmatrixSmallestDegree(minorSize, M2);
+        if (opts.Verbose) or debugLevel > 0 then print "internalChooseMinor: Choosing LexSmallest";
     )
     else if (myRandom < opts.Strategy#LexSmallest + opts.Strategy#LexSmallestTerm) then (
         R2 = reorderPolynomialRing(Lex, ambR); --do the same with respect to a Lex ordering
         f = map(R2, ambR);
         M2 = f(nonzeroM);
         submatrixS1 = chooseSubmatrixSmallestDegree(minorSize, selectSmallestTerms M2);
+        if (opts.Verbose) or debugLevel > 0 then print "internalChooseMinor: Choosing LexSmallestTerm";
     )
     else if (myRandom < opts.Strategy#LexSmallest + opts.Strategy#LexSmallestTerm + opts.Strategy#LexLargest) then
     (
@@ -696,6 +718,7 @@ internalChooseMinor(ZZ, Ring, Matrix, Matrix) := opts -> (minorSize, ambR, nonze
         f = map(R2, ambR);
         M2 = f(nonzeroM);
         submatrixS1 = chooseSubmatrixLargestDegree(minorSize, M2);
+        if (opts.Verbose) or debugLevel > 0 then print "internalChooseMinor: Choosing LexLargest";
     )
     else if (myRandom < opts.Strategy#LexSmallest + opts.Strategy#LexSmallestTerm + opts.Strategy#LexLargest + opts.Strategy#GRevLexSmallest) then
     (
@@ -704,6 +727,7 @@ internalChooseMinor(ZZ, Ring, Matrix, Matrix) := opts -> (minorSize, ambR, nonze
         M2 = f(matrix mutM2); --put the matrix in the ring with the new order
         submatrixS1 = chooseSubmatrixSmallestDegree(minorSize, M2);
         mutM2 = replaceSmallestTerm(submatrixS1, mutM2);
+        if (opts.Verbose) or debugLevel > 0 then print "internalChooseMinor: Choosing LexLargestTerm";
     )
     else if (myRandom < opts.Strategy#LexSmallest + opts.Strategy#LexSmallestTerm + opts.Strategy#LexLargest + opts.Strategy#GRevLexSmallest + opts.Strategy#GRevLexSmallestTerm) then
     (
@@ -712,6 +736,7 @@ internalChooseMinor(ZZ, Ring, Matrix, Matrix) := opts -> (minorSize, ambR, nonze
         M2 = f(matrix mutM2); --put the matrix in the ring with the new order
         submatrixS1 = chooseSubmatrixSmallestDegree(minorSize, selectSmallestTerms M2);
         mutM2 = replaceSmallestTerm(submatrixS1, mutM2);
+        if (opts.Verbose) or debugLevel > 0 then print "internalChooseMinor: Choosing GRevLexSmallest";
     )
     else if (myRandom < opts.Strategy#LexSmallest + opts.Strategy#LexSmallestTerm + opts.Strategy#LexLargest + opts.Strategy#GRevLexSmallest + opts.Strategy#GRevLexSmallestTerm + opts.Strategy#GRevLexLargest ) then (
         R2 = reorderPolynomialRing(GRevLex, ambR);
@@ -719,13 +744,20 @@ internalChooseMinor(ZZ, Ring, Matrix, Matrix) := opts -> (minorSize, ambR, nonze
         M2 = f(matrix mutM1); --put the matrix in the ring with the new order
         submatrixS1 = chooseSubmatrixLargestDegree(minorSize, M2);
         mutM1 = replaceLargestTerm(submatrixS1, mutM1);
+        if (opts.Verbose) or debugLevel > 0 then print "internalChooseMinor: Choosing GRevLexLargest";
         --this needs to be written
     )
     else if (myRandom < opts.Strategy#LexSmallest + opts.Strategy#LexSmallestTerm + opts.Strategy#LexLargest + opts.Strategy#GRevLexSmallest + opts.Strategy#GRevLexSmallestTerm + opts.Strategy#GRevLexLargest + opts.Strategy#Random) then (
         submatrixS1 = chooseRandomSubmatrix(minorSize, M1);
+        if (opts.Verbose) or debugLevel > 0 then print "internalChooseMinor: Choosing Random";
     )
     else if (myRandom < opts.Strategy#LexSmallest + opts.Strategy#LexSmallestTerm + opts.Strategy#LexLargest + opts.Strategy#GRevLexSmallest + opts.Strategy#GRevLexSmallestTerm + opts.Strategy#GRevLexLargest + opts.Strategy#Random + opts.Strategy#RandomNonzero) then (
         submatrixS1 = chooseRandomNonzeroSubmatrix(minorSize, M1);
+        if (opts.Verbose) or debugLevel > 0 then print "internalChooseMinor: Choosing RandomNonZero";
+    )
+    else if (myRandom < opts.Strategy#LexSmallest + opts.Strategy#LexSmallestTerm + opts.Strategy#LexLargest + opts.Strategy#GRevLexSmallest + opts.Strategy#GRevLexSmallestTerm + opts.Strategy#GRevLexLargest + opts.Strategy#Random + opts.Strategy#RandomNonzero + opts.Strategy#Points) then (
+        try (o = findANonZeroMinor(minorSize, M1, I1, Verbose=>opts.Verbose);) then submatrixS1 = {o#2, o#1} else submatrixS1 = chooseRandomSubmatrix(minorSize, M1);
+        if (opts.Verbose) or debugLevel > 0 then print "internalChooseMinor: Choosing Points";
     );
     --if (opts.Verbose or (debugLevel > 0)) then print "internalChooseMinor: finished.";
     return submatrixS1;
@@ -798,7 +830,7 @@ Rn(ZZ, Ring) := opts -> (n1, R1) -> (
     if (opts.Verbose or debugLevel > 0) then print concatenate("Rn: About to enter loop");
     while ( (r-d <= n1) and (i < numberOfMinorsCompute) and (#searchedSet < possibleMinors)) do (
         while (i <= opts.CodimCheckFunction(j)) and (i < numberOfMinorsCompute) do (
-            submatrixS1 = internalChooseMinor(fullRank, ambR, nonzeroM, M1, Strategy=>opts.Strategy, MutableSmallest=>mutM2, MutableLargest=>mutM1);
+            submatrixS1 = internalChooseMinor(fullRank, Id+sumMinors, nonzeroM, M1, Strategy=>opts.Strategy, MutableSmallest=>mutM2, MutableLargest=>mutM1);
             if  (not (submatrixS1 === null)) and (not (searchedSet#?(locationToSubmatrix(submatrixS1)))) then (
                 searchedSet#(locationToSubmatrix(submatrixS1)) = true;
                 sumMinors = sumMinors + ideal(getDetOfSubmatrix(M1, submatrixS1, DetStrategy=>opts.DetStrategy));
@@ -833,9 +865,15 @@ chooseGoodMinors = method(Options=>optChooseGoodMinors);
 
 chooseGoodMinors(ZZ, ZZ, Matrix) := opts -> (howMany, minorSize, M1) -> (
     R1 := ring M1;
+    ambR := ambient R1;
+    chooseGoodMinors(howMany, minorSize, sub(M1, ambR), ideal R1)
+);
+
+chooseGoodMinors(ZZ, ZZ, Matrix, Ideal) := opts -> (howMany, minorSize, M1, I1) -> (
+    R1 := ring M1;
     if (howMany <= 0) then return trim ideal(sub(0, R1));
     ambR := ambient R1;
-    Id := ideal R1;
+    Id := sub(I1, ambR) + ideal(R1);
     possibleMinors := binomial(numColumns M1, minorSize)*binomial(numRows M1, minorSize);
     M1 = sub(M1, ambR);
     mutM1 := mutableMatrix(M1);
@@ -856,7 +894,7 @@ chooseGoodMinors(ZZ, ZZ, Matrix) := opts -> (howMany, minorSize, M1) -> (
 --first we try smallest submatrices with respect to several different monomial orders
     while ( (k < howMany) and (i < maxAttempts) and (#searchedSet < possibleMinors)) do (
         while (i <= j^1.5) and (k < howMany) and (i < maxAttempts) do (
-            submatrixS1 = internalChooseMinor(minorSize, ambR, nonzeroM, M1, Strategy=>opts.Strategy, MutableSmallest=>mutM2, MutableLargest=>mutM1);
+            submatrixS1 = internalChooseMinor(minorSize, Id + sumMinors, nonzeroM, M1, Strategy=>opts.Strategy, MutableSmallest=>mutM2, MutableLargest=>mutM1);
 
             if (not (submatrixS1 === null)) and (not searchedSet#?(locationToSubmatrix(submatrixS1))) then (
                 searchedSet#(locationToSubmatrix(submatrixS1)) = true;
@@ -1083,7 +1121,8 @@ getSubmatrixOfRank(ZZ, Matrix) := opts -> (n1, M0) -> (
     if (M0 == 0) then return null;
     R1 := ring M0;
     ambRing := null;
-    if (instance(R1, PolynomialRing) or instance(R1, QuotientRing)) then (ambRing = ambient(R1)) else (ambRing = R1);
+    Id := null;
+    if (instance(R1, PolynomialRing) or instance(R1, QuotientRing)) then (ambRing = ambient(R1); Id = ideal(R1)) else (ambRing = R1; Id = ideal(0_R1));
     i := 0;
     M1 := sub(M0, ambRing);
     possibleMinors := binomial(numColumns M1, n1)*binomial(numRows M1, n1);
@@ -1106,7 +1145,7 @@ getSubmatrixOfRank(ZZ, Matrix) := opts -> (n1, M0) -> (
     if (debugLevel > 0) or opts.Verbose then print ("getSubmatrixOfRank: Trying to find a submatrix of rank at least: " | toString(n1) | " with attempts = " | toString(attempts) | ".  DetStrategy=>" | toString(opts.DetStrategy));
     while (i < attempts)  do (
         if (any(flatten entries matrix mutM2, z->z==0)) then error "getSubmatrixOfRank: expected a matrix with no zero entries.";
-        subMatrix = internalChooseMinor(n1, ambRing, nonzeroM, M1, internalMinorsOptions++{MutableSmallest=>mutM2, MutableLargest=>mutM1});
+        subMatrix = internalChooseMinor(n1,  Id, nonzeroM, M1, internalMinorsOptions++{MutableSmallest=>mutM2, MutableLargest=>mutM1});
         --if (debugLevel > 0) or opts.Verbose then print ("getSubmatrixOfRank: found subMatrix " | toString(subMatrix));
         if (not (subMatrix === null)) and (not (searchedSet#?(locationToSubmatrix(subMatrix)))) then (
             searchedSet#(locationToSubmatrix(subMatrix)) = true;
@@ -1281,6 +1320,7 @@ doc ///
     Key
         chooseGoodMinors
         (chooseGoodMinors, ZZ, ZZ, Matrix)
+        (chooseGoodMinors, ZZ, ZZ, Matrix, Ideal)
         [chooseGoodMinors, Verbose]
         [chooseGoodMinors, PeriodicCheckFunction]
         PeriodicCheckFunction
@@ -1288,17 +1328,23 @@ doc ///
         returns an ideal generated by interesting minors in a matrix
     Usage
         chooseGoodMinors(count, minorSize, M)
+        chooseGoodMinors(count, minorSize, M, I)
     Inputs
         count: ZZ
         minorSize: ZZ
         M: Matrix
+        I: Ideal            
     Outputs
         : Ideal
     Description
         Text
-            This returns an ideal generated by approximately {\tt count} minors of size {\tt minorSize} the matrix M.
+            This returns an ideal generated by approximately {\tt count} minors of size {\tt minorSize} the matrix M.  
         Example
             R = QQ[x, y, z];
+            M = matrix{{x,y,0}, {y,z,0}, {0,0,0}}, 
+            chooseGoodMinors(1, 2, M, Strategy=>DefaultNonRandom)
+        Text
+            If the ideal is passed, then it is used if the when the {\tt Points} portion of the {\tt Strategy} is turned on.  
 ///
 
 doc ///
@@ -1553,10 +1599,10 @@ doc ///
 
 
 document {
-    Key => {GRevLexLargest, GRevLexSmallest, GRevLexSmallestTerm, LexLargest, LexSmallest, LexSmallestTerm, Random, RandomNonzero, [chooseGoodMinors, Strategy], [getSubmatrixOfRank, Strategy], [Rn, Strategy], [isRankAtLeast, Strategy], [projDim, Strategy], "StrategyCurrent", "StrategyDefault", "StrategyDefaultNonRandom", "StrategyLexSmallest", "StrategyGRevLexSmallest", "StrategyRandom"},
+    Key => {[Rn, Strategy], GRevLexLargest, GRevLexSmallest, GRevLexSmallestTerm, LexLargest, LexSmallest, LexSmallestTerm, Random, RandomNonzero, Points, [chooseGoodMinors, Strategy], [getSubmatrixOfRank, Strategy],  [isRankAtLeast, Strategy], [projDim, Strategy], "StrategyCurrent", "StrategyDefault", "StrategyDefaultNonRandom", "StrategyLexSmallest", "StrategyGRevLexSmallest", "StrategyRandom", "StrategyPoints", "StrategyDefaultWithPoints"},
     Headline => "strategies for choosing submatrices",
     "Many of the core functions of this package allow the user to fine tune the strategy of how submatrices are selected.  Different strategies yield markedly different performance or results on these examples.
-    These are controlled by specifying a {\tt Strategy => } option, pointing to a {\tt HashTable}.  This HashTable should have the following keys.",
+    These are controlled by specifying a ", TT " Strategy => ", " option, pointing to a ", TT " HashTable", ".  This HashTable should have the following keys.",
     UL {
         {TT "GRevLexLargest", ": try to find submatrices where each row and column has a large entry with respect to a random ", TT "GRevLex", "order."},
         {TT "GRevLexSmallest", ": try to find submatrices where each row and column has a small entry with respect to a random ", TT "GRevLex", "order."},
@@ -1586,6 +1632,8 @@ document {
         {TT "StrategyLexSmallest", ": 50% of the matrices are ", TT "LexSmallest", " and 50% are ", TT "LexSmallestTerm"},
         {TT "StrategyGRevLexSmallest", ": 50% of the matrices are ", TT "GRevLexSmallest", " and 50% are ", TT "GRevLexLargest"},
         {TT "StrategyRandom", ": chooses 100% random submatrices."},
+        {TT "StrategyPoints", ": choose submatrices by finding submatrices with full rank at points not on an ideal, using the package ", TO RandomRationalPoints, "."},
+        {TT "StrategyDefaultWithPoints", ": like ", TT "StrategyDefault", " but replaces the ", TT "Random", " and ", "RandomNonZero", " submatrices as with matrices chosen as in StrategyPoints"},
     },
     "Additionally, a ", TT "MutableHashTable", " named ", TT "StrategyCurrent", " is also exported.  It begins as the default strategy, but the user can modify it."
 }
