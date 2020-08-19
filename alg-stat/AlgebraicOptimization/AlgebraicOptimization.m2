@@ -18,7 +18,7 @@ newPackage(
   },
   Headline => "A package for algebraic optimization",
   DebuggingMode => true,
-  PackageImports => {"Elimination","NumericalAlgebraicGeometry","Bertini","PrimaryDecomposition", "ToricInvariants"}
+  PackageImports => {"Elimination","NumericalAlgebraicGeometry", "Bertini", "PrimaryDecomposition", "ToricInvariants"}
 )
 
 --------------------
@@ -48,7 +48,7 @@ export {
   "toricEDDegree",
   "probabilisticConormalVarietyOptimizationDegree",
   -- Options
-  "DualVariable", "CoeffRing", "ForceAMat", "OutputText", "OutputType",
+  "DualVariable", "CoeffRing", "ForceAMat", "OutputText", "OutputType", "StartData", "StartScaling", "ReturnAllSolutions", "Directory",
   --Types and keys
   "ConormalRing","PrimalRing","DualRing","PrimalCoordinates","DualCoordinates",
   --More Types
@@ -816,6 +816,18 @@ assert(2==degree WCI)
 ----------------------------------------
 -- Toric ML Degree Code
 ----------------------------------------
+simplifyA = method(Options => {})
+simplifyA = (A)-> (
+    A = sub(A, ZZ);
+    simpleA := matrix {apply(numcols A, i -> 1_(ring A))};
+    if rank(A) != rank(simpleA||A) then error "ones vector is not in the the row span of A." ;
+    scan(numrows A, i -> (
+    	    B := simpleA||A^{i};
+    	    if rank(simpleA) + 1 == rank B then simpleA = B)
+          );
+    simpleA
+    );
+
 toricMLIdeal = method(Options => {CoeffRing => QQ})
 toricMLIdeal(Matrix, List, List) := Ideal => opts -> (A, c, u) -> (
     if not (rank A == min(numgens target A, numgens source A)) then error("The matrix is not full rank.");
@@ -868,7 +880,149 @@ assert(39 == toricEDDegree(A));
 
 ///
 
+----------------------------------------
+-- Numerical Toric ML Degree Code
+----------------------------------------
+toricMLWitness = method(Options => {CoeffRing => CC})
+toricMLWitness(Matrix, List, List) := Ideal => opts -> (A, c, u) -> (
+    A = sub(A, ZZ);
+    if not (rank A == min(numgens target A, numgens source A)) then error("The matrix is not full rank.");
+    t := symbol t;
+    n := #c;
+    R := (opts.CoeffRing)[t_1..t_(numgens target A)];
+    N := sum u;
+    toricMapA := transpose matrix {for i from 0 to n-1 list c_i*R_(entries A_i)};
+    u = transpose matrix {u};
+    A = sub(A,R);
+    MLIdeal := ideal(A*(N*toricMapA - u));
+    f := sum flatten entries toricMapA;
+    (f, MLIdeal, R)
+    )
 
+inCoordinateHyperplane = method(Options => options toricMLWitness++{Tolerance => 1e-9})
+inCoordinateHyperplane(Point) := Boolean => opts -> (pt) -> inCoordinateHyperplane(coordinates pt)
+inCoordinateHyperplane(List) := Boolean => opts -> (s) -> (
+    out := false;
+    scan(s,x->if abs(x)<opts.Tolerance then(
+    	  out = true;
+    	  break
+    	  ));
+    out
+    )
+
+inHypersurface = method(Options => options inCoordinateHyperplane)
+inHypersurface(Point, RingElement) := Boolean => opts -> (pt, f) -> (
+    abs sub(f, matrix pt) < opts.Tolerance
+    )
+inHypersurface(List, RingElement) := Boolean => opts -> (s,f) -> inHypersurface(point {s}, f)
+
+inPositiveOrthant = method(Options => {})
+inPositiveOrthant(List) := Boolean => opts -> s -> (
+  out := true;
+  scan(s, x -> if x < 0 then(
+    out = false;
+    break
+    ));
+  out
+  )
+
+
+solveStartSystemScalingMLDegree = method(Options => options inCoordinateHyperplane++{
+	StartData => null,
+	StartScaling => null,
+	Strategy => 0
+	})
+solveStartSystemScalingMLDegree(String, Matrix) := Nothing => opts -> (dir, A) -> (
+    cStart :=  opts.StartScaling;
+    if cStart === null then cStart = for i to numcols A-1 list random CC ;
+    assert(numcols A == #cStart);
+    uStart := opts.StartData;
+    if uStart === null then uStart = for i to numcols A-1 list random CC ;
+    assert(numcols A == #uStart);
+    (f, I, R) := toricMLWitness(A, cStart, uStart, CoeffRing => opts.CoeffRing);
+    if opts.Strategy == 0
+    then(
+    	--Pick your favorite way to solve
+    	wss := bertiniZeroDimSolve(I, TopDirectory => dir); -- solve the start system with bertini where c and u are generic complex numbers. # solutions should be degree of toric variety
+	    moveB'File(dir, "input", "input_start");
+    	ndwp := delete(null, apply(wss, i->if not inHypersurface(i, f) and not inCoordinateHyperplane(i) then i else null)); -- keep only nondegenerate witness points
+    	)
+    else if opts.Strategy == 1 then(
+    	makeB'InputFile(dir,
+	    AffVariableGroup => gens R,
+	    B'Polynomials => I_*,
+	    BertiniInputConfiguration => {UseRegeneration => 1},
+	    NameB'InputFile => "input_start"
+	    );
+    	runBertini(dir, NameB'InputFile => "input_start");
+    	wss = importSolutionsFile(dir, NameSolutionsFile => "nonsingular_solutions");
+    	ndwp = delete(null, apply(wss, i-> if not inHypersurface(i,f) and not inCoordinateHyperplane(i) then i else null));
+    	);
+    writeStartFile(dir, wss, NameStartFile => "wss");
+    writeStartFile(dir, ndwp, NameStartFile => "ndwp");
+    writeStartFile(dir, ndwp, NameStartFile => "start");
+    writeParameterFile(dir, cStart|uStart, NameParameterFile => "start_parameters");
+    (f, cStart, uStart, ndwp, wss)
+    )
+
+setupTargetSystemScalingMLDegree = method(Options => {})
+setupTargetSystemScalingMLDegree(String, Matrix) := Nothing => opts -> (dir, A) -> (
+    c := symbol c;
+    cStart := for i to numcols A-1 list c_i ;
+    u := symbol u;
+    uStart := for i to numcols A-1 list u_i ;
+    assert(numcols A == #cStart);
+    assert(numcols A == #uStart);
+    S := CC[cStart|uStart];
+    cTarget := drop(gens S,-numcols A);
+    uTarget := drop(gens S, numcols A);
+    (f, I, R) := toricMLWitness(A, cTarget, uTarget, CoeffRing=>S);
+    makeB'InputFile(dir,
+	     AffVariableGroup => gens R,
+	     B'Polynomials => I_*,
+	     ParameterGroup => cTarget|uTarget,
+	     BertiniInputConfiguration => {ParameterHomotopy => 2}
+	     );
+    )
+
+solveTargetSystemScalingMLDegree = method(Options => {})
+solveTargetSystemScalingMLDegree (String, List, List, RingElement) := Nothing => opts -> (dir, cTarget, uTarget, f) -> (
+    writeParameterFile(dir, cTarget|uTarget, NameParameterFile => "final_parameters");
+    runBertini(dir);
+    wss := importSolutionsFile(dir, NameSolutionsFile => "nonsingular_solutions");
+    ndwp := delete(null, apply(wss, i->if not inHypersurface(i, f) and not inCoordinateHyperplane(i) then i else null));
+    (ndwp,wss)
+    )
+
+numericalToricMLE = method(Options => options solveStartSystemScalingMLDegree ++ {Directory => null, ReturnAllSolutions => false})
+numericalToricMLE(Matrix, List, List) := Number => opts -> (A, c, u) -> (
+  dir := opts.Directory;
+  if dir === null then dir = storeBM2Files;
+  A = simplifyA(A);
+  (f, cStart, uStart, ndwp, wss) := solveStartSystemScalingMLDegree(dir, A);
+  setupTargetSystemScalingMLDegree(dir, A);
+  (ndwp, wss) = solveTargetSystemScalingMLDegree(dir, c, u, f);
+  R := ring f;
+  out := if opts.ReturnAllSolutions then ndwp else(
+    toricMapA := matrix {for i from 0 to numcols(A) - 1 list ((c_i)_R)*R_(entries A_i)};
+    dists := ndwp / (s -> sub(toricMapA, matrix {s})) / (p -> flatten entries p);
+    ndwp_(position(dists, inPositiveOrthant))
+    );
+  out
+  )
+
+numericalToricMLDegree = method(Options => options solveStartSystemScalingMLDegree ++ {Directory => null, Data => null})
+numericalToricMLDegree(Matrix, List) := Number => opts -> (A, c) -> (
+  dir := opts.Directory;
+  u := opts.Data;
+  if dir === null then dir = storeBM2Files;
+  if u === null then u = for i to numcols(A) - 1 list random(1, 10^5);
+  --A = simplifyA(A);
+  (f, cStart, uStart, ndwp, wss) := solveStartSystemScalingMLDegree(dir, A);
+  setupTargetSystemScalingMLDegree(dir, A);
+  (ndwp, wss) = solveTargetSystemScalingMLDegree(dir, c, u, f);
+  #ndwp
+  )
 
 --Used to find WI symbollically without using randomization.
 --Instead: We could also take a random linear combination.
