@@ -67,6 +67,7 @@ export{
   "StrategyPoints",
   "StrategyCurrent",  
   "SPairsFunction",
+  "PointOptions", --options to be based to the RandomRationaPoints package
   "UseOnlyFastCodim"
 }
 
@@ -125,6 +126,21 @@ StrategyRandom = new HashTable from {LexLargest=>0, LexSmallestTerm => 0, LexSma
 
 StrategyPoints = new HashTable from {LexLargest=>0, LexSmallestTerm => 0, LexSmallest=>0, GRevLexSmallestTerm=>0, GRevLexSmallest=>0, GRevLexLargest=>0,Random=>0, RandomNonzero=>0, Points => 100};
 
+optPoints = new HashTable from {
+    Strategy=>Default, 
+    Homogeneous => false,  
+    MaxCoordinatesToReplace => 1, 
+    MaxCoordinatesToTrivialize => infinity,
+    Replacement => Binomial,
+    Codimension => null,
+    IntersectionAttempts => 20,
+    ProjectionAttempts => 0,
+    ExtendField => true,
+    PointCheckAttempts => 100,
+    NumThreadsToUse => 1,
+    Verbose => false
+};
+
 optRn := {
     Verbose => false,
     MaxMinors => ((x,y) -> (10*x + 8*log_(1.3)(y))),
@@ -137,14 +153,16 @@ optRn := {
     PairLimit => 100,
     UseOnlyFastCodim => false, 
 --    DegreeFunction => ( (t,i) -> ceiling((i+1)*t))
-    SPairsFunction => (i -> ceiling(i^1.5))
+    SPairsFunction => (i -> ceiling(i^1.5)),
+    PointOptions => optPoints
 };
 
 optInternalChooseMinor := {
     MutableSmallest => null,
     MutableLargest => null,
     Strategy => StrategyDefault,
-    Verbose => false
+    Verbose => false,
+    PointOptions => optPoints
 };
 
 optProjDim := {
@@ -152,7 +170,8 @@ optProjDim := {
     Verbose => false,
     Strategy => StrategyDefault,
     DetStrategy => Cofactor,
-    MaxMinors => ((x,y) -> 5*x + 2*log_1.3(y))
+    MaxMinors => ((x,y) -> 5*x + 2*log_1.3(y)),
+    PointOptions => optPoints
 };
 
 optIsRankAtLeast :=  {
@@ -160,14 +179,16 @@ optIsRankAtLeast :=  {
     DetStrategy => Rank,
     MaxMinors => null,
     Strategy => StrategyDefaultNonRandom,
-    Threads => 1
+    Threads => 1,
+    PointOptions => optPoints
 };
 
 optChooseGoodMinors := {
     Verbose => false,
     Strategy => StrategyDefault,
     DetStrategy=>Cofactor,
-    PeriodicCheckFunction => null 
+    PeriodicCheckFunction => null,
+    PointOptions => optPoints
 };
 
 optIsCodimAtLeast := {
@@ -761,8 +782,8 @@ internalChooseMinor(ZZ, Ideal, Matrix, Matrix) := opts -> (minorSize, I1, nonzer
             submatrixS1 = chooseRandomSubmatrix(minorSize, M1); 
         )
         else (
-            if (opts.Verbose) or debugLevel > 0 then print "internalChooseMinor: Choosing Points";
-            try (o = findANonZeroMinor(minorSize, M1, I1, ProjectionAttempts => 0);) then submatrixS1 = {o#2, o#1} else ( submatrixS1 = chooseRandomSubmatrix(minorSize, M1); );
+            if (opts.Verbose) or debugLevel > 0 then print "internalChooseMinor: Choosing Points";            
+            try (o = findANonZeroMinor(minorSize, M1, I1, new OptionTable from opts.PointOptions);) then submatrixS1 = {o#2, o#1} else ( submatrixS1 = chooseRandomSubmatrix(minorSize, M1); if (opts.Verbose) or debugLevel > 0 then print "internalChooseMinor: failed to find a point"; );
         );
     );
     --if (opts.Verbose or (debugLevel > 0)) then print "internalChooseMinor: finished.";
@@ -836,7 +857,7 @@ Rn(ZZ, Ring) := opts -> (n1, R1) -> (
     if (opts.Verbose or debugLevel > 0) then print concatenate("Rn: About to enter loop");
     while ( (r-d <= n1) and (i < numberOfMinorsCompute) and (#searchedSet < possibleMinors)) do (
         while (i <= opts.CodimCheckFunction(j)) and (i < numberOfMinorsCompute) do (
-            submatrixS1 = internalChooseMinor(fullRank, Id+sumMinors, nonzeroM, M1, Strategy=>opts.Strategy, Verbose=>opts.Verbose, MutableSmallest=>mutM2, MutableLargest=>mutM1);
+            submatrixS1 = internalChooseMinor(fullRank, Id+sumMinors, nonzeroM, M1, Strategy=>opts.Strategy, Verbose=>opts.Verbose, MutableSmallest=>mutM2, MutableLargest=>mutM1, PointOptions=>opts.PointOptions);
             if  (not (submatrixS1 === null)) and (not (searchedSet#?(locationToSubmatrix(submatrixS1)))) then (
                 searchedSet#(locationToSubmatrix(submatrixS1)) = true;
                 sumMinors = sumMinors + ideal(getDetOfSubmatrix(M1, submatrixS1, DetStrategy=>opts.DetStrategy));
@@ -872,10 +893,11 @@ chooseGoodMinors = method(Options=>optChooseGoodMinors);
 chooseGoodMinors(ZZ, ZZ, Matrix) := opts -> (howMany, minorSize, M1) -> (
     R1 := ring M1;
     ambR := ambient R1;
-    chooseGoodMinors(howMany, minorSize, sub(M1, ambR), ideal R1)
+    chooseGoodMinors(howMany, minorSize, sub(M1, ambR), ideal R1, opts)
 );
 
 chooseGoodMinors(ZZ, ZZ, Matrix, Ideal) := opts -> (howMany, minorSize, M1, I1) -> (
+    if (not verifyStrategy(opts.Strategy)) then error "chooseGoodMinors: Expected a valid strategy, a HashTable or MutableHashTable with expected Keys.";
     R1 := ring M1;
     if (howMany <= 0) then return trim ideal(sub(0, R1));
     ambR := ambient R1;
@@ -900,7 +922,7 @@ chooseGoodMinors(ZZ, ZZ, Matrix, Ideal) := opts -> (howMany, minorSize, M1, I1) 
 --first we try smallest submatrices with respect to several different monomial orders
     while ( (k < howMany) and (i < maxAttempts) and (#searchedSet < possibleMinors)) do (
         while (i <= j^1.5) and (k < howMany) and (i < maxAttempts) do (
-            submatrixS1 = internalChooseMinor(minorSize, Id + sumMinors, nonzeroM, M1, Strategy=>opts.Strategy, Verbose=>opts.Verbose, MutableSmallest=>mutM2, MutableLargest=>mutM1);
+            submatrixS1 = internalChooseMinor(minorSize, Id + sumMinors, nonzeroM, M1, Strategy=>opts.Strategy, Verbose=>opts.Verbose, MutableSmallest=>mutM2, MutableLargest=>mutM1, PointOptions => opts.PointOptions);
 
             if (not (submatrixS1 === null)) and (not searchedSet#?(locationToSubmatrix(submatrixS1))) then (
                 searchedSet#(locationToSubmatrix(submatrixS1)) = true;
@@ -957,7 +979,7 @@ projDim(Module) := opts -> (N1) -> (
 --    1/0;
     if (debugLevel > 0) or opts.Verbose then print concatenate("projDim: going to try to find ", toString minorsCount, " minors.");
     
-    goodMinorsOptions := new OptionTable from {Strategy=>opts.Strategy, Verbose=>opts.Verbose, DetStrategy=>opts.DetStrategy, PeriodicCheckFunction => (J -> (dim J < 0))}; --just grab the options relevant to chooseGoodMinors
+    goodMinorsOptions := new OptionTable from {Strategy=>opts.Strategy, Verbose=>opts.Verbose, PointOptions => opts.PointOptions, DetStrategy=>opts.DetStrategy, PeriodicCheckFunction => (J -> (dim J < 0))}; --just grab the options relevant to chooseGoodMinors
     theseMinors := chooseGoodMinors(ceiling(minorsCount), firstRank, firstDiff, goodMinorsOptions);
     curDim := dim theseMinors;
     if (debugLevel > 0) or opts.Verbose then print concatenate("projDim: first minors computed!  minors found =", toString(#first entries gens theseMinors), ", curDim =", toString(curDim));
@@ -1138,7 +1160,7 @@ getSubmatrixOfRank(ZZ, Matrix) := opts -> (n1, M0) -> (
     nonzeroM := replaceZeros(M1); --
     mutM2 := mutableMatrix(nonzeroM); --for smallest grevlex computations
 
-    internalMinorsOptions := new OptionTable from {Strategy=>opts.Strategy, Verbose=>opts.Verbose}; --just grab the options relevant to chooseGoodMinors
+    internalMinorsOptions := new OptionTable from {Strategy=>opts.Strategy, Verbose=>opts.Verbose, PointOptions => opts.PointOptions}; --just grab the options relevant to chooseGoodMinors
 
     searchedSet := new MutableHashTable from {}; --used to store which ranks have already been computed
 
@@ -1348,7 +1370,7 @@ doc ///
         Example
             R = QQ[x, y, z];
             M = matrix{{x,y,0}, {y,z,0}, {0,0,0}}, 
-            chooseGoodMinors(1, 2, M, Strategy=>DefaultNonRandom)
+            chooseGoodMinors(1, 2, M, Strategy=>StrategyDefaultNonRandom)
         Text
             If the ideal is passed, then it is used if the when the {\tt Points} portion of the {\tt Strategy} is turned on.  
 ///
@@ -1505,6 +1527,28 @@ doc ///
 
 doc ///
     Key
+        PointOptions
+        [chooseGoodMinors, PointOptions]
+        [getSubmatrixOfRank, PointOptions]
+        [isRankAtLeast, PointOptions]
+        [projDim, PointOptions]
+        [Rn, PointOptions]
+    Headline
+        options to pass to functions in the package RandomRationalPoints
+    Description
+        Text
+            {\tt PointOptions} is an option in various functions in this package, which can store options to be passed to the function {\tt findANonZeroMinor} in {\tt RandomRationalPoints}.  
+        Example
+            (options Rn)#PointOptions
+            options findANonZeroMinor
+        Text
+            Notice the field is allowed to be extended by default.  Furthermore, we have set {\tt Homogeneous=>false} by default, and set {\tt ProjectionAttempts => 0}.  While generic linear  projection provides good median time in the examples we tried, in some cases it had extremely long run times.
+    SeeAlso
+        findANonZeroMinor
+///
+
+doc ///
+    Key
         Rn
         (Rn, ZZ, Ring)
         [Rn, Verbose]
@@ -1601,6 +1645,8 @@ doc ///
     SeeAlso
         isCodimAtLeast
 ///
+
+
 
 
 

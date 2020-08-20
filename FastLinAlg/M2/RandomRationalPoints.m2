@@ -66,7 +66,7 @@ optRandomPoints := {
     Verbose => false
 };
 
-optFindANonZeroMinor := optRandomPoints | {MinorPointAttempts => 5}
+optFindANonZeroMinor := optRandomPoints | {MinorPointAttempts => 5} | {ExtendField => true}
 
 optCoorindateChange := {
     Verbose => false, 
@@ -603,31 +603,32 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
     );
     
     --lets give a quick generic projection a shot (well, the hybrid version)
-    if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 1): trying a quick projection, coordinates only";
-    pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
-        opts++{ Strategy=>HybridProjectionIntersection,
-                MaxCoordinatesToReplace => 0,
-                Replacement => Binomial,
-                MaxCoordinatesToTrivialize => infinity,
-                ProjectionAttempts => 2,
-                IntersectionAttempts => 2*n1
-            }
+    if (opts.ProjectionAttempts > 0) then (
+        if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 1): trying a quick projection, coordinates only";
+        pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
+            opts++{ Strategy=>HybridProjectionIntersection,
+                    MaxCoordinatesToReplace => 0,
+                    Replacement => Binomial,
+                    MaxCoordinatesToTrivialize => infinity,
+                    ProjectionAttempts => 2,
+                    IntersectionAttempts => 2*n1
+                }
+        );
     );
     if (#pointsList >= n1) then return pointsList;
 
 
     --next do a very fast intersection with coordinate linear spaces
     if (#pointsList >= n1) then return pointsList;
-    if (opts.ProjectionAttempts > 0) then (
-        if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 2): trying a quick linear intersection, coordinates only";
-        pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
-            opts++{ Strategy=>LinearIntersection,
-                    MaxCoordinatesToReplace => 0,
-                    IntersectionAttempts => 2*n1,
-                    MaxCoordinatesToTrivialize => infinity
-                }
-        );
+    if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 2): trying a quick linear intersection, coordinates only";
+    pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
+        opts++{ Strategy=>LinearIntersection,
+                MaxCoordinatesToReplace => 0,
+                IntersectionAttempts => 2*n1,
+                MaxCoordinatesToTrivialize => infinity
+            }
     );
+
     if (#pointsList >= n1) then return pointsList;
     
     --next do a very fast intersection with nearly coordinate linear spaces
