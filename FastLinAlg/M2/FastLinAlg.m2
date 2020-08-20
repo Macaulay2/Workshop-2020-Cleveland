@@ -15,7 +15,7 @@ Version => "1.0", Date => "August 18th, 2020", Authors => {
     Email=> "yuhuiyao4ever@gmail.com"
     }
 }, --this file is in the public domain
-Headline => "A package for faster linear algebra operations.", DebuggingMode => true, Reload=>true)
+Headline => "A package for faster linear algebra operations.", PackageExports => {"RandomRationalPoints"}, DebuggingMode => true, Reload=>true)
 export{
 --  "selectSmallestTerms",
   "chooseSubmatrixSmallestDegree", --there are checks
@@ -756,8 +756,14 @@ internalChooseMinor(ZZ, Ideal, Matrix, Matrix) := opts -> (minorSize, I1, nonzer
         if (opts.Verbose) or debugLevel > 0 then print "internalChooseMinor: Choosing RandomNonZero";
     )
     else if (myRandom < opts.Strategy#LexSmallest + opts.Strategy#LexSmallestTerm + opts.Strategy#LexLargest + opts.Strategy#GRevLexSmallest + opts.Strategy#GRevLexSmallestTerm + opts.Strategy#GRevLexLargest + opts.Strategy#Random + opts.Strategy#RandomNonzero + opts.Strategy#Points) then (
-        try (o = findANonZeroMinor(minorSize, M1, I1, Verbose=>opts.Verbose);) then submatrixS1 = {o#2, o#1} else submatrixS1 = chooseRandomSubmatrix(minorSize, M1);
-        if (opts.Verbose) or debugLevel > 0 then print "internalChooseMinor: Choosing Points";
+        if (char ambR == 0) then (
+            if (opts.Verbose) or debugLevel > 0 then print "internalChooseMinor: Choosing Points, but characteristic is zero, so defaulting to random instead.";
+            submatrixS1 = chooseRandomSubmatrix(minorSize, M1); 
+        )
+        else (
+            if (opts.Verbose) or debugLevel > 0 then print "internalChooseMinor: Choosing Points";
+            try (o = findANonZeroMinor(minorSize, M1, I1, ProjectionAttempts => 0);) then submatrixS1 = {o#2, o#1} else ( submatrixS1 = chooseRandomSubmatrix(minorSize, M1); );
+        );
     );
     --if (opts.Verbose or (debugLevel > 0)) then print "internalChooseMinor: finished.";
     return submatrixS1;
@@ -830,7 +836,7 @@ Rn(ZZ, Ring) := opts -> (n1, R1) -> (
     if (opts.Verbose or debugLevel > 0) then print concatenate("Rn: About to enter loop");
     while ( (r-d <= n1) and (i < numberOfMinorsCompute) and (#searchedSet < possibleMinors)) do (
         while (i <= opts.CodimCheckFunction(j)) and (i < numberOfMinorsCompute) do (
-            submatrixS1 = internalChooseMinor(fullRank, Id+sumMinors, nonzeroM, M1, Strategy=>opts.Strategy, MutableSmallest=>mutM2, MutableLargest=>mutM1);
+            submatrixS1 = internalChooseMinor(fullRank, Id+sumMinors, nonzeroM, M1, Strategy=>opts.Strategy, Verbose=>opts.Verbose, MutableSmallest=>mutM2, MutableLargest=>mutM1);
             if  (not (submatrixS1 === null)) and (not (searchedSet#?(locationToSubmatrix(submatrixS1)))) then (
                 searchedSet#(locationToSubmatrix(submatrixS1)) = true;
                 sumMinors = sumMinors + ideal(getDetOfSubmatrix(M1, submatrixS1, DetStrategy=>opts.DetStrategy));
@@ -894,7 +900,7 @@ chooseGoodMinors(ZZ, ZZ, Matrix, Ideal) := opts -> (howMany, minorSize, M1, I1) 
 --first we try smallest submatrices with respect to several different monomial orders
     while ( (k < howMany) and (i < maxAttempts) and (#searchedSet < possibleMinors)) do (
         while (i <= j^1.5) and (k < howMany) and (i < maxAttempts) do (
-            submatrixS1 = internalChooseMinor(minorSize, Id + sumMinors, nonzeroM, M1, Strategy=>opts.Strategy, MutableSmallest=>mutM2, MutableLargest=>mutM1);
+            submatrixS1 = internalChooseMinor(minorSize, Id + sumMinors, nonzeroM, M1, Strategy=>opts.Strategy, Verbose=>opts.Verbose, MutableSmallest=>mutM2, MutableLargest=>mutM1);
 
             if (not (submatrixS1 === null)) and (not searchedSet#?(locationToSubmatrix(submatrixS1))) then (
                 searchedSet#(locationToSubmatrix(submatrixS1)) = true;
@@ -1132,7 +1138,7 @@ getSubmatrixOfRank(ZZ, Matrix) := opts -> (n1, M0) -> (
     nonzeroM := replaceZeros(M1); --
     mutM2 := mutableMatrix(nonzeroM); --for smallest grevlex computations
 
-    internalMinorsOptions := new OptionTable from {Strategy=>opts.Strategy}; --just grab the options relevant to chooseGoodMinors
+    internalMinorsOptions := new OptionTable from {Strategy=>opts.Strategy, Verbose=>opts.Verbose}; --just grab the options relevant to chooseGoodMinors
 
     searchedSet := new MutableHashTable from {}; --used to store which ranks have already been computed
 
@@ -1611,7 +1617,8 @@ document {
         {TT "LexSmallest", ": try to find submatrices where each row and column has a small entry with respect to a random ", TT "Lex", "order."},
         {TT "LexSmallestTerm", ": find submatrices where each row and column has an entry with a small term with respect to a random ", TT "Lex", "order."},
         {TT "Random", ": find random submatrices "},
-        {TT "RandomNonzero", ": find random submatrices that have nonzero rows and columns"}
+        {TT "RandomNonzero", ": find random submatrices that have nonzero rows and columns"},
+        {TT "Points", ": find submatrices that are not singular at the given ideal by finding a point where that ideal vanishes, and evaluating the matrix at that point (via the package ", TO RandomRationalPoints, ").  If working over a characteristic zero field, this will select random submatrices."}
     },
     "Each such key should point to an integer.",
 	BR{},BR{},
@@ -1632,8 +1639,8 @@ document {
         {TT "StrategyLexSmallest", ": 50% of the matrices are ", TT "LexSmallest", " and 50% are ", TT "LexSmallestTerm"},
         {TT "StrategyGRevLexSmallest", ": 50% of the matrices are ", TT "GRevLexSmallest", " and 50% are ", TT "GRevLexLargest"},
         {TT "StrategyRandom", ": chooses 100% random submatrices."},
-        {TT "StrategyPoints", ": choose submatrices by finding submatrices with full rank at points not on an ideal, using the package ", TO RandomRationalPoints, "."},
-        {TT "StrategyDefaultWithPoints", ": like ", TT "StrategyDefault", " but replaces the ", TT "Random", " and ", "RandomNonZero", " submatrices as with matrices chosen as in StrategyPoints"},
+        {TT "StrategyPoints", ": choose all submatrices via Points."},
+        {TT "StrategyDefaultWithPoints", ": like ", TT "StrategyDefault", " but replaces the ", TT "Random", " and ", "RandomNonZero", " submatrices as with matrices chosen as in Points."},
     },
     "Additionally, a ", TT "MutableHashTable", " named ", TT "StrategyCurrent", " is also exported.  It begins as the default strategy, but the user can modify it."
 }
@@ -2044,5 +2051,21 @@ assert(null === isDimAtMost(1, I));
 assert(true === isDimAtMost(2, I));
 assert(true === isDimAtMost(3, I))
 ///
+
+TEST /// --check #16 (checking various strategies)
+T = ZZ/101[x1,x2,x3,x4,x5,x6,x7];
+ I =  ideal(x5*x6-x4*x7,x1*x6-x2*x7,x5^2-x1*x7,x4*x5-x2*x7,x4^2-x2*x6,x1*x4-x2*x5,x2*x3^3*x5+3*x2*x3^2*x7+8*x2^2*x5+3*x3*x4*x7-8*x4*x7+x6*x7,x1*x3^3*x5+3*x1*x3^2*x7+8*x1*x2*x5+3*x3*x5*x7-8*x5*x7+x7^2,x2*x3^3*x4+3*x2*x3^2*x6+8*x2^2*x4+3*x3*x4*x6-8*x4*x6+x6^2,x2^2*x3^3+3*x2*x3^2*x4+8*x2^3+3*x2*x3*x6-8*x2*x6+x4*x6,x1*x2*x3^3+3*x2*x3^2*x5+8*x1*x2^2+3*x2*x3*x7-8*x2*x7+x4*x7,x1^2*x3^3+3*x1*x3^2*x5+8*x1^2*x2+3*x1*x3*x7-8*x1*x7+x5*x7);
+ R=T/I;
+assert(Rn(1, R, Strategy=>StrategyDefault));
+assert(Rn(1, R, Strategy=>StrategyDefaultNonRandom));
+assert(Rn(1, R, Strategy=>StrategyDefaultWithPoints, MinMinorsFunction => x->x));
+assert(Rn(1, R, Strategy=>StrategyGRevLexSmallest));
+assert(Rn(1, R, Strategy=>StrategyLexSmallest));
+assert(Rn(1, R, Strategy=>StrategyRandom));
+assert(Rn(1, R, Strategy=>StrategyPoints, MinMinorsFunction => x->x, CodimCheckFunction => x -> x));
+///
+
+
+
 
 end

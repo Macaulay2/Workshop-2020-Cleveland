@@ -693,9 +693,21 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
     );
     if (#pointsList >= n1) then return pointsList;
     
-    --lets try another projection
+    --this one is probably quite slow
+    if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 8): trying a linear intersection, binomials only";
+    pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
+        opts++{ Strategy=>LinearIntersection,
+                MaxCoordinatesToReplace => infinity,
+                Replacement => Binomial,
+                MaxCoordinatesToTrivialize => 1,
+                IntersectionAttempts => 4*n1
+            }
+    );
+    if (#pointsList >= n1) then return pointsList;
+
+        --lets try another projection
     if (opts.ProjectionAttempts > 0) then (
-        if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 8): giving projection another shot, coordinates and two binomials only";
+        if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 9): giving projection another shot, coordinates and two binomials only";
         pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
             opts++{ Strategy=>HybridProjectionIntersection,
                     MaxCoordinatesToReplace => 2,
@@ -705,18 +717,6 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
                     IntersectionAttempts => 4*n1
                 }
         );
-    );
-    if (#pointsList >= n1) then return pointsList;
-    
-    --this one is probably quite slow
-    if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 9): trying a linear intersection, binomials only";
-    pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
-        opts++{ Strategy=>LinearIntersection,
-                MaxCoordinatesToReplace => infinity,
-                Replacement => Binomial,
-                MaxCoordinatesToTrivialize => 1,
-                IntersectionAttempts => 4*n1
-            }
     );
     if (#pointsList >= n1) then return pointsList;
     
