@@ -23,7 +23,7 @@ L = {3,3}
 T = diagonalAction(W,L,R2)
 S = R2^T
 invariantRing T
-I = definingIdeal S
+I = definingIdeal S 
 I = definingIdeal T --works for invariant ring not action
 
 Q = ring I
@@ -57,15 +57,19 @@ hilbertIdeal L
 invariants L
 invariants(L,4)
 invariants(L,5)
+
+--binary quartics
 M4 = M = transpose (map(S,A)) last coefficients sub(basis(4,A),{u=>a*u+b*v,v=>c*u+d*v})
 R4 = QQ[x_1..x_5]
 L4 = linearlyReductiveAction(I,M4,R4)
 elapsedTime hilbertIdeal L4
-elapsedTime X = invariants L4
+elapsedTime X = invariants L4 
+-- Does X give minimal invariants?
 g2 = X_0/12
 g3 = -X_1/216
-256*(g2^3 - 27*g3^2) -- discriminant
-1728*(g2^3)/(g2^3 - 27*g3^2) -- j-invariant (symmetrized cross-ratio)
+-- What is the connection here?
+256*(g2^3 - 27*g3^2) -- discriminant of the quartic can be expressed in terms of invariants
+1728*(g2^3)/(g2^3 - 27*g3^2) -- j-invariant (symmetrized cross-ratio) of quartic also in terms of invariants
 
 -- invariant of 2x2 matrices of binary linear forms with SL_2 action
 restart
@@ -80,6 +84,13 @@ G3 = transpose genericMatrix(S,c_(1,1),2,2)
 R = QQ[x_(1,1,1)..x_(2,2,2)]
 L=linearlyReductiveAction(I,G1**G2**G3,R)
 elapsedTime inv=invariants L
+elapsedTime invariants(L,2)
+-- elapsedTime invariants(L,4) takes too long, linear algebra
+-- method is very slow with this many variables
+-- however hilbertIdeal is fast!
+elapsedTime hilbertIdeal(L)
+J = hilbertIdeal(L)
+isInvariant((J.gens)_(0,0),L)
 
 -- invariants of S_4 using King's algorithm
 -- and with the linear algebra method
@@ -90,3 +101,6 @@ L = apply({"2134","2341"},permutationMatrix);
 S4 = finiteAction(L,R)
 elapsedTime invariants S4
 elapsedTime invariants(S4,UseLinearAlgebra=>true)
+p= primaryInvariants S4
+secondaryInvariants(p,S4)
+hironakaDecomposition(S4)
