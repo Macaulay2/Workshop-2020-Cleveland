@@ -44,6 +44,12 @@ hilbertIdeal L
 invariants L
 invariants(L,4)
 invariants(L,5)
+M4 = M = transpose (map(S,A)) last coefficients sub(basis(4,A),{u=>a*u+b*v,v=>c*u+d*v})
+R4 = QQ[x_1..x_5]
+L4 = linearlyReductiveAction(I,M4,R4)
+elapsedTime hilbertIdeal L4
+elapsedTime X = invariants L4
+(4/27)*(X_0^3 - X_1^2) --discriminant
 
 -- invariant of 2x2 matrices of binary linear forms with SL_2 action
 restart
