@@ -49,7 +49,10 @@ R4 = QQ[x_1..x_5]
 L4 = linearlyReductiveAction(I,M4,R4)
 elapsedTime hilbertIdeal L4
 elapsedTime X = invariants L4
-(4/27)*(X_0^3 - X_1^2) --discriminant
+g2 = X_0/12
+g3 = -X_1/216
+256*(g2^3 - 27*g3^2) -- discriminant
+1728*(g2^3)/(g2^3 - 27*g3^2) -- j-invariant (symmetrized cross-ratio)
 
 -- invariant of 2x2 matrices of binary linear forms with SL_2 action
 restart
