@@ -1,41 +1,40 @@
-
-restart
-uninstallPackage "InvariantRings"
 installPackage "InvariantRings" -- runs all checks
-needsPackage "InvariantRings" -- loads without checking
-check InvariantRings -- runs all tests 
 viewHelp "InvariantRings" -- opens documentation in browser
 
 --no invariants example
+--SL2 acting on C^2
+restart
+needsPackage "InvariantRings"
 B = QQ[a,b,c,d]
 A = ideal(a*d - b*c - 1)
 SL2std = matrix{{a,b},{c,d}}
-R1 = QQ[x_1..x_2]
-
-time V1 = linearlyReductiveAction(A,SL2std,R1)
-invariants V1
-time hilbertIdeal V1
+R = QQ[x_1..x_2]
+elapsedTime V = linearlyReductiveAction(A,SL2std,R)
+invariants V
+elapsedTime hilbertIdeal V
 
 -- abelian group example C3xC3 acting on polynomial ring in two vars
-R2 = QQ[x_1..x_3]
+restart
+needsPackage "InvariantRings"
+R = QQ[x_1..x_3]
 W = matrix{{1,0,1},{0,1,1}}
 L = {3,3}
-T = diagonalAction(W,L,R2)
-S = R2^T
+T = diagonalAction(W,L,R)
+S = R^T
 invariantRing T
+-- resolution of Hilbert ideal
 I = definingIdeal S 
-I = definingIdeal T --works for invariant ring not action
-
 Q = ring I
-res S -- we should have this working?
 F = res I
-F.dd -- should this print nicer?
+-- Hilbert series of ring of invariants
 hilbertSeries S
+-- equivariant Hilbert series of polynomial ring
 equivariantHilbertSeries T
-equivariantHilbertSeries S --works with action not the invariant ring
 
 
 -- S_2 as a linearly reductive action
+restart
+needsPackage "InvariantRings"
 S = QQ[z]
 A = ideal(z^2 - 1)
 M = matrix{{(1+z)/2, (1-z)/2},{(1-z)/2,(1+z)/2}}
@@ -44,7 +43,7 @@ X = linearlyReductiveAction(A,M,R)
 isInvariant(a,X)
 invariants X
 
--- invariants of binary forms
+-- invariants of binary quadrics
 restart
 needsPackage "InvariantRings"
 S = QQ[a,b,c,d]
@@ -58,16 +57,20 @@ invariants L
 invariants(L,4)
 invariants(L,5)
 
---binary quartics
+-- invariants of binary quartics
+restart
+needsPackage "InvariantRings"
+S = QQ[a,b,c,d]
+I = ideal(a*d - b*c - 1)
+A = S[u,v]
 M4 = M = transpose (map(S,A)) last coefficients sub(basis(4,A),{u=>a*u+b*v,v=>c*u+d*v})
 R4 = QQ[x_1..x_5]
 L4 = linearlyReductiveAction(I,M4,R4)
 elapsedTime hilbertIdeal L4
 elapsedTime X = invariants L4 
--- Does X give minimal invariants?
+-- Other invariants can be obtained from the generators above
 g2 = X_0/12
 g3 = -X_1/216
--- What is the connection here?
 256*(g2^3 - 27*g3^2) -- discriminant of the quartic can be expressed in terms of invariants
 1728*(g2^3)/(g2^3 - 27*g3^2) -- j-invariant (symmetrized cross-ratio) of quartic also in terms of invariants
 
@@ -101,6 +104,6 @@ L = apply({"2134","2341"},permutationMatrix);
 S4 = finiteAction(L,R)
 elapsedTime invariants S4
 elapsedTime invariants(S4,UseLinearAlgebra=>true)
-p= primaryInvariants S4
-secondaryInvariants(p,S4)
-hironakaDecomposition(S4)
+elapsedTime p=primaryInvariants S4
+elapsedTime secondaryInvariants(p,S4)
+elapsedTime hironakaDecomposition(S4)
