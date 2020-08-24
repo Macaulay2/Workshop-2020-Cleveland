@@ -272,6 +272,7 @@ projectionToHypersurface(Ideal) := opts -> (I1) -> (
         c1 = codim I1;
     ) else (c1 = opts.Codimension);
     if (c1 <= 1) then return (map(R1, R1), I1); --its already a hypersurface
+    if (c1 == infinity) then return (map(R1, R1), I1); --it's the unit ideal, and hence also a hypersurface
     n1 := c1-1;
     
     --build the target ring
@@ -346,7 +347,7 @@ verifyPoint(List, Ideal) := opts -> (finalPoint, I1) -> (
 --if Verify is true, it will check to for linear independence of the monomial, binomial and randForms 
 getRandomLinearForms = method(Options => {Verify => false, Homogeneous => false, Verbose=>false});
 getRandomLinearForms(Ring, List) := opts -> (R1, L1) ->(
-    if (opts.Verbose) or (debugLevel > 0) then print "getRandomLinearForms: starting";
+    if (opts.Verbose) or (debugLevel > 0) then print concatenate("getRandomLinearForms: starting, options:", toString(L1));
     constForms := L1#0;
     monomialForms := L1#1;
     trueMonomialForms := L1#2; --forced to be monomial whether or not Homogeneous is true
@@ -357,6 +358,9 @@ getRandomLinearForms(Ring, List) := opts -> (R1, L1) ->(
     d := #genList;
     --tempList is used if Verify => true, it tries to maximize linear independence of monomial and binomial forms,
     --this is important if you are trying to verify some ring map is actually surjective 
+    if (d <= 0) then (
+        
+    );
     tempList := random genList;
     if (opts.Verify) then (
         if (#tempList < monomialForms + trueMonomialForms + binomialForms) then (tempList = tempList | apply(monomialForms + trueMonomialForms + binomialForms - #tempList, i->(genList)#(random d)));
@@ -400,6 +404,10 @@ randomPointViaLinearIntersection(ZZ, Ideal) := opts -> (n1, I1) -> (
     returnPointsList := {};
     c1 := opts.Codimension;
     if (c1 === null) then (c1 = codim I1); --don't compute it if we already know it.
+    if (c1 == 0) then (
+        if (opts.Verbose or debugLevel > 0) then print "randomPointViaLinearIntersection: 0 ideal was passed, switching to brute force.";
+        return searchPoints(n1, ring I1, first entries gens I1, opts++{PointCheckAttempts => 10*n1});
+    );
     R1 := ring I1;
     dR1 := dim R1;
     d1 := dR1 - c1;
@@ -417,13 +425,13 @@ randomPointViaLinearIntersection(ZZ, Ideal) := opts -> (n1, I1) -> (
     local J1;
     local myPowerList;
     local kk; --the extended field, if we extended
+    local varList;
     kk = coefficientRing(R1);
-    varList := drop(gens R1, d1);
+    if (d1 == -infinity) then (if (opts.Verbose or debugLevel > 0) then print "randomPointViaLinearIntersection: no points, the ideal is the unit ideal."; return returnPointsList;) else (varList = drop(gens R1, d1););  --if the unit ideal is passed, then there are no points
     toReplace := max(0, min(opts.MaxCoordinatesToReplace, c1));
     toTrivialize := min(d1, opts.MaxCoordinatesToTrivialize);
     while(i < opts.IntersectionAttempts) and (#returnPointsList < n1) do (
-        targetSpace = kk[varList];
-        
+        targetSpace = kk[varList];        
         if (opts.Replacement == Binomial) then (
             phiMatrix = getRandomLinearForms(targetSpace, {toTrivialize, 0, c1-toReplace + (d1 - toTrivialize), toReplace, 0}, Homogeneous => false, Verify=>true);
         )
@@ -500,7 +508,15 @@ randomPointViaGenericProjection(ZZ, Ideal) := opts -> (n1, I1) -> (
     while (flag) and (i < opts.ProjectionAttempts) and (#pointsList < n1) do (
         if (opts.Codimension === null) then (
             c1 := codim I1;
-            if (c1 == 1) then ( --don't project, if we are already a hypersurface
+            if (c1 == infinity) then (
+                if (opts.Verbose or debugLevel > 0) then print "randomPointViaGenericProjection: no points, the ideal is the unit ideal."; 
+                return pointsList;
+            )
+            else if (c1 == 0) then (
+                if (opts.Verbose or debugLevel > 0) then print "randomPointViaGenericProjection: 0 ideal was passed, switching to brute force.";
+                return searchPoints(n1, ring I1, first entries gens I1, opts++{PointCheckAttempts => 10*n1});
+            )
+            else if (c1 == 1) then ( --don't project, if we are already a hypersurface
                 phi = map(ring I1, ring I1);
                 I0 = I1;
             )
@@ -511,6 +527,14 @@ randomPointViaGenericProjection(ZZ, Ideal) := opts -> (n1, I1) -> (
         else if (opts.Codimension == 1) then (
             phi = map(ring I1, ring I1);
             I0 = I1;
+        )
+        else if (opts.Codimension == infinity) then (
+            if (opts.Verbose or debugLevel > 0) then print "randomPointViaGenericProjection: no points, the ideal is the unit ideal."; 
+            return pointsList;
+        )
+        else if (c1 == 0) then (
+            if (opts.Verbose or debugLevel > 0) then print "randomPointViaGenericProjection: 0 ideal was passed, switching to brute force.";
+            return searchPoints(n1, ring I1, first entries gens I1, opts++{PointCheckAttempts => 10*n1});
         )
         else(
             (phi, I0) = projectionToHypersurface(I1, Homogeneous=>opts.Homogeneous, Replacement => opts.Replacement, MaxCoordinatesToReplace => opts.MaxCoordinatesToReplace, Codimension => opts.Codimension, Verbose=>opts.Verbose);
@@ -582,8 +606,19 @@ randomPointViaDefaultStrategy = method(Options => optRandomPoints);
 randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
     local fieldSize;
     pointsList := {}; --a list of points to output
+
+    if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 0): trying a quick brute force with 10 attempts.";
+    pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
+            opts++{ Strategy=>BruteForce, PointCheckAttempts => 10 }
+        );
+    if (#pointsList >= n1) then return pointsList;
+
     c1 := opts.Codimension;
     if (c1 === null) then (c1 = codim I1); --don't compute it if we already know it.
+    if (c1 == infinity) then (
+        if (opts.Verbose or debugLevel > 0) then print "randomPointViaDefaultStrategy: the ideal has no points (it is the unit ideal)";
+        return pointsList;
+    );
 
     if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy: starting";
     --we can do a brute force attempt for hypersurfaces when the field is small
@@ -602,6 +637,10 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
         pointsList = pointsList | randomPointsBranching(n1, I1, opts++{Strategy=>BruteForce, PointCheckAttempts=>min(30*n1, 4*n1*fieldSize)});
     );
     
+
+
+
+
     --lets give a quick generic projection a shot (well, the hybrid version)
     if (opts.ProjectionAttempts > 0) then (
         if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 1): trying a quick projection, coordinates only";
