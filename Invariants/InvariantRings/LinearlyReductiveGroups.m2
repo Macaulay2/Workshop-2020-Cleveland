@@ -128,9 +128,9 @@ hilbertIdeal LinearlyReductiveAction := Ideal => opts -> V -> (
     
     -- return the result back in the user's input ring
     -- cache if default options are used
-    II := trim(sub(II, join(apply(n, i -> x_(i+1) => (ring V)_i),apply(n, i -> y_(i+1) => 0), apply(l, i -> z_(i+1) => 0))))
+    II = trim(sub(II, join(apply(n, i -> x_(i+1) => (ring V)_i),apply(n, i -> y_(i+1) => 0), apply(l, i -> z_(i+1) => 0))));
 
-    if opts.DegreeLimit === {} and opts.SubringLimit === infinity and V.cache#?hilbertIdeal then (
+    if opts.DegreeLimit === {} and opts.SubringLimit === infinity then (
 	V.cache#hilbertIdeal = II;
 	);
 
