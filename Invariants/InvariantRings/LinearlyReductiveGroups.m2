@@ -45,11 +45,12 @@ groupIdeal LinearlyReductiveAction := Ideal => V -> V.groupIdeal
 
 ---------------------------------------------
 
-hilbertIdeal = method()
+hilbertIdeal = method(Options => {
+	DegreeLimit => {},
+	SubringLimit => infinity
+	})
 
-hilbertIdeal LinearlyReductiveAction := { } >> opts -> (cacheValue (symbol hilbertIdeal)) (V -> runHooks(LinearlyReductiveAction, symbol hilbertIdeal, V))
-
-addHook(LinearlyReductiveAction, symbol hilbertIdeal, V -> break (
+hilbertIdeal LinearlyReductiveAction := Ideal => opts -> V -> (
     A := groupIdeal V;
     M := actionMatrix V;
     R := ambient ring V;
@@ -62,7 +63,7 @@ addHook(LinearlyReductiveAction, symbol hilbertIdeal, V -> break (
     
     -- now make the enlarged polynomial ring we'll work in, and convert inputs to that ring
     x := local x, y := local y, z := local z;
-    S := K[z_1..z_l, x_1..x_n, y_1..y_n];
+    S := K[z_1..z_l, x_1..x_n, y_1..y_n, MonomialOrder=>Eliminate l];
     M' := sub(M, apply(l, i -> (ring M)_i => z_(i+1)));
     A' := sub(A, apply(l, i -> (ring M)_i => z_(i+1)));
     Ux' := sub(U, apply(n, i -> R_i => x_(i+1)));
@@ -71,12 +72,19 @@ addHook(LinearlyReductiveAction, symbol hilbertIdeal, V -> break (
     -- the actual algorithm follows
     J' := apply(n, i -> y_(i+1) - sum(n, j -> M'_(j,i) * x_(j+1)));
     J := A' + ideal(J') + Ux' + Uy';
-    I := eliminate(apply(l, i -> z_(i+1)),J);
+    if opts.DegreeLimit === {} and opts.SubringLimit === infinity then (
+	I := eliminate(apply(l, i -> z_(i+1)),J);
+	) else (
+	I = ideal selectInSubring(1,
+	    gens gb(J,DegreeLimit=>opts.DegreeLimit,SubringLimit=>opts.SubringLimit)
+	    );
+	);
+    -- I := eliminate(apply(l, i -> z_(i+1)),J);
     II := sub(I, apply(n, i -> y_(i+1) => 0));
     
     -- return the result back in the user's input ring
     trim(sub(II, join(apply(n, i -> x_(i+1) => (ring V)_i),apply(n, i -> y_(i+1) => 0), apply(l, i -> z_(i+1) => 0))))
-    ))
+    )
 
 
 
