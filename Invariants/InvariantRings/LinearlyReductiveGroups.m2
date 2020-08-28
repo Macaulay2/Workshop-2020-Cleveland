@@ -45,12 +45,56 @@ groupIdeal LinearlyReductiveAction := Ideal => V -> V.groupIdeal
 
 ---------------------------------------------
 
+-- commented out below is the original code for hilbertIdeal
+-- which uses hooks
+-- further below is the new version without hooks
+-- FG: I didn't know how to combine options with hooks
+-- so I removed hooks
+
+-*
+hilbertIdeal = method(Options => {})
+	
+hilbertIdeal LinearlyReductiveAction := { } >> opts -> (cacheValue (symbol hilbertIdeal)) (V -> runHooks(LinearlyReductiveAction, symbol hilbertIdeal, V))
+
+addHook(LinearlyReductiveAction, symbol hilbertIdeal, V -> break (
+    A := groupIdeal V;
+    M := actionMatrix V;
+    R := ambient ring V;
+    U := ideal ring V;
+    if (numColumns M =!= numRows M) or (numRows M =!= #(gens R)) then print "Matrix size does not match polynomial ring";
+    -- first, some information about the inputs:
+    n := #(gens R);
+    K := coefficientRing(R);
+    l := #(gens ring M);
+    
+    -- now make the enlarged polynomial ring we'll work in, and convert inputs to that ring
+    x := local x, y := local y, z := local z;
+    S := K[z_1..z_l, x_1..x_n, y_1..y_n];
+    M' := sub(M, apply(l, i -> (ring M)_i => z_(i+1)));
+    A' := sub(A, apply(l, i -> (ring M)_i => z_(i+1)));
+    Ux' := sub(U, apply(n, i -> R_i => x_(i+1)));
+    Uy' := sub(U, apply(n, i -> R_i => y_(i+1)));
+    
+    -- the actual algorithm follows
+    J' := apply(n, i -> y_(i+1) - sum(n, j -> M'_(j,i) * x_(j+1)));
+    J := A' + ideal(J') + Ux' + Uy';
+    I := eliminate(apply(l, i -> z_(i+1)),J);
+    II := sub(I, apply(n, i -> y_(i+1) => 0));
+    
+    -- return the result back in the user's input ring
+    trim(sub(II, join(apply(n, i -> x_(i+1) => (ring V)_i),apply(n, i -> y_(i+1) => 0), apply(l, i -> z_(i+1) => 0))))
+    ))
+*-
+
 hilbertIdeal = method(Options => {
 	DegreeLimit => {},
 	SubringLimit => infinity
 	})
 
 hilbertIdeal LinearlyReductiveAction := Ideal => opts -> V -> (
+    if opts.DegreeLimit === {} and opts.SubringLimit === infinity and V.cache#?hilbertIdeal then (
+	return V.cache#hilbertIdeal;
+	);
     A := groupIdeal V;
     M := actionMatrix V;
     R := ambient ring V;
@@ -83,7 +127,14 @@ hilbertIdeal LinearlyReductiveAction := Ideal => opts -> V -> (
     II := sub(I, apply(n, i -> y_(i+1) => 0));
     
     -- return the result back in the user's input ring
-    trim(sub(II, join(apply(n, i -> x_(i+1) => (ring V)_i),apply(n, i -> y_(i+1) => 0), apply(l, i -> z_(i+1) => 0))))
+    -- cache if default options are used
+    II := trim(sub(II, join(apply(n, i -> x_(i+1) => (ring V)_i),apply(n, i -> y_(i+1) => 0), apply(l, i -> z_(i+1) => 0))))
+
+    if opts.DegreeLimit === {} and opts.SubringLimit === infinity and V.cache#?hilbertIdeal then (
+	V.cache#hilbertIdeal = II;
+	);
+
+    return II;
     )
 
 
