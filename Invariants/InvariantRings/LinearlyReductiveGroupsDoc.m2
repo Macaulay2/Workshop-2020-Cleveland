@@ -137,6 +137,14 @@ document {
 		"L = linearlyReductiveAction(I, M, Q)",
 		"H = hilbertIdeal L"
 		},
+	PARA {
+	    "The algorithm performs an elimination using Groebner
+	    bases. The options ", TO DegreeLimit, " and ",
+	    TO SubringLimit, " are standard ", TO gb, " options
+	    that can be used to interrupt the computation
+	    before it is complete, yielding a partial list of
+	    generators for the Hilbert ideal."
+	    },
     	 Caveat => "The generators of the Hilbert ideal computed
 	 by this function need not be invariant."	    
 	    }

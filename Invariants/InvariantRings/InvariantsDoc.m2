@@ -637,6 +637,15 @@ document {
 		"H = hilbertIdeal V",
 		"invariants V",
 		},
+	PARA {
+	    "The algorithm for the Hilbert ideal performs an
+	    elimination using Groebner
+	    bases. The options ", TO DegreeLimit, " and ",
+	    TO SubringLimit, " are standard ", TO gb, " options
+	    that can be used to interrupt the computation
+	    before it is complete, yielding a partial list of
+	    invariant generators for the Hilbert ideal."
+	    },
 	    
 	Caveat => {
 	    "Both ", TO "hilbertIdeal", " and ",
