@@ -146,9 +146,11 @@ reynoldsOperator (RingElement, DiagonalAction) := RingElement => (f, D) -> sum s
 
 invariants = method(Options => {
 	Strategy => UseNormaliz,
-	UseLinearAlgebra => false,
+	UseLinearAlgebra => false,--for finite groups
 	UseCoefficientRing => false,
-	DegreeBound => infinity
+	DegreeBound => infinity,--for finite groups
+	DegreeLimit => {},--for linearly reductive groups
+	SubringLimit => infinity--for linearly reductive groups
 	})
 
 invariants DiagonalAction := List => o -> D -> (
@@ -362,7 +364,8 @@ invariants (LinearlyReductiveAction, ZZ) := List => o -> (V,d) -> (
 
 --Uses the preceding function together with hilbertIdeal to compute a set of generating invariants.
 invariants (LinearlyReductiveAction) := List => o -> V -> (
-    I := hilbertIdeal V;
+    --I := hilbertIdeal V;
+    I := hilbertIdeal(V,DegreeLimit=>o.DegreeLimit,SubringLimit=>o.SubringLimit);
     Q := ring V;
     n := #(gens Q);
     K := coefficientRing ring groupIdeal V;
