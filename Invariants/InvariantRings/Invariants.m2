@@ -450,7 +450,7 @@ invariants FiniteGroupAction := List => o -> G -> (
     -- if terminating condition was not met, warn the user
     if M =!= {} then print"
 Warning: stopping condition not met!
-Output does not generate the entire ring of invariants.
+Output may not generate the entire ring of invariants.
 Increase value of DegreeBound.
 ";
     -- in characteristic zero remove denominators
