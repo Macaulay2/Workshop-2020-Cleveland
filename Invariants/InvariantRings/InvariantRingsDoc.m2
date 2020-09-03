@@ -3,20 +3,30 @@ document {
 	Key => InvariantRings,
 	Headline => "invariants of group actions",
 	EM "InvariantRing", " is a package implementing algorithms
-	to compute invariants of reductive groups.",
+	to compute invariants of linearly reductive groups.",
 	PARA {
 	    "Current algorithms include:"
 	    },
 	UL { 
-	    {"A fast algorithm for invariants of finite abelian groups based on: ",
+	    {"An elimination theory algorithm that computes the Hilbert ideal for any linearly reductive group: ",
+		"Derksen, H. & Kemper, G. (2015). ",
+		HREF{"https://link.springer.com/book/10.1007%2F978-3-662-48422-7","Computational Invariant Theory"}, 
+	   	". Heidelberg: Springer. Algorithm 4.1.9, pp 159-164"
+		},
+	    {"A simple and efficient algorithm for invariants of tori based on: ",
+		"Derksen, H. & Kemper, G. (2015). ",
+		HREF{"https://link.springer.com/book/10.1007%2F978-3-662-48422-7","Computational Invariant Theory"}, 
+	   	". Heidelberg: Springer. Algorithm 4.3.1 pp 174-177"
+		},
+	    {"An adaptation of the tori algorithm for invariants of finite abelian groups based on: ",
 		"Gandini, F. ",
 		HREF{"https://deepblue.lib.umich.edu/handle/2027.42/151589","Ideals of Subspace Arrangements"}, 
 	   	". Thesis (Ph.D.)-University of Michigan. 2019. ISBN: 978-1392-76291-2. pp 29-34."
 		},
-	    {"A fast algorithm for invariants of tori based on: ",
-		"Derksen, H. & Kemper, G. (2015). ",
-		HREF{"https://link.springer.com/book/10.1007%2F978-3-662-48422-7","Computational Invariant Theory"}, 
-	   	". Heidelberg: Springer. pp 174-177"
+	    {"The algorithms for finite groups implemented by: ",
+		"Hawes, T. ",
+		HREF{"https://msp.org/jsag/2013/5-1/p03.xhtml","Computing the invariant ring of a finite group"}, 
+	   	". JSAG, Vol. 5 (2013). pp 15-19. DOI: 10.2140/jsag.2013.5.15"
 		}
             }
 	}
