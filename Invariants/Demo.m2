@@ -57,6 +57,7 @@ invariants L
 invariants(L,4)
 invariants(L,5)
 
+
 -- invariants of binary quartics
 restart
 needsPackage "InvariantRings"
@@ -80,10 +81,10 @@ needsPackage "InvariantRings"
 S = QQ[a_(1,1)..a_(2,2),b_(1,1)..b_(2,2),c_(1,1)..c_(2,2)]
 I = ideal((det genericMatrix(S,a_(1,1),2,2))-1,
     (det genericMatrix(S,b_(1,1),2,2))-1,
-    (det genericMatrix(S,c_(1,1),2,2))-1)
-G1 = transpose genericMatrix(S,2,2)
-G2 = transpose genericMatrix(S,b_(1,1),2,2)
-G3 = transpose genericMatrix(S,c_(1,1),2,2)
+    (det genericMatrix(S,c_(1,1),2,2))-1);
+G1 = transpose genericMatrix(S,2,2);
+G2 = transpose genericMatrix(S,b_(1,1),2,2);
+G3 = transpose genericMatrix(S,c_(1,1),2,2);
 R = QQ[x_(1,1,1)..x_(2,2,2)]
 L=linearlyReductiveAction(I,G1**G2**G3,R)
 elapsedTime inv=invariants L
