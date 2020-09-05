@@ -52,20 +52,13 @@ QuotientRing^LinearlyReductiveAction := RingOfInvariants => (Q, L) -> (
 -------------------------------------------
 
 net RingOfInvariants := S -> (
-    n := horizontalJoin(
-	{
-	    (net coefficientRing ambient S),"["
-	    }|
-	apply(S.cache.generators, v -> (
-		if v == last S.cache.generators and v == first S.cache.generators then net v 
-		else if v == last S.cache.generators then " "|(net v)
-		else (net v)|", " 
-		)
-	    )|
-	{
-	    "]"
-	    }
-	);
+    comma := ", ";
+    n := wrap(printWidth, "-", toString horizontalJoin deepSplice (
+	net coefficientRing ambient S,
+	"[",
+	toSequence between(comma, apply(S.cache.generators, f -> net f)),
+	"]"
+	));
     -- this is used for linearly reductive actions on quotients
     -- to print relations on the ring of invariants
     if not zero ideal ambient S then (
