@@ -9,7 +9,7 @@ B = QQ[a,b,c,d]
 A = ideal(a*d - b*c - 1)
 SL2std = matrix{{a,b},{c,d}}
 R = QQ[x_1..x_2]
-elapsedTime V = linearlyReductiveAction(A,SL2std,R)
+elapsedTime V = linearlyReductiveAction(A,SL2std,R) --
 invariants V
 elapsedTime hilbertIdeal V
 
