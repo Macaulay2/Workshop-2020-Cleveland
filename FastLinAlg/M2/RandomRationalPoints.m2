@@ -2,7 +2,7 @@
 newPackage(
         "RandomRationalPoints",
     	Version => "1.3",
-    	Date => "August 10th, 2020",
+    	Date => "September 11th, 2020",
     	Authors => {
 	     {Name => "Sankhaneel Bisui", Email => "sbisu@tulane.edu", HomePage=>"https://sites.google.com/view/sankhaneelbisui/home"},
 	     {Name=> "Thai Nguyen", Email =>"tnguyen11@tulane.edu", HomePage=>"https://sites.google.com/view/thainguyenmath "},
@@ -10,9 +10,9 @@ newPackage(
 	     {Name => "Sarasij Maitra", Email => "sm3vg@virginia.edu", HomePage => "https://people.virginia.edu~sm3vg"},
 	     {Name => "Zhan Jiang", Email => "zoeng@umich.edu", HomePage => "http://www-personal.umich.edu/~zoeng/"}
 	     },
-    	Headline => "A Package To Compute A Random Point In A Given Variety",
-		DebuggingMode => true, 
-		Reload=>true,
+    	Headline => "compute a random point in a given variety over a finite field",
+		DebuggingMode => false, 
+		Reload=>false,
 		AuxiliaryFiles => false -- set to true if package comes with auxiliary files
     	)
 

@@ -2,14 +2,14 @@
 newPackage(
 	"SwitchingFields",
     	Version => "1.0", 
-    	Date => "May 12, 2020",
+    	Date => "September 11th, 2020",
     	Authors => {
 	     {Name => "Zhan Jiang", Email => "zoeng@umich.edu", HomePage => "http://www-personal.umich.edu/~zoeng/"},
 	     {Name => "Sarasij Maitra", Email => "sm3vg@virginia.edu", HomePage => "https://people.virginia.edu/~sm3vg"}
 	     },
     	Headline => "Switch Base Fields and Obtain Natural Maps",
-        Reload=>true,
-        DebuggingMode => true,
+        Reload=>false,
+        DebuggingMode => false,
 	AuxiliaryFiles => false -- set to true if package comes with auxiliary files
     	)
 
