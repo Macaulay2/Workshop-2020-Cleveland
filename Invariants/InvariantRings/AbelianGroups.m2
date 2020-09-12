@@ -1,4 +1,3 @@
---cleaned up
 
 DiagonalAction = new Type of GroupAction
 
