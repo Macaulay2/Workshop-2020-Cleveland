@@ -309,7 +309,7 @@ D4=finiteAction({matrix{{i,0},{0,-i}},matrix{{0,1},{1,0}}},R)
 assert(invariants D4 === {x*y,x^4+y^4})
 ///
 
--- Test 19
+-- Test 20
 -- Checks primaryInvariants for the symmetric group S3 - these should be
 -- the elementary symmetric polynomials in 3 variables
 -- Checks also that 1 is the only secondary invariant
@@ -331,7 +331,7 @@ assert(hironakaDecomposition S3 === ({x+y+z,x*y+x*z+y*z,x^3+y^3+z^3},{sub(1,R)})
 -- I do not know if you want to include this test in the package, especially given that one does not get
 -- the elementary symmetric polynomials as a set of generators.
 
--- Test 20
+-- Test 21
 -- Checks that the Dade algorithm works for large enough finite fields 
 
 TEST ///
@@ -355,7 +355,7 @@ assert(
 -- NOTE: Hawes runs Dade's algorithm twice. You may want to give a look at his comments.
 
 
--- Test 21
+-- Test 22
 -- Checks molienSeries and secondaryInvariants on a known example where the
 -- ground field is a number field 
 TEST ///
@@ -379,7 +379,7 @@ assert(
  
  -- NOTE: the primary invariants that he lists are not the same returned by primaryInvariants D6 
  
- -- Test 22
+ -- Test 23
  -- Checks the dadeHSOP routine by checking that the list of polynomials output
 -- has the expected output. Namely:
 -- they are invariant polynimials,
