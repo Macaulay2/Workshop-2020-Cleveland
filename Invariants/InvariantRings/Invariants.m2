@@ -1,21 +1,8 @@
---This file contains methods to compute invariants (weight algorithms) and check invariants
---TODO 6/26/20 
---1. Update and check list below: take Molien series code from old InvariantRing 
---2. Check state of documentation
---3. Check state of tests
-
---NOTE
--- For some reason, InvariantRing already seems to be a protected symbol. 
--- Not due to the InvariantRing package.
+--cleaned up
 
 -------------------------------------------
 --- RingOfInvariants methods --------------
 -------------------------------------------
-
--- TO DO: 1. Add hilbertSeries or molienSeries as functions on RingOfInvariants.
---    	  2. Errors, docs, examples, tests for presentation
---    	  3. (?) Can we pass a symbol as an option for presentation to use as variable base name?
-
 
 RingOfInvariants = new Type of HashTable   
 
@@ -27,11 +14,7 @@ invariantRing = method(Options => {
 	})
 
 invariantRing GroupAction := RingOfInvariants => o -> G -> (
-    -- Generating invariants are stored in the cache in case we want to add Options later
-    -- that compute invariants only up to a fixed degree similar to 'res'.
-    -- Being in the cache should allow the user to gradually update/increase the degree if there are
-    -- many invariants.
-    
+
     new RingOfInvariants from {
 	cache => new CacheTable from { (symbol generators) => invariants(G, o) },
 	(symbol ambient) => ring G, 
@@ -59,8 +42,6 @@ net RingOfInvariants := S -> (
 	toSequence between(comma, apply(S.cache.generators, f -> net f)),
 	"]"
 	));
-    -- this is used for linearly reductive actions on quotients
-    -- to print relations on the ring of invariants
     if not zero ideal ambient S then (
 	n = horizontalJoin(n," / ",net ideal ambient S);
 	);
@@ -74,12 +55,9 @@ action RingOfInvariants := GroupAction => S -> S.action
 ambient RingOfInvariants := PolynomialRing => S -> S.ambient
 
 generators RingOfInvariants := List => null -> S -> S.cache.generators
--- gens must pass 'opts' before the argument, or it will not run!!
 
 
 -------------------------------------------
-
---presentation of invariant ring as polynomial ring modulo ideal
 
 definingIdeal = method(Options => {Variable => "u"})
 
@@ -90,14 +68,11 @@ definingIdeal RingOfInvariants := opts -> S -> (
 	J = S.cache#definingIdeal;
 	if first baseName first (ring J)_* == u then return J
 	);
-    -- get ambient ring and generators of invariant ring
     R := ambient S;
     K := coefficientRing R;
     L := generators S;
     n := #L;
-    -- get degrees of generators
     gdegs := L / degree // flatten;
-    -- form a presentation of the invariant ring
     U := K[u_1..u_n, Degrees => gdegs];
     J = ker map(R,U,L);
     S.cache#(symbol definingIdeal) = J;
@@ -113,13 +88,6 @@ hilbertSeries RingOfInvariants := Divide => opts -> S -> (
 
 
 -------------------------------------------
---- Computing invariants ------------------
--------------------------------------------
-
--- TO DO: 2. After writing code to extract the weights from a finite group action 
---    	     that happens to be abelian, add a Strategy option to invariants(FiniteGroupAction)
---    	     to let user decided whether to use invariants(FiniteAbelianAction).
---    	  3. Add error checking to isInvariant(LinearlyReductiveGroup).
 
 reynoldsOperator = method()
 
@@ -139,11 +107,11 @@ reynoldsOperator (RingElement, DiagonalAction) := RingElement => (f, D) -> sum s
 
 invariants = method(Options => {
 	Strategy => UseNormaliz,
-	UseLinearAlgebra => false,--for finite groups
+	UseLinearAlgebra => false,
 	UseCoefficientRing => false,
-	DegreeBound => infinity,--for finite groups
-	DegreeLimit => {},--for linearly reductive groups
-	SubringLimit => infinity--for linearly reductive groups
+	DegreeBound => infinity,
+	DegreeLimit => {},
+	SubringLimit => infinity
 	})
 
 invariants DiagonalAction := List => o -> D -> (
@@ -170,7 +138,6 @@ invariants DiagonalAction := List => o -> D -> (
     local C, local S, local U;
     local v, local m, local v', local u;
     
-    -- Find invariants of the finite abelian factors. 
     if g > 0 then (
 	t := product d;
 	
@@ -204,7 +171,6 @@ invariants DiagonalAction := List => o -> D -> (
     	);
     if r == 0 then return apply(mons, m -> sub(m, ring D) );
     
-    -- Find invariants of the torus factors among the abelian invariant monomials.
     W1 = W1*(transpose matrix (mons/exponents/first));
     if o.Strategy == UsePolyhedra then (
 	if r == 1 then C = convexHull W1 else C = convexHull( 2*r*W1|(-2*r*W1) );
@@ -217,38 +183,18 @@ invariants DiagonalAction := List => o -> D -> (
 	C = apply(numColumns C, j -> C_j)
 	);
     
-    -- Creates a hashtable of lists indexed by the lattice points of the convex hull
-    -- of the (scaled) weight vectors, initialized with the list of each weight vector
-    -- being the corresponding variable in the ring.
     S = new MutableHashTable from apply(C, w -> w => {});
     scan(#mons, i -> S#(W1_i) = S#(W1_i)|{mons#i});
     U = new MutableHashTable from S;
     
     nonemptyU := select(keys U, w -> #(U#w) > 0);
-    --iteration := 0; --step by step printing
-    
-    -- While some list of monomials in U is nonempty, picks a monomial in U, multiplies
-    -- it by every variable, and updates the lists of monomials in S and U if the product
-    -- is minimal with respect to divisibility in the list of monomials in S with the same weight.
     while  #nonemptyU > 0 do(
 	v = first nonemptyU;
 	m = first (U#v);
 	
-	-- Uncomment lines in step by step printing to see steps
-	-- Note: there is one such line before the while loop
-	--print("\n"|"Iteration "|toString(iteration)|".\n"); --step by step printing
-    	--print(net("    Weights: ")|net(W)); --step by step printing
-	--print("\n"|"    Set U of weights/monomials:\n"); --step by step printing
-	--print(net("    ")|net(pairs select(hashTable pairs U,l->l!= {}))); --step by step printing
-	--print("\n"|"    Set S of weights/monomials:\n"); --step by step printing
-	--print(net("    ")|net(pairs select(hashTable pairs S,l->l!= {}))); --step by step printing
-	--iteration = iteration + 1; --step by step printing
-	
 	scan(#mons, i -> (
 		u := m*mons#i;
         	v' := v + W1_i;
-		-- Checks whether the monomial u is not divisible by some monomial m' already
-		-- found such that the quotient m'' is invariant under the finite abelian action.
         	if ((U#?v') and all(S#v', m' -> (
 			    if u%m' =!= 0_R then true
 			    else if g > 0 then (
@@ -277,7 +223,6 @@ invariants DiagonalAction := List => o -> D -> (
 
 -------------------------------------------
 
---Prune and trim seem to alter existing generators. This just removes redundant ones:
 manualTrim = method(TypicalValue => List)
 
 manualTrim (List) := List => L -> (
@@ -292,39 +237,8 @@ manualTrim (List) := List => L -> (
 
 
 -------------------------------------------
-
--*
---Computes an *additive* basis for the degree d part of the invariant ring.
-invariants (LinearlyReductiveAction, ZZ) := List => o -> (V,d) -> (
-    M := actionMatrix V;
-    R := ring V;
-    A := groupIdeal V;
-    n := dim V;
-    K := coefficientRing ring groupIdeal V;
-    x := local x, z := local z;
-    X := K[x_1..x_n];
-    
-    l := #(gens ring M);
-    S := K[x_1..x_n, z_1..z_l];
-    M' := sub(M, apply(l, i -> (ring M)_i => z_(i+1)));
-    A' := sub(A, apply(l, i -> (ring M)_i => z_(i+1)));
-    
-    L := sub(basis(d,X), S);
-    r := numColumns L;
-    NFDL := apply(r, i -> (sub(L_(0,i), apply(n, j -> x_(j+1) => sum(n, k -> M'_(k,j) * x_(k+1)))) - L_(0,i)) % A');
-    monomialsNFDL := flatten entries monomials(matrix{NFDL});
-    m := #monomialsNFDL;
-    B := matrix(apply(m, i -> apply(r, j -> coefficient(monomialsNFDL#i, NFDL#j))));
-    KB := gens kernel B;
-    return flatten entries sub(L * KB, join(apply(n, i -> x_(i+1) => R_i), apply(l, i -> z_(i+1) => 0)))
-)
-*-
-
 -- Computes an *additive* basis for the degree d part of the
 -- invariant ring following Algorithm 4.5.1 of Derksen-Kemper.
--- This is a variation on Xianlong Ni's original code
--- that should work for quotients of polynomial rings.
--- Degree is passed as a list or as an integer.
 invariants (LinearlyReductiveAction, List) := List => o -> (V,d) -> (
     M := actionMatrix V;
     Q := ring V;
@@ -332,7 +246,6 @@ invariants (LinearlyReductiveAction, List) := List => o -> (V,d) -> (
     n := #(gens Q);
     K := coefficientRing ring groupIdeal V;
     x := local x, z := local z;
-    --X := K[x_1..x_n];
     
     l := #(gens ring M);
     S := Q**K[z_1..z_l];
@@ -355,9 +268,7 @@ invariants (LinearlyReductiveAction, ZZ) := List => o -> (V,d) -> (
     invariants(V,{d})
     )
 
---Uses the preceding function together with hilbertIdeal to compute a set of generating invariants.
 invariants (LinearlyReductiveAction) := List => o -> V -> (
-    --I := hilbertIdeal V;
     I := hilbertIdeal(V,DegreeLimit=>o.DegreeLimit,SubringLimit=>o.SubringLimit);
     Q := ring V;
     n := #(gens Q);
@@ -396,29 +307,19 @@ invariants (LinearlyReductiveAction) := List => o -> V -> (
 -- Below is an implementation of King's algorithm following
 -- Derksen-Kemper Algorithm 3.8.2 for the non-modular case
 invariants FiniteGroupAction := List => o -> G -> (
-    R := ring G; -- ring with group action
-    S := {}; -- list of minimal generating invariants
-    b := #(group G); -- bound for algorithm termination
+    R := ring G; 
+    S := {}; 
+    b := #(group G); 
     if ( char(R) != 0 and b % char(R) == 0 ) then 
     error "Not implemented in the modular case";
     if unique degrees R =!= {{1}} then
     error "Only implemented for standard graded polynomial rings";
-    -- if user provides a DegreeBound smaller than the order of
-    -- the group, then use that
     if o.DegreeBound < b then b = o.DegreeBound;
     local M;
     for d from 1 to b do (
-	-- print d; -- for checking purposes
-	-- growing GB for computations
     	Gb := gb(promote(ideal S,R),DegreeLimit=>d);
-	-- get leading terms
 	I := monomialIdeal leadTerm Gb;
-	-- take all degree d monomials and reduce modulo I
-	-- does not require Groebner bases
-	-- empirical evidence suggests reversing order of list
-	-- produces nicer looking invariants for GRevLex
 	M = reverse select(flatten entries (basis(d,R)%I),m->not zero m);
-	-- if all monomials reduce to zero, done
 	if M === {} then break else (
 	    if o.UseLinearAlgebra then (
 		for f in invariants(G,d) do (
@@ -440,13 +341,11 @@ invariants FiniteGroupAction := List => o -> G -> (
 	    	);
     	    );
 	);
-    -- if terminating condition was not met, warn the user
     if M =!= {} then print"
 Warning: stopping condition not met!
 Output may not generate the entire ring of invariants.
 Increase value of DegreeBound.
 ";
-    -- in characteristic zero remove denominators
     if char(R) == 0 then (
 	S = apply(S,s->(mingens ideal s)_(0,0));
 	);
@@ -460,22 +359,14 @@ invariants(FiniteGroupAction, List) := List => o -> (G,d) -> (
     R := ring G;
     K := coefficientRing R;
     B := basis(d,R);
-    -- for each group generator g and monomial m of degree d
-    -- compute g*m-m, then extract coefficients relative to basis B
     L := apply(gens G, g -> sub(B,(vars R)*(transpose g)) - B);
     L = apply(L, l -> last coefficients l);
-    -- stack coefficients into single matrix
-    -- then move to field and compute kernel
     M := sub(matrix pack(L,1),K);
     C := gens ker M;
-    -- multiply kernel generators by variables to get a matrix of
-    -- invariants
     I := B*sub(C,R);
-    -- return the entries of the matrix
     flatten entries I
     )
 
--- this allows to pass degree as integer instead of list
 invariants(FiniteGroupAction, ZZ) := List => o -> (G,d) -> (
     invariants(G,{d})
     )
@@ -485,7 +376,6 @@ invariants(FiniteGroupAction, ZZ) := List => o -> (G,d) -> (
 isInvariant = method()
 
 isInvariant (RingElement, FiniteGroupAction) := Boolean => (f, G) -> reynoldsOperator(f, G) == f
-    -- reynoldsOperator already checks to see if f is in the ring on which G acts.
 
 isInvariant (RingElement, DiagonalAction) := Boolean => (f, D) -> (
     if not instance(f, ring D) then (
