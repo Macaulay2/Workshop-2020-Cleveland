@@ -245,3 +245,166 @@ assert(equivariantHilbertSeries(D,Order=>6) ===
       *z_0*z_1+3*z_0+z_1^2+3*z_1+1)*T^4+(3*z_0^2*z_1^2+3*z_0^2*z_1
       +3*z_0^2+3*z_0*z_1^2+3*z_0*z_1+z_0+3*z_1^2+z_1+1)*T^5)
 ///
+
+
+------------------------------------------------------------------------
+--- Tests imported from InvariantRings 1.0 with the new syntax ---------
+------------------------------------------------------------------------
+
+-- Test 16
+-- Test for reynoldsOperator
+TEST ///
+R=QQ[x_0..x_2]
+A=matrix{{0,1,0},{-1,0,0},{0,0,-1}}
+C4=finiteAction(A,R)
+assert(reynoldsOperator(x_0^2+x_1+x_2,C4)===(1/2)*(x_0^2+x_1^2))
+///
+
+-- Test 17 
+-- FiniteGroupAction Test for S5 and A4
+TEST ///
+A=transpose matrix{{0,1,0,0},{0,0,1,0},{0,0,0,1},{-1,-1,-1,-1}}
+B=matrix{{-1,1,0,0},{0,1,0,0},{0,0,1,0},{0,0,0,1}}
+R=QQ[x_1..x_4]
+S5=finiteAction({A,B},R)
+assert(#(group S5) === 120)
+assert(not isAbelian S5)
+C=permutationMatrix toString 3124
+D=permutationMatrix toString 2143
+A4=finiteAction({C,D},R)
+assert(#(group A4) === 12)
+assert(not isAbelian A4)
+///
+
+-- NOTE I believe the comments that Hawes has in his original package for this test are incorrect.
+
+-- Test 18
+-- Checks primaryInvariants and secondaryInvariant for correct
+-- output for the case where ground field is a number field.
+TEST ///
+K=toField(QQ[i]/(i^2+1))
+R=K[x,y]
+D4=finiteAction({matrix{{i,0},{0,-i}},matrix{{0,1},{1,0}}},R)
+assert(#(group D4) === 8)
+assert(not isAbelian D4)
+P=primaryInvariants D4
+assert(P === {x*y,(1/2)*x^4+(1/2)*y^4})
+assert(secondaryInvariants(P,D4) === {sub(1,R)})
+assert(hironakaDecomposition D4 === ({x*y,(1/2)*x^4+(1/2)*y^4},{sub(1,R)}))
+///
+
+-- D4 is the dihedral group of order 8
+-- Note i is the square root of -1
+-- If A=matrix{{i,0},{0,-i}}, B=matrix{{0,1},{1,0}}, one can check that 
+-- A^4=B^2=(A*B)^2=1, which are the defining relations for the dihedral group of
+-- order 8 (see [A88, Chapter 27])
+
+-- Test 19 
+-- Checks invariantRing for correct output for the case where ground field is a 
+-- number field.
+TEST ///
+K=toField(QQ[i],(i^2+1))
+R=K[x,y]
+D4=finiteAction({matrix{{i,0},{0,-i}},matrix{{0,1},{1,0}}},R)
+assert(invariants D4 === {x*y,x^4+y^4})
+///
+
+-- Test 19
+-- Checks primaryInvariants for the symmetric group S3 - these should be
+-- the elementary symmetric polynomials in 3 variables
+-- Checks also that 1 is the only secondary invariant
+
+TEST ///
+R = QQ[x,y,z]
+r=permutationMatrix toString 312
+s=permutationMatrix toString 213
+S3 = finiteAction({r,s},R)
+P=primaryInvariants S3
+assert(P === {x+y+z,x*y+x*z+y*z,x^3+y^3+z^3})
+assert(isInvariant(x*y*z,S3))
+assert(secondaryInvariants(P,S3) === {sub(1,R)})
+assert(hironakaDecomposition S3 === ({x+y+z,x*y+x*z+y*z,x^3+y^3+z^3},{sub(1,R)}))
+///
+
+-- NOTE: according to Hawes there was something wrong with this test in the original InvariantRing 1.0, 
+-- and it was commented out. Indeed if I run the test twice in a row I get a different answer for P.
+-- I do not know if you want to include this test in the package, especially given that one does not get
+-- the elementary symmetric polynomials as a set of generators.
+
+-- Test 20
+-- Checks that the Dade algorithm works for large enough finite fields 
+
+TEST ///
+K=GF(101)
+R=K[x,y,z]
+r=permutationMatrix toString 312
+s=permutationMatrix toString 213
+S3 = finiteAction({r,s},R)
+P=primaryInvariants (S3, Dade=>true)
+assert(
+     P==apply(P,f->reynoldsOperator(f,S3))
+     )
+assert(
+     dim(R/ideal(P))==0
+     )
+assert(
+     apply(P,degree)==toList(#P:{#(group S3)})
+     )
+///
+
+-- NOTE: Hawes runs Dade's algorithm twice. You may want to give a look at his comments.
+
+
+-- Test 21
+-- Checks molienSeries and secondaryInvariants on a known example where the
+-- ground field is a number field 
+TEST ///
+K=toField(QQ[a]/(a^2+a+1))
+A=matrix{{a,0},{0,a^2}}
+B=sub(matrix{{0,1},{1,0}},K)
+R=K[x,y]
+D6=finiteAction({A,B},R)
+mol=molienSeries D6
+use ring value denominator mol;
+assert(
+     (value denominator mol)==(T^5-T^3-T^2+1)
+     )
+assert(
+     (value numerator mol)==1
+     )
+assert(
+     secondaryInvariants({x^3+y^3,-(x^3-y^3)^2},D6)=={1,x*y,x^2*y^2}
+     )	
+ ///
+ 
+ -- NOTE: the primary invariants that he lists are not the same returned by primaryInvariants D6 
+ 
+ -- Test 22
+ -- Checks the dadeHSOP routine by checking that the list of polynomials output
+-- has the expected output. Namely:
+-- they are invariant polynimials,
+-- they form a homogeneous system of parameters for the polynomial ring
+-- they have degrees equal to the cardinality of the group (which should occur
+-- with probability 1)*
+-- *NB it is possible that dadeHSOP can run correctly and output an invariant
+-- polynomial of degree strictly less than the cardinality of the group. If a
+-- check on the package invariant ring reports failure of the following test,
+-- then one should see if the test is passed upon a second attempt. Only if the
+-- test fails a second time is it worth inspecting the code for errors.   	    	 
+TEST ///
+setRandomSeed 0
+S=QQ[x,y]
+r=matrix{{0,-1},{1,0}}
+s=matrix{{0,1},{1,0}}
+D4=finiteAction({r,s},S)
+P=primaryInvariants(D4,Dade=>true)
+assert(
+     P==apply(P,f->reynoldsOperator(f,D4))
+     )
+assert(
+     dim(S/ideal(P))==0
+     )
+assert(
+     apply(P,degree)==toList(#P:{#(group D4)})
+     )
+///
