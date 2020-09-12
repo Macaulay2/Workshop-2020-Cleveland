@@ -1,7 +1,3 @@
---cleaned up
-
-
-
 FiniteGroupAction = new Type of GroupAction
 
 finiteAction = method()
