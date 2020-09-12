@@ -303,7 +303,7 @@ assert(hironakaDecomposition D4 === ({x*y,(1/2)*x^4+(1/2)*y^4},{sub(1,R)}))
 -- Checks invariantRing for correct output for the case where ground field is a 
 -- number field.
 TEST ///
-K=toField(QQ[i],(i^2+1))
+K=toField(QQ[i]/(i^2+1))
 R=K[x,y]
 D4=finiteAction({matrix{{i,0},{0,-i}},matrix{{0,1},{1,0}}},R)
 assert(invariants D4 === {x*y,x^4+y^4})
