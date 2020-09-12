@@ -1,7 +1,4 @@
---This file contains torus/abelian action methods and Hilbert series methods
---TODO 7/1/20
---1. Check state of documentation
---2. Check state of tests
+--cleaned up
 
 DiagonalAction = new Type of GroupAction
 
@@ -10,9 +7,6 @@ DiagonalAction = new Type of GroupAction
 -------------------------------------------
 
 diagonalAction = method()
-
-
--- Constructor for a general diagonal action.
 
 diagonalAction (Matrix, Matrix, List, PolynomialRing) := DiagonalAction => (W1, W2, d, R) -> (
     if not isField coefficientRing R then (
@@ -34,7 +28,6 @@ diagonalAction (Matrix, Matrix, List, PolynomialRing) := DiagonalAction => (W1, 
     if p > 0 and any(d, j -> j%p == 0) then (
 	error "diagonalAction: Diagonal action is not defined when the characteristic divides the order of one of the cyclic factors."
 	);    
-    -- coefficient ring for group characters
     r := numRows W1;
     g := numRows W2;
     z := getSymbol "z";
@@ -64,8 +57,6 @@ diagonalAction (Matrix, List, PolynomialRing) := DiagonalAction => (W, d, R) -> 
     W2 := W^(apply(#d, i -> r + i));
     diagonalAction(W1, W2, d, R)
     )
-
--- Constructor for a diagonal torus action.
 
 diagonalAction (Matrix, PolynomialRing) := DiagonalAction => (W, R) -> diagonalAction(W, {}, R)
 
@@ -113,18 +104,6 @@ weights = method()
 weights DiagonalAction := Matrix => D -> D.weights
 
 
--------------------------------------------
--- equivariant Hilbert series code
--- for tori and finite abelian groups
--- was written for tori first (hence the letter T)
--- but same code works for finite abelian case
-
--- this method returns the equivariant hilbert series
--- for a diagonal torus/finite abelian action on a polynomial ring
--- NOTE: group must act diagonally on single graded polynomial ring
--- by default, the series is returned as a rational function
--- if the option Order=>d is used, the expansion of the series
--- up to degree d-1 is returned (as for hilbertSeries)
 
 equivariantHilbertSeries = method(Options => {Order => infinity}, TypicalValue => Divide)
 
@@ -140,42 +119,28 @@ equivariantHilbertSeries DiagonalAction := op -> T -> (
 	)
     )
 
--- toric Hilbert series as a rational function
--- do not export
 equivariantHilbertRational = T -> (
     n := dim T;
     W1 := first weights T;
     W2 := last weights T;
-    -- reduce entries of W2 mod group orders so they are >=0
     d := cyclicFactors T;
     if not zero W2 then (
     	W2 = matrix apply(entries W2,d,(row,m)->apply(row,i->i%m));
     	);
-    -- stack weights into one matrix
     W := W1 || W2;
     R := degreesRing T;
     C := coefficientRing R;
-    -- tally the weights of the action
     p := pairs tally entries transpose W;
-    -- for each weight form 1-zT factor with power from tally
-    -- then multiply them into a product expression
     den := Product apply(sort apply(p, (w,e) -> {1 - C_w * R_0,e}), t -> Power t);
-    -- return the rational function as an expression
     Divide{1,den}
 )
 
--- computes expansion of toric Hilbert series up to order d
--- do not export
 equivariantHilbertPartial = (T, d) -> (
-    -- if not existing, create in the cache
     if not T.cache.?equivariantHilbert then (
 	T.cache.equivariantHilbert = 1_(degreesRing T);
 	);
-    -- how far was it previously computed?
-    -- get degree and coefficients
     currentDeg := first degree T.cache.equivariantHilbert;
     (M,C) := coefficients T.cache.equivariantHilbert;
-    -- compute higher degrees recursively
     if (d > currentDeg) then (
 	R := degreesRing T;
 	r := rank T;
@@ -184,44 +149,28 @@ equivariantHilbertPartial = (T, d) -> (
     	den := value denominator equivariantHilbertSeries T;
     	denDeg := first degree den;
 	B := last coefficients den;
-	-- if there are cyclic factors, need to reduce exponents
 	if cf =!= {} then (
-	    -- this map sends coefficients of the Hilbert series
-	    -- to their own ring without the variable T
 	    CR := coefficientRing R;
 	    phi := map(CR,R);
-	    -- next map gets rid of the torus characters
-	    -- by substituting 1 into them
-	    -- it also takes abelian characters mod cyclic factors
 	    CRab := ZZ[Variables=>g];
 	    CRab = CRab / ideal apply(g,i -> CRab_i^(cf_i)-1);
 	    psi := map(CRab,CR,toList(r:1)|(gens CRab));
-	    -- next map 'goes back' into ring of all characters
 	    psi' := map(CR,CRab,apply(g, i-> CR_(r+i)));
-	    -- now reduce the existing coefficients
-	    (m,c) := coefficients(phi B,Variables=>apply(g, i-> CR_(r+i)));
+      	    (m,c) := coefficients(phi B,Variables=>apply(g, i-> CR_(r+i)));
 	    m = psi' psi m;
 	    B = m*c;
 	    );
 	for i from currentDeg+1 to d do (
-	    -- coefficient of the next degree in the recursion
 	    p := -sum(1..min(i,denDeg),k -> C_(i-k,0)*B_(k,0) );
 	    if cf =!= {} then (
-	    	-- send p to the ring without T and get coefficients
 	    	(m,c) = coefficients(phi p,Variables=>apply(g, i-> CR_(r+i)));
-	    	-- applying psi reduces exponents as desired
-	    	-- applying psi' brings back to ring with other vars
 	    	m = psi' psi m;
-	    	-- monomials*(new coeffs)=desired poly
 	    	p = (m*c)_(0,0);
 	    	);
-	    -- add this new coeff and the power of T
 	    M = M | matrix{{R_0^i}};
 	    C = C || matrix{{p}};
 	    );
 	);
-    -- compute expansion up to desired degree
     q := first flatten entries (M_{0..d}*C^{0..d});
-    -- store and return
     T.cache.equivariantHilbert = q
     )
