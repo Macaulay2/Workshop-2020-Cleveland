@@ -1,21 +1,5 @@
---This file contains finite group action methods improving on old InvariantRing
---TODO 6/26/20 
---1. Update and check list below: merge (?) with old InvariantRing
---2. Check state of documentation
---3. Check state of tests
+--cleaned up
 
-
-
--------------------------------------------
---- FiniteGroupAction methods -------------
--------------------------------------------
-
--- TO DO: 1. Port and improve the remaining methods from the package "InvariantRing"
---    	     to act on the type FiniteGroupAction (rewritten as hooks as appropriate).
---    	  2. Create examples/documentation/tests for FiniteGroupAction methods.
---    	  3. Write functions to extract list of cyclic factors/weights for FiniteGroupAction
---    	     that happens to be abelian.  
---    	  4. Add OrderBound option to prevent infinite loops if passed an infinite group.
 
 
 FiniteGroupAction = new Type of GroupAction
@@ -47,14 +31,10 @@ finiteAction (List, PolynomialRing) := FiniteGroupAction => (G, R) -> (
 finiteAction (Matrix, PolynomialRing) := FiniteGroupAction => (g, R) -> finiteAction({g}, R)
 
 
--------------------------------------------
 
 net FiniteGroupAction := G -> (net G.ring)|" <- "|(net G.generators)
--- If the list of generators is long, consider rewriting  to print only the first few generators together with "...".
--- Or find a better way to print if the size of the matrices is large.
 
 generators FiniteGroupAction := opts -> G -> G.generators
--- gens must pass 'opts' before the argument, or it will not run!!
 
 numgens FiniteGroupAction := ZZ => G -> G.numgens
 
@@ -65,8 +45,6 @@ isAbelian = method()
 
 isAbelian FiniteGroupAction := { } >> opts -> (cacheValue (symbol isAbelian)) (G -> runHooks(FiniteGroupAction, symbol isAbelian, G) )
 
--- The syntax "{ } >>" above is very important for some reason.
--- The hooks will not work properly without it.
 
 addHook(FiniteGroupAction, symbol isAbelian, G -> break (
 	X := G.generators;
@@ -80,7 +58,6 @@ addHook(FiniteGroupAction, symbol isAbelian, G -> break (
 	  ))
   
   
--------------------------------------------
 
 generateGroup = method()
 
@@ -95,19 +72,10 @@ addHook(FiniteGroupAction, symbol generateGroup, G -> break (
     S := new MutableHashTable from apply(m, i -> 
 	i => new MutableHashTable from {id_(K^n) => X#i}
 	);
-    -- A hashtable of hashtables.  The outer hashtable records the index i of each group 
-    -- generator.  The hashtable S#i represents the directed edges in the Schreier graph
-    -- corresponding to multiplication by the i-th generator.
     
     A := new MutableHashTable from {id_(K^n) => {{}}}|apply(m, i -> X#i => {{i}});
-    -- A hashtable of addresses associating to each matrix in the group a list of words
-    -- on the (indices of the) generators whose product is that matrix.
-    -- This could be used to speed up the computation of multiplicative functions on the group elements
-    -- by using the values on the generators only.
-    -- It can also be used to create a set of relations for the group.
     
     toUpdate := X;
-    -- A list of matrices in the group that have not yet been multiplied by every generator.
     
     local h; local a;
     while #toUpdate > 0 do(
@@ -117,13 +85,7 @@ addHook(FiniteGroupAction, symbol generateGroup, G -> break (
 	scan(m, i -> (
 		g := h*(X#i);
 		a' := a|{i};
-		
-		-- Add the directed edge h => g to the hashtable S#i.
 		S#i#h = g;
-		
-		-- If the product g has appeared before, add the new address a' 
-		-- to the list of existing ones.  Otherwise, create a new list of 
-		-- addresses for g, and add g to the list of matrices to be updated.
 		if A#?g then (
 		    A#g = (A#g)|{a'}
 		    )
@@ -191,29 +153,6 @@ addHook(FiniteGroupAction, symbol relations, G -> break (
 	);
     unique relators 
     )) 
-
--------------------------------------------
-
--- Unexported function used to extract the cyclic factors of a FiniteGroupAction that is abelian.
--- Currently, this does not keep track of which generators of the group are the minimal generators 
--- corresponding to the cyclic factors.
-
--*
-cyclicFactors = G -> (
-    if not isAbelian G then (error "cyclicFactors: Expected group to be abelian.");
-    relators := relations G;
-    m := numgens G;
-    relators = transpose matrix apply(relators, L -> (
-	    counts := apply(L, l -> applyValues(partition(i -> i, l), val -> #val) );
-	    counts = apply(counts, l -> apply(m, i -> if l#?i then l#i else 0) );
-	    first counts - last counts
-	    )
-	);
-    relators = relations minimalPresentation coker relators;
-    apply(numRows relators, i -> relators_i_i)
-    )
-
-*-
 
 -------------------------------------------
 
