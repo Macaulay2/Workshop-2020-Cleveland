@@ -1,9 +1,4 @@
--- This is Thomas Hawes' file for the package InvariantRing 1.1.0
--- as distributed with Macaulay2 1.15.
--- This is currently not loaded in version 2.0, rather code
--- is being ported from here into OldCode.m2
-
--- -*- coding: utf-8 -*-
+--- -*- coding: utf-8 -*-
 
 -- Last edited 10 October 2014
 
@@ -2048,23 +2043,4 @@ assert(
 end
 
 
-restart
-installPackage "InvariantRing"
-check "InvariantRing"
 
-
-restart
-printWidth = 70; truncateOutput 140; needsPackage "InvariantRing";
-A = matrix{{-1,1,0},{-1,0,1},{-1,0,0}}; B = matrix{{0,-1,1},{-1,0,1},{0,0,1}};
-S = QQ[x,y,z];
-G = generateGroup({A,B},QQ)
-time prim1=primaryInvariants(S,G)
-time prim2=primaryInvariants(S,G,Dade=>true)
-apply(prim2,degree)
-time sec1=secondaryInvariants(prim1,G)
-time sec2=secondaryInvariants(prim2,G);
-mol = molienSeries G
-T = first gens ring numerator mol;
-((value numerator mol)*(1-T^8)^3)//(value denominator mol)
-secondaryInvariants(prim2,G,PrintDegreePolynomial=>true);
-sort(2*T+T^2)
