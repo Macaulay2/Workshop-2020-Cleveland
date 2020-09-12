@@ -1,6 +1,3 @@
--- This file contains code that is being ported from the original
--- InvariantRing package by Thomas Hawes.
-
 -* Functions not ported:
 
 o 'generateGroup' applied to a List of matrices is replaced by
