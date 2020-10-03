@@ -56,7 +56,7 @@ urlcolor=OliveGreen
 \date{\today}
 
 \begin{abstract}
-In this article, we present {\tt RandomRationalPoints.m2}, a package in \emph{Macaulay2} designed mainly to generate points in a variety over a finite field. We use different strategies like linear intersection and projection to obtain such points. We also present methods to obtain non-vanishing minors of some given size in a given matrix at some chosen point, which in conjunction with the FastLinAlg package should aid in determining singular locus.
+In this article, we present {\tt RandomRationalPoints}, a package in \emph{Macaulay2} designed mainly to identify rational and geometric points in a variety over a finite field. We provide different strategies like linear intersection and projection to obtain such points. We also present methods to obtain non-vanishing minors of some given size in a given matrix, by evaluating the matrix at a point.  This, in conjunction with the {\tt FastLinAlg} package, should aid in determining properties of the singular locus.
 \end{abstract}
 
  
@@ -67,44 +67,46 @@ In this article, we present {\tt RandomRationalPoints.m2}, a package in \emph{Ma
 \maketitle
 
 \section{Introduction}
- Let $I$ be an ideal in a polynomial ring $k[x_1,\dots, x_n]$ over a finite field $k$. Let $X:=V(I)$ denote the corresponding set of rational points in affine $n$-space. Getting hold of these points, or at least find one such rational point, in an algorithmically efficient manner is our primary motivation. There is an existing package called RandomPoints which has some tools to aid this investigation. Our package provides further machinery along these lines. We provide some functions that apply different strategies to generate random rational points for the given variety. We also provide functions that will expedite the process of determining singular locus together with the functions provided in the package FastLinAlg.  
+ Let $I$ be an ideal in a polynomial ring $k[x_1,\dots, x_n]$ over a finite field $k$. Let $X:=V(I)$ denote the corresponding set of rational points in affine $n$-space. Finding one such rational point or geometric point (geometric meaning a point in some finite field extension), in an algorithmically efficient manner is our primary motivation. 
+ 
+ While there is an existing package called {\tt RandomPoints}, which we took inspiration from, which aims to find all the rational points of a variety, our aim here is to find one point quickly.
+ We provide some functions that apply different strategies to generate random rational points for the given variety. We also provide functions that will expedite the process of determining properties of the singular locus of $X$ when combined with the functions provided in the package {\tt FastLinAlg}.  
  
  We provide the following core functions:
  \begin{itemize}
- 	\item {\tt projectionToHypersurface} and {\tt genericProjection}: These functions provide customizable projection. (\Cref{projectionfunctions})
- 	\item {\tt randomPoints}:  This tries to find a point in the vanishing set of an ideal. (\Cref{randomPoints})
+	\item {\tt randomPoints}:  This tries to find a point in the vanishing set of an ideal. (\Cref{randomPoints})
+ 	\item {\tt projectionToHypersurface} and {\tt genericProjection}: These functions provide customizable projection. (\Cref{projectionfunctions}) 	
     \item {\tt findANonZeroMinor}:  This finds a submatrix of a given matrix that is nonsingular at a point of a given ideal. (\Cref{findANonZeroMinor})          
-	\item {\tt extendIdealByNonZeroMinor}:  This extends an ideal by a minor produced by findANonZeroMinor. (\Cref{extendIdealByNonZeroMinor})
-	
- 	
+	\item {\tt extendIdealByNonZeroMinor}:  This extends an ideal by a minor produced by findANonZeroMinor. (\Cref{extendIdealByNonZeroMinor})	
  \end{itemize}
  
-All polynomial rings considered here will be over finite fields. We first briefly describe some helper functions that will be used majorly in the core functions. In the subsequent sections, we explain briefly the core functions. We shall also briefly mention the strategies that we have implemented in the execution of both helper and core functions.
+All polynomial rings considered here will be over finite fields. We first briefly describe some helper functions that will be used extensively in the core functions above. In the subsequent sections, we explain briefly the core functions. We shall also briefly mention the strategies that we have implemented in the execution of both helper and core functions.
 
 \vspace{1em}
 \noindent \textbf{Acknowledgements:} The authors would like to thank David Eisenbud and Mike Stillman for useful conversations and comments on the development of this package.  The authors began work on this package at the virtual Cleveland 2020 Macaulay2 workshop.
 
-\section{helper functions}{\label{helper}}
+\section{Helper functions}{\label{helper}}
 
 All polynomial rings that we will consider will be over finite fields only. 
 
 We start by describing some functions that will come in handy for the main functions of this package. 
 
 \begin{itemize}
-	\item {\tt Codimension}: It takes input an integer. Various functions need to know the codimension/height of the scheme/ideal it is working with.  Setting this to be an integer will tell the function not to compute the codimension and to use this value instead.  The default value is {\tt null}, in which case the function will compute the codimension.
-	
-	
+%	\item {\tt Codimension}: It takes input an integer. Various functions need to know the codimension/height of the scheme/ideal it is working with.  Setting this to be an integer will tell the function not to compute the codimension and to use this value instead.  The default value is {\tt null}, in which case the function will compute the codimension.  
+%%%
+%%Codimension is not a function, it is an option.
+%%%
 	\item {\tt randomCoordinateChange}: It takes a polynomial ring as an input and outputs the coordinate change map. 
 	i.e. given a polynomial ring, this will produce a linear automorphism of the ring. 
 	
-	In some applications, a full change of coordinates is not desired, as it might cause code to run slowly, and so a binomial change of coordinates might be preferred.  
-	These changes of coordinates can be accomplished with the following options:
+	In some applications, a full change of coordinates is not desired, as it might cause code to run slowly, and so a binomial change of coordinates might be preferred.  Alternately, we might only replace some coordinates by monomials.  
+	Refinements of {\tt randomCoordinateChange} are controlled with the following options.
 	
 	\begin{itemize}
 		\item {\tt MaxCoordinatesToReplace}: the user can specify that only a specified number of coordinates should be non-monomial.  Sometimes, generic coordinate changes where all coordinates are modified, can be very slow.  This is a way to mitigate for that.
-		This option is passed to {\tt randomCoordinateChange} by other functions that call it. 
-		
+		This option is passed to {\tt randomCoordinateChange} by other functions that call it. 		
 		\item {\tt Replacement}: setting {\tt Replacement => Full} will mean that coordinates are changed to a general degree $1$ form.  If {\tt Replacement => Binomial}, the coordinates are only changed to binomials, which can be much faster for certain applications. If {\tt Homogeneous => false}, then there will be constant terms, and we view $mx + b$ as a binomial.
+		\item 
 	\end{itemize} 
 	
 	  This function already checks whether the map is an isomorphism by computing the Jacobian.
