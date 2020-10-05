@@ -2,7 +2,8 @@
 \usepackage{calc,amssymb,amsthm,amsmath,fullpage    }
 %\usepackage{mathtools}
 \RequirePackage[dvipsnames,usenames, table]{xcolor}
-\usepackage{hyperref,cleveref}
+\usepackage{hyperref}
+\usepackage[capitalize]{cleveref}
 \hypersetup{
 bookmarks,
 bookmarksdepth=3,
@@ -280,8 +281,49 @@ The user may also choose to provide some additional information depending on the
 		
 \end{itemize}
 
-\begin{example}
-	content...
+\begin{example}\label{BruteForce}
+	{{\small\color{blue}
+	\begin{verbatim}
+i1 : R=ZZ/5[x,y,z];
+
+o1 : PolynomialRing
+
+i2: I = ideal "x2-yz";
+
+o2 : Ideal of R
+
+i3 : randomPoints(I)
+
+o3 = {{1, 2, -2}}
+
+o3 : List
+\end{verbatim}
+}}
+
+To see that different strategies cause different outcomes, we compute
+	{{\small\color{blue}
+	\begin{verbatim}
+i1: R = ZZ/101[x,y,z];
+
+o1 : PolynomialRing
+
+i2 : J = ideal "x3+y2+1,z3-x2-y2+2";
+
+o2 : Ideal of R
+
+i3 : randomPoints(J,Strategy=>BruteForce)
+
+o3 = {}
+
+o3 : List
+
+i4 : randomPoints(J,Strategy=>GenericProjection)
+
+o4 = {{45, -28, -20}}
+
+o4 : List
+\end{verbatim}
+}}
 \end{example}
 	
 \item {\tt ProjectionAttempts => ZZ}: 
@@ -311,7 +353,24 @@ This option is used by {\tt randomPoints} in some strategies to determine the ma
  When calling {\tt randomPoints}, and functions that call it, with a {\tt BruteForce} strategy or {\tt GenericProjection} strategy, this denotes the number of trials for brute force point checking.
  
  \begin{example}
- 	content...
+ We re-compute \cref{BruteForce} by specifying more attempts.
+ 	{{\small\color{blue}
+	\begin{verbatim}
+i1: R = ZZ/101[x,y,z];
+
+o1 : PolynomialRing
+
+i2 : J = ideal "x3+y2+1,z3-x2-y2+2";
+
+o2 : Ideal of R
+
+i3 : randomPoints(J,Strategy=>BruteForce,PointCheckAttempts=>2000)
+
+o3 = {{-39, -43, 28}}
+
+o3 : List
+\end{verbatim}
+}}
  \end{example}
 
 \vspace{1em}
