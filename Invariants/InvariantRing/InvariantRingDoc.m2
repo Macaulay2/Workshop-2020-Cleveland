@@ -23,7 +23,13 @@ document {
 		HREF{"https://deepblue.lib.umich.edu/handle/2027.42/151589","Ideals of Subspace Arrangements"}, 
 	   	". Thesis (Ph.D.)-University of Michigan. 2019. ISBN: 978-1392-76291-2. pp 29-34."
 		},
-	    {"The algorithms for finite groups implemented by: ",
+	    {"King's algorithm and the linear algebra method for invariants of finite groups: ",
+		"Derksen, H. & Kemper, G. (2015). ",
+		HREF{"https://link.springer.com/book/10.1007%2F978-3-662-48422-7","Computational Invariant Theory"}, 
+	   	". Heidelberg: Springer. Algorithm 3.8.2, pp 107-109; pp 72-74"
+		},
+	    {"The algorithms for primary and secondary invariants, and Molien series of finite groups implemented
+		in version 1.1.0 of this package by: ",
 		"Hawes, T. ",
 		HREF{"https://msp.org/jsag/2013/5-1/p03.xhtml","Computing the invariant ring of a finite group"}, 
 	   	". JSAG, Vol. 5 (2013). pp 15-19. DOI: 10.2140/jsag.2013.5.15"
