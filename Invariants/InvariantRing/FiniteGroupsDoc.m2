@@ -19,7 +19,7 @@ document {
 		    the input matrices on the given polynomial ring"}
 		},
 	
-	"This function is provided by the package ", TO InvariantRings,".",
+	"This function is provided by the package ", TO InvariantRing,".",
 	
 	PARA {
 	    "The following example defines the permutation action of
@@ -48,7 +48,7 @@ document {
 	
 	Headline => "the class of all finite group actions",
 	
-	"This class is provided by the package ", TO InvariantRings,".",
+	"This class is provided by the package ", TO InvariantRing,".",
 	
 	PARA {
 	    	TT "FiniteGroupAction", " is the class of all finite
@@ -73,7 +73,7 @@ document {
 	Outputs => {
 		List => {"a list of generators of the group"}
 		},
-	"This function is provided by the package ", TO InvariantRings,". ",
+	"This function is provided by the package ", TO InvariantRing,". ",
 
     	PARA {
 	    "Use this function to get the user-defined
@@ -107,7 +107,7 @@ document {
 		    the given group action"}
 		},
 	
-	"This function is provided by the package ", TO InvariantRings,".",
+	"This function is provided by the package ", TO InvariantRing,".",
 	
 	PARA {
 	    "The following example defines the permutation action of
@@ -144,7 +144,7 @@ document {
 		Boolean => "whether the group associated to the action is Abelian"
 		},
 	    
-	"This function is provided by the package ", TO InvariantRings,". ",
+	"This function is provided by the package ", TO InvariantRing,". ",
 
 	PARA {
 	    "The following example defines the action of
@@ -186,7 +186,7 @@ document {
 	Outputs => {
 		ZZ => {"the number of generators of the group"}
 		},
-	"This function is provided by the package ", TO InvariantRings,". ",
+	"This function is provided by the package ", TO InvariantRing,". ",
 
     	PARA {
 	    "Use this function to get the number of user-defined
@@ -224,7 +224,7 @@ document {
 		HashTable => {"representing the Schreier graph of the group"}
 		},
 	
-	"This function is provided by the package ", TO InvariantRings,".",
+	"This function is provided by the package ", TO InvariantRing,".",
 	
 	PARA {
 	    "For a finite group action, we form a ", TO "HashTable",
@@ -264,7 +264,7 @@ document {
 		    a word of minimal length in (the indices of) the generators of the group"}
 		},
 	
-	"This function is provided by the package ", TO InvariantRings,".",
+	"This function is provided by the package ", TO InvariantRing,".",
 	
 	PARA {
 	    "The following example computes, for each permutation in the symmetric group
@@ -308,7 +308,7 @@ document {
 		Matrix => {"the matrix representation of the permutation"}
 		},
 	
-	"This function is provided by the package ", TO InvariantRings,".",
+	"This function is provided by the package ", TO InvariantRing,".",
 	
 	PARA {
 	    "The following example converts the one-line notation of a transposition into a matrix representation. "
@@ -345,7 +345,7 @@ document {
 	Outputs => {
 		List => {"a list of relations of the group"}
 		},
-	"This function is provided by the package ", TO InvariantRings,". ",
+	"This function is provided by the package ", TO InvariantRing,". ",
 
     	PARA {
 	    "Use this function to get the relations among elements of a group. Each element is represented by a word of minimal length in the Coxter generators. And each relation is represented by a list of two words that equates the group element represented by those two words."

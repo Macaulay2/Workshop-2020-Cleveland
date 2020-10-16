@@ -248,7 +248,7 @@ assert(equivariantHilbertSeries(D,Order=>6) ===
 
 
 ------------------------------------------------------------------------
---- Tests imported from InvariantRings 1.0 with the new syntax ---------
+--- Tests imported from InvariantRing 1.0 with the new syntax ---------
 ------------------------------------------------------------------------
 
 -- Test 16

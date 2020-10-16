@@ -1,7 +1,7 @@
 --cleaned up
 
 newPackage(
-        "InvariantRings",
+        "InvariantRing",
         Version => "2.0", 
         Date => "May 13, 2020",
         Authors => {
@@ -100,31 +100,31 @@ dim GroupAction := ZZ => G -> dim ring G
 --- LOAD AUXILIARY FILES ------------------
 -------------------------------------------
 
-load "./InvariantRings/FiniteGroups.m2"
+load "./InvariantRing/FiniteGroups.m2"
 
-load "./InvariantRings/AbelianGroups.m2"
+load "./InvariantRing/AbelianGroups.m2"
 
-load "./InvariantRings/LinearlyReductiveGroups.m2"
+load "./InvariantRing/LinearlyReductiveGroups.m2"
 
-load "./InvariantRings/Invariants.m2"
+load "./InvariantRing/Invariants.m2"
 
-load "./InvariantRings/Hawes.m2"
+load "./InvariantRing/Hawes.m2"
 
 beginDocumentation()
 
-load "./InvariantRings/InvariantRingsDoc.m2"
+load "./InvariantRing/InvariantRingDoc.m2"
 
-load "./InvariantRings/FiniteGroupsDoc.m2"
+load "./InvariantRing/FiniteGroupsDoc.m2"
 
-load "./InvariantRings/AbelianGroupsDoc.m2"
+load "./InvariantRing/AbelianGroupsDoc.m2"
 
-load "./InvariantRings/LinearlyReductiveGroupsDoc.m2"
+load "./InvariantRing/LinearlyReductiveGroupsDoc.m2"
 
-load "./InvariantRings/InvariantsDoc.m2"
+load "./InvariantRing/InvariantsDoc.m2"
 
-load "./InvariantRings/HawesDoc.m2"
+load "./InvariantRing/HawesDoc.m2"
 
-load "./InvariantRings/Tests.m2"
+load "./InvariantRing/Tests.m2"
 
 
 end

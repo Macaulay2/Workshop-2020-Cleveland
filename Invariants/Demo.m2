@@ -1,10 +1,10 @@
-installPackage "InvariantRings" -- runs all checks
-viewHelp "InvariantRings" -- opens documentation in browser
+installPackage "InvariantRing" -- runs all checks
+viewHelp "InvariantRing" -- opens documentation in browser
 
 --no invariants example
 --SL2 acting on C^2
 restart
-needsPackage "InvariantRings"
+needsPackage "InvariantRing"
 B = QQ[a,b,c,d]
 A = ideal(a*d - b*c - 1)
 SL2std = matrix{{a,b},{c,d}}
@@ -15,7 +15,7 @@ elapsedTime hilbertIdeal V
 
 -- abelian group example C3xC3 acting on polynomial ring in two vars
 restart
-needsPackage "InvariantRings"
+needsPackage "InvariantRing"
 R = QQ[x_1..x_3]
 W = matrix{{1,0,1},{0,1,1}}
 L = {3,3}
@@ -34,7 +34,7 @@ equivariantHilbertSeries T
 
 -- S_2 as a linearly reductive action
 restart
-needsPackage "InvariantRings"
+needsPackage "InvariantRing"
 S = QQ[z]
 A = ideal(z^2 - 1)
 M = matrix{{(1+z)/2, (1-z)/2},{(1-z)/2,(1+z)/2}}
@@ -45,7 +45,7 @@ invariants X
 
 -- invariants of binary quadrics
 restart
-needsPackage "InvariantRings"
+needsPackage "InvariantRing"
 S = QQ[a,b,c,d]
 I = ideal(a*d - b*c - 1)
 A = S[u,v]
@@ -60,7 +60,7 @@ invariants(L,5)
 
 -- invariants of binary quartics
 restart
-needsPackage "InvariantRings"
+needsPackage "InvariantRing"
 S = QQ[a,b,c,d]
 I = ideal(a*d - b*c - 1)
 A = S[u,v]
@@ -77,7 +77,7 @@ g3 = -X_1/216
 
 -- invariant of 2x2 matrices of binary linear forms with SL_2 action
 restart
-needsPackage "InvariantRings"
+needsPackage "InvariantRing"
 S = QQ[a_(1,1)..a_(2,2),b_(1,1)..b_(2,2),c_(1,1)..c_(2,2)]
 I = ideal((det genericMatrix(S,a_(1,1),2,2))-1,
     (det genericMatrix(S,b_(1,1),2,2))-1,
@@ -99,7 +99,7 @@ isInvariant((J.gens)_(0,0),L)
 -- invariants of S_4 using King's algorithm
 -- and with the linear algebra method
 restart
-needsPackage "InvariantRings"
+needsPackage "InvariantRing"
 R = QQ[x_1..x_4]
 L = apply({"2134","2341"},permutationMatrix);
 S4 = finiteAction(L,R)

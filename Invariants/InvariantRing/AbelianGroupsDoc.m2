@@ -19,7 +19,7 @@ document {
 		DiagonalAction => {"the diagonal action of the product of a torus
 		    with a finite abelian group corresponding to the given weight matrices"}
 		},
-	"This function is provided by the package ", TO InvariantRings,". ",
+	"This function is provided by the package ", TO InvariantRing,". ",
 
        	PARA {
 	    "Use this function to set up a diagonal action of a group",
@@ -78,7 +78,7 @@ document {
 document {
 	Key => {DiagonalAction},
 	Headline => "the class of all diagonal actions",
-	"This class is provided by the package ", TO InvariantRings,".",
+	"This class is provided by the package ", TO InvariantRing,".",
 	
 	PARA {
 	    	TT "DiagonalAction", " is the class of all
@@ -103,7 +103,7 @@ document {
 	Outputs => {
 		Divide => {"the equivariant Hilbert series"}
 		},
-	"This function is provided by the package ", TO InvariantRings,". ",
+	"This function is provided by the package ", TO InvariantRing,". ",
 
     	PARA {
 	    "For a torus acting on the vector space",
@@ -156,7 +156,7 @@ document {
 	Outputs => {
 		ZZ => {"the number of generators of the group"}
 		},
-	"This function is provided by the package ", TO InvariantRings,". ",
+	"This function is provided by the package ", TO InvariantRing,". ",
 
     	PARA {	 
 	    "Writing the diagonal group acting on the polynomial ring",
@@ -191,7 +191,7 @@ document {
 	Outputs => {
 		Matrix => {"the weight matrix of the group action"}
 		},
-	"This function is provided by the package ", TO InvariantRings,". ",
+	"This function is provided by the package ", TO InvariantRing,". ",
 	    
 	PARA {
 	    "Use this function to recover the weight matrix of a
@@ -248,7 +248,7 @@ document {
 	Outputs => {
 		List => {"of orders of cyclic abelian factors in the decomposition of the diagonal group"}
 		},
-	"This function is provided by the package ", TO InvariantRings,". ",
+	"This function is provided by the package ", TO InvariantRing,". ",
 	    
 	PARA {
 	    "Use this function to recover the cyclic abelian factors of a
@@ -285,7 +285,7 @@ document {
 	Outputs => {
 		ZZ => {"the rank of the torus factor of a diagonal action "}
 		},
-	"This function is provided by the package ", TO InvariantRings,". ",
+	"This function is provided by the package ", TO InvariantRing,". ",
 	    
 	PARA {
 	    "Use this function to recover the rank of the torus factor of a diagonal action."
@@ -321,7 +321,7 @@ document {
 	Outputs => {
 		Ring => {"where the equivariant Hilbert series of the diagonal group action lives in"}
 		},
-	"This function is provided by the package ", TO InvariantRings,". ",
+	"This function is provided by the package ", TO InvariantRing,". ",
 	    
 	PARA {
 	    "Use this function to get the ring where the equivariant Hilbert series of the diagonal group action lives in."

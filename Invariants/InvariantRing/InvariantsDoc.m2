@@ -13,7 +13,7 @@ document {
 	Outputs => {
 		GroupAction => {"the action that produced the ring of invariants in the input"}
 		},
-	"This function is provided by the package ", TO InvariantRings,".",
+	"This function is provided by the package ", TO InvariantRing,".",
 	
 	PARA {
 	    "This example shows how to recover the action of a
@@ -45,7 +45,7 @@ document {
 		List => {"of algebra generators for the ring of invariants"}
 		},
 	    
-	"This function is provided by the package ", TO InvariantRings,". ",
+	"This function is provided by the package ", TO InvariantRing,". ",
 	
 	PARA {
 	    "This method gets the algebra generators for a ring of invariants."
@@ -85,7 +85,7 @@ document {
 	    TO UseCoefficientRing, "."
 	    },  
 	    
-	"This function is provided by the package ", TO InvariantRings,". ",
+	"This function is provided by the package ", TO InvariantRing,". ",
 	
 	PARA {
 	    "The following example defines an action of a 
@@ -134,7 +134,7 @@ document {
 		},
 
 	PARA {
-	    "This function is provided by the package ", TO InvariantRings, 
+	    "This function is provided by the package ", TO InvariantRing, 
 	    ". This function can be used to compute the generating invariants of a diagonal group action, finite group action or linearly reductive group action.
 	    It can also be used to compute a basis of a graded component of the invariant ring. 
 	    Below is a list of the many ways to use this function:"
@@ -177,7 +177,7 @@ document {
 	    }, 
 
 	PARA {
-	    "This function is provided by the package ", TO InvariantRings, 
+	    "This function is provided by the package ", TO InvariantRing, 
 	    ". It implements an algorithm to computes a minimal set of generating 
 	    monomial invariants for a diagonal action of an abelian group",
 	    TEX /// $(k^*)^r \times \times \mathbb{Z}/d_1 \times \cdots \times \mathbb{Z}/d_g$ ///,
@@ -286,7 +286,7 @@ document {
 		"L" => List => {"a minimal set of generating invariants for the group action"}
 		},
 	PARA {
-	    "This function is provided by the package ", TO InvariantRings, "."
+	    "This function is provided by the package ", TO InvariantRing, "."
 	    },
 	PARA {
 	    "It implements King's algorithm to compute a minimal
@@ -328,7 +328,7 @@ document {
 		"L" => List => {"a minimal set of generating invariants for the group action"}
 		},
 	PARA {
-	    "This function is provided by the package ", TO InvariantRings, "."
+	    "This function is provided by the package ", TO InvariantRing, "."
 	    },
 	PARA {
 	    "This optional argument allows the user to provide
@@ -376,7 +376,7 @@ document {
 		},
 	
 	PARA {
-	    "This function is provided by the package ", TO InvariantRings, "."
+	    "This function is provided by the package ", TO InvariantRing, "."
 	    },
 	
 	PARA {
@@ -430,7 +430,7 @@ document {
 		},
 	
 	PARA {
-	    "This function is provided by the package ", TO InvariantRings, "."
+	    "This function is provided by the package ", TO InvariantRing, "."
 	    },
 	
 	PARA {
@@ -487,7 +487,7 @@ document {
 		},
 
 	PARA {
-	    "This function is provided by the package ", TO InvariantRings,
+	    "This function is provided by the package ", TO InvariantRing,
 	    },
 	
 	PARA {
@@ -549,7 +549,7 @@ document {
 		},
 
 	PARA {
-	    "This function is provided by the package ", TO InvariantRings,
+	    "This function is provided by the package ", TO InvariantRing,
 	    },
 	
 	PARA {
@@ -606,7 +606,7 @@ document {
 		},
 
 	PARA {
-	    "This function is provided by the package ", TO InvariantRings,
+	    "This function is provided by the package ", TO InvariantRing,
 	    },
 	
 	PARA {
@@ -682,7 +682,7 @@ document {
 		the given group action"
 		},
 	    
-	"This function is provided by the package ", TO InvariantRings,". ",
+	"This function is provided by the package ", TO InvariantRing,". ",
     	
 	PARA {
 	    "This function checks if a polynomial is invariant
@@ -770,7 +770,7 @@ document {
 		    polynomial under the Reynolds operator of the given finite group action or the given torus action"}
 		},
 	    
-	"This function is provided by the package ", TO InvariantRings,". ",
+	"This function is provided by the package ", TO InvariantRing,". ",
 	
 	PARA {
 	    "The following example computes the image of a polynomial under the
@@ -815,7 +815,7 @@ document {
 		Ideal => {"which defines the ring of invariants as a polynomial ring modulo the ideal."}
 		},
 	    
-	"This function is provided by the package ", TO InvariantRings,". ",
+	"This function is provided by the package ", TO InvariantRing,". ",
 	
 	PARA {
 	    "This method presents the ring of invariants as a polynomial ring modulo the defining ideal. The default variable name in the polynomial ring is ",TT "u_i",". You can pass the variable name you want as optional input."
@@ -836,7 +836,7 @@ document {
 	
 	Headline => "the class of the ring of invariants under the action of a finite group, Abelian group or a linearly reductive group",
 	
-	"This class is provided by the package ", TO InvariantRings,".",
+	"This class is provided by the package ", TO InvariantRing,".",
 	
 	PARA {
 	    	TT "RingOfInvariants", " is the class of ring of invariants when a finite group, Abelian group or a linearly reductive group acting on a polynomial ring."
@@ -858,7 +858,7 @@ document {
 	Outputs => {
 		PolynomialRing => {"where the group acted upon"}
 		},
-	"This function is provided by the package ", TO InvariantRings,".",
+	"This function is provided by the package ", TO InvariantRing,".",
 	
 	PARA {
 	    "This example shows how to recover the polynomial ring when a torus acted upon."
@@ -887,7 +887,7 @@ document {
 		Divide => {"the hilbert series of the invariant ring as a module over the ambient polynomial ring."}
 		},
 	    
-	"This function is provided by the package ", TO InvariantRings,". ",
+	"This function is provided by the package ", TO InvariantRing,". ",
 	
 	PARA {
 	    "This method computes the hilbert series of the ring of invariant."

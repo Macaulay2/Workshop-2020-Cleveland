@@ -18,7 +18,7 @@ document {
 	       }
           },
      PARA{
-	  "This function is provided by the package ", TO InvariantRings, "."
+	  "This function is provided by the package ", TO InvariantRing, "."
 	  },
      PARA{
 	  TO hironakaDecomposition, "  makes use of the functions ",
@@ -85,7 +85,7 @@ document {
 	    }
 	},  
     PARA{
-	"This function is provided by the package ", TO InvariantRings, "."
+	"This function is provided by the package ", TO InvariantRing, "."
 	},
     PARA{
 	"The example below computes the Molien series for the dihedral 
@@ -161,7 +161,7 @@ document {
 	  TO "hsop algorithms", " for a discussion on the Dade algorithm."
 	  },
      PARA{
-	  "This function is provided by the package ", TO InvariantRings, "."
+	  "This function is provided by the package ", TO InvariantRing, "."
 	  }
      }
 
@@ -483,7 +483,7 @@ document {
 	  	  }
 	     },
 	PARA{
-	     "This function is provided by the package ", TO InvariantRings, "."
+	     "This function is provided by the package ", TO InvariantRing, "."
 	     }
 	}
 

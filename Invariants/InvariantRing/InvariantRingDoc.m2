@@ -1,6 +1,6 @@
 
 document { 
-	Key => InvariantRings,
+	Key => InvariantRing,
 	Headline => "invariants of group actions",
 	EM "InvariantRing", " is a package implementing algorithms
 	to compute invariants of linearly reductive groups.",
@@ -47,7 +47,7 @@ document {
 		},
 	
 	PARA {"This function is provided by the package ", 
-	    TO InvariantRings,"."},
+	    TO InvariantRing,"."},
 	
 	EXAMPLE {
 		"R = QQ[x_1..x_4]",
@@ -61,7 +61,7 @@ document {
 	
 	Headline => "the class of all group actions",
 	
-	"This class is provided by the package ", TO InvariantRings,".",
+	"This class is provided by the package ", TO InvariantRing,".",
 	
 	PARA {
 	    	TT "GroupAction", " is the class of all group actions
@@ -119,7 +119,7 @@ document {
 		},
 	
 	PARA {"This function is provided by the package ",
-	    TO InvariantRings,"."},
+	    TO InvariantRing,"."},
 	
 	EXAMPLE {
 		"R = QQ[x_1..x_4]",
