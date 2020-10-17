@@ -1,3 +1,11 @@
+-*
+   Copyright 2014, Thomas Hawes.
+
+   You may redistribute this file under the terms of the GNU General Public
+   License as published by the Free Software Foundation, either version 2 of
+   the License, or any later version.
+*-
+
 -* Functions not ported:
 
 o 'generateGroup' applied to a List of matrices is replaced by

@@ -1,9 +1,16 @@
---cleaned up
+-*
+   Copyright 2020, Luigi Ferraro, Federico Galetto,
+   Francesca Gandini, Hang Huang, Matthew Mastroeni, Xianglong Ni.
+
+   You may redistribute this file under the terms of the GNU General Public
+   License as published by the Free Software Foundation, either version 2 of
+   the License, or any later version.
+*-
 
 newPackage(
         "InvariantRing",
         Version => "2.0", 
-        Date => "May 13, 2020",
+        Date => "October 16, 2020",
         Authors => {
 	    {Name => "Luigi Ferraro", 
 		 Email => "ferrarl@wfu.edu", 
