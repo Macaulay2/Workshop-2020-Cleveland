@@ -328,7 +328,7 @@ document {
 		},
 	
 	PARA {
-	    "The following example converts the cyclic notation of the same transposition into a matrix representation. Without ",TT "n"," the function assumes ",TT "n"," is largest integer appears in your array or list of arrays."
+	    "The following example converts the cyclic notation of the same transposition into a matrix representation. Without ",TT "n"," the function assumes ",TT "n"," is the largest integer that appears in your array or list of arrays."
 	    },
 	
 	EXAMPLE {

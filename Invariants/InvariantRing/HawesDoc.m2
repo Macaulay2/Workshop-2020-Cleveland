@@ -20,7 +20,7 @@ document {
      Outputs => {
           Sequence =>{
 	       TT "(P,S)", ", where ", TT "P", " is a ", TO List, " of primary 
-	       invariants (i.e. an homogeneous system of parameters for the 
+	       invariants (i.e. a homogeneous system of parameters for the 
 	       invariant ring) and ", TT "S", " is a ", TO List, " of
                corresponding secondary invariants"
 	       }
@@ -70,7 +70,7 @@ document {
 	  SUP(TT "3"), TT "-x", SUP(TT "3"), TT "y", "."
 	  }, 
      Caveat=>{
-	  "Currently hironakaDecomposition can only calculate with polynomial rings and 
+	  "Currently hironakaDecomposition works only with polynomial rings and 
 	  matrices over fields of characteristic 0."
 	  },
      SeeAlso=>{"hsop algorithms"}
@@ -111,7 +111,7 @@ document {
 
 ------------------------------------------------
 -- primaryInvariants
--- Optional invariants: Dade, DegreeVector
+-- Optional arguments: Dade, DegreeVector
 ------------------------------------------------
 
 document {
@@ -124,7 +124,7 @@ document {
 	  },
      Outputs=>{
 	  List => {
-	       " consisting of an homogeneous system of parameters (hsop) for the 
+	       " consisting of a homogeneous system of parameters (hsop) for the 
 	       invariant ring of the group action"
 	       }
 	  },
@@ -156,7 +156,7 @@ document {
 	  },
      Caveat=> {
 	  "Currently users can only use ", TO primaryInvariants, " to calculate 
-	  an hsop for the invariant ring over a finite field by using the Dade 
+	  a hsop for the invariant ring over a finite field by using the Dade 
 	  algorithm. Users should enter the finite field as a ", TO GaloisField,
      	  " or a quotient field of the form ", TO ZZ, "/p and are advised to
       	  ensure that the ground field has 
@@ -183,7 +183,7 @@ document {
 	  },
      Outputs=>{
 	  List => {
-	       " consisting of an homogeneous system of parameters (hsop) for the 
+	       " consisting of a homogeneous system of parameters (hsop) for the 
 	       invariant ring of the group action"
 	       }
 	  },
@@ -210,9 +210,6 @@ document {
 	  default value ", TO false, "."
 	  }, 
      EXAMPLE {
---          "A=matrix{{0,1,0},{0,0,1},{1,0,0}};", 
---	  "B=matrix{{0,1,0},{1,0,0},{0,0,1}};", 
---	  "S3=generateGroup({A,B},QQ)",
           "primaryInvariants(S3)"
           },
      PARA{
@@ -225,12 +222,12 @@ document {
 	  "primaryInvariants(S3,Dade=>true)"
 	  },
      PARA{
-	  "For more information about the algorithms used to calculate an hsop 
+	  "For more information about the algorithms used to calculate a hsop 
 	  in primaryInvariants, see ", TO "hsop algorithms", "."
 	  },
      Caveat=> {
 	  "Currently users can only use ", TO primaryInvariants, " to calculate 
-	  an hsop for the invariant ring over a finite field by using the Dade 
+	  a hsop for the invariant ring over a finite field by using the Dade 
 	  algorithm. Users should enter the finite field as a ", TO GaloisField,
      	  " or a quotient field of the form ", TO ZZ, "/p and are advised to
       	  ensure that the ground field has 
@@ -255,20 +252,20 @@ document {
 	  },
      Outputs=>{
 	  List => {
-	       " consisting of an homogeneous system of parameters (hsop) for
+	       " consisting of a homogeneous system of parameters (hsop) for
 	       the invariant ring of the group action"
 	       }
 	  },
      PARA{
 	  "By default, ", TO primaryInvariants," uses an optimising algorithm 
-	  which tests for the existence of an homogeneous system of parameters 
+	  which tests for the existence of a homogeneous system of parameters 
 	  (hsop) ", TT "(f", SUB TT "1", TT ",...,", TT "f", SUB TT "n", TT ")", 
 	  " with positive degrees corresponding to ", TT "(d", SUB TT "1", 
 	  TT ",...,", TT "d", SUB TT "n", TT ")", " in ", TO ZZ, SUP TT "n", ". 
-	  If it is known that an hsop exists for a certain collection of 
+	  If it is known that a hsop exists for a certain collection of 
 	  degrees, this can be assigned, as a ", TO List, ", to the optional 
 	  argument ", TO DegreeVector, ". ", TO primaryInvariants, " will then 
-	  output an hsop corresponding to this list of degrees. If however no 
+	  output a hsop corresponding to this list of degrees. If however no 
 	  such hsop exists, ", TO primaryInvariants, " outputs an error 
 	  message."
 	  },
@@ -276,11 +273,6 @@ document {
 	  "Note that the ", TO List, " assigned to ", TO DegreeVector, " is
           ignored if ", TO Dade, " is set to ", TO true, "."
 	  },
---     PARA{
---	  TO DegreeVector, " is also an optional argument for the method ",
---	  TO invariantRing, "; see ", TO [invariantRing,DegreeVector], " for
---     	  more information."
---	  }, 
      EXAMPLE {
           "A=matrix{{0,1,0},{0,0,1},{1,0,0}};", 
 	  "B=matrix{{0,1,0},{1,0,0},{0,0,1}};", 
@@ -289,7 +281,7 @@ document {
           },
      Caveat=> {
 	  "Currently users can only use ", TO primaryInvariants, " to calculate 
-	  an hsop for the invariant ring over a finite field by using the Dade 
+	  a hsop for the invariant ring over a finite field by using the Dade 
 	  algorithm. Users should enter the finite field as a ", TO GaloisField,
      	  " or a quotient field of the form ", TO ZZ, "/p and are advised to
       	  ensure that the ground field has 
@@ -301,7 +293,6 @@ document {
      	  continue with the computation in this case. See ", 
 	  TO "hsop algorithms", " for a discussion on the Dade algorithm."
 	  },
---     SeeAlso=>{primaryInvariants,[invariantRing,DegreeVector]}
      SeeAlso=>{primaryInvariants}
      }
 
@@ -316,7 +307,7 @@ document {
      Headline => "an overview of the algorithms used in primaryInvariants",
      PARA{
 	  "This page contains a discussion on the two algorithms that are used 
-	  in the function ", TO primaryInvariants, ", which computes an 
+	  in the function ", TO primaryInvariants, ", which computes a 
 	  homogenous system of parameters (hsop) for the invariant ring ", 
 	  TT "R:=K[x", SUB TT "1", TT ",...,x", SUB TT "n", TT "]", SUP TT "G", 
 	  " of a finite group ", TT "G", ". Which algorithm is used depends on 
@@ -327,12 +318,12 @@ document {
 	  },
      PARA{
 	  "The default algorithm is an implementation of the 'optimal' algorithm 
-	  given in [K]. It is optimal in the sense that it finds an hsop ", 
+	  given in [K]. It is optimal in the sense that it finds a hsop ", 
 	  TT "f", SUB TT "1", TT ",...,", TT "f", SUB TT "n", " such that the 
 	  number of secondary invariants required to make ", TT "R", " into a 
 	  free ", TT "K[f", SUB TT "1", TT ",...,f", SUB TT "n", TT "]", 
 	  "-module is minimal. The first step in the default algorithm is to 
-	  cycle through ", TO List, "s ", TT "{d", SUB TT "1", TT ",...,", 
+	  cycle through the ", TO List, " s", TT "={d", SUB TT "1", TT ",...,", 
 	  TT "d", SUB TT "n", TT "}", " of possible degrees for the hsop. It 
 	  tests the degrees against two restrictions that are known to hold for 
 	  any hsop of ", TT "R", ": firstly, the order of ", TT "G", " must 
@@ -343,13 +334,13 @@ document {
 	  TT "(R,T)", " is the Molien (Hilbert) series of ", TT "R", 
 	  " [DK, p83]. Once a ", TO List, " of suitable degrees is found, the 
 	  algorithm uses a Krull-dimension based test that holds for algebras 
-	  over infinite fields to determine the existence of an hsop with the 
-	  candidate degrees; see [K, Theorem 2]. It then finds such an hsop if 
-	  one exists, or tries a new ", TO List, " of degrees if such an hsop 
-	  does not exist. Note: if one knows a priori that an hsop exists for 
+	  over infinite fields to determine the existence of a hsop with the 
+	  candidate degrees; see [K, Theorem 2]. It then finds such a hsop if 
+	  one exists, or tries a new ", TO List, " of degrees if such a hsop 
+	  does not exist. Note: if one knows a priori that a hsop exists for 
 	  some ", TO List, " of degrees, this can be assigned to the optional 
 	  argument ", TO DegreeVector, " and the default algorithm will compute 
-	  an hsop with degrees corresponding to this ", TO List, ". Finally, 
+	  a hsop with degrees corresponding to this ", TO List, ". Finally, 
 	  users should be aware that the default algorithm currently only works 
 	  in the case where ", TT "R", " is defined over a field of 
 	  characteristic zero."
@@ -362,7 +353,7 @@ document {
 	  TT "i", ", it computes the polynomial ", TT "f", SUB TT "i", " defined 
 	  as the product over the ", TT "G", "-orbit of ", TT "v", SUB TT "i", 
 	  ". The resulting collection ", TT "f", SUB TT "1", TT ",...,", TT "f", 
-	  SUB TT "n", " is an hsop for ", TT "R", "; see [DK, pp80,81]. In the 
+	  SUB TT "n", " is a hsop for ", TT "R", "; see [DK, pp80,81]. In the 
 	  implemented Dade algorithm, a Dade basis is constructed iteratively by 
 	  choosing ", TO random, " linear forms such that ", TT "v", SUB TT "i", 
 	  " is not contained in any of the vector subspaces ", TT "span", 
@@ -411,7 +402,7 @@ document {
 	  },
      PARA{
 	  "Of course, currently one advantage of the Dade algorithm is that it 
-	  can calculate an hsop for the invariant ring when considering a 
+	  can calculate a hsop for the invariant ring when considering a 
 	  finite field. Since ", TT "|C4xC2|", SUP TT "2", "=64, it is safe to 
 	  consider the finite field with 101 elements."
 	  },
@@ -430,7 +421,6 @@ document {
 	  Systems of Parameters", ". J. Symbolic Computation ", EM "27", 
 	  " (1999), 171-184"
 	  },
---     SeeAlso=>{primaryInvariants,Dade,DegreeVector,invariantRing}    
      SeeAlso=>{primaryInvariants,Dade,DegreeVector}    
      }
 
@@ -538,12 +528,7 @@ document {
 	  the polynomial ",  TT "H(S", SUP TT "G", TT ",T)*", TT "(1-T", 
 	  SUP(TT "d", SUB TT "1"), TT ")*...*(1-T", SUP(TT "d", SUB TT "n"), 
 	  TT ")", "."   
-     	  },
---     PARA{
---	  TO PrintDegreePolynomial, " is also an optional argument for the
---     	  method ", TO invariantRing, "; see ", 
---	  TO [invariantRing,PrintDegreePolynomial], " for more information." 
---	  },    
+     	  },    
      PARA{
 	  "The example below computes the secondary invariants for the dihedral 
 	  group with 6 elements, given a set of primary invariants ", TT "P",
@@ -566,5 +551,4 @@ document {
 	     " recognises as a characteristic zero field (see ", TO toField, 
 	     " for a way to do this)."
 	},
---   SeeAlso=>{[invariantRing,PrintDegreePolynomial]}
      }

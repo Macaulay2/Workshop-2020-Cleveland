@@ -32,7 +32,7 @@ document {
 
        	PARA {
 	    "Use this function to set up a diagonal action of a group",
-	    TEX /// $(k^*)^r \times \times \mathbb{Z}/d_1 \times \cdots \times \mathbb{Z}/d_g$ ///,
+	    TEX /// $(k^*)^r \times \mathbb{Z}/d_1 \times \cdots \times \mathbb{Z}/d_g$ ///,
 	    " on a polynomial ring ",
 	    TEX /// $R = k[x_1,\ldots,x_n]$ ///,
 	    "over a field. Saying the action is diagonal means that ",

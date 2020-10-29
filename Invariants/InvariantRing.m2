@@ -13,8 +13,8 @@ newPackage(
         Date => "October 16, 2020",
         Authors => {
 	    {Name => "Luigi Ferraro", 
-		 Email => "ferrarl@wfu.edu", 
-		 HomePage => "http://users.wfu.edu/ferrarl/"
+		 Email => "lferraro@ttu.edu", 
+		 HomePage => "http://www.math.ttu.edu/~lferraro/"
 		 },
              {Name => "Federico Galetto", 
 		 Email => "f.galetto@csuohio.edu", 

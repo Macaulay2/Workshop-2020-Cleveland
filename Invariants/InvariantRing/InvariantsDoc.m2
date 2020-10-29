@@ -131,7 +131,7 @@ document {
 	    invariants
 	    },
 	
-	Headline => "compute the generating invariants of a group action",
+	Headline => "computes the generating invariants of a group action",
 	
 	Usage => "invariants G",
 	
@@ -149,11 +149,11 @@ document {
 	    Below is a list of the many ways to use this function:"
 	    },
 	UL{
-	    {TO (invariants, FiniteGroupAction), ": compute the generating invariants of a finite group action"},
-	    {TO (invariants, DiagonalAction), ": compute the generating invariants of a diagonal group action"},
-	    {TO (invariants, LinearlyReductiveAction), ": compute the generating invariants of a linearly reductive action"},
-	    {TO (invariants, FiniteGroupAction, ZZ)," or ", TO (invariants, FiniteGroupAction, List), ": compute a basis for graded component of the invariant ring of a finite group action"},
-	    {TO (invariants, LinearlyReductiveAction, ZZ)," or ", TO (invariants, LinearlyReductiveAction, List), ": compute a basis for graded component of the invariant ring of a linearly reductive group action"},
+	    {TO (invariants, FiniteGroupAction), ": computes the generating invariants of a finite group action"},
+	    {TO (invariants, DiagonalAction), ": computes the generating invariants of a diagonal group action"},
+	    {TO (invariants, LinearlyReductiveAction), ": computes the generating invariants of a linearly reductive action"},
+	    {TO (invariants, FiniteGroupAction, ZZ)," or ", TO (invariants, FiniteGroupAction, List), ": computes a basis for graded component of the invariant ring of a finite group action"},
+	    {TO (invariants, LinearlyReductiveAction, ZZ)," or ", TO (invariants, LinearlyReductiveAction, List), ": computes a basis for graded component of the invariant ring of a linearly reductive group action"},
 	    },
     
     	SeeAlso => {
@@ -167,7 +167,7 @@ document {
 	    (invariants, DiagonalAction)
 	    },
 	
-	Headline => "compute the generating invariants of a group action",
+	Headline => "computes the generating invariants of a group action",
 	
 	Usage => "invariants D",
 	
@@ -187,9 +187,9 @@ document {
 
 	PARA {
 	    "This function is provided by the package ", TO InvariantRing, 
-	    ". It implements an algorithm to computes a minimal set of generating 
+	    ". It implements an algorithm to compute a minimal set of generating 
 	    monomial invariants for a diagonal action of an abelian group",
-	    TEX /// $(k^*)^r \times \times \mathbb{Z}/d_1 \times \cdots \times \mathbb{Z}/d_g$ ///,
+	    TEX /// $(k^*)^r \times \mathbb{Z}/d_1 \times \cdots \times \mathbb{Z}/d_g$ ///,
 	    " on a polynomial ring ",
 	    TEX /// $R = k[x_1, \dots, x_n]$.///,
 	    " Saying the action is diagonal means that ",
@@ -209,7 +209,9 @@ document {
 	    "-th root of unity. The integers",
 	    TEX /// $w_{i,j}$ ///,
 	    "comprise the weight matrix ", TT "W",
-	    ". In other words, the j-th column of ", TT "W", 
+	    ". In other words, the ",
+	    TEX /// $j$ ///,
+	    "-th column of ", TT "W", 
 	    " is the weight vector of",
 	    TEX /// $x_j$. ///
 	    },
@@ -285,7 +287,7 @@ document {
 	Key => {
 	    (invariants, FiniteGroupAction),
 	    },
-	Headline => "compute the generating invariants of a group action",
+	Headline => "computes the generating invariants of a group action",
 	Usage => "invariants G",
 	Inputs => {
 	    "G" => FiniteGroupAction,
@@ -345,7 +347,7 @@ document {
 	    invariants of a finite group action.
 	    If no upper bound is provided, the order of the group
 	    is used as an upper bound. Providing a smaller
-	    upper bound may speedup the computation of invariants.
+	    upper bound may speed up the computation of invariants.
 	    However, if the value provided is too small the
 	    resulting list may not generate the ring of invariants."
 	    },
@@ -457,7 +459,7 @@ document {
 	PARA {
 	    "The following example computes the invariants of the
 	    symmetric group on 4 elements. Note that using
-	    different strategies may lead to a different set of 
+	    different strategies may lead to different sets of 
 	    generating invariants."
 	    },
 	
@@ -500,7 +502,7 @@ document {
 	    },
 	
 	PARA {
-	    "When called on a finite group action  and
+	    "When called on a finite group action and
 	    a (multi)degree, it computes an additive basis for the
 	    invariants of the action in the given degree."},
 	PARA {
@@ -811,7 +813,7 @@ document {
 	Key => {definingIdeal,
 	     (definingIdeal, RingOfInvariants)},
 	
-	Headline => "presentation of a ring of invariants as polynomial ring modulo defining ideal",
+	Headline => "presentation of a ring of invariants as polynomial ring modulo the defining ideal",
 	
 	Usage => "definingIdeal S",
 	
@@ -843,12 +845,12 @@ document {
 document {
 	Key => {RingOfInvariants},
 	
-	Headline => "the class of the ring of invariants under the action of a finite group, Abelian group or a linearly reductive group",
+	Headline => "the class of the rings of invariants under the action of a finite group, an Abelian group or a linearly reductive group",
 	
 	"This class is provided by the package ", TO InvariantRing,".",
 	
 	PARA {
-	    	TT "RingOfInvariants", " is the class of ring of invariants when a finite group, Abelian group or a linearly reductive group acting on a polynomial ring."
+	    	TT "RingOfInvariants", " is the class of rings of invariants when a finite group, an Abelian group or a linearly reductive group acts on a polynomial ring."
 	    },
 	}
     
@@ -884,7 +886,7 @@ document {
 document {
 	Key => {(hilbertSeries, RingOfInvariants)},
 	
-	Headline => "hilbert series of the invariant ring",
+	Headline => "Hilbert series of the invariant ring",
 	
 	Usage => "hilbertSeries S",
 	
@@ -893,13 +895,13 @@ document {
 		},
 	    
 	Outputs => {
-		Divide => {"the hilbert series of the invariant ring as a module over the ambient polynomial ring."}
+		Divide => {"the Hilbert series of the invariant ring as a module over the ambient polynomial ring."}
 		},
 	    
 	"This function is provided by the package ", TO InvariantRing,". ",
 	
 	PARA {
-	    "This method computes the hilbert series of the ring of invariant."
+	    "This method computes the hilbert series of the ring of invariants."
 	    },
     	
 	EXAMPLE {
