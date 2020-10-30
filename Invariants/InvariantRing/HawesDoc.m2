@@ -190,7 +190,7 @@ document {
      PARA{
 	  TO Dade, " takes ", TO Boolean, " values and is set to ", TO false, 
 	  " by default. If ", TO Dade, " is set to ", TO true, ", then ", 
-	  TO primaryInvariants, " will use the Dade algorithm to calculate an 
+	  TO primaryInvariants, " will use the Dade algorithm to calculate a 
 	  homogeneous system of parameters (hsop) for the invariant ring of a
      	  finite group."
      	  },
