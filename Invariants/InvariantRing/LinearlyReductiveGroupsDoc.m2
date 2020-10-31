@@ -239,8 +239,8 @@ document {
 		" This class should not be used for actions of
 		tori or finite groups, as its methods for computing
 		invariants are in general less efficient than
-		specialized methods for the classes ", TO "TorusAction", ", ",
-		TO "FiniteGroupAction", ", and ", TO "FiniteAbelianAction", "."
+		specialized methods for the classes ",
+		TO "FiniteGroupAction", ", and ", TO "DiagonalAction", "."
 	    },
 	}
 

@@ -52,7 +52,9 @@ document {
 	    "-th root of unity. The integers",
 	    TEX /// $w_{i,j}$ ///,
 	    "comprise the weight matrix ", TT "W",
-	    ". In other words, the j-th column of ", TT "W", 
+	    ". In other words, the ",
+	    TEX /// $j$ ///,
+	    "-th column of ", TT "W", 
 	    " is the weight vector of",
 	    TEX /// $x_j$. ///
 	    },
@@ -131,7 +133,9 @@ document {
 	    TEX /// $K[V]^T$ ///,
 	    ". The option ",
 	    TT "Order => N",
-	    " can be used to compute the series up to the t-degree ",
+	    " can be used to compute the series up to the ",
+	    TEX /// $t$ ///,
+	    "-degree ",
 	    TT "N-1",
 	    "."
 	},
@@ -207,7 +211,9 @@ document {
 	    diagonal action on a polynomial ring. For a diagonal action
 	    on a polynomial ring ",
 	    TEX /// $k[x_1, \dots, x_n]$ ///,
-	    ", the j-th column of the weight matrix is the weight of the
+	    ", the ",
+	    TEX /// $j$ ///,
+	    "-th column of the weight matrix is the weight of the
 	    variable ",
 	    TEX /// $x_j$ ///,
 	    "."

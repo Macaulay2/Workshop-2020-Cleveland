@@ -66,7 +66,7 @@ document {
 		It is created using ", TO "finiteAction", ". ",
 		"Note that diagonal actions of finite abelian
 		groups can be created with the class ",
-		TO "FiniteAbelianAction", " which implements more
+		TO "DiagonalAction", " which implements more
 		efficient methods for computing invariants."
 	    },
 	}
