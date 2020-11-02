@@ -160,7 +160,13 @@ document {
     	SeeAlso => {
 	    invariantRing, 
 	    isInvariant
-	    }	
+	    },
+	
+	Caveat => {"Some optional inputs are only relevant to
+	    certain use cases of this method.
+	    Please consult the documentation pages for the
+	    different cases to learn which optional inputs
+	    are used."}
 	}
 
 document {
