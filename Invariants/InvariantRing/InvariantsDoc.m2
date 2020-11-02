@@ -136,7 +136,8 @@ document {
 	Usage => "invariants G",
 	
 	Inputs => {  
-	    	"G" => GroupAction => {"a specific type of group action on a polynomial ring"}
+	    	"G" => GroupAction => {"a specific type of group action on a polynomial ring"},
+		Strategy => {"the strategy used to compute diagonal invariants, options are UsePolyhedra or UseNormaliz."}
 		},
 	Outputs => {
 		"L" => List => {"a minimal set of generating invariants for the group action"}
@@ -173,7 +174,7 @@ document {
 	
 	Inputs => {  
 	    	"D" => DiagonalAction => {"a diagonal action on a polynomial ring"},
-		Strategy => {"the strategy used to compute the ring of invariants, options are UsePolyhedra or UseNormaliz."}
+		Strategy => {"the strategy used to compute diagonal invariants, options are UsePolyhedra or UseNormaliz."}
 		},
 	Outputs => {
 		"L" => List => {"a minimal set of generating invariants for the group action"}
@@ -291,7 +292,7 @@ document {
 	Usage => "invariants G",
 	Inputs => {
 	    "G" => FiniteGroupAction,
-	    Strategy => {"the strategy used to compute the ring of invariants"}
+	    Strategy => {"the strategy used to compute diagonal invariants, options are UsePolyhedra or UseNormaliz."}
 	    },
 	Outputs => {
 		"L" => List => {"a minimal set of generating invariants for the group action"}
@@ -491,7 +492,7 @@ document {
 	Inputs => {  
 	    	"G" => FiniteGroupAction,
 		"d" => ZZ => {"a degree or multidegree"},
-		Strategy => {"the strategy used to compute the ring of invariants"}
+	    	Strategy => {"the strategy used to compute diagonal invariants, options are UsePolyhedra or UseNormaliz."}
 		},
 	Outputs => {
 		"L" => List => {"an additive basis for a graded component of the ring of invariants"}
@@ -553,7 +554,7 @@ document {
 	Inputs => {  
 	    	"V" => LinearlyReductiveAction,
 		"d" => ZZ => {"a degree or multidegree"},
-		Strategy => {"the strategy used to compute the ring of invariants"}
+	    	Strategy => {"the strategy used to compute diagonal invariants, options are UsePolyhedra or UseNormaliz."}
 		},
 	Outputs => {
 		"L" => List => {"an additive basis for a graded component of the ring of invariants"}
@@ -610,7 +611,7 @@ document {
 	
 	Inputs => {  
 	    	"V" => LinearlyReductiveAction,
-		Strategy => {"the strategy used to compute the ring of invariants."}
+	    	Strategy => {"the strategy used to compute diagonal invariants, options are UsePolyhedra or UseNormaliz."}
 		},
 	Outputs => {
 		"L" => List => {"of invariants generating the Hilbert ideal"}
