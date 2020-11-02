@@ -159,6 +159,31 @@ document {
 	    }
 
 document {
+	Key => { equivariantHilbert },
+	Headline => "stores equivariant Hilbert series expansions",
+
+    	PARA {
+	    "This key is created in the cache table of a ",
+	    TO "DiagonalAction", " upon calling ",
+	    TO "equivariantHilbertSeries", " with the ",
+	    TO "Order", " option. It stores partial expansions
+	    of the equivariant Hilbert series to avoid computing
+	    them again."
+	},
+    	
+	EXAMPLE {
+	    "R = QQ[x_1..x_3]",
+	    "W = matrix{{-1,0,1},{0,-1,1}}",
+	    "T = diagonalAction(W, R)",
+	    "T.cache.?equivariantHilbert",
+	    "elapsedTime equivariantHilbertSeries(T, Order => 5)",
+	    "T.cache.?equivariantHilbert",
+	    "elapsedTime equivariantHilbertSeries(T, Order => 5);",
+		},
+	 
+	    }
+
+document {
 	Key => {(numgens, DiagonalAction)},
 	Headline => "number of generators of the finite part of a diagonal group",
 	Usage => "numgens D",
