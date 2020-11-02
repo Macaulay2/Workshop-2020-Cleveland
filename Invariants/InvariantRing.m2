@@ -28,6 +28,7 @@ newPackage(
 		 Email => "hhuang235@tamu.edu", 
 		 HomePage => "https://math.tamu.edu/~hhuang"
 		 },
+	     {Name => "Thomas Hawes", Email => "thomas.hawes@maths.ox.ac.uk"},
 	     {Name => "Matthew Mastroeni", 
 		 Email => "mmastro@okstate.edu", 
 		 HomePage => "https://mnmastro.github.io/"
