@@ -75,10 +75,10 @@ In this article, we present {\tt RandomRationalPoints}, a package in \emph{Macau
  
  We provide the following core functions:
  \begin{itemize}
-	\item {\tt randomPoints}:  This tries to find a point in the vanishing set of an ideal. (\Cref{randomPoints})
- 	\item {\tt projectionToHypersurface} and {\tt genericProjection}: These functions provide customizable projection. (\Cref{projectionfunctions}) 	
+		\item {\tt projectionToHypersurface} and {\tt genericProjection}: These functions provide customizable projection. (\Cref{projectionfunctions}) 	
+ 	\item {\tt randomPoints}:  This tries to find a point in the vanishing set of an ideal. (\Cref{randomPoints})
     \item {\tt findANonZeroMinor}:  This finds a submatrix of a given matrix that is nonsingular at a point of a given ideal. (\Cref{findANonZeroMinor})          
-	\item {\tt extendIdealByNonZeroMinor}:  This extends an ideal by a minor produced by findANonZeroMinor. (\Cref{extendIdealByNonZeroMinor})	
+	\item {\tt extendIdealByNonZeroMinor}:  This extends an ideal by a minor produced by \\{\tt findANonZeroMinor}. (\Cref{extendIdealByNonZeroMinor})	
  \end{itemize}
  
 All polynomial rings considered here will be over finite fields. We first briefly describe some helper functions that will be used extensively in the core functions above. In the subsequent sections, we explain briefly the core functions. We shall also briefly mention the strategies that we have implemented in the execution of both helper and core functions.
@@ -96,7 +96,7 @@ All polynomial rings considered here will be over finite fields. We first briefl
 %%%
 %%Codimension is not a function, it is an option.
 %%%
-\subsection*{\tt randomCoordinateChange} This function takes a polynomial ring as an input and outputs the coordinate change map.  
+\subsection*{\tt randomCoordinateChange:} This function takes a polynomial ring as an input and outputs the coordinate change map.  
 	i.e. given a polynomial ring, this will produce a linear automorphism of the ring.  This function checks whether the map is an isomorphism by computing the Jacobian.
 	
 	In some applications, a full change of coordinates is not desired, as it might cause code to run very slowly.  A binomial change of coordinates might be preferred, or we might only replace some monomials by other monomials.  
@@ -104,11 +104,17 @@ All polynomial rings considered here will be over finite fields. We first briefl
 	
 	\begin{itemize}
 		\item {\tt Replacement}: Setting {\tt Replacement => Full} will mean that coordinates are replaced by a general degree $1$ form.  If {\tt Replacement => Binomial}, the coordinates are only changed to binomials, which can be much faster for certain applications. If {\tt Homogeneous => false}, then there will be constant terms, and we view $mx + b$ as a binomial.
-		\item {\tt MaxCoordinatesToReplace}: the user can specify that only a specified number of coordinates should be non-monomial (assuming {\tt Homogeneous => true}).  
+		\item {\tt MaxCoordinatesToReplace}: The user can specify that only a specified number of coordinates should be non-monomial (assuming {\tt Homogeneous => true}).  
 		This option is passed to {\tt randomCoordinateChange} by other functions that call it. 		
 		\item {\tt Homogeneous}:  Setting {\tt Homogeneous => false} will cause degree zero terms to be added to modified coordinates (including monomial coordinates).		
 	\end{itemize} 
 
+\vspace{1em}
+
+\begin{example}~~
+	
+	~~
+	
 	{{\small\color{blue}
 	\begin{verbatim}
 	i3 : R = ZZ/11[x,y,z];
@@ -131,9 +137,9 @@ o4 = map(R,--[x, y, z],{4x + 5y - 5z, 3x - 4y - 3z, 4x})
 
 	o7 = | y x+4z z |
 	\end{verbatim}}
-	}
+	}}
 	  
-
+\end{example}
 \section{genericProjection, projectionToHypersurface}\label{projectionfunctions}
 
 Both of these functions provide customizable projection techniques. We describe them here. 
@@ -141,7 +147,7 @@ Both of these functions provide customizable projection techniques. We describe 
 
 %\begin{enumerate}
 \subsection{genericProjection} 
-This function finds a random (somewhat depending on options) generic projection of the ring or ideal.
+This function finds a random (somewhat, depending on options) generic projection of the ring or ideal.
 The typical usages are as follows: 
 \vspace{1em}
 
@@ -160,7 +166,7 @@ $I$ is an ideal
 in a polynomial ring, 
 $R$ can denote a quotient of a polynomial ring and 
 $n\in \mathbb{Z}$ is
-an integer specifying how many dimensions to drop.  Note, this function makes no attempt to verify that the projection is actually generic with respect to the ideal.
+an integer specifying how many dimensions to drop.  Note that this function makes no attempt to verify that the projection is actually generic with respect to the ideal.
 
 
 This gives the projection map from $\mathbb{A}^N \mapsto\mathbb{A}^{N-n}$ and the defining ideal of the projection of $V(I)$. If no integer $n$ is provided then it acts as if $n = 1$. 
@@ -188,7 +194,7 @@ o6 : Sequence
 	}}
 \end{example}
 
-Alternately, instead of {\tt I}, we may pass it a quotient ring.  It will then return the inclusion of the generic projection ring into the given ring, followed by the source of that inclusion.  It is essentially the same functionality as calling {\tt genericProjection(n, ideal R)} although the format of the output is slightly different. 
+Alternately, instead of {$I$}, we may pass it a quotient ring.  It will then return the inclusion of the generic projection ring into the given ring, followed by the source of that inclusion.  It is essentially the same functionality as calling {\tt genericProjection(n, ideal R)} although the format of the output is slightly different. 
 
 ~~
 
@@ -220,7 +226,7 @@ This method works by calling {\tt randomCoordinateChange} (see \Cref{helper}) be
 
 The user can also specify the same options as before to be passed on to the {\tt randomCoordinateChange} function.
 
-~~
+\newpage
 
 \begin{example}
 	~~
@@ -259,6 +265,60 @@ a list with two entries, the generic projection map, and the ideal if {\tt I} wa
 
 It differs from {\tt genericProjection(codim I - 1, I)} as it only tries to find a hypersurface equation that vanishes along the projection, instead of finding one that vanishes exactly at the projection.  This can be faster, and can be useful for finding points.   If we already know the codimension is {\tt c}, we can set {\tt Codimension=>c} so the function does not compute it. 
 
+\vspace{1em}
+\begin{example}
+	{{\small\color{blue}
+	\begin{verbatim}
+	i2 : R=ZZ/5[x,y,z];
+	
+	i3 : I = ideal(random(3,R)-2, random(2,R))
+	
+	               3       2     3            2        2       2       2  
+	o3 = ideal (- x  - 2x*y  - 2y  - x*y*z + y z - 2x*z  + 2y*z  - 2, x  -
+	-------------------------------------------------------------------
+	        2
+	2x*y - y  + x*z - y*z)
+	
+	o3 : Ideal of R
+	
+	i4 : projectionToHypersurface(I)
+	
+	            ZZ                             4    3      2 2     4
+	o4 = (map(R,--[y, z],{x + 2y, 2y}), ideal(y  + y z - 2y z  - 2z  - y -
+	            5
+	-------------------------------------------------------------------
+	z))
+	
+	o4 : Sequence
+	
+	i5 : projectionToHypersurface(R/I)
+	
+	
+	
+                           	                    R                    
+	o5 = (map(--------------------------------------------------------------
+	    3       2     3            2        2       2       2     
+	(- x  - 2x*y  - 2y  - x*y*z + y z - 2x*z  + 2y*z  - 2, x  - 2x
+	-------------------------------------------------------------------
+                                    ZZ                       
+	                                    --[y, z]                 
+	                                    5                       
+	--------------------,----------------------------------------------
+	      2               4 2    3 3       5     6     3       2     3 
+	*y - y  + x*z - y*z) y z  + y z  - 2y*z  + 2z  + 2y  + 2y*z  + 2z  
+	-------------------------------------------------------------------
+                    	       ZZ
+                	           --[y, z]
+	                            5
+	---,{x - z, y}), -------------------------------------------------)
+	                  4 2    3 3       5     6     3       2     3
+	- 1              y z  + y z  - 2y*z  + 2z  + 2y  + 2y*z  + 2z  - 1
+	
+	o5 : Sequence
+	
+	\end{verbatim}
+}}
+\end{example}
 
 
 %\end{enumerate}
@@ -272,7 +332,7 @@ It differs from {\tt genericProjection(codim I - 1, I)} as it only tries to find
 
 \vspace{1em}
 \noindent where $n$ is a positive integer denoting the number of desired points, and 
-$I$ is an ideal inside a polynomial ring.  If {\tt n} is omitted, then it is assumed to be 1.
+$I$ is an ideal inside a polynomial ring.  If {$ n$} is omitted, then it is assumed to be 1.
 
 
 \subsection{Options}\label{strategydetails}
@@ -295,6 +355,7 @@ The user may also choose to provide some additional information depending on the
 	\end{itemize}
 
 	Notice that the speed, or success, varies depending on the strategy.
+\newpage
 
 	\begin{example}\label{BruteForce}
 		~~
@@ -364,7 +425,7 @@ The user may also choose to provide some additional information depending on the
 		
 	We re-compute \cref{BruteForce} this time specifying more attempts.
 	
-	
+	~~
 
 		{{\small\color{blue}
 		\begin{verbatim}
@@ -501,7 +562,7 @@ The user may also choose to provide some additional information depending on the
 
 As mentioned in the introduction, the two functions in this section will provide further tools for computing singular locus, in addition to those available in the package {\tt FastLinAlg}. 
 
-	\subsection{\tt findANonZeroMinor}\label{findANonZeroMinor}: The typical usage of this function is as follows: 
+	\subsection{\tt findANonZeroMinor:}\label{findANonZeroMinor} The typical usage of this function is as follows: 
 	
 	\vspace{1em}
 	-- {\tt findANonZeroMinor(n,M,I)} 
@@ -525,7 +586,7 @@ As mentioned in the introduction, the two functions in this section will provide
 The user may also provide the following additional information: 
 
 \begin{description}
-	\item[\tt Strategy => Symbol] to specify which strategy to use when calling {\tt randomPoints} (see \Cref{strategydetails}).
+	\item[\tt Strategy => Symbol] To specify which strategy to use when calling {\tt randomPoints} (see \Cref{strategydetails}).
 	
 	\item[\tt Verbose => Boolean]
 		 Set the option {\tt Verbose => true} to turn on verbose output.  This may be useful in debugging or in determining why a computation is running slowly.
@@ -578,7 +639,7 @@ The user may also provide the following additional information:
 	}}
 \end{example}
 
-\subsection{\tt extendIdealByNonZeroMinor}\label{extendIdealByNonZeroMinor}: The typical usage is 
+\subsection{\tt extendIdealByNonZeroMinor:}\label{extendIdealByNonZeroMinor} The typical usage is 
 
 \vspace{1em}
 -- {\tt extendIdealByNonZeroMinor(n,M,I)} 
@@ -697,7 +758,7 @@ Consider the following example which is $(R_1)$ where computing the dimension of
 	
 	\end{example} 
 
-In this particular example, there tend to be about 5 associated primes when adding the first minor to J, and so one would expect about 5 steps as each minor computed most likely will eliminate one of those primes.
+In this particular example, there tend to be about $5$ associated primes when adding the first minor to $J$, and so one would expect about $5$ steps as each minor computed most likely will eliminate one of those primes.
 
 There is some similar functionality obtained via heuristics (as opposed to actually finding rational points) in the package {\tt FastLinAlg}.
 
