@@ -1,40 +1,40 @@
 \documentclass[11pt]{amsart}
-\usepackage{calc,amssymb,amsthm,amsmath,fullpage    }
-%\usepackage{mathtools}
+\usepackage{calc,amssymb,amsthm,amsmath,fullpage}
+% \usepackage{mathtools}
 \RequirePackage[dvipsnames,usenames, table]{xcolor}
 \usepackage{hyperref}
 \usepackage[capitalize]{cleveref}
 \hypersetup{
-bookmarks,
-bookmarksdepth=3,
-bookmarksopen,
-bookmarksnumbered,
-pdfstartview=FitH,
-colorlinks,backref,hyperindex,
-linkcolor=Sepia,
-anchorcolor=BurntOrange,
-citecolor=MidnightBlue,
-citecolor=OliveGreen,
-filecolor=BlueViolet,
-menucolor=Yellow,
-urlcolor=OliveGreen
+  bookmarks,
+  bookmarksdepth=3,
+  bookmarksopen,
+  bookmarksnumbered,
+  pdfstartview=FitH,
+  colorlinks,backref,hyperindex,
+  linkcolor=Sepia,
+  anchorcolor=BurntOrange,
+  citecolor=MidnightBlue,
+  citecolor=OliveGreen,
+  filecolor=BlueViolet,
+  menucolor=Yellow,
+  urlcolor=OliveGreen
 }
 \usepackage{xypic}
 \usepackage{alltt}
 \usepackage{multicol}  
-%\usepackage{etex}
+% \usepackage{etex}
 \usepackage{xspace}
 \usepackage{rotating}
 \interfootnotelinepenalty=100000
 \theoremstyle{definition}
 \newtheorem{example}{Example}[section]
 
-%\usepackage{mabliautoref}
-%\usepackage{colonequals}
-%\frenchspacing
-%\input{kmacros3.sty}
-%\usepackage{stmaryrd}
-%
+% \usepackage{mabliautoref}
+% \usepackage{colonequals}
+% \frenchspacing
+% \input{kmacros3.sty}
+% \usepackage{stmaryrd}
+% 
 \usepackage{verbatim}
 \usepackage{enumerate}
 \begin{document}
@@ -57,30 +57,30 @@ urlcolor=OliveGreen
 \date{\today}
 
 \begin{abstract}
-In this article, we present {\tt RandomRationalPoints}, a package in \emph{Macaulay2} designed mainly to identify rational and geometric points in a variety over a finite field. We provide different strategies like linear intersection and projection to obtain such points. We also present methods to obtain non-vanishing minors of some given size in a given matrix, by evaluating the matrix at a point.  This, in conjunction with the {\tt FastLinAlg} package, should aid in determining properties of the singular locus.
+  In this article, we present {\tt RandomRationalPoints}, a package in \emph{Macaulay2} designed mainly to identify rational and geometric points in a variety over a finite field. We provide different strategies like linear intersection and projection to obtain such points. We also present methods to obtain non-vanishing minors of some given size in a given matrix, by evaluating the matrix at a point.  This, in conjunction with the {\tt FastLinAlg} package, should aid in determining properties of the singular locus.
 \end{abstract}
 
- 
+
 \keywords{RandomRationalPoints, Macaulay2}
-%\thanks{Martinova was supported by a University of Utah Mathematics REU fellowship and by the University of Utah ACCESS program.  
-%%Yao was supported by a University of Utah Mathematics REU fellowship.}
+% \thanks{Martinova was supported by a University of Utah Mathematics REU fellowship and by the University of Utah ACCESS program.  
+%% Yao was supported by a University of Utah Mathematics REU fellowship.}
 
 \maketitle
 
 \section{Introduction}
- Let $I$ be an ideal in a polynomial ring $k[x_1,\dots, x_n]$ over a finite field $k$. Let $X:=V(I)$ denote the corresponding set of rational points in affine $n$-space. Finding one such rational point or geometric point (geometric meaning a point in some finite field extension), in an algorithmically efficient manner is our primary motivation. 
- 
- There is an existing package called {\tt RandomPoints}, which we took inspiration from, which aims to find \emph{all} the rational points of a variety; our aim here is to find one point quickly, even if it is not rational.  
- We provide some functions that apply different strategies to generate random rational points for the given variety. We also provide functions that will expedite the process of determining properties of the singular locus of $X$ when combined with the functions provided in the package {\tt FastLinAlg}.  
- 
- We provide the following core functions:
- \begin{itemize}
-		\item {\tt projectionToHypersurface} and {\tt genericProjection}: These functions provide customizable projection. (\Cref{projectionfunctions}) 	
- 	\item {\tt randomPoints}:  This tries to find a point in the vanishing set of an ideal. (\Cref{randomPoints})
-    \item {\tt findANonZeroMinor}:  This finds a submatrix of a given matrix that is nonsingular at a point of a given ideal. (\Cref{findANonZeroMinor})          
-	\item {\tt extendIdealByNonZeroMinor}:  This extends an ideal by a minor produced by \\{\tt findANonZeroMinor}. (\Cref{extendIdealByNonZeroMinor})	
- \end{itemize}
- 
+Let $I$ be an ideal in a polynomial ring $k[x_1,\dots, x_n]$ over a finite field $k$. Let $X:=V(I)$ denote the corresponding set of rational points in affine $n$-space. Finding one such rational point or geometric point (geometric meaning a point in some finite field extension), in an algorithmically efficient manner is our primary motivation. 
+
+There is an existing package called {\tt RandomPoints}, which we took inspiration from, which aims to find \emph{all} the rational points of a variety; our aim here is to find one point quickly, even if it is not rational.  
+We provide some functions that apply different strategies to generate random rational points for the given variety. We also provide functions that will expedite the process of determining properties of the singular locus of $X$ when combined with the functions provided in the package {\tt FastLinAlg}.  
+
+We provide the following core functions:
+\begin{itemize}
+\item {\tt projectionToHypersurface} and {\tt genericProjection}: These functions provide customizable projection. (\Cref{projectionfunctions}) 	
+\item {\tt randomPoints}:  This tries to find a point in the vanishing set of an ideal. (\Cref{randomPoints})
+\item {\tt findANonZeroMinor}:  This finds a submatrix of a given matrix that is nonsingular at a point of a given ideal. (\Cref{findANonZeroMinor})          
+\item {\tt extendIdealByNonZeroMinor}:  This extends an ideal by a minor produced by \\{\tt findANonZeroMinor}. (\Cref{extendIdealByNonZeroMinor})	
+\end{itemize}
+
 All polynomial rings considered here will be over finite fields. We first briefly describe some helper functions that will be used extensively in the core functions above. In the subsequent sections, we explain briefly the core functions. We shall also briefly mention the strategies that we have implemented in the execution of both helper and core functions.
 
 \vspace{1em}
@@ -90,34 +90,34 @@ All polynomial rings considered here will be over finite fields. We first briefl
 
 
 
-%We start {\tt randomCoordinateChange}, a helper function that also might be useful to others.
+% We start {\tt randomCoordinateChange}, a helper function that also might be useful to others.
 
-%	\item {\tt Codimension}: It takes input an integer. Various functions need to know the codimension/height of the scheme/ideal it is working with.  Setting this to be an integer will tell the function not to compute the codimension and to use this value instead.  The default value is {\tt null}, in which case the function will compute the codimension.  
-%%%
-%%Codimension is not a function, it is an option.
-%%%
+% \item {\tt Codimension}: It takes input an integer. Various functions need to know the codimension/height of the scheme/ideal it is working with.  Setting this to be an integer will tell the function not to compute the codimension and to use this value instead.  The default value is {\tt null}, in which case the function will compute the codimension.  
+%%%   
+%%   Codimension is not a function, it is an option.
+%%%   
 \subsection*{\tt randomCoordinateChange:} This function takes a polynomial ring as an input and outputs the coordinate change map.  
-	i.e. given a polynomial ring, this will produce a linear automorphism of the ring.  This function checks whether the map is an isomorphism by computing the Jacobian.
-	
-	In some applications, a full change of coordinates is not desired, as it might cause code to run very slowly.  A binomial change of coordinates might be preferred, or we might only replace some monomials by other monomials.  
-	Refinements of {\tt randomCoordinateChange} are controlled with the following options.
-	
-	\begin{itemize}
-		\item {\tt Replacement}: Setting {\tt Replacement => Full} will mean that coordinates are replaced by a general degree $1$ form.  If {\tt Replacement => Binomial}, the coordinates are only changed to binomials, which can be much faster for certain applications. If {\tt Homogeneous => false}, then there will be constant terms, and we view $mx + b$ as a binomial.
-		\item {\tt MaxCoordinatesToReplace}: The user can specify that only a specified number of coordinates should be non-monomial (assuming {\tt Homogeneous => true}).  
-		This option is passed to {\tt randomCoordinateChange} by other functions that call it. 		
-		\item {\tt Homogeneous}:  Setting {\tt Homogeneous => false} will cause degree zero terms to be added to modified coordinates (including monomial coordinates).		
-	\end{itemize} 
+i.e. given a polynomial ring, this will produce a linear automorphism of the ring.  This function checks whether the map is an isomorphism by computing the Jacobian.
+
+In some applications, a full change of coordinates is not desired, as it might cause code to run very slowly.  A binomial change of coordinates might be preferred, or we might only replace some monomials by other monomials.  
+Refinements of {\tt randomCoordinateChange} are controlled with the following options.
+
+\begin{itemize}
+\item {\tt Replacement}: Setting {\tt Replacement => Full} will mean that coordinates are replaced by a general degree $1$ form.  If {\tt Replacement => Binomial}, the coordinates are only changed to binomials, which can be much faster for certain applications. If {\tt Homogeneous => false}, then there will be constant terms, and we view $mx + b$ as a binomial.
+\item {\tt MaxCoordinatesToReplace}: The user can specify that only a specified number of coordinates should be non-monomial (assuming {\tt Homogeneous => true}).  
+  This option is passed to {\tt randomCoordinateChange} by other functions that call it. 		
+\item {\tt Homogeneous}:  Setting {\tt Homogeneous => false} will cause degree zero terms to be added to modified coordinates (including monomial coordinates).		
+\end{itemize} 
 
 \vspace{1em}
 
 \begin{example}~~
-	
-	~~
-	
-	{{\small\color{blue}
-	\begin{verbatim}
-	i3 : R = ZZ/11[x,y,z];
+  
+  ~~
+  
+  {{\small\color{blue}
+\begin{verbatim}
+	i3 : R = ZZ/11[x, y, z];
 
 	i4 : randomCoordinateChange(R)
 
@@ -125,27 +125,31 @@ All polynomial rings considered here will be over finite fields. We first briefl
 o4 = map(R,--[x, y, z],{4x + 5y - 5z, 3x - 4y - 3z, 4x})                     
            11
 
-	i5 : matrix randomCoordinateChange(R, MaxCoordinatesToReplace=>1)
+                    ZZ
+o4 : RingMap R <--- --[x, y, z]
+                    11
+
+	i5 : matrix randomCoordinateChange(R, MaxCoordinatesToReplace => 1)
 
 	o5 = | x -x-4y-5z y |
 
-	i6 : matrix randomCoordinateChange(R, MaxCoordinatesToReplace=>1, Homogeneous=>false)
+	i6 : matrix randomCoordinateChange(R, MaxCoordinatesToReplace => 1, Homogeneous => false)
 
 	o6 = | x-3 z-5 -x+3y-4z+2 |
 
-	i7 : matrix randomCoordinateChange(R, MaxCoordinatesToReplace=>1, Replacement=>Binomial)
+	i7 : matrix randomCoordinateChange(R, MaxCoordinatesToReplace => 1, Replacement => Binomial)
 
 	o7 = | y x+4z z |
-	\end{verbatim}}
-	}}
-	  
+\end{verbatim}}
+    }}
+  
 \end{example}
 \section{genericProjection, projectionToHypersurface}\label{projectionfunctions}
 
 Both of these functions provide customizable projection techniques. We describe them here. 
 
 
-%\begin{enumerate}
+% \begin{enumerate}
 \subsection{genericProjection} 
 This function finds a random (somewhat, depending on options) generic projection of the ring or ideal.
 The typical usages are as follows: 
@@ -174,24 +178,24 @@ This gives the projection map from $\mathbb{A}^N \mapsto\mathbb{A}^{N-n}$ and th
 ~~
 
 \begin{example}	
-~~
+  ~~
 
-{{\small\color{blue}
-	\begin{verbatim}
+  {{\small\color{blue}
+\begin{verbatim}
 
-i1 : R=ZZ/5[x,y,z,w];
+i1 : R = ZZ/5[x, y, z, w];
 
-i2 : I = ideal(x,y^2,w^3+x^2);
+i2 : I = ideal(x, y^2, w^3 + x^2);
 
-i3 : genericProjection(2,I)
+i3 : genericProjection(2, I)
 
             ZZ                                         2          2
-o6 = (map(R,--[z, w],{- x - 2y - z, - y - 2z}), ideal(z  - z*w - w ))                   
+o3 = (map(R,--[z, w],{- x - 2y - z, - y - 2z}), ideal(z  - z*w - w ))                   
             5
 
-o6 : Sequence
-	\end{verbatim}
-	}}
+o3 : Sequence
+\end{verbatim}}
+    }}
 \end{example}
 
 Alternately, instead of {$I$}, we may pass it a quotient ring.  It will then return the inclusion of the generic projection ring into the given ring, followed by the source of that inclusion.  It is essentially the same functionality as calling {\tt genericProjection(n, ideal R)} although the format of the output is slightly different. 
@@ -199,15 +203,15 @@ Alternately, instead of {$I$}, we may pass it a quotient ring.  It will then ret
 ~~
 
 \begin{example}~~
-	
-	{{\small\color{blue}
-	\begin{verbatim}
+  
+  {{\small\color{blue}
+\begin{verbatim}
 
-i1 : R=ZZ/5[x,y,z,w];
+i1 : R = ZZ/5[x, y, z, w];
 
-i2 : I = ideal(x,y^2,w^3+x^2);
+i2 : I = ideal(x, y^2, w^3 + x^2);
 
-i3 : genericProjection(2,R/I)	
+i3 : genericProjection(2, R/I)	
 
                             ZZ                          ZZ
                             --[z, w]                    --[z, w]                        
@@ -217,10 +221,10 @@ o3 = (map(----------------,--------,{2y - w, - y - z}), --------)
         (x, y , w  + x )      z                            z
 
 o3 : Sequence
-	\end{verbatim}
-	}}
+\end{verbatim}}
+    }}
 \end{example}
-	
+
 
 This method works by calling {\tt randomCoordinateChange} (see \Cref{helper}) before dropping some variables.  It passes the options {\tt Replacement}, {\tt MaxCoordinatesToReplace}, {\tt Homogeneous} to that function.
 
@@ -228,30 +232,31 @@ The user can also specify the same options as before to be passed on to the {\tt
 
 \newpage
 
-\begin{example}
-	~~
-	
-	{{\small\color{blue}
-	\begin{verbatim}
+\begin{example}~~
+  
+  ~~
+  
+  {{\small\color{blue}
+\begin{verbatim}
 		
-i2 : R=ZZ/5[x,y,z,w];
+i2 : R = ZZ/5[x, y, z, w];
 
-i3 : I = ideal(x,y^2,w^3+x^2);
+i3 : I = ideal(x, y^2, w^3 + x^2);
 
 o3 : Ideal of R
 
-i4 :genericProjection(2,I, Replacement=>Binomial)
+i4 :genericProjection(2, I, Replacement => Binomial)
 
             ZZ                                   4
 o4 = (map(R,--[z, w],{x + 2z, - 2y + w}), ideal w )                                     
             5
 
 o4 : Sequence
-\end{verbatim}
-}}
+\end{verbatim}}
+    }}
 \end{example}
 
-%\vspace{1em} 
+% \vspace{1em} 
 \subsection{\tt projectionToHypersurface} This function creates a projection to a hypersurface. The typical usages are as follows: 
 
 \vspace{1em}
@@ -266,12 +271,15 @@ a list with two entries, the generic projection map, and the ideal if {\tt I} wa
 It differs from {\tt genericProjection(codim I - 1, I)} as it only tries to find a hypersurface equation that vanishes along the projection, instead of finding one that vanishes exactly at the projection.  This can be faster, and can be useful for finding points.   If we already know the codimension is {\tt c}, we can set {\tt Codimension=>c} so the function does not compute it. 
 
 \vspace{1em}
-\begin{example}
-	{{\small\color{blue}
-	\begin{verbatim}
-	i2 : R=ZZ/5[x,y,z];
+\begin{example}~~
+
+  ~~
+  
+  {{\small\color{blue}
+\begin{verbatim}
+	i2 : R = ZZ/5[x, y, z];
 	
-	i3 : I = ideal(random(3,R)-2, random(2,R))
+	i3 : I = ideal(random(3, R) - 2, random(2, R))
 	
 	               3       2     3            2        2       2       2  
 	o3 = ideal (- x  - 2x*y  - 2y  - x*y*z + y z - 2x*z  + 2y*z  - 2, x  -
@@ -316,12 +324,12 @@ It differs from {\tt genericProjection(codim I - 1, I)} as it only tries to find
 	
 	o5 : Sequence
 	
-	\end{verbatim}
-}}
+\end{verbatim}}
+    }}
 \end{example}
 
 
-%\end{enumerate}
+% \end{enumerate}
 \section{randomPoints}\label{randomPoints}
 {\tt randomPoints} is a function to find rational or geometric points in a variety. The typical usages are as follows: 
 
@@ -340,32 +348,31 @@ $I$ is an ideal inside a polynomial ring.  If {$ n$} is omitted, then it is assu
 The user may also choose to provide some additional information depending on the context which may help in faster computations, or whether a point is found at all.
 
 \begin{description}		
-	\item[\tt Strategy => $\bullet$]   Here the $\bullet$ can be {\tt Default, BruteForce, LinearIntersection, \\ GenericProjection} or {\tt HybridProjectionIntersection}.
+\item[\tt Strategy => $\bullet$]   Here the $\bullet$ can be {\tt Default, BruteForce, LinearIntersection, \\ GenericProjection} or {\tt HybridProjectionIntersection}.
 
-	\begin{itemize}
-		\item {\tt Default} performs a sequence of the different strategies below, aimed at finding a point quickly.    
-		\item {\tt BruteForce} simply tries random points and sees if they are on the variety.
-		
-		\item {\tt GenericProjection} projects to a hypersurface, via 
-		{\tt projectionToHypersurface} and then uses a {\tt BruteForce} strategy.
-		
-		\item {\tt LinearIntersection} intersects with an appropriately random linear space.
-		
-		\item {\tt HybridProjectionIntersection} does a generic projection, followed by a linear intersection. 		
-	\end{itemize}
+  \begin{itemize}
+  \item {\tt Default} performs a sequence of the different strategies below, aimed at finding a point quickly.    
+  \item {\tt BruteForce} simply tries random points and sees if they are on the variety.
+    
+  \item {\tt GenericProjection} projects to a hypersurface, via 
+    {\tt projectionToHypersurface} and then uses a {\tt BruteForce} strategy.
+    
+  \item {\tt LinearIntersection} intersects with an appropriately random linear space.
+    
+  \item {\tt HybridProjectionIntersection} does a generic projection, followed by a linear intersection. 		
+  \end{itemize}
 
-	Notice that the speed, or success, varies depending on the strategy.
-\newpage
+  Notice that the speed, or success, varies depending on the strategy.
 
-	\begin{example}\label{BruteForce}
-		~~
-		
-		{{\small\color{blue}
-		\begin{verbatim}
+  \begin{example}\label{BruteForce}
+    ~~
+    
+    {{\small\color{blue}
+\begin{verbatim}
 
-			i2 : R = ZZ/101[x,y,z];
+			i2 : R = ZZ/101[x, y, z];
 			
-			i3 : J = ideal(x^3+y^2+1,z^3-x^2-y^2+2);
+			i3 : J = ideal(x^3 + y^2 + 1, z^3 - x^2 - y^2 + 2);
 			
 			o3 : Ideal of R
 			
@@ -390,160 +397,150 @@ The user may also choose to provide some additional information depending on the
 			
 			o6 : List
 			
-	\end{verbatim}
-	}}
-	\end{example}
-		
-	\item[\tt ProjectionAttempts => ZZ] 
+\end{verbatim}}
+      }}
+  \end{example}
+  
+\item[\tt ProjectionAttempts => ZZ] 
 
-	When calling the Strategy {\tt GenericProjection} or \\
-	{\tt HybridProjectionIntersection} from {\tt randomPoints}, this option denotes the number of trials before giving up.  This option is also passed to {\tt randomPoints} by other functions.
+  When calling the Strategy {\tt GenericProjection} or \\
+  {\tt HybridProjectionIntersection} from {\tt randomPoints}, this option denotes the number of trials before giving up.  This option is also passed to {\tt randomPoints} by other functions.
 
-	\vspace{1em}
-	\item[\tt MaxCoordinatesToReplace => ZZ] (see \Cref{helper})
-	\vspace{1em}
-	\item[\tt Codimension => ZZ] (see \Cref{helper})
+  \vspace{1em}
+\item[\tt MaxCoordinatesToReplace => ZZ] (see \Cref{helper})
+  \vspace{1em}
+\item[\tt Codimension => ZZ] (see \Cref{helper})
 
-	\vspace{1em}
-	\item[\tt ExtendField => Boolean] 
+  \vspace{1em}
+\item[\tt ExtendField => Boolean] 
 
-	Intersection with a general linear space will naturally find scheme theoretic points that are not rational over the base field.  
-	Setting {\tt ExtendField => true} will tell the function that such points are valid.  Setting {\tt ExtendField => false} will tell the function ignore such points.  This sometimes can slow computation, and other times can substantially speed it up when the variety has few rational points.  In some cases, points over extended fields may also have better randomness properties for applications.
+  Intersection with a general linear space will naturally find scheme theoretic points that are not rational over the base field.  
+  Setting {\tt ExtendField => true} will tell the function that such points are valid.  Setting {\tt ExtendField => false} will tell the function ignore such points.  This sometimes can slow computation, and other times can substantially speed it up when the variety has few rational points.  In some cases, points over extended fields may also have better randomness properties for applications.
 
-	\vspace{1em}
-	\item[\tt IntersectionAttempts => ZZ]
+  \vspace{1em}
+\item[\tt IntersectionAttempts => ZZ]
 
-	This option is used by {\tt randomPoints} in some strategies to determine the maximum number of attempts to intersect with a linear space when looking for random rational points.  %Other functions pass this option through to {\tt randomPoints}.
+  This option is used by {\tt randomPoints} in some strategies to determine the maximum number of attempts to intersect with a linear space when looking for random rational points.  %Other functions pass this option through to {\tt randomPoints}.
 
-	\vspace{1em}
-	\item[\tt PointCheckAttempts => ZZ]
+  \vspace{1em}
+\item[\tt PointCheckAttempts => ZZ]
 
-	When calling {\tt randomPoints}, and functions that call it, with a {\tt BruteForce} strategy or {\tt GenericProjection} strategy, this denotes the number of trials for brute force point checking.
-	
-		
-	\begin{example}
-		
-	We re-compute \cref{BruteForce} this time specifying more attempts.
-	
-	~~
+  When calling {\tt randomPoints}, and functions that call it, with a {\tt BruteForce} strategy or {\tt GenericProjection} strategy, this denotes the number of trials for brute force point checking.
+  
+  
+  \begin{example}
+    
+    We re-compute \cref{BruteForce} this time specifying more attempts.
+    
+    ~~
 
-		{{\small\color{blue}
-		\begin{verbatim}
-	i1: R = ZZ/101[x,y,z];
+    {{\small\color{blue}
+\begin{verbatim}
+	i1: R = ZZ/101[x, y, z];
 
-	o1 : PolynomialRing
-
-	i2 : J = ideal "x3+y2+1,z3-x2-y2+2";
+	i2 : J = ideal "x3 + y2 + 1, z3 - x2 - y2 + 2";
 
 	o2 : Ideal of R
 
-	i3 : randomPoints(J,Strategy=>BruteForce,PointCheckAttempts=>20000)
+	i3 : randomPoints(J, Strategy => BruteForce, PointCheckAttempts => 20000)
 		-- used 0.84679 seconds
 
 	o3 = {{-39, -43, 28}}
 
 	o3 : List
-	\end{verbatim}
-	}}
-	\end{example}
+\end{verbatim}}
+      }}
+  \end{example}
 
-	\vspace{1em}
-	\item[\tt MaxCoordinatesToTrivialize]
+  \vspace{1em}
+\item[\tt MaxCoordinatesToTrivialize]
 
-	When calling {\tt randomPoints} and performing an intersection with a linear space, this is the number of defining equations of the linear space of the form $x_i - a_i$.  Having a large number of these will provide faster intersections.
-	
-	\vspace{1em}
-	\item[\tt NumThreadsToUse => ZZ]
+  When calling {\tt randomPoints} and performing an intersection with a linear space, this is the number of defining equations of the linear space of the form $x_i - a_i$.  Having a large number of these will provide faster intersections.
+  
+  \vspace{1em}
+\item[\tt NumThreadsToUse => ZZ]
 
-	When calling {\tt randomPoints}, and functions that call it, with a {\tt BruteForce} strategy, this denotes the number of threads to use in brute force point checking.
+  When calling {\tt randomPoints}, and functions that call it, with a {\tt BruteForce} strategy, this denotes the number of threads to use in brute force point checking.
 \end{description}
-%Outputs
-%:List
-%a list of points in the variety with possible repetitions.
-%Description
-%Text  
-%Gives at most $n$ many point in a variety $V(I)$. 
-%Example
-%R = ZZ/5[t_1..t_3];
-%I = ideal(t_1,t_2+t_3);
-%randomPoints(3, I)
-%randomPoints(4, I, Strategy => Default)
-%randomPoints(4, I, Strategy => GenericProjection)
-%randomPoints(4, I, Strategy => LinearIntersection)
+% Outputs
+% :List
+% a list of points in the variety with possible repetitions.
+% Description
+% Text  
+% Gives at most $n$ many point in a variety $V(I)$. 
+% Example
+% R = ZZ/5[t_1..t_3];
+% I = ideal(t_1,t_2+t_3);
+% randomPoints(3, I)
+% randomPoints(4, I, Strategy => Default)
+% randomPoints(4, I, Strategy => GenericProjection)
+% randomPoints(4, I, Strategy => LinearIntersection)
 
 \subsection{Comments on performance}
 
-	When working over very small fields, frequently {\tt BruteForce} is most efficient.  This is not surprising as there may not be many points to check, and a surprisingly large percentage of points can be rational in hypersurfaces and complete intersections.  However, if the field size is larger, {\tt BruteForce} will perform poorly.  Other strategies work differently on different examples, and even the same strategy can sometimes work very quickly even if it typically works very slowly.
-	
-	~
-	
-	\begin{example}
-		~~
-		
-		{{\small\color{blue}
-		\begin{verbatim}
+When working over very small fields, frequently {\tt BruteForce} is most efficient.  This is not surprising as there may not be many points to check, and a surprisingly large percentage of points can be rational in hypersurfaces and complete intersections.  However, if the field size is larger, {\tt BruteForce} will perform poorly.  Other strategies work differently on different examples, and even the same strategy can sometimes work very quickly even if it typically works very slowly.
 
-			i2 : R = ZZ/7[x_1..x_10]
+~
 
-			o2 = R
+\begin{example}
+  ~~
+  
+  {{\small\color{blue}
+\begin{verbatim}
+
+			i2 : R = ZZ/7[x_1..x_10];
 			
-			o2 : PolynomialRing
-			
-			i3 : I = ideal(random(2, R), random(3,R));
+			i3 : I = ideal(random(2, R), random(3, R));
 			
 			o3 : Ideal of R
 			
-			i4 : time randomPoints(I,Strategy=>BruteForce, PointCheckAttempts=>20000)
+			i4 : time randomPoints(I, Strategy => BruteForce, PointCheckAttempts => 20000)
 				 -- used 0.0102075 seconds
 			
 			o4 = {{-2, -1, 3, -2, -2, 2, 0, -2, -2, -2}}
 			
 			o4 : List
 			
-			i5 : time randomPoints(I,Strategy=>Default)
+			i5 : time randomPoints(I, Strategy => Default)
 				 -- used 0.085741 seconds
 			
 			o5 = {{1, -2, 2, 2, -2, 0, 0, -1, -1, 3}}
 			
 			o5 : List
 
-			i6 : S = ZZ/211[x_1..x_10]
-
-			o6 = S
-
-			o6 : PolynomialRing
+			i6 : S = ZZ/211[x_1..x_10];
 
 			i7 : J = ideal(random(2, S), random(3, S));
 
 			o7 : Ideal of S
 
-			i8 : time randomPoints(J,Strategy=>BruteForce, PointCheckAttempts=>2000000)
+			i8 : time randomPoints(J, Strategy => BruteForce, PointCheckAttempts => 2000000)
 				-- used 25.3479 seconds
 
 			o8 = {{-36, 26, -63, -7, -48, 78, -44, -22, 105, 39}}
 
-			i9 : time randomPoints(J,Strategy=>Default)
+			i9 : time randomPoints(J, Strategy => Default)
 			-- used 0.102918 seconds
 	   
 			o9 = {{0, -42, -53, -33, -65, -27, -105, -37, 99, 64}}
 			
 			o9 : List
 
-			i10 : time randomPoints(J,Strategy=>LinearIntersection)
+			i10 : time randomPoints(J, Strategy => LinearIntersection)
 			-- used 0.0169781 seconds
 
 			o10 = {{-51, -11, -34, -33, -65, 19, -86, 50, -44, -97}}
 
 			o10 : List
 			
-			i11 : time randomPoints(J,Strategy=>GenericProjection)
+			i11 : time randomPoints(J, Strategy => GenericProjection)
 			-- used 0.364902 seconds
 
 			o11 = {{31, -15, 53, 41, 87, 9, -21, -43, -12, 85}}
 
 			o11 : List
 
-			i12 : time randomPoints(J,Strategy=>LinearIntersection, ExtendField => true)
+			i12 : time randomPoints(J, Strategy => LinearIntersection, ExtendField => true)
      		-- used 0.0612306 seconds
 
 			               5      4      3      2                                      5  
@@ -552,9 +549,9 @@ The user may also choose to provide some additional information depending on the
 				   4      3      2
 				43a  - 70a  - 96a  + 50a - 103, -29, 0, -37}}
 			
-	\end{verbatim}
-	}}
-	\end{example}
+\end{verbatim}}
+    }}
+\end{example}
 
 
 
@@ -562,55 +559,51 @@ The user may also choose to provide some additional information depending on the
 
 As mentioned in the introduction, the two functions in this section will provide further tools for computing singular locus, in addition to those available in the package {\tt FastLinAlg}. 
 
-	\subsection{\tt findANonZeroMinor:}\label{findANonZeroMinor} The typical usage of this function is as follows: 
-	
-	\vspace{1em}
-	-- {\tt findANonZeroMinor(n,M,I)} 
-	
-	\vspace{1em}
-	\noindent where $I$ is an ideal
-	in a polynomial ring over {\tt QQ} or {\tt ZZ/p} for $p$ prime; $M$ is a matrix
-	over the polynomial ring and $n\in \mathbb{Z}$ denotes the size of the minors of interest.
-	
-	
-	The function outputs the following:
-	
-	-- randomly chosen point $P$ in $V(I)$ which it finds using {\tt randomPoints}.
-	
-	-- the indexes of the columns of $M$ that stay linearly independent upon plugging $P$ into $M$, 
-	
-	-- the indices of the linearly independent rows of the matrix extracted from $M$ in the above step, 
-	
-	-- a random $n\times n$ sub-matrix of $M$ that has full rank at $P$.
-	
+\subsection{\tt findANonZeroMinor:}\label{findANonZeroMinor} The typical usage of this function is as follows: 
+
+\vspace{1em}
+-- {\tt findANonZeroMinor(n, M, I)} 
+
+\vspace{1em}
+\noindent where $I$ is an ideal
+in a polynomial ring over {\tt QQ} or {\tt ZZ/p} for $p$ prime; $M$ is a matrix
+over the polynomial ring and $n\in \mathbb{Z}$ denotes the size of the minors of interest.
+
+
+The function outputs the following:
+
+-- randomly chosen point $P$ in $V(I)$ which it finds using {\tt randomPoints}.
+
+-- the indexes of the columns of $M$ that stay linearly independent upon plugging $P$ into $M$, 
+
+-- the indices of the linearly independent rows of the matrix extracted from $M$ in the above step, 
+
+-- a random $n\times n$ sub-matrix of $M$ that has full rank at $P$.
+
 The user may also provide the following additional information: 
 
 \begin{description}
-	\item[\tt Strategy => Symbol] To specify which strategy to use when calling {\tt randomPoints} (see \Cref{strategydetails}).
-	
-	\item[\tt Verbose => Boolean]
-		 Set the option {\tt Verbose => true} to turn on verbose output.  This may be useful in debugging or in determining why a computation is running slowly.
-		 
-	\item[\tt Homogeneous => Boolean] (see \Cref{helper})
-	
-	\item[\tt MinorPointAttempts => ZZ] 
-		This controls how many points at which to check the rank of the matrix.
+\item[\tt Strategy => Symbol] To specify which strategy to use when calling {\tt randomPoints} (see \Cref{strategydetails}).
+  
+\item[\tt Verbose => Boolean]
+  Set the option {\tt Verbose => true} to turn on verbose output.  This may be useful in debugging or in determining why a computation is running slowly.
+  
+\item[\tt Homogeneous => Boolean] (see \Cref{helper})
+  
+\item[\tt MinorPointAttempts => ZZ] 
+  This controls how many points at which to check the rank of the matrix.
 \end{description}
 
 \vspace{1em}
 
 \begin{example}~~
-	
-	~~
-	{{\small\color{blue}
-		\begin{verbatim}
-		i3 : R = ZZ/5[x,y,z]
+  
+  ~~
+  {{\small\color{blue}
+\begin{verbatim}
+		i3 : R = ZZ/5[x, y, z];
 		
-		o3 = R
-		
-		o3 : PolynomialRing
-		
-		i4 : I = ideal(random(3,R)-2, random(2,R))
+		i4 : I = ideal(random(3, R) - 2, random(2, R))
 		
 		              3     2        2    3    2              2        2       2
 		o4 = ideal (2x  - 2x y + 2x*y  + y  + x z - 2x*y*z + y z - 2x*z  + 2y*z 
@@ -629,20 +622,20 @@ The user may also provide the following additional information:
 		             3       2
 		o5 : Matrix R  <--- R
 		
-		i6 : findANonZeroMinor(2,M,I, Strategy => GenericProjection)
+		i6 : findANonZeroMinor(2, M, I, Strategy => GenericProjection)
 		
 		o6 = ({-2, 1, 1}, {0, 1}, {0, 1}, {1} | x2+xy+2y2+2xz-2yz-2z2   -2y-z |)
 		{1} | -2x2-xy-2y2-2xz+2yz+2z2 -2x   |
 		
 		o6 : Sequence
-		\end{verbatim}
-	}}
+\end{verbatim}}
+    }}
 \end{example}
 
 \subsection{\tt extendIdealByNonZeroMinor:}\label{extendIdealByNonZeroMinor} The typical usage is 
 
 \vspace{1em}
--- {\tt extendIdealByNonZeroMinor(n,M,I)} 
+-- {\tt extendIdealByNonZeroMinor(n, M, I)} 
 
 \vspace{1em}
 \noindent where $n,M,I$ are same as before. This function finds a submatrix of size $n\times n$ using \\{\tt findANonZeroMinor};  
@@ -650,7 +643,7 @@ it extracts the last entry of the output, finds its determinant and
 adds it to the ideal $I$, thus extending $I$. 
 
 
-%\vspace{1em}
+% \vspace{1em}
 As before, we can have the following additional options:
 \begin{description}
 \item[\tt Strategy => Symbol] This specifies which strategy to use when calling {\tt randomPoints}.
@@ -661,18 +654,14 @@ As before, we can have the following additional options:
 
 \vspace{1em}
 \begin{example}~~
-	
-	~~
-	
-	{{\small\color{blue}
+  
+  ~~
+  
+  {{\small\color{blue}
 \begin{verbatim}
-i2 : R = ZZ/5[x,y,z]
+i2 : R = ZZ/5[x, y, z];
 
-o2 = R
-
-o2 : PolynomialRing
-
-i3 : I = ideal(random(3,R)-2, random(2,R))
+i3 : I = ideal(random(3, R) - 2, random(2, R))
 
                 3    2       2     3     2              2       2     3
 o3 = ideal (- 2x  + x y - x*y  - 2y  - 2x z + 2x*y*z + y z + y*z  - 2z 
@@ -691,7 +680,7 @@ o4 = {1} | -x2+2xy-y2+xz+2yz    x-2y+z   |
              3       2
 o4 : Matrix R  <--- R
 
-i5 : extendIdealByNonZeroMinor(2,M,I, Strategy => LinearIntersection)
+i5 : extendIdealByNonZeroMinor(2, M, I, Strategy => LinearIntersection)
 
                 3    2       2     3     2              2       2     3
 o5 = ideal (- 2x  + x y - x*y  - 2y  - 2x z + 2x*y*z + y z + y*z  - 2z 
@@ -703,8 +692,8 @@ o5 = ideal (- 2x  + x y - x*y  - 2y  - 2x z + 2x*y*z + y z + y*z  - 2z
 2x z + y*z  - z )
 
 o5 : Ideal of R
-\end{verbatim}	
-}}	
+\end{verbatim}}	
+    }}	
 \end{example}
 
 One use for this function can be in showing that certain rings are $(R_1)$ (regular in codimension $1$).
@@ -713,11 +702,11 @@ Consider the following example which is $(R_1)$ where computing the dimension of
 \vspace{1em}
 
 \begin{example}~~
-	
-	~~
-	{{\small\color{blue}
-	\begin{verbatim}
-		i2 : T = ZZ/101[x1,x2,x3,x4,x5,x6,x7];
+  
+  ~~
+  {{\small\color{blue}
+\begin{verbatim}
+		i2 : T = ZZ/101[x1, x2, x3, x4, x5, x6, x7];
 		
 		i3 : I =  ideal(x5*x6-x4*x7,x1*x6-x2*x7,x5^2-x1*x7,x4*x5-x2*x7,x4^2-x2*x6,x1*x4-x2*x5,
 		x2*x3^3*x5+3*x2*x3^2*x7+8*x2^2*x5+3*x3*x4*x7-8*x4*x7+x6*x7,
@@ -741,7 +730,7 @@ Consider the following example which is $(R_1)$ where computing the dimension of
 		o6 : Ideal of T
 		
 		i7 : elapsedTime(while (i < 10) and dim J > 1 do (
-                                i = i+1; 
+                                i = i + 1; 
                                 J = extendIdealByNonZeroMinor(4, M, J)));
 		-- 0.903328 seconds elapsed
 		
@@ -753,16 +742,16 @@ Consider the following example which is $(R_1)$ where computing the dimension of
 		
 		o9 = 5
 		
-	\end{verbatim}
-}}
-	
-	\end{example} 
+\end{verbatim}}
+    }}
+  
+\end{example} 
 
 In this particular example, there tend to be about $5$ associated primes when adding the first minor to $J$, and so one would expect about $5$ steps as each minor computed most likely will eliminate one of those primes.
 
 There is some similar functionality obtained via heuristics (as opposed to actually finding rational points) in the package {\tt FastLinAlg}.
 
-%\end{enumerate}
+% \end{enumerate}
 
 \vspace{2em}
 \end{document}
