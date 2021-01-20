@@ -44,20 +44,22 @@
 \title{{RandomRationalPoints} package for \emph{Macaulay2}}
 \author{Sankhaneel Bisui}
 \email{sbisui@tulane.edu}
-\address{Tulane University}
+\address{Department of Mathematics, Tulane University, New Orleans, LA 70118}
 \author{Zhan Jiang}
 \email{zoeng@umich.edu}
-\address{University of Michigan}
+\address{Department of Mathematics, University of Michigan, Ann Arbor, MI 48109}
 \author{Sarasij Maitra}
 \email{sm3vg@virginia.edu}
-\address{University of Virginia}
+\address{Department of Mathematics, University of Virginia, Charlottesville, VA 22904}
 \author{Thai Nguyen}
 \email{tnguyen11@tulane.edu}
-\address{Tulane University}
+\address{Department of Mathematics, Tulane University, New Orleans, LA 70118}
 \author{Karl Schwede}
 \email{schwede@math.utah.edu}
 \address{Department of Mathematics, University of Utah, 155 S 1400 E Room 233, Salt Lake City, UT, 84112}
-\date{\today}
+%\date{\today}
+
+\thanks{Schwede was supported by NSF Grant \#1801849, NSF FRG Grant \#1952522 and a Fellowship from the Simons Foundation.}
 
 \begin{abstract}
   In this article, we present {\tt RandomRationalPoints}, a package in \emph{Macaulay2} designed mainly to identify rational and geometric points in a variety over a finite field. We provide different strategies such as linear intersection and projection to obtain such points. We also present methods to obtain non-vanishing minors of some given size in a given matrix, by evaluating the matrix at a point.  %This, in conjunction with the {\tt FastLinAlg} package, should aid in determining properties of the singular locus.
@@ -74,7 +76,7 @@
     Let $I$ be an ideal in a polynomial ring $k[x_1,\dots, x_n]$ over a finite field $k$. Let $X:=V(I)$ denote the corresponding set of rational points in affine $n$-space. Finding one such rational point or geometric point (geometric meaning a point in some finite field extension), in an algorithmically efficient manner is our primary motivation. 
 
     There is an existing package called {\tt RandomPoints}, which we took inspiration from, which aims to find \emph{all} the rational points of a variety; our aim here is to find one point quickly, even if it is not rational.  
-    We provide some functions that apply different strategies to generate random rational points for the given variety. We also provide functions that will expedite the process of determining properties of the singular locus of $X$.% when combined with the functions provided in the package {\tt FastLinAlg}.  
+    We develop functions that apply different strategies to generate random rational and geometric points onn the given variety. We also provide functions that will expedite the process of determining properties of the singular locus of $X$.% when combined with the functions provided in the package {\tt FastLinAlg}.  
 
     We provide the following core functions:
     \begin{itemize}    
@@ -259,10 +261,10 @@ o5 : List
     }}
     \end{example}    
 
-\begin{example}Now we work over a larger field.
-        {{\small\color{blue}
-        ~~
-        \begin{quote}
+\begin{example}
+    Now we work over a larger field.
+    {{\small\color{blue}
+    \begin{quote}
 \begin{verbatim}
 i6 : S = ZZ/211[x_1..x_10];
 
@@ -301,7 +303,6 @@ o11 = {{31, -15, 53, 41, 87, 9, -21, -43, -12, 85}}
     \begin{example}
         Finally, we allow our functions to extend our field.
         {{\small\color{blue}
-        ~~
         \begin{quote}
         \begin{verbatim}
 i12 : time randomPoints(J, Strategy => LinearIntersection, ExtendField => true)
@@ -430,8 +431,6 @@ o3 : Sequence
 
 Alternately, instead of {$I$}, we may pass it a quotient ring.  It will then return the inclusion of the generic projection ring into the given ring, followed by the source of that inclusion.  It is essentially the same functionality as calling {\tt genericProjection(n, ideal R)} although the format of the output is slightly different. 
 
-~~
-
 \begin{comment}~~
   
   {{\small\color{blue}
@@ -458,7 +457,6 @@ o3 : Sequence
 
 This method works by calling {\tt randomCoordinateChange} (see \Cref{helper}) before dropping some variables.  It passes the options {\tt Replacement}, {\tt MaxCoordinatesToReplace}, {\tt Homogeneous} to that function.
 %The user can also specify the same options as before to be passed on to the {\tt randomCoordinateChange} function.
-
 \begin{comment}~~
   
   ~~
