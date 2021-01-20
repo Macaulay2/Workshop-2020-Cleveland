@@ -1,3 +1,5 @@
 {
-    "editor.detectIndentation": false
+    "editor.detectIndentation": false,
+    "editor.wordWrap": "bounded",
+    "editor.wordWrapColumn": 110
 }
