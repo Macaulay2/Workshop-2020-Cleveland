@@ -39,7 +39,7 @@
 % 
 \usepackage{verbatim}
 \usepackage{enumerate}
-
+ 
 \begin{document}
 \title{{RandomRationalPoints} package for \emph{Macaulay2}}
 \author{Sankhaneel Bisui}
@@ -75,8 +75,9 @@
 \section{Introduction}
     Let $I$ be an ideal in a polynomial ring $k[x_1,\dots, x_n]$ over a finite field $k$. Let $X:=V(I)$ denote the corresponding set of rational points in affine $n$-space. Finding one such rational point or geometric point (geometric meaning a point in some finite field extension), in an algorithmically efficient manner is our primary motivation. 
 
-    There is an existing package called {\tt RandomPoints}, which we took inspiration from, which aims to find \emph{all} the rational points of a variety; our aim here is to find one point quickly, even if it is not rational.  
-    We develop functions that apply different strategies to generate random rational and geometric points onn the given variety. We also provide functions that will expedite the process of determining properties of the singular locus of $X$.% when combined with the functions provided in the package {\tt FastLinAlg}.  
+    There is an existing package called {\tt RationalPoints} \cite{RationalPointsSource}, which we took inspiration from, which aims to find \emph{all} the rational points of a variety; our aim here is to find one or more points quickly, even if it is not rational.  We note also that the package {\tt Cremona} \cite{CremonaSource} can find rational points on projective varieties, as can built-in the function {\tt randomKRationalPoint} \cite{M2}, our methods frequently appear to be faster.
+
+    We develop functions that apply different strategies to generate random rational and geometric points on the given variety. We also provide functions that will expedite the process of determining properties of the singular locus of $X$.% when combined with the functions provided in the package {\tt FastLinAlg}.  
 
     We provide the following core functions:
     \begin{itemize}    
@@ -228,7 +229,7 @@ o7 = {{-39, -43, 28}}
 
     \subsection{Comments on performance}
 
-    When working over very small fields, frequently {\tt BruteForce} is most efficient.  This is not surprising as there may not be many points to check, and a surprisingly large percentage of points can be rational in hypersurfaces and complete intersections.  However, if the field size is larger, {\tt BruteForce} will perform poorly.  Other strategies work differently on different examples, and even the same strategy can sometimes work very quickly even if it typically works very slowly.  A quick comment, while in many examples generic projection works well, there are some where it has very slow performance.  Setting {\tt ProjectionAttempts=>0} in the {\tt Default} strategy is a way to avoid this situation.
+    When working over very small fields, frequently {\tt BruteForce} is most efficient.  This is not surprising as there may not be many points to check, and a surprisingly large percentage of points can be rational in hypersurfaces and complete intersections.  However, if the field size is larger, {\tt BruteForce} will perform poorly.  Other strategies work differently on different examples, and even the same strategy can sometimes work very quickly even if it typically works very slowly.  A quick comment, while in many examples generic projection works well, there are some examples where it performs quite slowly.  Setting {\tt ProjectionAttempts=>0} in the {\tt Default} strategy is a way to avoid this situation.
 
 
     \begin{example}
@@ -408,7 +409,7 @@ This gives the projection map from $\mathbb{A}^N \mapsto\mathbb{A}^{N-n}$ and th
 
 
 \begin{example}	
-    We project a curve in 4-space to 2-space.
+    We project a curve in 4-space to one 2-space.
     ~~
   {{\small\color{blue}
   \begin{quote}
@@ -493,7 +494,7 @@ o4 : Sequence
 \noindent where $I$ is an ideal in a polynomial ring, respectively, $R$ is a quotient of a polynomial ring. The output is
 a list with two entries: the generic projection map and the ideal (respectively the ring).
 
-It differs from {\tt genericProjection(codim I - 1, I)} as it only tries to find a hypersurface equation that vanishes along the projection, instead of finding one that vanishes exactly at the projection.  This can be faster, and can be useful for finding points.   If we already know the codimension is {\tt c}, we can set {\tt Codimension=>c} so the function does not compute it. 
+It differs from {\tt genericProjection(codim I - 1, I)} as it only tries to find a hypersurface equation that vanishes along the projection, instead of finding one that vanishes exactly at the projection.  This can be faster and can be useful for finding points.   If we already know the codimension is {\tt c}, we can set {\tt Codimension=>c} so the function does not compute it. 
 
 %\vspace{1em}
 \begin{comment}~~
@@ -734,9 +735,12 @@ One can use this function to show that rings are $(R_1)$, that is, regular in co
     In this particular example, there tend to be about $5$ associated primes when adding the first minor to $J$, and so one would expect about $5$ steps as each minor computed most likely will eliminate one of those primes.
 \end{example} 
 
-There is some similar functionality obtained via heuristics (as opposed to actually finding rational points) in the package {\tt FastLinAlg}.
+There is some similar functionality computing partial Jacobian ideals obtained via heuristics (as opposed to actually finding rational points) in the package {\tt FastLinAlg}, see \cite{FastLinAlgSource}.
 
 % \end{enumerate}
 
-\vspace{2em}
+\bibliographystyle{skalpha}
+\bibliography{MainBib}
+
+
 \end{document}
