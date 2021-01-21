@@ -75,12 +75,8 @@
 \section{Introduction}
     Let $I$ be an ideal in a polynomial ring $k[x_1,\dots, x_n]$ over a finite field $k$. Let $X:=V(I)$ denote the corresponding set of rational points in affine $n$-space. Finding one such rational point or geometric point (geometric meaning a point in some finite field extension), in an algorithmically efficient manner is our primary motivation. 
 
-<<<<<<< HEAD
     There is an existing package called {\tt RationalPoints} \cite{RationalPointsSource}, which we took inspiration from, which aims to find \emph{all} the rational points of a variety; our aim here is to find one or more points quickly, even if it is not rational.  We note also that the package {\tt Cremona} \cite{CremonaSource} can find rational points on projective varieties, as can built-in the function {\tt randomKRationalPoint} \cite{M2}, our methods frequently appear to be faster and apply in the affine setting as well.
 
-=======
-    There is an existing package called {\tt RandomPoints}, which we took inspiration from, which aims to find \emph{all} the rational points of a variety; our aim here is to find one point quickly, even if it is not rational.  
->>>>>>> ccae6a41c42e2b47c4ed6acfd9648af48dd17611
     We develop functions that apply different strategies to generate random rational and geometric points on the given variety. We also provide functions that will expedite the process of determining properties of the singular locus of $X$.% when combined with the functions provided in the package {\tt FastLinAlg}.  
 
     We provide the following core functions:
@@ -618,11 +614,7 @@ The user may also provide the following additional information:
 		o6 = ({-2, 1, 1}, {0, 1}, {0, 1}, {1} | x2+xy+2y2+2xz-2yz-2z2   -2y-z |)
 		{1} | -2x2-xy-2y2-2xz+2yz+2z2 -2x   |
 \end{verbatim}
-<<<<<<< HEAD
 \end{quote}\vspace{-0.5em}    
-=======
-\end{quote}    
->>>>>>> ccae6a41c42e2b47c4ed6acfd9648af48dd17611
     }}
 \end{example}
 
@@ -726,14 +718,12 @@ One can use this function to show that rings are $(R_1)$, that is, regular in co
 		i9 : i
 		
 		o9 = 5
-		
 \end{verbatim}
 \end{quote}
     }}    
     \noindent
     In this particular example, there tend to be about $5$ associated primes when adding the first minor to $J$, and so one expects about $5$ steps as each minor will typically eliminate one of those primes.
 \end{example} 
-<<<<<<< HEAD
 
 There is some similar functionality computing partial Jacobian ideals obtained via heuristics (as opposed to actually finding rational points) in the package {\tt FastLinAlg}, see \cite{FastLinAlgSource}.  That package now uses the functionality contained here in {\tt RandomRationalPoints} in some of its functions.
 
@@ -743,10 +733,4 @@ There is some similar functionality computing partial Jacobian ideals obtained v
 \bibliography{MainBib}
 
 
-=======
-There is some similar functionality obtained via heuristics (as opposed to actually finding rational points) in the package {\tt FastLinAlg}.
-
-% \end{enumerate}
-\vspace{1em}
->>>>>>> ccae6a41c42e2b47c4ed6acfd9648af48dd17611
 \end{document}
