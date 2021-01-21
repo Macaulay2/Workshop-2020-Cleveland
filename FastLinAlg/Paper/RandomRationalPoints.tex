@@ -76,7 +76,7 @@
     Let $I$ be an ideal in a polynomial ring $k[x_1,\dots, x_n]$ over a finite field $k$. Let $X:=V(I)$ denote the corresponding set of rational points in affine $n$-space. Finding one such rational point or geometric point (geometric meaning a point in some finite field extension), in an algorithmically efficient manner is our primary motivation. 
 
     There is an existing package called {\tt RandomPoints}, which we took inspiration from, which aims to find \emph{all} the rational points of a variety; our aim here is to find one point quickly, even if it is not rational.  
-    We develop functions that apply different strategies to generate random rational and geometric points onn the given variety. We also provide functions that will expedite the process of determining properties of the singular locus of $X$.% when combined with the functions provided in the package {\tt FastLinAlg}.  
+    We develop functions that apply different strategies to generate random rational and geometric points on the given variety. We also provide functions that will expedite the process of determining properties of the singular locus of $X$.% when combined with the functions provided in the package {\tt FastLinAlg}.  
 
     We provide the following core functions:
     \begin{itemize}    
@@ -91,7 +91,7 @@
     \vspace{1em}
     \noindent \textbf{Acknowledgements:} The authors would like to thank David Eisenbud and Mike Stillman for useful conversations and comments on the development of this package.  The authors began work on this package at the virtual Cleveland 2020 Macaulay2 workshop.
 
-\section{Our primary pupose: {\tt randomPoints}}\label{randomPoints}
+\section{Our primary purpose: {\tt randomPoints}}\label{randomPoints}
     We start with the core function in this package:  {\tt randomPoints} is a function to find rational or geometric points in a variety. The typical usages are as follows: 
 
     \vspace{0.5em}
@@ -328,7 +328,7 @@ o12 = {{54, 14a  - 48a  - 56a  + 56a  - 13a + 48, -101, 56, -42, -27, - 26a  -
 %%%   
 \subsection*{\tt randomCoordinateChange:} 
 
-This function takes a polynomial ring as an input and outputs the coordinate change map.  
+This function takes a polynomial ring as an input and outputs the coordinate change map,
 i.e. given a polynomial ring, this will produce a linear automorphism of the ring.  This function checks whether the map is an isomorphism by computing the Jacobian.
 
 In some applications, a full change of coordinates is not desired, as it might cause code to run very slowly.  A binomial change of coordinates might be preferred, or we might only replace some monomials by other monomials.  
@@ -429,7 +429,7 @@ o3 : Sequence
     }}
 \end{example}
 
-Alternately, instead of {$I$}, we may pass it a quotient ring.  It will then return the inclusion of the generic projection ring into the given ring, followed by the source of that inclusion.  It is essentially the same functionality as calling {\tt genericProjection(n, ideal R)} although the format of the output is slightly different. 
+Alternatively, instead of {$I$}, we may pass it a quotient ring.  It will then return the inclusion of the generic projection ring into the given ring, followed by the source of that inclusion.  It is essentially the same functionality as calling {\tt genericProjection(n, ideal R)} although the format of the output is slightly different. 
 
 \begin{comment}~~
   
@@ -559,8 +559,9 @@ As mentioned in the introduction, the two functions in this section will provide
 \vspace{0.5em}
 -- {\tt findANonZeroMinor(n, M, I)} 
 \vspace{0.5em}
+
 \noindent where $I$ is an ideal
-in a polynomial ring over {\tt QQ} or {\tt ZZ/p} for $p$ prime; $M$ is a matrix
+in a polynomial ring over {\tt QQ} or {\tt ZZ/p} for $p$ prime, $M$ is a matrix
 over the polynomial ring and $n\in \mathbb{Z}$ denotes the size of the minors of interest.
 
 
@@ -587,10 +588,9 @@ The user may also provide the following additional information:
 \item[\tt MinorPointAttempts => ZZ] 
   This controls how many points at which to check the rank of the matrix.
 \end{description}
-\vspace{0.25em}
+%\vspace{0.25em}
 \begin{example}
   We demonstrate this function.
-  ~~
   {{\small\color{blue}
   \begin{quote}
 \begin{verbatim}
@@ -622,7 +622,7 @@ The user may also provide the following additional information:
 		
 		o6 : Sequence
 \end{verbatim}
-\end{quote}\vspace{-1em}    
+\end{quote}    
     }}
 \end{example}
 
@@ -728,15 +728,13 @@ One can use this function to show that rings are $(R_1)$, that is, regular in co
 		o9 = 5
 		
 \end{verbatim}
-\end{quote}\vspace{-1em}    
+\end{quote}
     }}    
     \noindent
     In this particular example, there tend to be about $5$ associated primes when adding the first minor to $J$, and so one would expect about $5$ steps as each minor computed most likely will eliminate one of those primes.
 \end{example} 
-
 There is some similar functionality obtained via heuristics (as opposed to actually finding rational points) in the package {\tt FastLinAlg}.
 
 % \end{enumerate}
-
-\vspace{2em}
+\vspace{1em}
 \end{document}
