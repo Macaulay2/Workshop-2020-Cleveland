@@ -51,7 +51,7 @@
 \author{Sarasij Maitra}
 \email{sm3vg@virginia.edu}
 \address{Department of Mathematics, University of Virginia, Charlottesville, VA 22904}
-\author{Thai Nguyen}
+\author{Th\'ai Th\`anh Nguy$\tilde{\text{\^e}}$n}
 \email{tnguyen11@tulane.edu}
 \address{Department of Mathematics, Tulane University, New Orleans, LA 70118}
 \author{Karl Schwede}
@@ -118,7 +118,7 @@
     \item {\tt BruteForce} simply tries random points and sees if they are on the variety.
         
     \item {\tt GenericProjection} projects to a hypersurface, via 
-        {\tt projectionToHypersurface} and then uses a {\tt BruteForce} strategy.
+        {\tt projectionToHypersurface} and then uses the {\tt BruteForce} strategy.
         
     \item {\tt LinearIntersection} intersects with an appropriately random linear space.
         
@@ -134,28 +134,18 @@
     \begin{quote}
 \begin{verbatim}
 i2 : R = ZZ/101[x, y, z];
-
 i3 : J = ideal(x^3 + y^2 + 1, z^3 - x^2 - y^2 + 2);
-
 o3 : Ideal of R
-
 i4 : randomPoints(J)
     -- used 0.0181549 seconds
-
 o4 = {{32, 37, -30}}
-
 o4 : List
-
 i5 : time randomPoints(J,Strategy=>BruteForce)
     -- used 0.0146932 seconds
-
 o5 = {}
-
 o5 : List
-
 i6 : randomPoints(J,Strategy=>GenericProjection)
     -- used 0.0146932 seconds
-
 o6 = {{2, -30, -8}}
         \end{verbatim}
     \end{quote}
@@ -165,7 +155,7 @@ o6 = {{2, -30, -8}}
     \vspace{-1em}
     \item[\tt ProjectionAttempts => ZZ] 
 
-    When calling the Strategy {\tt GenericProjection} or \\
+    When calling the strategy {\tt GenericProjection} or \\
     {\tt HybridProjectionIntersection} from {\tt randomPoints}, this option denotes the number of trials before giving up.  This option is also passed to {\tt randomPoints} by other functions.
 
     \item[\tt MaxCoordinatesToReplace => ZZ] This is used for fine tuning the {\tt LinearIntersection} or {\tt GenericProjection} strategies, see \Cref{helper}.
@@ -193,7 +183,6 @@ o6 = {{2, -30, -8}}
 \begin{verbatim}    
 i7 : randomPoints(J, Strategy => BruteForce, PointCheckAttempts => 20000)
     -- used 0.84679 seconds
-
 o7 = {{-39, -43, 28}}
     \end{verbatim}%        
 \end{quote}\vspace{-1em}%
@@ -226,7 +215,7 @@ o7 = {{-39, -43, 28}}
 
     \subsection{Comments on performance}
 
-    When working over very small fields, frequently {\tt BruteForce} is most efficient.  This is not surprising as there may not be many points to check, and a surprisingly large percentage of points can be rational in hypersurfaces and complete intersections.  However, if the field size is larger, {\tt BruteForce} will perform poorly.  Other strategies work differently on different examples, and even the same strategy can sometimes work very quickly even if it typically works very slowly.  A quick comment, while in many examples generic projection works well, there are some examples where it performs quite slowly.  Setting {\tt ProjectionAttempts=>0} in the {\tt Default} strategy is a way to avoid this situation.
+    When working over very small fields, frequently {\tt BruteForce} is most efficient.  This is not surprising as there may not be many points to check, and a surprisingly large percentage of points can be rational in hypersurfaces and complete intersections.  However, if the field size is larger, {\tt BruteForce} will perform poorly.  Even for some simple examples, it could not provide any rational points if the number of trials is not enough.  Other strategies work differently on different examples, and even the same strategy can sometimes work very quickly even if it typically works very slowly.  A quick comment, while in many examples generic projection works well, there are some examples where it performs quite slowly.  Setting {\tt ProjectionAttempts=>0} in the {\tt Default} strategy is a way to avoid this situation.
 
 
     \begin{example}
@@ -236,21 +225,14 @@ o7 = {{-39, -43, 28}}
     \begin{quote}
 \begin{verbatim}
 i2 : R = ZZ/7[x_1..x_10];
-
 i3 : I = ideal(random(2, R), random(3, R));
-
 o3 : Ideal of R
-
 i4 : time randomPoints(I, Strategy => BruteForce, PointCheckAttempts => 20000)
     -- used 0.0102075 seconds
-
 o4 = {{-2, -1, 3, -2, -2, 2, 0, -2, -2, -2}}
-
 o4 : List
-
 i5 : time randomPoints(I, Strategy => Default)
     -- used 0.085741 seconds
-
 o5 = {{1, -2, 2, 2, -2, 0, 0, -1, -1, 3}}
     \end{verbatim}
 \end{quote}\vspace{-1em}
@@ -263,33 +245,21 @@ o5 = {{1, -2, 2, 2, -2, 0, 0, -1, -1, 3}}
     \begin{quote}
 \begin{verbatim}
 i6 : S = ZZ/211[x_1..x_10];
-
 i7 : J = ideal(random(2, S), random(3, S));
-
 o7 : Ideal of S
-
 i8 : time randomPoints(J, Strategy => BruteForce, PointCheckAttempts => 2000000)
     -- used 25.3479 seconds
-
 o8 = {{-36, 26, -63, -7, -48, 78, -44, -22, 105, 39}}
-
 i9 : time randomPoints(J, Strategy => Default)
 -- used 0.102918 seconds
-
 o9 = {{0, -42, -53, -33, -65, -27, -105, -37, 99, 64}}
-
 o9 : List
-
 i10 : time randomPoints(J, Strategy => LinearIntersection)
 -- used 0.0169781 seconds
-
 o10 = {{-51, -11, -34, -33, -65, 19, -86, 50, -44, -97}}
-
 o10 : List
-
 i11 : time randomPoints(J, Strategy => GenericProjection)
 -- used 0.364902 seconds
-
 o11 = {{31, -15, 53, 41, 87, 9, -21, -43, -12, 85}}      
     \end{verbatim}
 \end{quote}\vspace{-1em}
@@ -303,7 +273,6 @@ o11 = {{31, -15, 53, 41, 87, 9, -21, -43, -12, 85}}
         \begin{verbatim}
 i12 : time randomPoints(J, Strategy => LinearIntersection, ExtendField => true)
 -- used 0.0612306 seconds
-
             5      4      3      2                                      5  
 o12 = {{54, 14a  - 48a  - 56a  + 56a  - 13a + 48, -101, 56, -42, -27, - 26a  -
     -------------------------------------------------------------------------
@@ -324,7 +293,7 @@ o12 = {{54, 14a  - 48a  - 56a  + 56a  - 13a + 48, -101, 56, -42, -27, - 26a  -
 %%%   
 \subsection*{\tt randomCoordinateChange:} 
 
-This function takes a polynomial ring as an input and outputs the coordinate change map,
+This function takes a polynomial ring as an input and output the coordinate change map,
 i.e. given a polynomial ring, this will produce a linear automorphism of the ring.  This function checks whether the map is an isomorphism by computing the Jacobian.
 
 In some applications, a full change of coordinates is not desired, as it might cause code to run very slowly.  A binomial change of coordinates might be preferred, or we might only replace some monomials by other monomials.  
@@ -344,27 +313,18 @@ This is controlled with the following options.
   \begin{quote}
 \begin{verbatim}
 	i3 : R = ZZ/11[x, y, z];
-
 	i4 : randomCoordinateChange(R)
-
            ZZ
 o4 = map(R,--[x, y, z],{4x + 5y - 5z, 3x - 4y - 3z, 4x})                     
            11
-
                     ZZ
 o4 : RingMap R <--- --[x, y, z]
                     11
-
 	i5 : matrix randomCoordinateChange(R, MaxCoordinatesToReplace => 1)
-
 	o5 = | x -x-4y-5z y |
-
 	i6 : matrix randomCoordinateChange(R, MaxCoordinatesToReplace => 1, Homogeneous => false)
-
 	o6 = | x-3 z-5 -x+3y-4z+2 |
-
 	i7 : matrix randomCoordinateChange(R, MaxCoordinatesToReplace => 1, Replacement => Binomial)
-
 	o7 = | y x+4z z |
 \end{verbatim}
 \end{quote}
@@ -410,11 +370,8 @@ This gives the projection map from $\mathbb{A}^N \mapsto\mathbb{A}^{N-n}$ and th
   \begin{quote}
 \begin{verbatim}
 i1 : R = ZZ/5[x, y, z, w];
-
 i2 : I = ideal(x, y^2, w^3 + x^2);
-
 i3 : genericProjection(2, I)
-
             ZZ                                         2          2
 o3 = (map(R,--[z, w],{- x - 2y - z, - y - 2z}), ideal(z  - z*w - w ))                   
             5
@@ -428,20 +385,15 @@ Alternatively, instead of {$I$}, we may pass it a quotient ring.  It will then r
   
   {{\small\color{blue}
 \begin{verbatim}
-
 i1 : R = ZZ/5[x, y, z, w];
-
 i2 : I = ideal(x, y^2, w^3 + x^2);
-
 i3 : genericProjection(2, R/I)	
-
                             ZZ                          ZZ
                             --[z, w]                    --[z, w]                        
                 R           5                           5
 o3 = (map(----------------,--------,{2y - w, - y - z}), --------)                       
              2   3    2        4                            4
         (x, y , w  + x )      z                            z
-
 o3 : Sequence
 \end{verbatim}}
     }}
@@ -458,17 +410,12 @@ This method works by calling {\tt randomCoordinateChange} (\Cref{helper}) before
 \begin{verbatim}
 		
 i2 : R = ZZ/5[x, y, z, w];
-
 i3 : I = ideal(x, y^2, w^3 + x^2);
-
 o3 : Ideal of R
-
 i4 :genericProjection(2, I, Replacement => Binomial)
-
             ZZ                                   4
 o4 = (map(R,--[z, w],{x + 2z, - 2y + w}), ideal w )                                     
             5
-
 o4 : Sequence
 \end{verbatim}}
     }}
@@ -508,7 +455,6 @@ It differs from {\tt genericProjection(codim I - 1, I)} as it only tries to find
 	            5
 	
     o4 : Sequence
-
 	i5 : projectionToHypersurface(R/I)
 	
 	
@@ -639,28 +585,20 @@ adds it to the ideal $I$, thus extending $I$.   It has the same options as {\tt 
   {{\small\color{blue}
 \begin{verbatim}
 i2 : R = ZZ/5[x, y, z];
-
 i3 : I = ideal(random(3, R) - 2, random(2, R))
-
                 3    2       2     3     2              2       2     3
 o3 = ideal (- 2x  + x y - x*y  - 2y  - 2x z + 2x*y*z + y z + y*z  - 2z 
 -------------------------------------------------------------------
          2            2                 2
 - 2, - 2x  - 2x*y + 2y  + x*z - 2y*z - z )
-
 o3 : Ideal of R
-
 i4 : M = jacobian(I)
-
 o4 = {1} | -x2+2xy-y2+xz+2yz    x-2y+z   |
      {1} | x2-2xy-y2+2xz+2yz+z2 -2x-y-2z |
      {1} | -2x2+2xy+y2+2yz-z2   x-2y-2z  |
-
              3       2
 o4 : Matrix R  <--- R
-
 i5 : extendIdealByNonZeroMinor(2, M, I, Strategy => LinearIntersection)
-
                 3    2       2     3     2              2       2     3
 o5 = ideal (- 2x  + x y - x*y  - 2y  - 2x z + 2x*y*z + y z + y*z  - 2z 
 -------------------------------------------------------------------
@@ -669,7 +607,6 @@ o5 = ideal (- 2x  + x y - x*y  - 2y  - 2x z + 2x*y*z + y z + y*z  - 2z
 -------------------------------------------------------------------
   2       2    3
 2x z + y*z  - z )
-
 o5 : Ideal of R
 \end{verbatim}}	
     }}	
@@ -728,7 +665,7 @@ There is some similar functionality computing partial Jacobian ideals obtained v
 
 % \end{enumerate}
 
-\bibliographystyle{skalpha}
+\bibliographystyle{alpha}
 \bibliography{MainBib}
 
 \vspace{1em}
