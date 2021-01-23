@@ -59,10 +59,10 @@
 \address{Department of Mathematics, University of Utah, 155 S 1400 E Room 233, Salt Lake City, UT, 84112}
 %\date{\today}
 
-\thanks{Schwede was supported by NSF Grant \#1801849, NSF FRG Grant \#1952522 and a Fellowship from the Simons Foundation.}
+\thanks{Schwede was supported by NSF Grants \#1801849, FRG \#1952522 and a Fellowship from the Simons Foundation.}
 
 \begin{abstract}
-  In this article, we present {\tt RandomRationalPoints}, a package in \emph{Macaulay2} designed mainly to identify rational and geometric points in a variety over a finite field. We provide different strategies such as linear intersection and projection to obtain such points. We also present methods to obtain non-vanishing minors of a given size in a given matrix, by evaluating the matrix at a point.  %This, in conjunction with the {\tt FastLinAlg} package, should aid in determining properties of the singular locus.
+  We present {\tt RandomRationalPoints}, a package in \emph{Macaulay2} designed mainly to identify rational and geometric points in a variety over a finite field. We provide different strategies such as linear intersection and projection to obtain such points. We also present methods to obtain non-vanishing minors of a given size in a given matrix, by evaluating the matrix at a point.  %This, in conjunction with the {\tt FastLinAlg} package, should aid in determining properties of the singular locus.
 \end{abstract}
 
 
@@ -87,7 +87,7 @@
     %\item :  This extends an ideal by a minor produced by \\{\tt findANonZeroMinor}. (\Cref{extendIdealByNonZeroMinor})	
     \end{itemize}
 
-    All polynomial rings considered here will be over finite fields. In the subsequent sections, we explain briefly the core and some helper functions and describe the strategies that we have implemented in their execution.
+    All polynomial rings considered here will be over finite fields. In the subsequent sections, we explain  the core and helper functions and describe the strategies that we have implemented.
 
    \vspace{1em}
     \noindent \textbf{Acknowledgements:} The authors would like to thank David Eisenbud and Mike Stillman for useful conversations and comments on the development of this package.  The authors began work on this package at the virtual Cleveland 2020 Macaulay2 workshop.
@@ -169,7 +169,7 @@ o6 = {{2, -30, -8}}
     {\tt HybridProjectionIntersection} from {\tt randomPoints}, this option denotes the number of trials before giving up.  This option is also passed to {\tt randomPoints} by other functions.
 
     \item[\tt MaxCoordinatesToReplace => ZZ] This is used for fine tuning the {\tt LinearIntersection} or {\tt GenericProjection} strategies, see \Cref{helper}.
-    \item[\tt Codimension => ZZ] If the codimension is already known, one can provide it so it is not recomputed.  This is used in the {\tt GenericProjection} and {\tt LinearIntersection} strategies, see \Cref{projectionfunctions}.
+    \item[\tt Codimension => ZZ] One can provide the codimension so it is not recomputed.  This is used in the {\tt GenericProjection} and {\tt LinearIntersection} strategies, see \Cref{projectionfunctions}.
 
     \item[\tt ExtendField => Boolean] 
 
