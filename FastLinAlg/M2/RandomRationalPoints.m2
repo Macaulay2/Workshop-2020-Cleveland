@@ -772,6 +772,85 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
     return pointsList;
 );
 
+saturateInGenericCoordinates=method()
+saturateInGenericCoordinates(Ideal):= I -> (
+    x:=last gens ring I;
+    saturate(I,ideal x))
+
+
+
+randomPointViaMultiplicationTable=method(Options => optRandomPoints);
+
+
+randomPointViaMultiplicationTable(ZZ,Ideal) := opts-> (n1,I) -> (
+    d:= (dimDegViaBezout I)_0;
+    ptlist:={};
+    while (#ptlist<n1) do (
+    ptlist = ptlist | randomPointViaMultiplicationTable(I,d,opts++{Strategy => MultiplicationTable})
+    );
+    return ptlist
+)
+
+randomPointViaMultiplicationTable(Ideal,ZZ) := opts-> (I,d) -> (
+    -- Input: I, a homogeneous ideal, d its dimension
+    --Output: a K-rational point on V(I) where K is  the finite ground field.
+    if not isHomogeneous I then error "expect a homogeneous ideal";
+    -- we cut down with a linear space to a zero-dimensional projective scheme
+    -- and compute how the last two variables act on the quotient ring truncated  
+    -- at the regularity. 
+    -- In case of an absolutely irreducible I over K, we will find with 
+    -- high probability a point, 
+    -- since the determinant will has a linear factor in at least 50% of the cases
+    S:= ring I;
+    attemps:=1;
+    while (
+        L:=ideal random(S^1,S^{d-1:-1});
+	--elapsedTime J=saturate(I+L);
+	    J:=I+L;
+    	Js:=saturateInGenericCoordinates J;
+	    r:=degree ideal last (entries gens gb Js)_0;
+        b1 :=basis(r+1,S^1/Js);
+	    b2 :=basis(r+2,S^1/Js);
+	    j:=#gens S-d;
+	    xx:=(support (vars S%L))_{j-1,j};
+	    m0:=contract(transpose matrix entries b2,matrix entries((xx_0*b1)%Js));
+	    m1:=contract(transpose matrix entries b2,matrix entries((xx_1*b1)%Js));
+        M:=map(S^(rank target m0),S^{rank source m0:-1},xx_0*m1-xx_1*m0);
+ 	    DetM:=(M^{0}*syz M^{1..rank source M-1})_(0,0);
+	 -- computing DetM is the bottleneck
+	    h:=ideal first first factor DetM;
+	    print degree h <<endl;
+	    degree h>1 and attemps<opts.IntersectionAttempts) do (attemps=attemps+1);
+    if degree h >1 then return {};
+    pt:=radical saturateInGenericCoordinates(h+Js);
+    flatten (entries syz transpose jacobian pt)
+   )
+
+
+dimDegViaBezout=method()
+
+dimDegViaBezout(Ideal) := I -> (
+    S:=ring I;
+    lowerBound := max(dim S-rank source gens I,0);
+    upperBound := dim S;
+    mid:= null; increased:=null;
+    while upperBound - lowerBound >1 do (
+	mid = floor((upperBound+lowerBound)/2);
+    	L := ideal random(S^1,S^{mid-1:-1});
+	Is := saturateInGenericCoordinates(I+L);
+	if 
+	Is==ideal 1_S 
+	then (upperBound=mid;) else (lowerBound=mid;) ;
+	--print mid
+	);
+    d:=lowerBound;
+    L= ideal random(S^1,S^{d-1:-1});
+    Is = saturateInGenericCoordinates(I+L);
+    (d,degree Is)
+    )
+
+
+
 randomPoints = method(TypicalValue => List, Options => optRandomPoints);
 
 randomPoints(ZZ, Ideal) := List => opts -> (n1, I1) ->(
@@ -813,6 +892,8 @@ randomPointsBranching(ZZ, Ideal) := List => opts -> (n1, I) -> (
     else if (opts.Strategy == HybridProjectionIntersection) 
     then return randomPointViaGenericProjection(n1, I, opts)
     
+    else if (opts.Strategy == MultiplicationTable)
+    then return randomPointViaMultiplicationTable(n1, I, opts)
 --    else if (opts.Strategy == LinearProjection) 
 --    then return randomPointViaLinearProjection(I, opts)
     --else if (opts.Strategy == MultiThreads)
@@ -1000,6 +1081,7 @@ extendIdealByNonZeroMinor(ZZ,Matrix,Ideal):= opts -> (n, M, I) -> (
     Ifin = I + L1;
     return Ifin;
 );
+
 
 
 
