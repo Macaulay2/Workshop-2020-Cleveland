@@ -12,7 +12,7 @@ newPackage(
 	     },
     	Headline => "compute a random point in a given variety over a finite field",
         PackageImports => {"SwitchingFields", "MinimalPrimes"}, 
-		DebuggingMode => false, 
+		DebuggingMode => true, 
 		Reload=>false,
 		AuxiliaryFiles => false -- set to true if package comes with auxiliary files
     	)
@@ -29,6 +29,10 @@ export {
     --"randomPointViaLinearIntersection", --these are here for debugging purposes
     --"randomPointViaLinearIntersectionOld", --these are here for debugging purposes
     "getRandomLinearForms", --here for debugging purposes
+    "dimDegViaBezout",--for debugging
+    "dimViaBezout",
+    "randomPointViaMultiplicationTable", --for debugging
+    "saturateInGenericCoordinates", --for debugging
 	"Codimension",
 	"MaxCoordinatesToReplace",
     "MaxCoordinatesToTrivialize",
@@ -774,9 +778,12 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
 );
 
 saturateInGenericCoordinates=method()
-saturateInGenericCoordinates(Ideal):= I -> (
-    x:=last gens ring I;
-    saturate(I,ideal x))
+saturateInGenericCoordinates(Ideal):= I1 -> (
+    S1 := ring I1;
+    --x:=random(0, S1)*random(1, S1) + random(1, S1);
+    x:=last gens ring I1;
+    saturate(I1,ideal x)
+)
 
 
 
@@ -828,28 +835,94 @@ randomPointViaMultiplicationTable(Ideal,ZZ) := opts-> (I,d) -> (
     flatten (entries syz transpose jacobian pt)
    )
 
+dimViaBezout=method();
+
+dimViaBezout(Ideal) := I1 -> (
+    dimViaBezout(1, I1)
+)
+
+dimViaBezout(ZZ, Ideal) := (n1,I1) -> (
+    --if (isHomogeneous I1) then (
+--        valList := sort apply(n1, i->dimViaBezoutHomogeneous(5, I1));
+  --      max valList
+    --)
+    --else(
+        dimViaBezoutNonhomogeneous(1, I1)
+    --)
+)
+
+dimViaBezoutHomogeneous=method();
+
+dimViaBezoutHomogeneous(ZZ, Ideal) := (checkCount, I1) -> (
+    S1:=ring I1;
+--    randomMon := ideal((gens S1)#(random(#gens S1)));
+    --if (I1 == ideal 1_S1) then return -1;
+    if (I1 == ideal 0_S1) then return dim S1;
+    lowerBound := max(dim S1-rank source gens I1,0);
+    upperBound := dim S1;
+    mid:= null; 
+    i := 0;
+    print lowerBound;        
+    while upperBound - lowerBound >1 do (
+        mid = floor ((upperBound+lowerBound)/2);
+        L := ideal random(S1^1,S1^{mid-1:-1});        
+        print ("L: "|toString(L));
+        Is := ideal(1_S1); 
+        i = 0;
+        varList := random gens S1;
+        while (Is == ideal(1_S1)) and (i < min(checkCount, #varList)) do (
+            mySat := ideal(varList#i); --ideal((gens S1)#(random(#gens S1)));
+            Is = saturate(I1+L, mySat); --saturateInGenericCoordinates(I+L);
+            print ("mySat: " | toString(mySat));            
+            print ("Is: " | toString(Is));
+            i = i+1;
+        );
+        print ("Is == 1: " | toString(Is == ideal 1_S1));
+        if 
+            Is==ideal 1_S1 
+        then (upperBound=mid;) else (lowerBound=mid;) ;
+        --print mid
+	);
+    lowerBound
+)
+
+dimViaBezoutNonhomogeneous=method();
+
+dimViaBezoutNonhomogeneous(ZZ, Ideal) := (checkCount, I1)->(
+    S1 := ring I1;
+    i := dim S1-1;
+    while (i > 0) do (
+        L1 := ideal getRandomLinearForms(S1, {0,0,0,0,i});
+        print L1;
+        print trim(I1 + L1);
+        if (L1 + I1 != ideal 1_S1) then return i;
+        i = i-1;
+        print i;
+    );
+    return dim S1;
+)
 
 dimDegViaBezout=method()
 
-dimDegViaBezout(Ideal) := I -> (
+dimDegViaBezout(Ideal) := I -> (    
     S:=ring I;
     lowerBound := max(dim S-rank source gens I,0);
     upperBound := dim S;
     mid:= null; increased:=null;
     while upperBound - lowerBound >1 do (
-	mid = floor((upperBound+lowerBound)/2);
-    	L := ideal random(S^1,S^{mid-1:-1});
-	Is := saturateInGenericCoordinates(I+L);
-	if 
-	Is==ideal 1_S 
-	then (upperBound=mid;) else (lowerBound=mid;) ;
-	--print mid
+	    mid = floor((upperBound+lowerBound)/2);
+        L := ideal random(S^1,S^{mid-1:-1});
+	    Is := saturateInGenericCoordinates(I+L);
+	    if 
+	        Is==ideal 1_S 
+	    then (upperBound=mid;) else (lowerBound=mid;) ;
+	    --print mid
 	);
     d:=lowerBound;
     L= ideal random(S^1,S^{d-1:-1});
     Is = saturateInGenericCoordinates(I+L);
     (d,degree Is)
-    )
+)
 
 
 
