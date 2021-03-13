@@ -843,8 +843,8 @@ dimViaBezout(Ideal) := I1 -> (
 
 dimViaBezout(ZZ, Ideal) := (n1,I1) -> (
     --if (isHomogeneous I1) then (
---        valList := sort apply(n1, i->dimViaBezoutHomogeneous(5, I1));
-  --      max valList
+        --valList := sort apply(n1, i->dimViaBezoutHomogeneous(5, I1));
+        --max valList
     --)
     --else(
         dimViaBezoutNonhomogeneous(1, I1)
@@ -893,11 +893,11 @@ dimViaBezoutNonhomogeneous(ZZ, Ideal) := (checkCount, I1)->(
     i := dim S1-1;
     while (i > 0) do (
         L1 := ideal getRandomLinearForms(S1, {0,0,0,0,i});
-        print L1;
-        print trim(I1 + L1);
+        --print L1;
+        --print trim(I1 + L1);
         if (L1 + I1 != ideal 1_S1) then return i;
         i = i-1;
-        print i;
+        --print i;
     );
     return dim S1;
 )
