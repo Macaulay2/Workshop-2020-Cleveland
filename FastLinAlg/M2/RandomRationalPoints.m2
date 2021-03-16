@@ -1,8 +1,8 @@
 
 newPackage(
         "RandomRationalPoints",
-    	Version => "1.3",
-    	Date => "September 11th, 2020",
+    	Version => "1.4",
+    	Date => "March 16th, 2021",
     	Authors => {
 	     {Name => "Sankhaneel Bisui", Email => "sbisu@tulane.edu", HomePage=>"https://sites.google.com/view/sankhaneelbisui/home"},
 	     {Name=> "Thai Nguyen", Email =>"tnguyen11@tulane.edu", HomePage=>"https://sites.google.com/view/thainguyenmath "},
