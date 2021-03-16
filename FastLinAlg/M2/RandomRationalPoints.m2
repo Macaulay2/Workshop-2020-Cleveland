@@ -47,6 +47,7 @@ export {
     "PointCheckAttempts",
     "MinorPointAttempts",
     "MinimumFieldSize",
+    "DimensionIntersectionAttempts",
     "NumThreadsToUse" -- used in the BruteForce strategy
     }
 exportMutable {}
@@ -838,23 +839,41 @@ randomPointViaMultiplicationTable(Ideal,ZZ) := opts-> (I,d) -> (
     flatten (entries syz transpose jacobian pt)
    )
 
-dimViaBezout=method(Options => {MinimumFieldSize => 100});
+getNextValidFieldSize = method();
+getNextValidFieldSize(ZZ, ZZ, ZZ) := (pp, d, targetSize) -> (
+    i := 1;
+    while (pp^(i*d) < targetSize) do (
+        i = i+1;
+    );
+    i
+);
+
+dimViaBezout=method(Options => {Verbose => false, DimensionIntersectionAttempts => null, MinimumFieldSize => 100});
 
 dimViaBezout(Ideal) := opts-> I1 -> (
     S1 := ring I1;
     m := getFieldSize coefficientRing S1;
-    if (m >= opts.MinimumFieldSize) then (
-        return dimViaBezoutNonhomogeneous(I1);
-    );
+    local attempts;
     pp := char ring I1;
+    d := floor(log_pp(m) + 0.5);
+    i := getNextValidFieldSize(pp, d, opts.MinimumFieldSize);
+    if (opts.DimensionIntersectionAttempts === null) then (attempts = ceiling(log_10(5000/(pp^(i*d))))) else (attempts = opts.DimensionIntersectionAttempts;);
+    if opts.Verbose then print ("dimViaBezout: Checking each dimension " | toString(attempts) | " times.");
+    if (m >= opts.MinimumFieldSize) then (
+        return dimViaBezoutNonhomogeneous(I1, Verbose=>opts.Verbose, DimensionIntersectionAttempts=>attempts);
+    );
+    if opts.Verbose then print "dimViaBezout: The field is too small, extending it.";
+    -*pp := char ring I1;
     d := floor(log_pp(m) + 0.5);
     i := 1;
     while (pp^(i*d) < opts.MinimumFieldSize) do (
         i = i+1;
-    );
+    );*-
+    
+    if opts.Verbose then print ("dimViaBezout: New field size is " | toString(pp) | "^" | toString(i*d) | " = " | toString(pp^(i*d)) );
     (S2, phi1) := fieldBaseChange(S1, GF(pp, i*d));
     I2 := phi1(I1);
-    dimViaBezoutNonhomogeneous(I2)
+    dimViaBezoutNonhomogeneous(I2, Verbose=>opts.Verbose, DimensionIntersectionAttempts=>attempts)
 )
 
 --dimViaBezout(ZZ, Ideal) := (n1,I1) -> (
@@ -866,6 +885,30 @@ dimViaBezout(Ideal) := opts-> I1 -> (
         --dimViaBezoutNonhomogeneous(1, I1)
     --)
 --)
+
+
+dimViaBezoutNonhomogeneous=method(Options => {Verbose => false, DimensionIntersectionAttempts => 1, MinimumFieldSize => 100});
+
+dimViaBezoutNonhomogeneous(Ideal) := opts -> (I1)->(
+    S1 := ring I1;
+    --if (getFieldSize(S1)<39) then return codim I1;
+    i := dim S1-1;
+    checks := opts.DimensionIntersectionAttempts;
+    while (i >= 0) do (
+        if opts.Verbose then print("dimViaBezoutNonhomogeneous: Trying intersection with a linear space of dimension " | toString(dim S1 - i));
+        L1 := apply(checks, t->ideal getRandomLinearForms(S1, {0,0,0,0,i}));
+        --print L1;
+        --print trim(I1 + L1);
+        myList := apply(L1, l -> (l + I1 != ideal 1_S1));
+        if all(myList, b->b) then return i;
+        --if (L1 + I1 != ideal 1_S1) then return i;
+        --print dim(L1 + I1);
+        i = i-1;
+        --print i;
+    );        
+    return -1;
+)
+
 
 getFieldSize = method();
 
@@ -916,24 +959,6 @@ dimViaBezoutHomogeneous(ZZ, Ideal) := (checkCount, I1) -> (
         --print mid
 	);
     lowerBound
-)
-
-dimViaBezoutNonhomogeneous=method();
-
-dimViaBezoutNonhomogeneous(Ideal) := (I1)->(
-    S1 := ring I1;
-    --if (getFieldSize(S1)<39) then return codim I1;
-    i := dim S1-1;
-    while (i >= 0) do (
-        L1 := ideal getRandomLinearForms(S1, {0,0,0,0,i});
-        --print L1;
-        --print trim(I1 + L1);
-        if (L1 + I1 != ideal 1_S1) then return i;
-        --print dim(L1 + I1);
-        i = i-1;
-        --print i;
-    );        
-    return -1;
 )
 
 

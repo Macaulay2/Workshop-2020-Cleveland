@@ -72,7 +72,8 @@ randomPointViaMultiplicationTable(Ideal,ZZ) := opts-> (I,d) -> (
 	degree h>1 and attemps<opts.IntersectionAttemps) do (attemps=attemps+1);
     if degree h >1 then return {};
      pt:=radical saturateInGenericCoordinates(h+Js);
-    flatten (entries syz transpose jacobian pt))
+    flatten (entries syz transpose jacobian pt)
+)
 
 
 dimDegViaBezout=method()
@@ -113,9 +114,12 @@ assert((dimDegViaBezout I)_0==dim I)
 ///
 kk=ZZ/nextPrime 10^2
 kk=ZZ/nextPrime 10^3
+kk = ZZ/7;
+kk = ZZ/2;
 S=kk[y_0..y_14]
 
 I=minors(2,random(S^3,S^{5:-1}));
+elapsedTime dimViaBezout(I)
 elapsedTime (d,deg)=dimDegViaBezout(I)
 elapsedTime d=dim I
 elapsedTime randomPointViaMultiplicationTable(I,dim I)
