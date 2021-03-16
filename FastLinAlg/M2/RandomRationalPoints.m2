@@ -890,6 +890,7 @@ dimViaBezoutNonhomogeneous=method();
 
 dimViaBezoutNonhomogeneous(ZZ, Ideal) := (checkCount, I1)->(
     S1 := ring I1;
+    --if (#(coefficientRing S1)<39) then return codim I1;
     i := dim S1-1;
     while (i > 0) do (
         L1 := ideal getRandomLinearForms(S1, {0,0,0,0,i});
