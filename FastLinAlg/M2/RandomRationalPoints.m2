@@ -7,7 +7,7 @@ newPackage(
 	     {Name => "Sankhaneel Bisui", Email => "sbisu@tulane.edu", HomePage=>"https://sites.google.com/view/sankhaneelbisui/home"},
 	     {Name=> "Thai Nguyen", Email =>"tnguyen11@tulane.edu", HomePage=>"https://sites.google.com/view/thainguyenmath "},
 	     {Name=>"Karl Schwede", Email=>"schwede@math.utah.edu", HomePage=>"https://www.math.utah.edu/~schwede/" },
-	     {Name => "Sarasij Maitra", Email => "sm3vg@virginia.edu", HomePage => "https://people.virginia.edu~sm3vg"},
+	     {Name => "Sarasij Maitra", Email => "sm3vg@virginia.edu", HomePage => "https://sarasij93.github.io/"},
 	     {Name => "Zhan Jiang", Email => "zoeng@umich.edu", HomePage => "http://www-personal.umich.edu/~zoeng/"}
 	     },
     	Headline => "compute a random point in a given variety over a finite field",
@@ -908,7 +908,7 @@ dimViaBezoutNonhomogeneous=method();
 
 dimViaBezoutNonhomogeneous(ZZ, Ideal) := (checkCount, I1)->(
     S1 := ring I1;
-    --if (#(coefficientRing S1)<39) then return codim I1;
+    --if (getFieldSize(S1)<39) then return codim I1;
     i := dim S1-1;
     while (i >= 0) do (
         L1 := ideal getRandomLinearForms(S1, {0,0,0,0,i});
