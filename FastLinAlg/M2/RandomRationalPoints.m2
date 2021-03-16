@@ -46,6 +46,7 @@ export {
     "ExtendField", --used in GenericProjection and LinearIntersection strategy
     "PointCheckAttempts",
     "MinorPointAttempts",
+    "MinimumFieldSize",
     "NumThreadsToUse" -- used in the BruteForce strategy
     }
 exportMutable {}
@@ -837,10 +838,23 @@ randomPointViaMultiplicationTable(Ideal,ZZ) := opts-> (I,d) -> (
     flatten (entries syz transpose jacobian pt)
    )
 
-dimViaBezout=method();
+dimViaBezout=method(Options => {MinimumFieldSize => 100});
 
-dimViaBezout(Ideal) := I1 -> (
-    dimViaBezoutNonhomogeneous(I1)
+dimViaBezout(Ideal) := opts-> I1 -> (
+    S1 := ring I1;
+    m := getFieldSize coefficientRing S1;
+    if (m >= opts.MinimumFieldSize) then (
+        return dimViaBezoutNonhomogeneous(I1);
+    );
+    pp := char ring I1;
+    d := floor(log_pp(m) + 0.5);
+    i := 1;
+    while (pp^(i*d) < opts.MinimumFieldSize) do (
+        i = i+1;
+    );
+    (S2, phi1) := fieldBaseChange(S1, GF(pp, i*d));
+    I2 := phi1(I1);
+    dimViaBezoutNonhomogeneous(I2)
 )
 
 --dimViaBezout(ZZ, Ideal) := (n1,I1) -> (
