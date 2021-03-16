@@ -620,7 +620,7 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
     if (#pointsList >= n1) then return pointsList;
 
     c1 := opts.Codimension;
-    if (c1 === null) then (c1 = codim I1); --don't compute it if we already know it.
+    if (c1 === null) then (c1 = dim ring I1 - dimViaBezout(I1)); --don't compute it if we already know it.
     if (c1 == infinity) then (
         if (opts.Verbose or debugLevel > 0) then print "randomPointViaDefaultStrategy: the ideal has no points (it is the unit ideal)";
         return pointsList;
@@ -793,7 +793,10 @@ randomPointViaMultiplicationTable=method(Options => optRandomPoints);
 
 
 randomPointViaMultiplicationTable(ZZ,Ideal) := opts-> (n1,I) -> (
-    d:= (dimDegViaBezout I)_0;
+    local d;
+    if not (opts.Codimension === null) then (d = opts.Codimension;)
+    else (d = dimViaBezout I;);
+    --d:= dimViaBezout I;
     ptlist:={};
     while (#ptlist<n1) do (
            ptlist = append(ptlist, randomPointViaMultiplicationTable(I,d,opts));
@@ -880,22 +883,22 @@ dimViaBezoutHomogeneous(ZZ, Ideal) := (checkCount, I1) -> (
     upperBound := dim S1;
     mid:= null; 
     i := 0;
-    print lowerBound;        
+    --print lowerBound;        
     while upperBound - lowerBound >1 do (
         mid = floor ((upperBound+lowerBound)/2);
         L := ideal random(S1^1,S1^{mid-1:-1});        
-        print ("L: "|toString(L));
+        --print ("L: "|toString(L));
         Is := ideal(1_S1); 
         i = 0;
         varList := random gens S1;
         while (Is == ideal(1_S1)) and (i < min(checkCount, #varList)) do (
             mySat := ideal(varList#i); --ideal((gens S1)#(random(#gens S1)));
             Is = saturate(I1+L, mySat); --saturateInGenericCoordinates(I+L);
-            print ("mySat: " | toString(mySat));            
-            print ("Is: " | toString(Is));
+            --print ("mySat: " | toString(mySat));            
+            --print ("Is: " | toString(Is));
             i = i+1;
         );
-        print ("Is == 1: " | toString(Is == ideal 1_S1));
+        --print ("Is == 1: " | toString(Is == ideal 1_S1));
         if 
             Is==ideal 1_S1 
         then (upperBound=mid;) else (lowerBound=mid;) ;
@@ -920,28 +923,6 @@ dimViaBezoutNonhomogeneous(ZZ, Ideal) := (checkCount, I1)->(
         --print i;
     );        
     return -1;
-)
-
-dimDegViaBezout=method()
-
-dimDegViaBezout(Ideal) := I -> (    
-    S:=ring I;
-    lowerBound := max(dim S-rank source gens I,0);
-    upperBound := dim S;
-    mid:= null; increased:=null;
-    while upperBound - lowerBound >1 do (
-	    mid = floor((upperBound+lowerBound)/2);
-        L := ideal random(S^1,S^{mid-1:-1});
-	    Is := saturateInGenericCoordinates(I+L);
-	    if 
-	        Is==ideal 1_S 
-	    then (upperBound=mid;) else (lowerBound=mid;) ;
-	    --print mid
-	);
-    d:=lowerBound;
-    L= ideal random(S^1,S^{d-1:-1});
-    Is = saturateInGenericCoordinates(I+L);
-    (d,degree Is)
 )
 
 
