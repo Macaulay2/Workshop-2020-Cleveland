@@ -1742,6 +1742,11 @@ doc ///
     Key
         dimViaBezout
         (dimViaBezout, Ideal)
+        [dimViaBezout, DimensionIntersectionAttempts]
+        [dimViaBezout, MinimumFieldSize]
+        [dimViaBezout, Verbose]
+        MinimumFieldSize
+        DimensionIntersectionAttempts
     Headline
         computes the dimension and degree of the given ideal $I$ probabilistically
     Usage
@@ -1749,12 +1754,16 @@ doc ///
     Inputs
         I: Ideal
             in a polynomial ring over a field
+        DimensionIntersectionAttempts => ZZ
+            the number of linear spaces to try before moving to the next dimension
+        MinimumFieldSize => ZZ
+            if the ambient field is smaller than this value it will automatically be replaced with an extension
     Outputs
         : ZZ
             d = dimension of the ideal $I$
     Description
         Text
-            This intersects $V(I)$ with successively higher dimensional random linear spaces until there is an intersection.  For example, if $V(I)$ intersect a random line has a point, then we expect that $V(I)$ contains a hypersurface.  If there was no intersection, this function tries a 2-dimensional linear space, and so on.
+            This intersects $V(I)$ with successively higher dimensional random linear spaces until there is an intersection.  For example, if $V(I)$ intersect a random line has a point, then we expect that $V(I)$ contains a hypersurface.  If there was no intersection, this function tries a 2-dimensional linear space, and so on.  This speeds up many computations.
         Example
             kk=ZZ/nextPrime 10^2;
             S=kk[y_0..y_14];
@@ -1762,7 +1771,7 @@ doc ///
             elapsedTime dimViaBezout(I)
             elapsedTime dim I
         Text
-            This speeds up many computations.
+            The user may set the {\tt MinimumFieldSize} to ensure that the field being worked over is big enough.  For instance, there are relatively few linear spaces over a field of characteristic 2, and this can cause incorrect results to be provided.  If an ideal whose ring 
 ///
 
 doc ///
