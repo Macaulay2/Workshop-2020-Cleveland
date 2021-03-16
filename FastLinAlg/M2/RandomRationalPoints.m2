@@ -509,9 +509,10 @@ randomPointViaGenericProjection(ZZ, Ideal) := opts -> (n1, I1) -> (
     local m2;
     R1 := ring I1;  
     i := 0;
+    c1 := opts.Codimension;
     while (flag) and (i < opts.ProjectionAttempts) and (#pointsList < n1) do (
         if (opts.Codimension === null) then (
-            c1 := codim I1;
+            c1 = codim I1;
             if (c1 == infinity) then (
                 if (opts.Verbose or debugLevel > 0) then print "randomPointViaGenericProjection: no points, the ideal is the unit ideal."; 
                 return pointsList;
@@ -1708,7 +1709,7 @@ doc ///
             S=ZZ/101[y_0..y_9];
             I=ideal random(S^1,S^{-2,-2,-2,-3})+(ideal random(2,S))^2;
             elapsedTime randomPoints(I,Strategy=>MultiplicationTable)
-            elapsedTime randomPoints(I,Strategy => LinearIntersection)
+            elapsedTime randomPoints(I,Codimension=>5)
 
 
 ///
