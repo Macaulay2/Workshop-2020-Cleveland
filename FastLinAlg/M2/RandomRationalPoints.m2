@@ -1702,8 +1702,7 @@ doc ///
             R = ZZ/5[t_1..t_3];
             I = ideal(t_1,t_2+t_3);
             randomPoints(3, I)
-            randomPoints(4, I, Strategy => Default)
-            randomPoints(4, I, Strategy => GenericProjection)
+            randomPoints(4, I, Strategy => Default)            
             randomPoints(4, I, Strategy => LinearIntersection)
         Text 
             Using the MultiplicationTable Strategy, often fastest computations are achieved among all.
@@ -1798,7 +1797,7 @@ doc ///
             R = ZZ/5[x,y,z];
             I = ideal(random(3,R)-2, random(2,R));
             M = jacobian(I);
-            findANonZeroMinor(2,M,I, Strategy => GenericProjection)
+            findANonZeroMinor(2,M,I)
         Text
             The option {\tt MinorPointAttempts} is how many points to attempt before giving up.
     SeeAlso
