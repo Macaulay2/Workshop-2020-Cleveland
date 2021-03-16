@@ -1713,6 +1713,28 @@ doc ///
             elapsedTime randomPoints(I,Strategy=>LinearIntersection,Codimension=>5)
 ///
 
+doc ///
+    Key
+        dimViaBezout
+        (dimViaBezout, Ideal)
+    Headline
+        computes the dimension of the ideal by intersecting with randomly chosen lower dimensional varieties.
+    Usage
+        dimViaBezout(I)
+    Inputs
+        I: Ideal in a polynomial ring over a finite field
+    Outputs
+        : dimension of $I$
+    Description
+        Text
+
+    Example
+        kk=ZZ/nextPrime 10^2;
+        S=kk[y_0..y_14];
+        I=minors(2,random(S^3,S^{5:-1}));
+        dimViaBezout(I)
+///
+
 -*doc ///
     Key
         dimDegViaBezout
