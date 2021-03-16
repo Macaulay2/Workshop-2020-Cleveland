@@ -853,13 +853,16 @@ dimViaBezout(ZZ, Ideal) := (n1,I1) -> (
 
 getFieldSize = method();
 
+needsPackage "PushForward";
+
 getFieldSize(Ring):= (k1) -> (
     if not isField(k1) then error "getFieldSize: You did not provide a field.";
     if instance(k1, GaloisField) then return (char k1)^((degree (ideal ambient k1)_0)#0);
     if instance(k1, QuotientRing) then (
         if ambient(k1) === ZZ then return char k1;
-        error "getFieldSize:  Not implemented for finite non-Galois fields."
-    )
+        error "getFieldSize:  Not implemented for finite non-Galois fields.";
+    );
+    infinity
 )
 
 dimViaBezoutHomogeneous=method();
