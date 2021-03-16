@@ -1711,9 +1711,7 @@ doc ///
             S=ZZ/101[y_0..y_9];
             I=ideal random(S^1,S^{-2,-2,-2,-3})+(ideal random(2,S))^2;
             elapsedTime randomPoints(I,Strategy=>MultiplicationTable)
-            elapsedTime randomPoints(I,Codimension=>5)
-
-
+            elapsedTime randomPoints(I,Strategy=>LinearIntersection,Codimension=>5)
 ///
 
 -*doc ///
