@@ -406,15 +406,16 @@ randomPointViaLinearIntersection = method(Options => optRandomPoints);
 
 randomPointViaLinearIntersection(ZZ, Ideal) := opts -> (n1, I1) -> (
     returnPointsList := {};
+    R1 := ring I1;
+    dR1 := dim R1;
     c1 := opts.Codimension;
-    if (c1 === null) then (c1 = codim I1); --don't compute it if we already know it.
+    local d1;
+    if (c1 === null) then (c1 = dR1 - dimViaBezout(I1)); --don't compute it if we already know it.
     if (c1 == 0) then (
         if (opts.Verbose or debugLevel > 0) then print "randomPointViaLinearIntersection: 0 ideal was passed, switching to brute force.";
         return searchPoints(n1, ring I1, first entries gens I1, opts++{PointCheckAttempts => 10*n1});
     );
-    R1 := ring I1;
-    dR1 := dim R1;
-    d1 := dR1 - c1;
+    d1 := dR1-c1;
     i := 0;
     j := 0;
     local finalPoint;
@@ -446,7 +447,7 @@ randomPointViaLinearIntersection(ZZ, Ideal) := opts -> (n1, I1) -> (
         if (debugLevel > 0 or opts.Verbose == true) then print concatenate("randomPointViaLinearIntersection:  Doing a loop with:", toString(phiMatrix));
         phi = map(targetSpace, R1, phiMatrix);
         J1 = phi(I1);
-        if (dim J1 == 0) then (
+        if ((dimViaBezout(J1)) == 0) then (
             if (c1 == 1) then ( --if we are intersecting with a line, we can go slightly faster by using factor instead of decompose
                 ptList = apply(toList factor(gcd(first entries gens J1)), t->ideal(t#0));
             )
