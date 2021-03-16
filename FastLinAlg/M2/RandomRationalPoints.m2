@@ -415,7 +415,7 @@ randomPointViaLinearIntersection(ZZ, Ideal) := opts -> (n1, I1) -> (
         if (opts.Verbose or debugLevel > 0) then print "randomPointViaLinearIntersection: 0 ideal was passed, switching to brute force.";
         return searchPoints(n1, ring I1, first entries gens I1, opts++{PointCheckAttempts => 10*n1});
     );
-    d1 := dR1-c1;
+    d1 = dR1-c1;
     i := 0;
     j := 0;
     local finalPoint;
@@ -446,7 +446,8 @@ randomPointViaLinearIntersection(ZZ, Ideal) := opts -> (n1, I1) -> (
         if (opts.Verbose) or (debugLevel > 0) then print concatenate("randomPointViaLinearIntersection: doing loop with ", toString( phiMatrix));
         if (debugLevel > 0 or opts.Verbose == true) then print concatenate("randomPointViaLinearIntersection:  Doing a loop with:", toString(phiMatrix));
         phi = map(targetSpace, R1, phiMatrix);
-        J1 = phi(I1);
+        J1 = phi(I1);        
+        --if (dim J1 == 0) then (
         if ((dimViaBezout(J1)) == 0) then (
             if (c1 == 1) then ( --if we are intersecting with a line, we can go slightly faster by using factor instead of decompose
                 ptList = apply(toList factor(gcd(first entries gens J1)), t->ideal(t#0));
@@ -456,14 +457,13 @@ randomPointViaLinearIntersection(ZZ, Ideal) := opts -> (n1, I1) -> (
             );
             j = 0;
             while (j < #ptList) and (#returnPointsList < n1) do (
-                myDeg = degree(ptList#j);
-                myDim = dim(ptList#j);
-                if (myDim == 0) and (myDeg == 1) then (
+                myDeg = degree(ptList#j);                
+                if (myDeg == 1) then (
                     finalPoint = first entries evalAtPoint(R1, matrix{phiMatrix}, idealToPoint(ptList#j));
                     --finalPoint = apply(idealToPoint(ptList#j), s -> sub(s, R1));
                     if (verifyPoint(finalPoint, I1, opts)) then returnPointsList = append(returnPointsList, finalPoint);
                 )
-                else if (myDim == 0) and (opts.ExtendField == true) then (
+                else if (opts.ExtendField == true) then (
                     if (debugLevel > 0) or (opts.Verbose) then print "randomPointViaLinearIntersection:  extending the field.";
                     psi = (extendFieldByDegree(myDeg, targetSpace))#1;
                     newR1 := target psi;
@@ -910,15 +910,16 @@ dimViaBezoutNonhomogeneous(ZZ, Ideal) := (checkCount, I1)->(
     S1 := ring I1;
     --if (#(coefficientRing S1)<39) then return codim I1;
     i := dim S1-1;
-    while (i > 0) do (
+    while (i >= 0) do (
         L1 := ideal getRandomLinearForms(S1, {0,0,0,0,i});
         --print L1;
         --print trim(I1 + L1);
         if (L1 + I1 != ideal 1_S1) then return i;
+        --print dim(L1 + I1);
         i = i-1;
         --print i;
-    );
-    return dim S1;
+    );        
+    return -1;
 )
 
 dimDegViaBezout=method()

@@ -112,13 +112,14 @@ assert((dimDegViaBezout I)_0==dim I)
 
 ///
 kk=ZZ/nextPrime 10^2
+kk=ZZ/nextPrime 10^3
 S=kk[y_0..y_14]
 
 I=minors(2,random(S^3,S^{5:-1}));
 elapsedTime (d,deg)=dimDegViaBezout(I)
 elapsedTime d=dim I
 elapsedTime randomPointViaMultiplicationTable(I,d)
-elapsedTime randomPoints(I,Strategy=>LinearIntersection)
+elapsedTime randomPoints(I,Strategy=>LinearIntersection, Codimension=>8)
 I=minors(2,genericMatrix(S,y_0,3,5));
 dim I
 elapsedTime pt=matrix{randomPointViaMultiplicationTable(I)}
