@@ -118,7 +118,7 @@ S=kk[y_0..y_14]
 I=minors(2,random(S^3,S^{5:-1}));
 elapsedTime (d,deg)=dimDegViaBezout(I)
 elapsedTime d=dim I
-elapsedTime randomPointViaMultiplicationTable(I,d)
+elapsedTime randomPointViaMultiplicationTable(I,dim I)
 elapsedTime randomPoints(I,Strategy=>LinearIntersection, Codimension=>8)
 I=minors(2,genericMatrix(S,y_0,3,5));
 dim I
