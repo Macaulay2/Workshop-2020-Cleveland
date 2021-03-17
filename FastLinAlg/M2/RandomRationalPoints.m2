@@ -446,8 +446,9 @@ randomPointViaLinearIntersection(ZZ, Ideal) := opts -> (n1, I1) -> (
         if (debugLevel > 0 or opts.Verbose == true) then print concatenate("randomPointViaLinearIntersection:  Doing a loop with:", toString(phiMatrix));
         phi = map(targetSpace, R1, phiMatrix);
         J1 = phi(I1);        
-        --if (dim J1 == 0) then (
-        if ((dimViaBezout(J1)) == 0) then (
+        if (dim J1 == 0) then (
+        --if ((dimViaBezout(J1, DimensionIntersectionAttempts=>1, MinimumFieldSize=>5)) == 0) then (
+        --if (dimViaBezoutIsZero(J1)) then (
             if (c1 == 1) then ( --if we are intersecting with a line, we can go slightly faster by using factor instead of decompose
                 ptList = apply(toList factor(gcd(first entries gens J1)), t->ideal(t#0));
             )
@@ -895,6 +896,7 @@ dimViaBezoutNonhomogeneous(Ideal) := opts -> (I1)->(
     checks := opts.DimensionIntersectionAttempts;
     while (i >= 0) do (
         if opts.Verbose then print("dimViaBezoutNonhomogeneous: Trying intersection with a linear space of dimension " | toString(dim S1 - i));
+        if (i == 0) then checks = 1;
         L1 := apply(checks, t->ideal getRandomLinearForms(S1, {0,0,0,0,i}));
         --print L1;
         --print trim(I1 + L1);
@@ -907,6 +909,7 @@ dimViaBezoutNonhomogeneous(Ideal) := opts -> (I1)->(
     );        
     return -1;
 )
+
 
 
 getFieldSize = method();
