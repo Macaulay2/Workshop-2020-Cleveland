@@ -296,13 +296,11 @@ i11 : time randomPoints(J, Strategy => GenericProjection)
 
 o11 = {{31, -15, 53, 41, 87, 9, -21, -43, -12, 85}}      
     \end{verbatim}
-\end{quote}\vspace{-1em}
+\end{quote}\vspace{-2em}
         }}
     \end{example}
 To enable speed ups as indicated in the above discussion, the {\tt ProjectionAttempts} has been set to $0$ in the {\tt Default} strategy so that {\tt GenericProjection} is not opted for unless specified by user.
-
-
-    \begin{example}
+\begin{example}
         Finally, we allow our functions to extend our field.
         {{\small\color{blue}
         \begin{quote}
@@ -310,10 +308,10 @@ To enable speed ups as indicated in the above discussion, the {\tt ProjectionAtt
 i12 : time randomPoints(J, Strategy => LinearIntersection, ExtendField => true)
 -- used 0.0612306 seconds
 
-            5      4      3      2                                      5  
+               5      4      3      2                                      5  
 o12 = {{54, 14a  - 48a  - 56a  + 56a  - 13a + 48, -101, 56, -42, -27, - 26a  -
     -------------------------------------------------------------------------
-    4      3      2
+       4      3      2
     43a  - 70a  - 96a  + 50a - 103, -29, 0, -37}}
         \end{verbatim}
     \end{quote}
