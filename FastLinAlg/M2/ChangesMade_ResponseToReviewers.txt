@@ -1,0 +1,33 @@
+We thank the reviewers for their helpful suggestions, comments and preliminary codes and examples.
+
+Changes Made to Paper:
+
+a) Section 2.1 (Page 2), 
+
+b) 2.2 Page 3, 
+
+c) Sentence before Example 2.5 added on Page 4
+
+d) Page 5 Section 5 dimViaBezout added with example 3.1 and paragraph following it. 
+
+MAIN CHANGE: 
+
+We implement the dimViaBezout to compute the dimension probabilistically. This intersects V(I) with successively higher dimensional random linear spaces until there is an intersection.  For example, if $V(I)$ intersect a random line has a point, then we expect that $V(I)$ contains a hypersurface.  If there was no intersection, this function tries a 2-dimensional linear space, and so on.  This speeds up many computations.
+Optional Inputs:
+
+DimensionIntersectionAttempts => ZZ : the number of linear spaces to try before moving to the next dimension
+MinimumFieldSize => ZZ: if the ambient field is smaller than this value it will automatically be replaced with an extension. (The user may set the  MinimumFieldSize to ensure that the field being worked over is big enough.  For instance, there are relatively few linear spaces over a field of characteristic 2, and this can cause incorrect results to be provided.) 
+
+The reviewer suggested the use of dimDegViaBezout where the use of saturation is needed. We avoid this issue (which may be potentially decelerating) totally by the above successive intersections. 
+
+
+
+Changes Made to the Source Code:
+
+We have added the MultiplicationStrategy verbatim as provided by the reviewer but have changed the computation of the dimension to be done via dimViaBezout instead of dimDegViaBezout. 
+
+New documentation and examples have been provided. 
+
+All the strategies now make use of the dimViaBezout to compute the dimension of the given ideal, if the codimension is not already known. In case, that is known, it should be specified along with the call of randomPoints to achieve high speeds. 
+
+ProjectionAttempts has been set to 0 in the Default Strategy now. 
