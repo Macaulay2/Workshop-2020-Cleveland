@@ -37,6 +37,7 @@ randomPointViaMultiplicationTable=method(Options=>{IntersectionAttemps=>20})
 
 randomPointViaMultiplicationTable(Ideal) := opts-> (I) -> (
     d:= (dimDegViaBezout I)_0;
+    print d;
     randomPointViaMultiplicationTable(I,d,opts)
     )
     

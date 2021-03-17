@@ -792,7 +792,7 @@ randomPointViaMultiplicationTable=method(Options => optRandomPoints);
 
 randomPointViaMultiplicationTable(ZZ,Ideal) := opts-> (n1,I) -> (
     local d;
-    if not (opts.Codimension === null) then (d = opts.Codimension;)
+    if not (opts.Codimension === null) then (d = (dim ring I) - opts.Codimension;)
     else (d = dimViaBezout I;);
     --d:= dimViaBezout I;
     ptlist:={};
