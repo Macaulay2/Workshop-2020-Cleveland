@@ -1771,7 +1771,7 @@ doc ///
             elapsedTime dimViaBezout(I)
             elapsedTime dim I
         Text
-            The user may set the {\tt MinimumFieldSize} to ensure that the field being worked over is big enough.  For instance, there are relatively few linear spaces over a field of characteristic 2, and this can cause incorrect results to be provided.  If an ideal whose ring 
+            The user may set the {\tt MinimumFieldSize} to ensure that the field being worked over is big enough.  For instance, there are relatively few linear spaces over a field of characteristic 2, and this can cause incorrect results to be provided. 
 ///
 
 doc ///
