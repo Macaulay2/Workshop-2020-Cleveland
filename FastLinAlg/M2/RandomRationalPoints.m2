@@ -1727,14 +1727,14 @@ doc ///
             S=ZZ/103[y_0..y_14];
             I=minors(2,random(S^3,S^{5:-1}));
             elapsedTime randomPoints(I,Strategy=>MultiplicationTable, Codimension=>8)
-            elapsedTime randomPoints(I,Strategy=>LinearIntersection, Codimension=>8)
+            elapsedTime randomPoints(I,Codimension=>8)
         Text
             and other times not:
         Example
             S=ZZ/101[y_0..y_9];
             I=ideal random(S^1,S^{-2,-2,-2,-3})+(ideal random(2,S))^2;
             elapsedTime randomPoints(I,Strategy=>MultiplicationTable,Codimension=>5)
-            elapsedTime randomPoints(I,Strategy=>LinearIntersection,Codimension=>5)
+            elapsedTime randomPoints(I,Codimension=>5)
 ///
 
 doc ///
