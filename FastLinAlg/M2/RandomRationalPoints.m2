@@ -1601,7 +1601,7 @@ doc ///
             {\tt MultiplicationTable} works for homogeneous ideals only. It computes the dimension of $I$ probabilistically, speeding up
             the process. It cuts down with a linear space to a zero-dimensional projective scheme and computes how the last two variables act on the quotient ring truncated  
             at the regularity. In case of an absolutely irreducible $I$ over the field, we will find with  high probability a point, 
-            since the determinant will have a linear factor in at least 50% of the cases. This strategy is in general the fastest. 
+            since the determinant will have a linear factor in at least 50% of the cases.  
     SeeAlso
         randomPoints
         randomKRationalPoint
