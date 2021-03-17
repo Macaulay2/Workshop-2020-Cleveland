@@ -617,7 +617,7 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
             opts++{ Strategy=>BruteForce, PointCheckAttempts => 10 }
         );
     if (#pointsList >= n1) then return pointsList;
-
+    if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 0): brute force failed, now computing the dimension (if not provided)";    
     c1 := opts.Codimension;
     if (c1 === null) then (c1 = dim ring I1 - dimViaBezout(I1)); --don't compute it if we already know it.
     if (c1 == infinity) then (
@@ -821,6 +821,7 @@ randomPointViaMultiplicationTable(Ideal,ZZ) := opts-> (I,d) -> (
 	--elapsedTime J=saturate(I+L);
 	    J:=I+L;
     	Js:=saturateInGenericCoordinates J;
+        --Js := saturate(J, ideal first entries vars S);
 	    r:=degree ideal last (entries gens gb Js)_0;
         b1 :=basis(r+1,S^1/Js);
 	    b2 :=basis(r+2,S^1/Js);
