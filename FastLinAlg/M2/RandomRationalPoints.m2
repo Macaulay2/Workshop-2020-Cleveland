@@ -506,13 +506,12 @@ randomPointViaGenericProjection(ZZ, Ideal) := opts -> (n1, I1) -> (
     local phi;
     local myDeg;
     local myDim;
-    local m2;
-    R1 := ring I1;  
+    local m2; 
     i := 0;
     c1 := opts.Codimension;
     while (flag) and (i < opts.ProjectionAttempts) and (#pointsList < n1) do (
         if (opts.Codimension === null) then (
-            c1 = codim I1;
+            c1 = dim ring I1 - dimViaBezout(I1);
             if (c1 == infinity) then (
                 if (opts.Verbose or debugLevel > 0) then print "randomPointViaGenericProjection: no points, the ideal is the unit ideal."; 
                 return pointsList;
