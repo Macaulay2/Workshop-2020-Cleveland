@@ -543,7 +543,7 @@ randomPointViaGenericProjection(ZZ, Ideal) := opts -> (n1, I1) -> (
         else(
             (phi, I0) = projectionToHypersurface(I1, Homogeneous=>opts.Homogeneous, Replacement => opts.Replacement, MaxCoordinatesToReplace => opts.MaxCoordinatesToReplace, Codimension => opts.Codimension, Verbose=>opts.Verbose);
         );
-        if (codim I0 == 1) then (
+        if ((dim ring I0 - dimViaBezout(I0)) == 1) then (
             if (debugLevel > 0) or opts.Verbose then print "randomPointViaGenericProjection:  found a good generic projection, now finding a point on it.";
             if (opts.Strategy == GenericProjection) then (
                 pts = randomPoints(n1-#pointsList, I0, switchStrategy(opts, BruteForce)))
@@ -1747,7 +1747,7 @@ doc ///
         MinimumFieldSize
         DimensionIntersectionAttempts
     Headline
-        computes the dimension and degree of the given ideal $I$ probabilistically
+        computes the dimension of the given ideal $I$ probabilistically
     Usage
         dimViaBezout(I)
     Inputs
