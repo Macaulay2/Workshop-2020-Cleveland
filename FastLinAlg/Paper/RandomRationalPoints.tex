@@ -90,7 +90,7 @@
     All polynomial rings considered here will be over finite fields. In the subsequent sections, we explain  the core and helper functions and describe the strategies that we have implemented.
 
    \vspace{1em}
-    \noindent \textbf{Acknowledgements:} The authors would like to thank David Eisenbud and Mike Stillman for useful conversations and comments on the development of this package.  The authors began work on this package at the virtual Cleveland 2020 Macaulay2 workshop.
+    \noindent \textbf{Acknowledgements:} The authors would like to thank David Eisenbud and Mike Stillman for useful conversations and comments on the development of this package.  The authors began work on this package at the virtual Cleveland 2020 Macaulay2 workshop. The authors are also grateful to the reviewers for suggesting and providing preliminary codes to speed up computations, thereby improving the efficacy of the package substantially. 
 
 \section{Our primary purpose: {\tt randomPoints}}\label{randomPoints}
     We start with the core function in this package:  {\tt randomPoints} is a function to find rational or geometric points in a variety. The typical usages are as follows: 
@@ -111,7 +111,7 @@
 
     \begin{description}%[]
         \setlength{\itemsep}{5pt}
-    \item[\tt Strategy => $\bullet$]   Here the $\bullet$ can be {\tt Default, BruteForce, LinearIntersection, \\ GenericProjection} or {\tt HybridProjectionIntersection}.
+    \item[\tt Strategy => $\bullet$]   Here the $\bullet$ can be {\tt Default, BruteForce, LinearIntersection, \\ GenericProjection}, {\tt HybridProjectionIntersection} or {\tt MultiplicationTable}.
 
     \begin{itemize}
     \item {\tt Default} performs a sequence of the different strategies below, aimed at finding a point quickly.  It begins with less general projections and linear intersections, and gradually ramps up the randomness.  
@@ -123,9 +123,13 @@
     \item {\tt LinearIntersection} intersects with an appropriately random linear space.
         
     \item {\tt HybridProjectionIntersection} does a generic projection, followed by a linear intersection. 		
+    
+    \item {\tt MultiplicationTable} works for homogeneous ideals only. It cuts down with a linear space to a zero-dimensional projective scheme and computes how the last two variables act on the quotient ring truncated  
+    at the regularity. In case of an absolutely irreducible $I$ over the field, we will find with  high probability a point, 
+    since the determinant will have a linear factor in at least 50\% of the cases.
     \end{itemize}
 
-    Notice that the speed, or success, varies depending on the strategy.
+    Notice that the speed, or success, varies depending on the strategy (see also \Cref{helper}).
 
     \begin{example}\label{BruteForce}
         Consider the following example.
@@ -169,7 +173,7 @@ o6 = {{2, -30, -8}}
     {\tt HybridProjectionIntersection} from {\tt randomPoints}, this option denotes the number of trials before giving up.  This option is also passed to {\tt randomPoints} by other functions.
 
     \item[\tt MaxCoordinatesToReplace => ZZ] This is used for fine tuning the {\tt LinearIntersection} or {\tt GenericProjection} strategies, see \Cref{helper}.
-    \item[\tt Codimension => ZZ] One can provide the codimension so it is not recomputed.  This is used in the {\tt GenericProjection} and {\tt LinearIntersection} strategies, see \Cref{projectionfunctions}.
+    \item[\tt Codimension => ZZ] One can provide the codimension so it is not recomputed.  This is used in the {\tt GenericProjection} and {\tt LinearIntersection} strategies, see \Cref{projectionfunctions}. 
 
     \item[\tt ExtendField => Boolean] 
 
@@ -226,7 +230,7 @@ o7 = {{-39, -43, 28}}
 
     \subsection{Comments on performance}
 
-    When working over very small fields, frequently {\tt BruteForce} is most efficient.  This is not surprising as there may not be many points to check, and a surprisingly large percentage of points can be rational in hypersurfaces and complete intersections.  However, if the field size is larger, {\tt BruteForce} will perform poorly.  Even for some simple examples, it could not provide any rational points if the number of trials is not enough. Other strategies work differently on different examples, and even the same strategy can sometimes work very quickly even if it typically works very slowly.  A quick comment, while in many examples generic projection works well, there are some examples where it performs quite slowly.  Setting {\tt ProjectionAttempts=>0} in the {\tt Default} strategy is a way to avoid this situation.
+    When working over very small fields, frequently {\tt BruteForce} is most efficient.  This is not surprising as there may not be many points to check, and a surprisingly large percentage of points can be rational in hypersurfaces and complete intersections.  However, if the field size is larger, {\tt BruteForce} will perform poorly.  Even for some simple examples, it could not provide any rational points if the number of trials is not enough. Other strategies work differently on different examples, and even the same strategy can sometimes work very quickly even if it typically works very slowly. Providing {\tt codimension} speeds up computations significantly as computing codimension using the default command {\tt codim} creates a bottleneck. If codimension needs to be computed, we  circumvent this issue using a probabilistic code to compute it (see \Cref{helper}). A quick comment, while in many examples generic projection works well, there are some examples where it performs quite slowly.  Setting {\tt ProjectionAttempts=>0} in the {\tt Default} strategy is a way to avoid this situation primarily. 
 
 
     \begin{example}
@@ -295,6 +299,8 @@ o11 = {{31, -15, 53, 41, 87, 9, -21, -43, -12, 85}}
 \end{quote}\vspace{-1em}
         }}
     \end{example}
+To enable speed ups as indicated in the above discussion, the {\tt ProjectionAttempts} has been set to $0$ in the {\tt Default} strategy so that {\tt GenericProjection} is not opted for unless specified by user.
+
 
     \begin{example}
         Finally, we allow our functions to extend our field.
@@ -314,14 +320,46 @@ o12 = {{54, 14a  - 48a  - 56a  + 56a  - 13a + 48, -101, 56, -42, -27, - 26a  -
         }}
     \end{example}
 
-\section{A helper function: {\tt randomCoordinateChange}}{\label{helper}}
 
-% We start {\tt randomCoordinateChange}, a helper function that also might be useful to others.
+\section{Two helper functions: {\tt dimViaBezout} and {\tt randomCoordinateChange}}{\label{helper}}
 
-% \item {\tt Codimension}: It takes input an integer. Various functions need to know the codimension/height of the scheme/ideal it is working with.  Setting this to be an integer will tell the function not to compute the codimension and to use this value instead.  The default value is {\tt null}, in which case the function will compute the codimension.  
-%%%   
-%%   Codimension is not a function, it is an option.
-%%%   
+\subsection*{\tt dimViaBezout:} We thank the reviewer for pointing out that in most of the computations, computing the codimension significantly slows down speed. Instead, we compute the dimension probabilistically using {\tt dimViaBezout}. This function takes as input an ideal $I$ in a polynomial ring over a field and intersects $V(I)$ with successively higher dimensional random linear spaces until there is an intersection.  For example, if $V(I)$ intersect a random line has a point, then we expect that $V(I)$ contains a hypersurface.  If there was no intersection, this function tries a $2$-dimensional linear space, and so on.  This speeds up many computations. The function also takes in optional inputs as described below:
+
+\begin{itemize}
+	\item {\tt DimensionIntersectionAttempts}: 
+	This integer input denotes the number of linear spaces to try before moving to the next dimension.
+	\item {\tt MinimumFieldSize}:
+	If the ambient field is smaller than this integer value, it will automatically be replaced with an extension field. The user may set the {\tt MinimumFieldSize} to ensure that the field being worked over is big enough.  For instance, there are relatively few linear spaces over a field of characteristic $2$, and this can cause incorrect results to be provided. 
+\end{itemize}
+
+\begin{example} We illustrate the speed difference in this example.
+	{\color{blue}{
+			\begin{quote}
+				\begin{verbatim}
+				i3 : kk=ZZ/nextPrime 10^2;
+				
+				i4 : S=kk[y_0..y_14];
+				
+				i5 : I=minors(2,random(S^3,S^{5:-1}));
+				
+				o5 : Ideal of S
+				
+				i6 : elapsedTime dimViaBezout(I)
+				-- 0.303629 seconds elapsed
+				
+				o6 = 7
+				
+				i7 : elapsedTime dim I
+				-- 1.47916 seconds elapsed
+				
+				o7 = 7
+				\end{verbatim}
+			\end{quote}
+	}}
+\end{example}
+
+As discussed earlier, one can always compute the codimension (say, $c$) of the input ideal using this function, and provide it as an optional input {\tt Codimension => c} whenever calling {\tt randomPoints}. Alternatively, all the strategies for {\tt randomPoints} (see \Cref{strategydetails}) compute the dimension using the above function, which significantly accelerates the computations.
+
 \subsection*{\tt randomCoordinateChange:} 
 
 This function takes a polynomial ring as an input and output the coordinate change map,
@@ -359,11 +397,13 @@ o4 : RingMap R <--- --[x, y, z]
 	
 	o5 = | x -x-4y-5z y |
 	
-	i6 : matrix randomCoordinateChange(R, MaxCoordinatesToReplace => 1, Homogeneous => false)
+	i6 : matrix randomCoordinateChange(R, MaxCoordinatesToReplace => 1, 
+	Homogeneous => false)
 	
 	o6 = | x-3 z-5 -x+3y-4z+2 |
 	
-	i7 : matrix randomCoordinateChange(R, MaxCoordinatesToReplace => 1, Replacement => Binomial)
+	i7 : matrix randomCoordinateChange(R, MaxCoordinatesToReplace => 1, 
+	Replacement => Binomial)
 	
 	o7 = | y x+4z z |
 \end{verbatim}
@@ -371,6 +411,8 @@ o4 : RingMap R <--- --[x, y, z]
     }}
   
 \end{example}
+
+
 \section{Other helper functions: {\tt genericProjection}, {\tt projectionToHypersurface}}\label{projectionfunctions}
 
 We include two functions providing customizable projections. We describe them here. 
@@ -611,7 +653,7 @@ The user may also provide the following additional information:
 		o6 = ({-2, 1, 1}, {0, 1}, {0, 1}, {1} | x2+xy+2y2+2xz-2yz-2z2   -2y-z |)
 		{1} | -2x2-xy-2y2-2xz+2yz+2z2 -2x   |
 \end{verbatim}
-\end{quote}\vspace{-0.5em}    
+\end{quote}  
     }}
 \end{example}
 
