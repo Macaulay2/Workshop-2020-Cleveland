@@ -321,7 +321,7 @@ o12 = {{54, 14a  - 48a  - 56a  + 56a  - 13a + 48, -101, 56, -42, -27, - 26a  -
 
 \section{Two helper functions: {\tt dimViaBezout} and {\tt randomCoordinateChange}}{\label{helper}}
 
-\subsection*{\tt dimViaBezout:} We thank the reviewer for pointing out that in most of the computations, computing the codimension significantly slows down speed. Instead, we compute the dimension probabilistically using {\tt dimViaBezout}. This function takes as input an ideal $I$ in a polynomial ring over a field and intersects $V(I)$ with successively higher dimensional random linear spaces until there is an intersection.  For example, if $V(I)$ intersect a random line has a point, then we expect that $V(I)$ contains a hypersurface.  If there was no intersection, this function tries a $2$-dimensional linear space, and so on.  This speeds up many computations. The function also takes in optional inputs as described below:
+\subsection*{\tt dimViaBezout:} We thank the reviewer for pointing out that in most of the computations, computing the codimension of the given ideal, significantly slows down speed. Instead, we compute the dimension of $V(I)$ probabilistically using {\tt dimViaBezout}. This function takes as input an ideal $I$ in a polynomial ring over a field and intersects $V(I)$ with successively higher dimensional random linear spaces until there is an intersection.  For example, if $V(I)$ intersect a random line has a point, then we expect that $V(I)$ contains a hypersurface.  If there was no intersection, this function tries a $2$-dimensional linear space, and so on.  This speeds up many computations. The function also takes in optional inputs as described below:
 
 \begin{itemize}
 	\item {\tt DimensionIntersectionAttempts}: 
@@ -356,11 +356,11 @@ o12 = {{54, 14a  - 48a  - 56a  + 56a  - 13a + 48, -101, 56, -42, -27, - 26a  -
 	}}
 \end{example}
 
-As discussed earlier, one can always compute the codimension (say, $c$) of the input ideal using this function, and provide it as an optional input {\tt Codimension => c} whenever calling {\tt randomPoints}. Alternatively, all the strategies for {\tt randomPoints} (see \Cref{strategydetails}) compute the dimension using the above function, which significantly accelerates the computations.
+As discussed earlier, one can always compute the codimension (say, $c$) of the input ideal using the output from the above function (or by existing command {\tt codim} beforehand), and provide it as an optional input {\tt Codimension => c} whenever calling {\tt randomPoints}. Alternatively, one can simply rely on any of the strategies for {\tt randomPoints} (see \Cref{strategydetails}) as they compute the dimension of $V(I)$ using {\tt dimViaBezout}, which significantly accelerates the computations.
 
 \subsection*{\tt randomCoordinateChange:} 
 
-This function takes a polynomial ring as an input and output the coordinate change map,
+This function takes a polynomial ring as an input and outputs the coordinate change map,
 i.e. given a polynomial ring, this will produce a linear automorphism of the ring.  This function checks whether the map is an isomorphism by computing the Jacobian.
 
 In some applications, a full change of coordinates is not desired, as it might cause code to run very slowly.  A binomial change of coordinates might be preferred, or we might only replace some monomials by other monomials.  
@@ -444,7 +444,7 @@ This gives the projection map from $\mathbb{A}^N \mapsto\mathbb{A}^{N-n}$ and th
 
 
 \begin{example}	
-    We project a curve in 4-space to one 2-space.
+    We project a curve in $4$-space to one in $2$-space.
     ~~
   {{\small\color{blue}
   \begin{quote}
