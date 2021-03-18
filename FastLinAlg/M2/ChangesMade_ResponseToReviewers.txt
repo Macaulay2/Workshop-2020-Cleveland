@@ -1,10 +1,10 @@
-We thank the reviewers for their helpful suggestions, comments and preliminary codes and examples.
+We thank the reviewers for their helpful suggestions, comments and preliminary codes and examples. We would be very happy to invite the reviewer to be a coauthor to the source code (and also for the paper, if desired).
 
 Changes Made to Paper:
 
 a) Section 2.1 (Page 2), 
 
-b) 2.2 Page 3, 
+b) 2.2 Page 3;  
 
 c) Sentence before Example 2.5 added on Page 4
 
@@ -13,6 +13,7 @@ d) Page 5 Section 5 dimViaBezout added with example 3.1 and paragraph following 
 MAIN CHANGE: 
 
 We implement the dimViaBezout to compute the dimension probabilistically. This intersects V(I) with successively higher dimensional random linear spaces until there is an intersection.  For example, if $V(I)$ intersect a random line has a point, then we expect that $V(I)$ contains a hypersurface.  If there was no intersection, this function tries a 2-dimensional linear space, and so on.  This speeds up many computations.
+
 Optional Inputs:
 
 DimensionIntersectionAttempts => ZZ : the number of linear spaces to try before moving to the next dimension
@@ -20,14 +21,18 @@ MinimumFieldSize => ZZ: if the ambient field is smaller than this value it will 
 
 The reviewer suggested the use of dimDegViaBezout where the use of saturation is needed. We avoid this issue (which may be potentially decelerating) totally by the above successive intersections. 
 
+The MultiplicationTable strategy has also beeen added. (This MultiplicationTable strategy essentially is still a LinearIntersection but it handles the point issue differently. The previous strategy was using decompose to break up the ideal.)
+
 
 
 Changes Made to the Source Code:
 
-We have added the MultiplicationStrategy verbatim as provided by the reviewer but have changed the computation of the dimension to be done via dimViaBezout instead of dimDegViaBezout. 
+We have added the MultiplicationStrategy verbatim as provided by the reviewer but have changed the computation of the dimension to be done via dimViaBezout instead of dimDegViaBezout. (This MultiplicationTable strategy essentially is still a LinearIntersection but it handles the point issue differently. The previous strategy was using decompose to break up the ideal.)
 
 New documentation and examples have been provided. 
 
 All the strategies now make use of the dimViaBezout to compute the dimension of the given ideal, if the codimension is not already known. In case, that is known, it should be specified along with the call of randomPoints to achieve high speeds. 
 
 ProjectionAttempts has been set to 0 in the Default Strategy now. 
+
+
