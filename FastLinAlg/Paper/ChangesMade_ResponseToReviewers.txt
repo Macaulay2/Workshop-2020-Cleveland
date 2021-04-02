@@ -8,22 +8,24 @@ b) 2.2 Page 3;
 
 c) Sentence before Example 2.5 added on Page 4
 
-d) Page 5 Section 5 dimViaBezout added with example 3.1 and paragraph following it. 
+d) Page 5 Remark 2.2.1 added following reviewer's suggestion to discuss a bit about the probability of succesful output.
 
-MAIN CHANGE: 
+e) Page 5 Section 5 dimViaBezout added with example 3.1 and paragraph following it. 
 
-We implement the dimViaBezout to compute the dimension probabilistically. This intersects V(I) with successively higher dimensional random linear spaces until there is an intersection.  For example, if $V(I)$ intersect a random line has a point, then we expect that $V(I)$ contains a hypersurface.  If there was no intersection, this function tries a 2-dimensional linear space, and so on.  This speeds up many computations.
+MAIN CHANGES: 
+
+-- We implement the dimViaBezout to compute the dimension probabilistically. This intersects V(I) with successively higher dimensional random linear spaces until there is an intersection.  For example, if $V(I)$ intersect a random line has a point, then we expect that $V(I)$ contains a hypersurface.  If there was no intersection, this function tries a 2-dimensional linear space, and so on.  This speeds up many computations.
 
 Optional Inputs:
 
 DimensionIntersectionAttempts => ZZ : the number of linear spaces to try before moving to the next dimension
 MinimumFieldSize => ZZ: if the ambient field is smaller than this value it will automatically be replaced with an extension. (The user may set the  MinimumFieldSize to ensure that the field being worked over is big enough.  For instance, there are relatively few linear spaces over a field of characteristic 2, and this can cause incorrect results to be provided.) 
 
-The reviewer suggested the use of dimDegViaBezout where the use of saturation is needed. We avoid this issue (which may be potentially decelerating) totally by the above successive intersections. 
+-- The reviewer suggested the use of dimDegViaBezout where the use of saturation is needed. We avoid this issue (which may be potentially decelerating) totally by the above successive intersections. 
 
-The MultiplicationTable strategy has also beeen added. (This MultiplicationTable strategy essentially is still a LinearIntersection but it handles the point issue differently. The previous strategy was using decompose to break up the ideal.)
+-- The MultiplicationTable strategy has also beeen added. (This MultiplicationTable strategy essentially is still a LinearIntersection but it handles the point issue differently. The previous strategy was using decompose to break up the ideal.)
 
-
+-- Following the reviewer's suggestion, we have added Remark 2.2.1 with references that all point to a good probability of finding a rational point by intersecting with a line in the case of hypersurface. 
 
 Changes Made to the Source Code:
 
