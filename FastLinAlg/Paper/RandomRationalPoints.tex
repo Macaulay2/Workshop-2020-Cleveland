@@ -28,6 +28,7 @@
 \interfootnotelinepenalty=100000
 \theoremstyle{definition}
 \newtheorem{example}{Example}[section]
+\newtheorem{remark}{Remark}[subsection]
 %\usepackage{enumitem}
 %\SetLabelAlign{parleft}{\parbox[t]\textwidth{#1\smallskip}}
 
@@ -317,6 +318,11 @@ o12 = {{54, 14a  - 48a  - 56a  + 56a  - 13a + 48, -101, 56, -42, -27, - 26a  -
     \end{quote}
         }}
     \end{example}
+
+\begin{remark}
+	In the case of an absolutely irreducible hypersurface (defined by $f$ say), there are significant discussion on estimating lower bounds of number of rational points (see for instance, \cite{RationalKPointsSource}, \cite{lang1954number},\cite{ghorpade2002number}, \cite{cafure2006improved}) all of which point to the fact that there is ``good probability" of finding a rational point in this case when we intersect with a random line. Heuristically, we can make the following rough estimation: A random line $L$ has $q$ points. We want to find the probability that one of these points is  rational for $V(f)$. By the proof of \cite[Proposition 2.12]{bothmer2005quick}, we get that the probability that  the chosen point does not lie in the intersection, $L\cap V(f)$, is $1-\frac{1}{q}$. We then exhaust this search over all the points on $L$ to get the probability that there is indeed a successful intersection is $1-(1-\frac{1}{q})^{q}$. As $q$ gets larger, this value tends to $1-e^{-1}\approx 0.63$, thereby showing a very good chance of successful output. 
+
+\end{remark}
 
 
 \section{Two helper functions: {\tt dimViaBezout} and {\tt randomCoordinateChange}}{\label{helper}}
