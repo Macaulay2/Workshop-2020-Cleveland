@@ -29,6 +29,9 @@
 \theoremstyle{definition}
 \newtheorem{example}{Example}[section]
 \newtheorem{remark}{Remark}[subsection]
+
+\newcommand{\bA}{\mathbb{A}}
+\newcommand{\bF}{\mathbb{F}}
 %\usepackage{enumitem}
 %\SetLabelAlign{parleft}{\parbox[t]\textwidth{#1\smallskip}}
 
@@ -115,19 +118,16 @@
     \item[\tt Strategy => $\bullet$]   Here the $\bullet$ can be {\tt Default, BruteForce, LinearIntersection, \\ GenericProjection}, {\tt HybridProjectionIntersection} or {\tt MultiplicationTable}.
 
     \begin{itemize}
-    \item {\tt Default} performs a sequence of the different strategies below, aimed at finding a point quickly.  It begins with less general projections and linear intersections, and gradually ramps up the randomness.  
+    \item {\tt Default} performs a sequence of the different strategies below, aimed at finding a point quickly.  It begins begins with brute force and moves to linear intersections with particularly simple linear forms, and gradually ramps up the randomness.  If {\tt ProjectionAttempts} is set to a value bigger than zero (it is set to zero by default), then the strategy alternates between generic projects and hybrid projection / intersections.  For additional discussion, see \cref{rem.ProjectingToAHypersurfaceFirst}.  
     \item {\tt BruteForce} simply tries random points and sees if they are on the variety.
         
     \item {\tt GenericProjection} projects to a hypersurface, via 
-        {\tt projectionToHypersurface} and then uses the {\tt BruteForce} strategy.
+        {\tt projectionToHypersurface} and then uses the {\tt BruteForce} strategy.  Finally, it pulls back back the points that were found to the original variety (via a linear intersection).  See \cref{rem.ProjectingToAHypersurfaceFirst}.  
         
     \item {\tt LinearIntersection} intersects with an appropriately random linear space.
         
-    \item {\tt HybridProjectionIntersection} does a generic projection, followed by a linear intersection. 		
-    
-    \item {\tt MultiplicationTable} works for homogeneous ideals only. It cuts down with a linear space to a zero-dimensional projective scheme and computes how the last two variables act on the quotient ring truncated  
-    at the regularity. In case of an absolutely irreducible $I$ over the field, we will find with  high probability a point, 
-    since the determinant will have a linear factor in at least 50\% of the cases.
+    \item {\tt HybridProjectionIntersection} does a generic projection, followed by a linear intersectio with that hypersurface.  Finally, it pulls back back the points that were found to the original variety (via a linear intersection).   See \cref{rem.ProjectingToAHypersurfaceFirst}.  
+    \item {\tt MultiplicationTable} works for homogeneous ideals only. It cuts down with a linear space to a zero-dimensional projective scheme and computes how the last two variables act on the quotient ring truncated at the regularity.  %In case of an absolutely irreducible $I$ over the field, we will find with  high probability a point, since the determinant will have a linear factor in at least 50\% of the cases.
     \end{itemize}
 
     Notice that the speed, or success, varies depending on the strategy (see also \Cref{helper}).
@@ -231,7 +231,7 @@ o7 = {{-39, -43, 28}}
 
     \subsection{Comments on performance}
 
-    When working over very small fields, frequently {\tt BruteForce} is most efficient.  This is not surprising as there may not be many points to check, and a surprisingly large percentage of points can be rational in hypersurfaces and complete intersections.  However, if the field size is larger, {\tt BruteForce} will perform poorly.  Even for some simple examples, it could not provide any rational points if the number of trials is not enough. Other strategies work differently on different examples, and even the same strategy can sometimes work very quickly even if it typically works very slowly. Providing {\tt codimension} speeds up computations significantly as computing codimension using the default command {\tt codim} creates a bottleneck. If codimension needs to be computed, we  circumvent this issue using a probabilistic code to compute it (see \Cref{helper}). A quick comment, while in many examples generic projection works well, there are some examples where it performs quite slowly.  Setting {\tt ProjectionAttempts=>0} in the {\tt Default} strategy is a way to avoid this situation primarily. 
+    When working over very small fields, frequently {\tt BruteForce} is most efficient.  This is not surprising as there may not be many points to check, and a surprisingly large percentage of points can be rational in hypersurfaces and complete intersections.  However, if the field size is larger, {\tt BruteForce} will perform poorly.  Even for some simple examples, it could not provide any rational points if the number of trials is not enough. Other strategies work differently on different examples, and even the same strategy can sometimes work very quickly even if it typically works very slowly. Providing {\tt codimension} speeds up computations significantly as computing codimension using the default command {\tt codim} creates a bottleneck. If codimension needs to be computed, we  circumvent this issue using a probabilistic code to compute it (see \Cref{helper}). A quick comment, while in many examples generic projection works well, there are some examples where it is many orders of magnitude slower.  By default, generic projection is turned off in the default strategy, that is we set {\tt ProjectionAttempts=>0}.  Increasing this number will include it.
 
 
     \begin{example}
@@ -319,9 +319,20 @@ o12 = {{54, 14a  - 48a  - 56a  + 56a  - 13a + 48, -101, 56, -42, -27, - 26a  -
         }}
     \end{example}
 
-\begin{remark}
-	In the case of an absolutely irreducible hypersurface (defined by $f$ say), there are significant discussion on estimating lower bounds of number of rational points (see for instance, \cite{RationalKPointsSource}, \cite{lang1954number},\cite{ghorpade2002number}, \cite{cafure2006improved}) all of which point to the fact that there is ``good probability" of finding a rational point in this case when we intersect with a random line. Heuristically, we can make the following rough estimation: A random line $L$ has $q$ points. We want to find the probability that one of these points is  rational for $V(f)$. By the proof of \cite[Proposition 2.12]{bothmer2005quick}, we get that the probability that  the chosen point does not lie in the intersection, $L\cap V(f)$, is $1-\frac{1}{q}$. We then exhaust this search over all the points on $L$ to get the probability that there is indeed a successful intersection is $1-(1-\frac{1}{q})^{q}$. As $q$ gets larger, this value tends to $1-e^{-1}\approx 0.63$, thereby showing a very good chance of successful output. 
+\begin{remark}[Finding a point]
+	In the case of an absolutely irreducible hypersurface in $\bA^n_{\bF_q}$ (defined by $f$ say), there is significant discussion in the literature estimating lower bounds of number of rational points (see for instance, \cite{RationalKPointsSource,lang1954number,ghorpade2002number,cafure2006improved}) all of which point to the fact that there is ``good probability" of finding a rational point in this case when we intersect with a random line. Heuristically, we can make the following rough estimation.  We expect that each equation $f = \lambda$ for $\lambda \in \bF_q$ has approximately the same number of solutions.  Since each point on $\bF_q^n$ solves exactly one of these equations, we expect that $f = 0$ has approximately $q^{n-1}$ solutions, or in other words, our hypersurface has $q^{n-1}$-points.  
+       Now, a random line $L$ has $q$ points. We want to find the probability that one of these points is  rational for $V(f)$.  We would expect that if these points are randomly distributed, then the probability that our line contains one of those points $1-(1-{1 \over q})^q$ which tends to $1-e^{-1} \approx 0.63$ for $q$ large.   Alternately, one can use the proof of \cite[Proposition 2.12]{bothmer2005quick} for a more precise statement.  For each point of $L$, we see that the probability that  the chosen point does not lie in the intersection, $L\cap V(f)$, is $1-\frac{1}{q}$. We then exhaust this search over all the points on $L$ to get the probability that there is indeed a successful intersection is $1-(1-\frac{1}{q})^{q}$. As $q$ gets larger, this value tends to $1-e^{-1}\approx 0.63$.
 
+       Of course, there are certainly examples schemes over $\bF_q$ with no rational points at all, even for curves in $\bA^2$.
+\end{remark}
+
+\begin{remark}[Projecting to a hypersurface first]
+    \label{rem.ProjectingToAHypersurfaceFirst}
+    Suppose $X \subseteq \bA^n$ is an algebraic set.  In a number of existing algorithms, one first does a generic (or even not very generic) projection $h : \bA^n \to \bA^m$ and so that $h(X)$ is a hypersurface (at least set theoretically).  Then we find a point $x \in h(X)$ (say as above), and compute $h^{-1}(\{ x \})$ which is a linear space in $\bA^n$ that typically intersects $X$ in a rational point.   For example, this is done in {\tt randomKRationalPoint} in core Macaulay2.  Note that projecting to a hypersurface \emph{still is performing an intersection with a linear space}, but it just tries to choose the linear space more intelligently.
+
+    However, while in a number of examples, doing this generic projection first can speed up computations (as opposed to simply intersecting with a linear space, since we have identified a linear space initially), there are numerous cases where computing this hypersurface $h(X)$ can be extremely slow.  This particularly appears in cases when one is computing successive minors to identify the locus where some variety is nonsingular.  Thus, by default, we disable the functionality to project to a hypersurface in the default strategy.
+
+    On the other hand, instead of using a truly random linear space to intersect with, in the default strategy, we normally choose a linear space whose defining equations are particularly non-complicated (ie, with many linear or binomial terms).  Such simple linear spaces are the ones considered in {\tt randomKRationalPoint} for instance.  In practice, this seems give approximately the same performance as projecting to a hypersurface, without the chance of the code getting hung up on the generic projection.
 \end{remark}
 
 
@@ -766,5 +777,4 @@ There is some similar functionality computing partial Jacobian ideals obtained v
 \bibliographystyle{alpha}
 \bibliography{MainBib}
 
-\vspace{1em}
 \end{document}
