@@ -15,7 +15,12 @@ J = I + chooseGoodMinors(25, 4, M);
 T2 = ZZ/101[x1,x2,x3,x4,x5,x6,x7, Z];
 J2 = ideal(apply(first entries gens J, t->homogenize(sub(t, T2), Z) ));
 
+J = I + chooseGoodMinors(8, 4, M);  T2 = ZZ/101[x1,x2,x3,x4,x5,x6,x7, Z]; J2 = ideal(apply(first entries gens J, t->homogenize(sub(t, T2), Z) ));
+
+elapsedTime randomPoints(J2, Verbose=>true)
+
 time randomPoints(J, Strategy=>LinearIntersection)
+time randomPoints(J, Strategy=>MultiplicationTable)
 
 
 

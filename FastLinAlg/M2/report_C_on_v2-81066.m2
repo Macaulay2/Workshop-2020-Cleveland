@@ -27,9 +27,9 @@ kk=ZZ/nextPrime 10^2
 
 
 saturateInGenericCoordinates=method()
-saturateInGenericCoordinates(Ideal):= I -> (
-    x:=last gens ring I;
-    saturate(I,ideal x))
+saturateInGenericCoordinates(Ideal):= I5 -> (
+    x:=last gens ring I5;
+    saturate(I5,ideal x))
 
 
 

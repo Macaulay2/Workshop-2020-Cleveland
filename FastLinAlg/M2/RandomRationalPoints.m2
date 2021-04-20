@@ -30,6 +30,8 @@ export {
     --"randomPointViaLinearIntersectionOld", --these are here for debugging purposes
     "getRandomLinearForms", --here for debugging purposes    
     "dimViaBezout",    
+    "dimViaBezoutHomogeneous",    
+    "dimViaBezoutNonhomogeneous", 
 	"Codimension",
 	"MaxCoordinatesToReplace",
     "MaxCoordinatesToTrivialize",
@@ -409,7 +411,7 @@ randomPointViaLinearIntersection(ZZ, Ideal) := opts -> (n1, I1) -> (
     dR1 := dim R1;
     c1 := opts.Codimension;
     local d1;
-    if (c1 === null) then (c1 = dR1 - dimViaBezout(I1)); --don't compute it if we already know it.
+    if (c1 === null) then (c1 = dR1 - dimViaBezout(I1, Verbose=>opts.Verbose)); --don't compute it if we already know it.
     if (c1 == 0) then (
         if (opts.Verbose or debugLevel > 0) then print "randomPointViaLinearIntersection: 0 ideal was passed, switching to brute force.";
         return searchPoints(n1, ring I1, first entries gens I1, opts++{PointCheckAttempts => 10*n1});
@@ -619,7 +621,7 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
     if (#pointsList >= n1) then return pointsList;
     if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 0): brute force failed, now computing the dimension (if not provided)";    
     c1 := opts.Codimension;
-    if (c1 === null) then (c1 = dim ring I1 - dimViaBezout(I1)); --don't compute it if we already know it.
+    if (c1 === null) then (c1 = dim ring I1 - dimViaBezout(I1, Verbose=>opts.Verbose)); --don't compute it if we already know it.
     if (c1 == infinity) then (
         if (opts.Verbose or debugLevel > 0) then print "randomPointViaDefaultStrategy: the ideal has no points (it is the unit ideal)";
         return pointsList;
@@ -651,11 +653,12 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
         if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 1): trying a quick projection, coordinates only";
         pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
             opts++{ Strategy=>HybridProjectionIntersection,
+                    Codimension=>c1,
                     MaxCoordinatesToReplace => 0,
                     Replacement => Binomial,
                     MaxCoordinatesToTrivialize => infinity,
                     ProjectionAttempts => 2,
-                    IntersectionAttempts => 2*n1
+                    IntersectionAttempts => 2*n1,                    
                 }
         );
     );
@@ -667,6 +670,7 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
     if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 2): trying a quick linear intersection, coordinates only";
     pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
         opts++{ Strategy=>LinearIntersection,
+                Codimension=>c1,
                 MaxCoordinatesToReplace => 0,
                 IntersectionAttempts => 2*n1,
                 MaxCoordinatesToTrivialize => infinity
@@ -679,6 +683,7 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
     if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 3): trying a quick linear intersection, coordinates and one binomial only";
     pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
         opts++{ Strategy=>LinearIntersection,
+                Codimension=>c1,
                 MaxCoordinatesToReplace => 1,
                 Replacement => Binomial,
                 MaxCoordinatesToTrivialize => infinity,
@@ -691,6 +696,7 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
     if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 4): trying a quick linear intersection, coordinates and one random term only";
     pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
         opts++{ Strategy=>LinearIntersection,
+                Codimension=>c1,
                 MaxCoordinatesToReplace => 1,
                 Replacement => Full,
                 MaxCoordinatesToTrivialize => infinity,
@@ -704,6 +710,7 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
         if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 5): giving projection another shot, coordinates and one binomial only";
         pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
             opts++{ Strategy=>HybridProjectionIntersection,
+                    Codimension=>c1,
                     MaxCoordinatesToReplace => 1,
                     Replacement => Binomial,
                     MaxCoordinatesToTrivialize => infinity,
@@ -718,6 +725,7 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
     if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 6): trying a quick linear intersection, coordinates and two binomials only";
     pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
         opts++{ Strategy=>LinearIntersection,
+                Codimension=>c1,
                 MaxCoordinatesToReplace => 2,
                 Replacement => Binomial,
                 MaxCoordinatesToTrivialize => 4,
@@ -730,6 +738,7 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
     if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 7): trying a quick linear intersection, coordinates and two linear terms only";
     pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
         opts++{ Strategy=>LinearIntersection,
+                Codimension=>c1,
                 MaxCoordinatesToReplace => 2,
                 Replacement => Full,
                 MaxCoordinatesToTrivialize => 2,
@@ -742,6 +751,7 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
     if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 8): trying a linear intersection, binomials only";
     pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
         opts++{ Strategy=>LinearIntersection,
+                Codimension=>c1,
                 MaxCoordinatesToReplace => infinity,
                 Replacement => Binomial,
                 MaxCoordinatesToTrivialize => 1,
@@ -755,6 +765,7 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
         if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 9): giving projection another shot, coordinates and two binomials only";
         pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
             opts++{ Strategy=>HybridProjectionIntersection,
+                    Codimension=>c1,
                     MaxCoordinatesToReplace => 2,
                     Replacement => Binomial,
                     MaxCoordinatesToTrivialize => 2,
@@ -769,6 +780,7 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
     if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 10): trying a linear intersection, full random";
     pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
         opts++{ Strategy=>LinearIntersection,
+                Codimension=>c1,
                 MaxCoordinatesToReplace => infinity,
                 Replacement => Full,
                 MaxCoordinatesToTrivialize => 1,
@@ -806,7 +818,7 @@ randomPointViaMultiplicationTable(ZZ,Ideal) := opts-> (n1,I) -> (
 randomPointViaMultiplicationTable(Ideal,ZZ) := opts-> (I,d) -> (
     -- Input: I, a homogeneous ideal, d its dimension
     --Output: a K-rational point on V(I) where K is  the finite ground field.
-    if not isHomogeneous I then error "expect a homogeneous ideal";
+    if not isHomogeneous I then error "randomPointViaMultiplicationTable: expected a homogeneous ideal";
     switchStrategy(opts,MultiplicationTable);
     -- we cut down with a linear space to a zero-dimensional projective scheme
     -- and compute how the last two variables act on the quotient ring truncated  
@@ -851,16 +863,51 @@ getNextValidFieldSize(ZZ, ZZ, ZZ) := (pp, d, targetSize) -> (
 
 dimViaBezout=method(Options => {Verbose => false, DimensionIntersectionAttempts => null, MinimumFieldSize => 100});
 
+--better canceling provided by Dan Grayson
+cancel = task -> (
+     << "cancelling task " << task << endl;
+     cancelTask task; 
+     while true do (
+	  if isCanceled task then (<< "cancelled task terminated " << task << endl; break);
+	  if isReady task then (taskResult task ; << "cancelled task finished " << task << endl; break);
+	  sleep 1;
+	  );
+     << "cancelled task " << task << endl;
+)
+
 dimViaBezout(Ideal) := opts-> I1 -> (
     S1 := ring I1;
     m := getFieldSize coefficientRing S1;
     local attempts;
+    local tr;
+    local tempResult;
     pp := char ring I1;
     d := floor(log_pp(m) + 0.5);
     i := getNextValidFieldSize(pp, d, opts.MinimumFieldSize);
     if (opts.DimensionIntersectionAttempts === null) then (attempts = ceiling(log_10(5000/(pp^(i*d))))) else (attempts = opts.DimensionIntersectionAttempts;);
     if opts.Verbose then print ("dimViaBezout: Checking each dimension " | toString(attempts) | " times.");
     if (m >= opts.MinimumFieldSize) then (
+        -*backtrace=false;
+        t1 := createTask(myI -> (backtrace=false; return dimViaBezoutNonhomogeneous myI), (I1, Verbose=>opts.Verbose, DimensionIntersectionAttempts=>attempts));
+        t2 := createTask(myI -> (backtrace=false; return dim myI), (I1));
+        schedule t1;
+        schedule t2;
+        r1 := isReady(t1);
+        r2 := isReady(t2);
+        if opts.Verbose then print ("dimViaBezout:  starting threads, one classical dim, one probabilistic dim ");
+        while (r1==false and r2==false) do ( nanosleep(1000000); r1 = isReady(t1); r2 = isReady(t2););
+        if (r2) then (
+            if opts.Verbose then print ("dimViaBezout:  classical dim finished first.");
+            tr = taskResult(t2);
+            cancel t1;                       
+        )
+        else if (r1) then (
+            if opts.Verbose then print ("dimViaBezout:  probabilistic dim finished first.");
+            tr = taskResult(t1);
+            cancel t2;
+        );
+        return tr;      *-  
+        if (isHomogeneous I1) then return dimViaBezoutHomogeneous(I1, DimensionIntersectionAttempts=>attempts) else 
         return dimViaBezoutNonhomogeneous(I1, Verbose=>opts.Verbose, DimensionIntersectionAttempts=>attempts);
     );
     if opts.Verbose then print "dimViaBezout: The field is too small, extending it.";
@@ -929,9 +976,9 @@ getFieldSize(Ring):= (k1) -> (
     infinity
 )
 
-dimViaBezoutHomogeneous=method();
+dimViaBezoutHomogeneous=method(Options => {DimensionIntersectionAttempts => 1});
 
-dimViaBezoutHomogeneous(ZZ, Ideal) := (checkCount, I1) -> (
+dimViaBezoutHomogeneous(Ideal) := opts-> (I1) -> (
     S1:=ring I1;
 --    randomMon := ideal((gens S1)#(random(#gens S1)));
     --if (I1 == ideal 1_S1) then return -1;
@@ -940,24 +987,28 @@ dimViaBezoutHomogeneous(ZZ, Ideal) := (checkCount, I1) -> (
     upperBound := dim S1;
     mid:= null; 
     i := 0;
+    checks := opts.DimensionIntersectionAttempts;
     --print lowerBound;        
     while upperBound - lowerBound >1 do (
         mid = floor ((upperBound+lowerBound)/2);
-        L := ideal random(S1^1,S1^{mid-1:-1});        
+        --L := ideal random(S1^1,S1^{mid-1:-1});        
+        L := apply(checks, tz -> ideal random(S1^1,S1^{mid-1:-1}));        
         --print ("L: "|toString(L));
-        Is := ideal(1_S1); 
+        Is := {ideal(1_S1)}; 
         i = 0;
         varList := random gens S1;
-        while (Is == ideal(1_S1)) and (i < min(checkCount, #varList)) do (
+        --while (Is == ideal(1_S1)) and (i < #varList) do (
+        while all(Is, tz -> (tz == ideal(1_S1))) and (i < #varList) do (
             mySat := ideal(varList#i); --ideal((gens S1)#(random(#gens S1)));
-            Is = saturate(I1+L, mySat); --saturateInGenericCoordinates(I+L);
+            --Is = saturate(I1+L, mySat); --saturateInGenericCoordinates(I+L);
+            Is = apply(L, tz -> saturate(I1 + tz, mySat));
             --print ("mySat: " | toString(mySat));            
             --print ("Is: " | toString(Is));
             i = i+1;
         );
         --print ("Is == 1: " | toString(Is == ideal 1_S1));
         if 
-            Is==ideal 1_S1 
+            all(Is, tz -> (tz == ideal(1_S1)))
         then (upperBound=mid;) else (lowerBound=mid;) ;
         --print mid
 	);
