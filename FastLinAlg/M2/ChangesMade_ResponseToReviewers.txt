@@ -16,9 +16,15 @@ MAIN CHANGES:
 
 -- We have implemented the dimViaBezout to compute the dimension probabilistically. This intersects V(I) with successively higher dimensional random linear spaces until there is an intersection.  For example, if $V(I)$ intersect a random line has a point, then we expect that $V(I)$ contains a hypersurface.  If there was no intersection, this function tries a 2-dimensional linear space, and so on.  This speeds up many computations.  
 
-    Some comments on implementation.  The referee suggested using a binary search pattern, however we found that in practice, it is much faster to start with a 1-dimensional linear space, then a 2-dimensional linear space, and so on, until we find an intersection.  This is because in our examples, checking whether an intersection is empty is much faster when the intersection is indeed empty.  
+    Some comments on implementation.  We have implemented this in the affine case and the projective case.
 
-    Furthermore, our implementation is in the affine case and not the projective setting (it did not seem to impact performance, and now it works on a wider range of examples).
+    In the projective case, saturate against all coordinates, instead of just the last coordinate.  Otherwise, we were getting incorrect answers too frequently.
+
+    We also implemented this in the affine setting affine examples where we do not saturate.
+    
+    In the projective case, the referee suggested a binary search pattern, and we still use that there.   In the affine case however, we found that in practice, it is much faster to start with a 1-dimensional linear space, then a 2-dimensional linear space, and so on, until we find an intersection.  This is because in our examples, checking whether an intersection is empty is much faster when the intersection is indeed empty.  
+
+    Unfortunately, there are large classes of examples where either the probablistic code, for either the affine or non-affine examples, are much slower than simply calling dim.  We would like to implement both simultaneously by multi-threading.  Unfortunately, canceling tasks in multithreaded examples still creates a great deal of instability in M2.
 
 Optional Inputs:
 
@@ -48,7 +54,7 @@ However, doing a saturation with respect to every variable (even separately) see
 
 New documentation and examples have been provided. 
 
-All the strategies now make use of the dimViaBezout to compute the dimension of the given ideal, if the codimension is not already known. In case, that it is known, it should be specified along with the call of randomPoints.
+All the strategies now make use of the dimViaBezout to compute the dimension of the given ideal, if the codimension is not already known. In case that it is known, it should be specified along with the call of randomPoints.
 
 ProjectionAttempts has been set to 0 in the Default Strategy now for reasons discussed.
 
