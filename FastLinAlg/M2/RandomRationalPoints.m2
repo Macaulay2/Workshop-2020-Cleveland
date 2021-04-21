@@ -870,7 +870,7 @@ cancel = task -> (
      while true do (
 	  if isCanceled task then (<< "cancelled task terminated " << task << endl; break);
 	  if isReady task then (taskResult task ; << "cancelled task finished " << task << endl; break);
-	  sleep 1;
+	  nanosleep(10000000);
 	  );
      << "cancelled task " << task << endl;
 )
@@ -887,28 +887,33 @@ dimViaBezout(Ideal) := opts-> I1 -> (
     if (opts.DimensionIntersectionAttempts === null) then (attempts = ceiling(log_10(5000/(pp^(i*d))))) else (attempts = opts.DimensionIntersectionAttempts;);
     if opts.Verbose then print ("dimViaBezout: Checking each dimension " | toString(attempts) | " times.");
     if (m >= opts.MinimumFieldSize) then (
-        -*backtrace=false;
-        t1 := createTask(myI -> (backtrace=false; return dimViaBezoutNonhomogeneous myI), (I1, Verbose=>opts.Verbose, DimensionIntersectionAttempts=>attempts));
+        backtrace=false;
+        t1 := createTask(myI -> (backtrace=false; return dimViaBezoutNonhomogeneous myI), (I1, Verbose=>false, DimensionIntersectionAttempts=>attempts));
         t2 := createTask(myI -> (backtrace=false; return dim myI), (I1));
         schedule t1;
         schedule t2;
         r1 := isReady(t1);
         r2 := isReady(t2);
         if opts.Verbose then print ("dimViaBezout:  starting threads, one classical dim, one probabilistic dim ");
-        while (r1==false and r2==false) do ( nanosleep(1000000); r1 = isReady(t1); r2 = isReady(t2););
+        while (r1==false and r2==false) do ( nanosleep(100000); r1 = isReady(t1); r2 = isReady(t2););
+        if opts.Verbose then print ("dimViaBezout:  found an answer" );
         if (r2) then (
-            if opts.Verbose then print ("dimViaBezout:  classical dim finished first.");
             tr = taskResult(t2);
+            if opts.Verbose then print ("dimViaBezout:  classical dim finished first: " | toString(tr) );            
             cancel t1;                       
+            return tr;
         )
         else if (r1) then (
-            if opts.Verbose then print ("dimViaBezout:  probabilistic dim finished first.");
             tr = taskResult(t1);
+            if opts.Verbose then print ("dimViaBezout:  probabilistic dim finished first: " | toString(tr));
             cancel t2;
+            return tr;
+            
         );
-        return tr;      *-  
-        if (isHomogeneous I1) then return dimViaBezoutHomogeneous(I1, DimensionIntersectionAttempts=>attempts) else 
-        return dimViaBezoutNonhomogeneous(I1, Verbose=>opts.Verbose, DimensionIntersectionAttempts=>attempts);
+        if opts.Verbose then print "dimViaBezout: Something went wrong with multithrading.";              
+        return null;
+        --if (isHomogeneous I1) then return dimViaBezoutHomogeneous(I1, DimensionIntersectionAttempts=>attempts) else 
+        --return dimViaBezoutNonhomogeneous(I1, Verbose=>opts.Verbose, DimensionIntersectionAttempts=>attempts);
     );
     if opts.Verbose then print "dimViaBezout: The field is too small, extending it.";
     -*pp := char ring I1;
