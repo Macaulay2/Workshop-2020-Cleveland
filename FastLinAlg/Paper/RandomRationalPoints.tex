@@ -334,7 +334,7 @@ o12 = {{54, 14a  - 48a  - 56a  + 56a  - 13a + 48, -101, 56, -42, -27, - 26a  -
 
     However, while in a number of examples, doing this generic projection first can speed up computations (as opposed to simply intersecting with a linear space, since we have identified a linear space initially), there are numerous cases where computing this hypersurface $h(X)$ can be extremely slow.  This particularly appears in cases when one is computing successive minors to identify the locus where some variety is nonsingular.  Thus, by default, we disable the functionality to project to a hypersurface in the default strategy.
 
-    On the other hand, instead of using a truly random linear space to intersect with, in the default strategy, we normally choose a linear space whose defining equations are particularly non-complicated (ie, with many linear or binomial terms).  Such simple linear spaces are the ones considered in {\tt randomKRationalPoint} for instance.  In practice, this seems give approximately the same performance as projecting to a hypersurface, without the chance of the code getting hung up on the generic projection.
+    On the other hand, instead of using a truly random linear space to intersect with, in the default strategy, we normally choose a linear space whose defining equations are particularly non-complicated (i.e., with many linear or binomial terms).  Such simple linear spaces are the ones considered in {\tt randomKRationalPoint} for instance.  In practice, this seems give approximately the same performance as projecting to a hypersurface, without the chance of the code getting hung up on the generic projection.
 \end{remark}
 
 
