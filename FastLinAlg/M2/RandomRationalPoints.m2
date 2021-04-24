@@ -1813,6 +1813,7 @@ doc ///
         [dimViaBezout, DimensionIntersectionAttempts]
         [dimViaBezout, MinimumFieldSize]
         [dimViaBezout, Verbose]
+        [dimViaBezout, Homogeneous]
         MinimumFieldSize
         DimensionIntersectionAttempts        
     Headline
@@ -1840,6 +1841,8 @@ doc ///
             elapsedTime dim I
         Text
             The user may set the {\tt MinimumFieldSize} to ensure that the field being worked over is big enough.  For instance, there are relatively few linear spaces over a field of characteristic 2, and this can cause incorrect results to be provided. 
+        Text
+            This function computes things in two ways, depending on if the ideal is homogeneous or not.  If you wish to force non-homogeneous computation, set the option {\tt Homogeneous=false}.  This can be faster in some examples.
     SeeAlso
         DimensionFunction
 ///
