@@ -1,4 +1,4 @@
-We thank the reviewers for their helpful suggestions, comments and preliminary codes and examples. We would be very happy to invite the reviewer to be a coauthor to the source code (and also for the paper, if desired).
+We thank the reviewers for their helpful suggestions, comments preliminary code and examples. We would very much like to invite the reviewer to be a coauthor to the source code (and also for the paper, if desired).  In particular, there are some issues we think we would benefit with working with them on (see below).
 
 Changes Made to Paper:
 
