@@ -10,7 +10,9 @@ c) Sentence before Example 2.5 added on Page 4
 
 d) Page 5 Remark 2.2.1 added following reviewer's suggestion to discuss a bit about the probability of succesful output.
 
-e) Page 5 Section 5 dimViaBezout added with example 3.1 and paragraph following it. 
+e) Page 5 dimViaBezout added with example 3.1 and paragraph following it. 
+
+f)  Page 5, Remark 2.2.2 added explaining how generic projection works and why we aren't using it currently.
 
 MAIN CHANGES: 
 

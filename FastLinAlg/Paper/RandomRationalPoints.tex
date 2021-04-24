@@ -347,6 +347,9 @@ o12 = {{54, 14a  - 48a  - 56a  + 56a  - 13a + 48, -101, 56, -42, -27, - 26a  -
 	This integer input denotes the number of linear spaces to try before moving to the next dimension.
 	\item {\tt MinimumFieldSize}:
 	If the ambient field is smaller than this integer value, it will automatically be replaced with an extension field. The user may set the {\tt MinimumFieldSize} to ensure that the field being worked over is big enough.  For instance, there are relatively few linear spaces over a field of characteristic $2$, and this can cause incorrect results to be provided. 
+    \item {\tt Homogeneous}: 
+        By default, the function uses one of two algorithms depending on whether the ideal is homogeneous.
+        There are homogeneous examples where the non-Homogeneous method is faster.  Setting this to {\tt false} will force non-homogeneous computation even in homogeneous examples.  Setting it to true will force homogeneous computation, which may behave unexpectedly in non-homogeneous examples.
 \end{itemize}
 
 \begin{example} We illustrate the speed difference in this example.
