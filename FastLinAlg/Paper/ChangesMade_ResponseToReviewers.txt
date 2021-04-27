@@ -14,14 +14,22 @@ e) Page 5 Section 5 dimViaBezout added with example 3.1 and paragraph following 
 
 MAIN CHANGES: 
 
--- We implement the dimViaBezout to compute the dimension probabilistically. This intersects V(I) with successively higher dimensional random linear spaces until there is an intersection.  For example, if $V(I)$ intersect a random line has a point, then we expect that $V(I)$ contains a hypersurface.  If there was no intersection, this function tries a 2-dimensional linear space, and so on.  This speeds up many computations.
+-- We have implemented the dimViaBezout to compute the dimension probabilistically. This intersects V(I) with successively higher dimensional random linear spaces until there is an intersection.  For example, if $V(I)$ intersect a random line has a point, then we expect that $V(I)$ contains a hypersurface.  If there was no intersection, this function tries a 2-dimensional linear space, and so on.  This speeds up many computations.  
+
+    Some comments on implementation.  We have implemented this in the affine case and the projective case.
+
+    In the projective case, saturate against all coordinates, instead of just the last coordinate.  Otherwise, we were getting incorrect answers too frequently.
+
+    We also implemented this in the affine setting affine examples where we do not saturate.
+    
+    In the projective case, the referee suggested a binary search pattern, and we still use that there.   In the affine case however, we found that in practice, it is much faster to start with a 1-dimensional linear space, then a 2-dimensional linear space, and so on, until we find an intersection.  This is because in our examples, checking whether an intersection is empty is much faster when the intersection is indeed empty.  
+
+    Unfortunately, there are large classes of examples where either the probablistic code, for either the affine or non-affine examples, are much slower than simply calling dim.  We would like to implement both simultaneously by multi-threading.  Unfortunately, canceling tasks in multithreaded examples still creates a great deal of instability in M2.
 
 Optional Inputs:
 
 DimensionIntersectionAttempts => ZZ : the number of linear spaces to try before moving to the next dimension
 MinimumFieldSize => ZZ: if the ambient field is smaller than this value it will automatically be replaced with an extension. (The user may set the  MinimumFieldSize to ensure that the field being worked over is big enough.  For instance, there are relatively few linear spaces over a field of characteristic 2, and this can cause incorrect results to be provided.) 
-
--- The reviewer suggested the use of dimDegViaBezout where the use of saturation is needed. We avoid this issue (which may be potentially decelerating) totally by the above successive intersections. 
 
 -- The MultiplicationTable strategy has also beeen added. (This MultiplicationTable strategy essentially is still a LinearIntersection but it handles the point issue differently. The previous strategy was using decompose to break up the ideal.)
 
@@ -29,12 +37,127 @@ MinimumFieldSize => ZZ: if the ambient field is smaller than this value it will 
 
 Changes Made to the Source Code:
 
-We have added the MultiplicationStrategy verbatim as provided by the reviewer but have changed the computation of the dimension to be done via dimViaBezout instead of dimDegViaBezout. (This MultiplicationTable strategy essentially is still a LinearIntersection but it handles the point issue differently. The previous strategy was using decompose to break up the ideal.)
+We have added the MultiplicationStrategy verbatim as provided by the reviewer but have changed the computation of the dimension to be done via dimViaBezout instead of dimDegViaBezout. (This MultiplicationTable strategy essentially is still a LinearIntersection but it handles the point issue differently. The previous strategy was using decompose to break up the ideal.)  
+
+There are some aspects of this code we do not totally understand.  In particular, we do not understand what is occurring in the lines:
+
+m0:=contract(transpose matrix entries b2,matrix entries((xx_0*b1)%Js));
+and what follows.
+
+Additionally, we have had quite a few examples, especially when running something iteratively, where the saturation:
+Js:=saturateInGenericCoordinates J;
+(which only saturates in the last coordinate)
+will saturate away the points, and thus causes this function to crash.  
+
+However, doing a saturation with respect to every variable (even separately) seems to make this function quite a bit slower.  We are tempted to saturate with respect to a (random) variable, then use a try command to see if that yields a good result, and if it crashed try saturating with respect to a different (random) variable.  However, we
+
 
 New documentation and examples have been provided. 
 
-All the strategies now make use of the dimViaBezout to compute the dimension of the given ideal, if the codimension is not already known. In case, that is known, it should be specified along with the call of randomPoints to achieve high speeds. 
+All the strategies now make use of the dimViaBezout to compute the dimension of the given ideal, if the codimension is not already known. In case that it is known, it should be specified along with the call of randomPoints.
 
-ProjectionAttempts has been set to 0 in the Default Strategy now. 
+ProjectionAttempts has been set to 0 in the Default Strategy now for reasons discussed.
 
 
+-------------------------------
+
+We also provide some examples demonstrating performance in some somewhat larger examples.
+
+-------------------------
+----Large Example #1-----
+-------------------------
+
+
+
+-------------------------
+----Large Example #3-----
+-------------------------
+
+Here is an example (coming out of a jacobian computation) where the rational points tend to be saturated away, which causes the MultiplicationTable strategy to fail (at least based on our understanding).  
+
+In this example, the primary speed limitation still appears to be the dimension computation.
+
+T2 = ZZ/101[x1,x2,x3,x4,x5,x6,x7, Z];
+J2 = ideal(x5*x6-x4*x7,x1*x6-x2*x7,x5^2-x1*x7,x4*x5-x2*x7,x4^2-x2*x6,x1*x4-x2*x5,x2*x3^3*x5+3*x2*x3^2*x7*Z+8*x2^2*x5*Z^2+3*x3*
+      x4*x7*Z^2-8*x4*x7*Z^3+x6*x7*Z^3,x1*x3^3*x5+3*x1*x3^2*x7*Z+8*x1*x2*x5*Z^2+3*x3*x5*x7*Z^2-8*x5*x7*Z^3+x7^2*Z^3,x2*x3^3*x4+3*
+      x2*x3^2*x6*Z+8*x2^2*x4*Z^2+3*x3*x4*x6*Z^2-8*x4*x6*Z^3+x6^2*Z^3,x2^2*x3^3+3*x2*x3^2*x4*Z+8*x2^3*Z^2+3*x2*x3*x6*Z^2-8*x2*x6*
+      Z^3+x4*x6*Z^3,x1*x2*x3^3+3*x2*x3^2*x5*Z+8*x1*x2^2*Z^2+3*x2*x3*x7*Z^2-8*x2*x7*Z^3+x4*x7*Z^3,x1^2*x3^3+3*x1*x3^2*x5*Z+8*x1^2
+      *x2*Z^2+3*x1*x3*x7*Z^2-8*x1*x7*Z^3+x5*x7*Z^3,x1*x2^2*x4-x2^3*x5,-x1^2*x3^3*x5^2-6*x1*x3^2*x5^3*Z-6*x3*x5^4*Z^2-3*x1*x3*x5^
+      2*x7*Z^2+16*x5^4*Z^3+8*x1*x5^2*x7*Z^3-4*x5^3*x7*Z^3,-x2^2*x3^3*x4^2-6*x2*x3^2*x4^3*Z-8*x2^3*x4^2*Z^2-6*x3*x4^4*Z^2-3*x2*x3
+      *x4^2*x6*Z^2+16*x4^4*Z^3+8*x2*x4^2*x6*Z^3-4*x4^3*x6*Z^3,-2*x3^3*x5^2*x7^2-x1*x3^3*x7^3-6*x3^2*x5*x7^3*Z-8*x1*x5^2*x6*x7*Z^
+      2-8*x1*x4*x5*x7^2*Z^2-16*x2*x5^2*x7^2*Z^2-8*x1*x2*x7^3*Z^2-3*x3*x7^4*Z^2+8*x7^4*Z^3,-8*x1^5,-x1^2*x3^3*x5^2+x1^3*x3^3*x7-6
+      *x1*x3^2*x5^3*Z+6*x1^2*x3^2*x5*x7*Z+8*x1^3*x4*x5*Z^2-16*x1^2*x2*x5^2*Z^2-6*x3*x5^4*Z^2+8*x1^3*x2*x7*Z^2+3*x1*x3*x5^2*x7*Z^
+      2+3*x1^2*x3*x7^2*Z^2+16*x5^4*Z^3-8*x1*x5^2*x7*Z^3-4*x5^3*x7*Z^3-8*x1^2*x7^2*Z^3+4*x1*x5*x7^2*Z^3,-x1^2*x5^2+x1^3*x7,-6*x1^
+      2*x2*x3^5*x5*x7-30*x1*x2*x3^4*x5^2*x7*Z-48*x1^2*x2^2*x3^2*x5*x7*Z^2-36*x2*x3^3*x5^3*x7*Z^2-24*x1*x2*x3^3*x5*x7^2*Z^2+5*x1*
+      x2^2*x3*x5^2*x7*Z^3+48*x1*x2*x3^2*x5*x7^2*Z^3+47*x2*x3^2*x5^2*x7^2*Z^3-3*x1*x2*x3^2*x7^3*Z^3-48*x1*x2^2*x5*x7^2*Z^4-5*x2*
+      x3*x5^2*x7^2*Z^4-24*x2*x3*x5*x7^3*Z^4+48*x2*x5*x7^3*Z^5-3*x2*x7^4*Z^5,18*x1^2*x2^3*x3^6+24*x1^2*x2^3*x3^5*Z+24*x1^2*x2^2*
+      x3^5*x4*Z+9*x1*x2^3*x3^5*x5*Z+29*x1^2*x2^4*x3^3*Z^2+29*x1^2*x2^2*x3^4*x4*Z^2+19*x1*x2^3*x3^4*x5*Z^2-6*x1*x2^2*x3^4*x4*x5*Z
+      ^2-9*x2^3*x3^4*x5^2*Z^2+18*x1*x2^3*x3^4*x7*Z^2-10*x1^2*x2^4*x3^2*Z^3-24*x1^2*x2^3*x3^2*x4*Z^3-43*x1*x2^4*x3^2*x5*Z^3-45*x1
+      *x2*x3^3*x4^2*x5*Z^3-18*x2^2*x3^3*x4*x5^2*Z^3+43*x1^2*x2^2*x3^3*x6*Z^3+9*x1*x2^2*x3^3*x5*x6*Z^3+24*x1*x2^3*x3^3*x7*Z^3+24*
+      x1*x2^2*x3^3*x4*x7*Z^3-20*x1*x2^4*x3*x5*Z^4-48*x1*x2^3*x3*x4*x5*Z^4-39*x1*x2*x3^2*x4^2*x5*Z^4-15*x2*x3^2*x4^2*x5^2*Z^4+10*
+      x1^2*x2^2*x3^2*x6*Z^4+19*x1*x2^2*x3^2*x5*x6*Z^4-18*x1*x2*x3^2*x4*x5*x6*Z^4+3*x2^2*x3^2*x5^2*x6*Z^4+6*x1^2*x2*x3^2*x6^2*Z^4
+      +29*x1*x2^4*x3*x7*Z^4+29*x1*x2^2*x3^2*x4*x7*Z^4+20*x1*x2*x3*x4^2*x5*Z^5+48*x2*x3*x4^2*x5^2*Z^5+48*x1*x2*x3*x4*x5*x6*Z^5+9*
+      x1*x3*x4^2*x5*x6*Z^5-48*x2^2*x3*x5^2*x6*Z^5-6*x2*x3*x4*x5^2*x6*Z^5-6*x1*x2*x3*x5*x6^2*Z^5-10*x1*x2^4*x7*Z^5-24*x1*x2^3*x4*
+      x7*Z^5+43*x1*x2^2*x3*x6*x7*Z^5-24*x1*x4^2*x5*x6*Z^6+3*x4^2*x5^2*x6*Z^6+48*x1*x2*x5*x6^2*Z^6-6*x2*x5^2*x6^2*Z^6+10*x1*x2^2*
+      x6*x7*Z^6+6*x1*x2*x6^2*x7*Z^6,-x1^3*x4+x1^2*x2*x5,2*x1*x2*x4^2-2*x2^2*x4*x5-x1*x2^2*x6+x2^3*x7,-2*x3^3*x5^2*x7^2-x1*x3^3*
+      x7^3-6*x3^2*x5*x7^3*Z-16*x1*x5^2*x6*x7*Z^2-16*x2*x5^2*x7^2*Z^2-8*x1*x2*x7^3*Z^2-3*x3*x7^4*Z^2+8*x7^4*Z^3,-2*x4^4+2*x2*x4^2
+      *x6,-27*x1*x2^3*x3^5*x5-29*x1*x2^3*x3^4*x5*Z-36*x1*x2^2*x3^4*x4*x5*Z-27*x2^3*x3^4*x5^2*Z+43*x1*x2^2*x3^3*x4*x5*Z^2-9*x1*x2
+      *x3^3*x4^2*x5*Z^2+47*x2^2*x3^3*x4*x5^2*Z^2-9*x1*x2^2*x3^3*x5*x6*Z^2+18*x2^3*x3^3*x5*x7*Z^2+10*x1*x2^2*x3^2*x4*x5*Z^3+24*x1
+      *x2*x3^2*x4^2*x5*Z^3-10*x2^3*x3^2*x5^2*Z^3+38*x2^2*x3^2*x4*x5^2*Z^3-15*x2*x3^2*x4^2*x5^2*Z^3+24*x1*x2^2*x3^2*x5*x6*Z^3-3*
+      x1*x2*x3^2*x4*x5*x6*Z^3-18*x2^2*x3^2*x5^2*x6*Z^3+10*x2^3*x3^2*x5*x7*Z^3+6*x2^2*x3^2*x4*x5*x7*Z^3+20*x2^2*x3*x4*x5^2*Z^4+48
+      *x2*x3*x4^2*x5^2*Z^4+48*x2^2*x3*x5^2*x6*Z^4-6*x2*x3*x4*x5^2*x6*Z^4-20*x2^3*x3*x5*x7*Z^4-48*x2^2*x3*x4*x5*x7*Z^4+9*x2*x3*x4
+      ^2*x5*x7*Z^4-18*x2^2*x3*x5*x6*x7*Z^4-24*x2*x4^2*x5*x7*Z^5+3*x4^3*x5*x7*Z^5+48*x2^2*x5*x6*x7*Z^5-6*x2*x4*x5*x6*x7*Z^5,-3*x1
+      ^2*x2*x3^5*x4*x5-6*x1*x2^2*x3^5*x5^2-12*x1*x2*x3^4*x4*x5^2*Z-9*x2^2*x3^4*x5^3*Z-12*x1^2*x2*x3^4*x4*x7*Z-12*x1*x2^2*x3^4*x5
+      *x7*Z-24*x1^2*x2^2*x3^2*x4*x5*Z^2-48*x1*x2^3*x3^2*x5^2*Z^2-15*x1^2*x3^3*x4^2*x7*Z^2-48*x1*x2*x3^3*x4*x5*x7*Z^2-27*x2^2*x3^
+      3*x5^2*x7*Z^2+48*x1*x2^2*x3*x4*x5^2*Z^3+5*x1^2*x2^2*x3*x4*x7*Z^3+24*x1^2*x3^2*x4^2*x7*Z^3+5*x1*x2^3*x3*x5*x7*Z^3+24*x1*x2*
+      x3^2*x4*x5*x7*Z^3-36*x1*x3^2*x4^2*x5*x7*Z^3+24*x2^2*x3^2*x5^2*x7*Z^3-12*x2*x3^2*x4*x5^2*x7*Z^3-18*x1*x2*x3^2*x4*x7^2*Z^3-
+      18*x2^2*x3^2*x5*x7^2*Z^3-48*x1^2*x2*x4^2*x7*Z^4-24*x1*x2^2*x4*x5*x7*Z^4+48*x1*x3*x4^2*x5*x7*Z^4+48*x1*x2*x3*x4*x7^2*Z^4-18
+      *x1*x3*x4^2*x7^2*Z^4+48*x2^2*x3*x5*x7^2*Z^4-15*x2*x3*x4*x5*x7^2*Z^4+48*x1*x4^2*x7^2*Z^5+24*x2*x4*x5*x7^2*Z^5-3*x4^2*x5*x7^
+      2*Z^5,0,9*x1^3*x2^2*x3^7+9*x1^3*x2*x3^6*x4*Z+36*x1^2*x2^2*x3^6*x5*Z-29*x1^3*x2^3*x3^4*Z^2-24*x1^3*x2*x3^5*x4*Z^2+24*x1^2*
+      x2^2*x3^5*x5*Z^2+39*x1^2*x2*x3^5*x4*x5*Z^2+30*x1*x2^2*x3^5*x5^2*Z^2+3*x1^3*x2*x3^5*x6*Z^2+18*x1^2*x2^2*x3^5*x7*Z^2-29*x1^3
+      *x2^2*x3^3*x4*Z^3-29*x1^2*x2^3*x3^3*x5*Z^3-19*x1^2*x2*x3^4*x4*x5*Z^3-29*x1*x2^2*x3^4*x5^2*Z^3+45*x1*x2*x3^4*x4*x5^2*Z^3+15
+      *x1^2*x2*x3^4*x5*x6*Z^3-24*x1^2*x2^2*x3^4*x7*Z^3+24*x1^2*x2*x3^4*x4*x7*Z^3+6*x1*x2^2*x3^4*x5*x7*Z^3+10*x1^3*x2^2*x3^2*x4*Z
+      ^4-10*x1^2*x2^3*x3^2*x5*Z^4-5*x1^2*x2^2*x3^2*x4*x5*Z^4+24*x1*x2^3*x3^2*x5^2*Z^4-43*x1*x2*x3^3*x4*x5^2*Z^4+24*x1^3*x2^2*x3^
+      2*x6*Z^4+18*x1*x2*x3^3*x5^2*x6*Z^4+29*x1^2*x2^3*x3^2*x7*Z^4-43*x1^2*x2*x3^3*x4*x7*Z^4-6*x1^2*x3^3*x4^2*x7*Z^4+43*x1*x2^2*
+      x3^3*x5*x7*Z^4+48*x1*x2*x3^3*x4*x5*x7*Z^4+12*x1^2*x2*x3^3*x6*x7*Z^4-27*x1*x2^2*x3^3*x7^2*Z^4+20*x1^2*x2^2*x3*x4*x5*Z^5+48*
+      x1^2*x2^2*x3*x5*x6*Z^5-20*x1^2*x2^3*x3*x7*Z^5+5*x1^2*x2^2*x3*x4*x7*Z^5-10*x1^2*x2*x3^2*x4*x7*Z^5+48*x1*x2^3*x3*x5*x7*Z^5+
+      10*x1*x2^2*x3^2*x5*x7*Z^5+39*x1*x2*x3^2*x4*x5*x7*Z^5-9*x1*x3^2*x4^2*x5*x7*Z^5+15*x2*x3^2*x4*x5^2*x7*Z^5-24*x1^2*x2*x3^2*x6
+      *x7*Z^5+3*x1^2*x3^2*x4*x6*x7*Z^5+27*x1*x2*x3^2*x5*x6*x7*Z^5+14*x1*x2^2*x3^2*x7^2*Z^5-27*x1*x2*x3^2*x4*x7^2*Z^5-48*x1^2*x2*
+      x4^2*x7*Z^6+24*x1*x2^2*x4*x5*x7*Z^6-20*x1*x2*x3*x4*x5*x7*Z^6-48*x2*x3*x4*x5^2*x7*Z^6+24*x1^2*x2^2*x6*x7*Z^6-48*x1*x2*x3*x5
+      *x6*x7*Z^6+6*x1*x3*x4*x5*x6*x7*Z^6+20*x1*x2^2*x3*x7^2*Z^6-5*x1*x2*x3*x4*x7^2*Z^6-18*x1*x3*x4^2*x7^2*Z^6+3*x2*x3*x4*x5*x7^2
+      *Z^6+9*x1*x2*x3*x6*x7^2*Z^6+48*x1*x4^2*x7^2*Z^7-24*x2*x4*x5*x7^2*Z^7-3*x4^2*x5*x7^2*Z^7-24*x1*x2*x6*x7^2*Z^7+3*x1*x4*x6*x7
+      ^2*Z^7,3*x1*x3^5*x4*x5^2+3*x1*x2*x3^5*x5*x7+8*x1^2*x2*x3^3*x4*x5*Z+9*x1*x3^4*x5^2*x6*Z+9*x1*x2*x3^4*x7^2*Z+48*x1*x2*x3^2*
+      x4*x5^2*Z^2+24*x1^2*x2*x3^2*x5*x6*Z^2+24*x1^2*x2*x3^2*x4*x7*Z^2+24*x1*x2^2*x3^2*x5*x7*Z^2+x3^3*x4*x5^2*x7*Z^2+9*x1*x3^3*x5
+      *x6*x7*Z^2+9*x1*x3^3*x4*x7^2*Z^2+x2*x3^3*x5*x7^2*Z^2-37*x1^2*x2^2*x4*x5*Z^3+48*x1^2*x3*x4*x5*x6*Z^3+24*x1^2*x3*x4^2*x7*Z^3
+      -24*x1*x3^2*x5*x6*x7*Z^3+3*x3^2*x5^2*x6*x7*Z^3-24*x1*x3^2*x4*x7^2*Z^3+6*x1*x3^2*x6*x7^2*Z^3+3*x2*x3^2*x7^3*Z^3-27*x1^2*x4*
+      x5*x6*Z^4+16*x1^2*x5*x6^2*Z^4+37*x1^2*x4^2*x7*Z^4+16*x2*x4*x5^2*x7*Z^4+16*x1^2*x4*x6*x7*Z^4+8*x2^2*x5*x7^2*Z^4+3*x3*x5*x6*
+      x7^2*Z^4+3*x3*x4*x7^3*Z^4-8*x5*x6*x7^2*Z^5-8*x4*x7^3*Z^5+2*x6*x7^3*Z^5,-2*x5^4+2*x1*x5^2*x7,-2*x1*x2^3*x3^3-3*x1*x2^2*x3^2
+      *x4*Z-24*x1*x2^4*Z^2+x1*x2*x4*x6*Z^3,-x2^2*x4*x5+x1*x2^2*x6,6*x1*x2^3*x3^7+8*x1*x2^3*x3^6*Z+8*x1*x2^2*x3^6*x4*Z+24*x1*x2^4
+      *x3^4*Z^2-24*x1*x2^2*x3^5*x4*Z^2-18*x2^3*x3^5*x7*Z^2+27*x1*x2^4*x3^3*Z^3-45*x1*x2^3*x3^3*x4*Z^3+48*x1*x2^2*x3^4*x6*Z^3+24*
+      x2^3*x3^4*x7*Z^3-30*x2^2*x3^4*x4*x7*Z^3+10*x1*x2^5*x3*Z^4+10*x1*x2^3*x3^2*x4*Z^4+37*x1*x2^2*x3^3*x6*Z^4+2*x1*x2*x3^3*x6^2*
+      Z^4-29*x2^4*x3^2*x7*Z^4-37*x2^3*x3^3*x7*Z^4+27*x2^2*x3^3*x4*x7*Z^4-8*x2*x3^3*x4^2*x7*Z^4+7*x1*x2^5*Z^5+37*x1*x2^4*x4*Z^5-
+      20*x1*x2^3*x3*x6*Z^5+20*x2^4*x3*x7*Z^5+48*x2^3*x3*x4*x7*Z^5+10*x2^2*x3^2*x4*x7*Z^5+24*x2*x3^2*x4^2*x7*Z^5-43*x2^2*x3^2*x6*
+      x7*Z^5-7*x1*x2^3*x6*Z^6+16*x1*x2^2*x6^2*Z^6+7*x2^4*x7*Z^6-27*x2^3*x4*x7*Z^6+8*x2^2*x4^2*x7*Z^6-30*x2^2*x3*x6*x7*Z^6-48*x2*
+      x3*x4*x6*x7*Z^6-6*x2*x3*x6^2*x7*Z^6-7*x2^2*x6*x7*Z^7-37*x2*x4*x6*x7*Z^7+16*x2*x6^2*x7*Z^7-2*x4*x6^2*x7*Z^7,-2*x1*x2*x3^6*
+      x5*x7-3*x2*x3^5*x5^2*x7*Z-48*x1*x2^2*x3^3*x5*x7*Z^2-3*x1*x3^4*x5*x6*x7*Z^2-3*x2*x3^4*x5*x7^2*Z^2-48*x2^2*x3^2*x5^2*x7*Z^3+
+      24*x1^2*x2*x3^2*x6*x7*Z^3+8*x1*x3^3*x5*x6*x7*Z^3-x3^3*x5^2*x6*x7*Z^3+8*x2*x3^3*x5*x7^2*Z^3-7*x1*x3^3*x6*x7^2*Z^3+47*x1*x2^
+      3*x5*x7*Z^4-48*x1*x2*x3*x5*x6*x7*Z^4-48*x2^2*x3*x5*x7^2*Z^4+24*x1*x3^2*x6*x7^2*Z^4+27*x1*x2*x5*x6*x7*Z^5-16*x2*x5^2*x6*x7*
+      Z^5+8*x1^2*x6^2*x7*Z^5+27*x2^2*x5*x7^2*Z^5+16*x1*x2*x6*x7^2*Z^5+3*x3*x6*x7^3*Z^5-8*x6*x7^3*Z^6,-3*x1^2*x2^2*x3^2*x7-6*x1*
+      x2^2*x3*x5*x7*Z-3*x1*x2^2*x7^2*Z^2,-6*x1*x2^2*x3^5*x5^2-6*x1*x2*x3^4*x4*x5^2*Z-6*x2^2*x3^4*x5^3*Z-18*x1*x2^2*x3^4*x5*x7*Z-
+      48*x1*x2^3*x3^2*x5^2*Z^2-12*x1*x2*x3^3*x5^2*x6*Z^2-30*x2^2*x3^3*x5^2*x7*Z^2-10*x1*x2^2*x3*x4*x5^2*Z^3+15*x2^3*x3*x5^3*Z^3+
+      48*x1*x2*x3^2*x5^2*x6*Z^3-18*x2*x3^2*x5^3*x6*Z^3-48*x2^2*x3^2*x5^2*x7*Z^3+18*x2*x3^2*x4*x5^2*x7*Z^3-6*x1*x2*x3^2*x5*x6*x7*
+      Z^3-12*x2^2*x3^2*x5*x7^2*Z^3-5*x1*x2^2*x5^2*x6*Z^4-5*x2*x3*x5^3*x6*Z^4-43*x2^3*x5^2*x7*Z^4+5*x2*x3*x4*x5^2*x7*Z^4-12*x2*x3
+      *x5^2*x6*x7*Z^4+12*x2*x3*x4*x5*x7^2*Z^4);
+
+i55 :  time randomPoints(J2, Strategy=>MultiplicationTable)
+RandomRationalPoints.m2:840:17:(3):[12]: error: expected a polynomial ring
+RandomRationalPoints.m2:840:17:(3):[12]: --entering debugger (type help to see debugger commands)                                
+RandomRationalPoints.m2:840:17-840:79: --source code:                                                                            
+            m0:=contract(transpose matrix entries b2,matrix entries((xx_0*b1)%Js));
+
+i56 : time randomPoints(J2, Strategy=>Default)
+     -- used 4.2498 seconds                                                                                                      
+
+o56 = {{0, 0, 23, 0, 0, 42, 29, 0}}
+
+o56 : List
