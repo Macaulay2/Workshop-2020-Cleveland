@@ -30,8 +30,8 @@ export {
     --"randomPointViaLinearIntersectionOld", --these are here for debugging purposes
     "getRandomLinearForms", --here for debugging purposes    
     "dimViaBezout",    
-    "dimViaBezoutHomogeneous",    
-    "dimViaBezoutNonhomogeneous", 
+    --"dimViaBezoutHomogeneous",    
+    --"dimViaBezoutNonhomogeneous", 
 	"Codimension",
 	"MaxCoordinatesToReplace",
     "MaxCoordinatesToTrivialize",
@@ -46,6 +46,7 @@ export {
 	"ProjectionAttempts", --used in the GenericProjection strategy
     "IntersectionAttempts", --used in the LinearIntersection strategy
     "ExtendField", --used in GenericProjection and LinearIntersection strategy
+    "DimensionFunction", --
     "PointCheckAttempts",
     "MinorPointAttempts",
     "MinimumFieldSize",
@@ -55,6 +56,9 @@ export {
 exportMutable {}
 
 installMinprimes();
+
+--this appears to need to be here, otherwise the options don't realize dimViaBezout is a function, it thinks its a symbol.
+dimViaBezout=method(Options => {Verbose => false, Homogeneous => null, DimensionIntersectionAttempts => null, MinimumFieldSize => 200});
 
 optRandomPoints := {
     Strategy=>Default, 
@@ -68,6 +72,7 @@ optRandomPoints := {
     ExtendField => false,
     PointCheckAttempts => 100,
     NumThreadsToUse => 1,
+    DimensionFunction => dimViaBezout,
     Verbose => false
 };
 
@@ -411,7 +416,7 @@ randomPointViaLinearIntersection(ZZ, Ideal) := opts -> (n1, I1) -> (
     dR1 := dim R1;
     c1 := opts.Codimension;
     local d1;
-    if (c1 === null) then (c1 = dR1 - dimViaBezout(I1, Verbose=>opts.Verbose)); --don't compute it if we already know it.
+    if (c1 === null) then (c1 = dR1 - (opts.DimensionFunction)(I1)); --don't compute it if we already know it.
     if (c1 == 0) then (
         if (opts.Verbose or debugLevel > 0) then print "randomPointViaLinearIntersection: 0 ideal was passed, switching to brute force.";
         return searchPoints(n1, ring I1, first entries gens I1, opts++{PointCheckAttempts => 10*n1});
@@ -448,7 +453,7 @@ randomPointViaLinearIntersection(ZZ, Ideal) := opts -> (n1, I1) -> (
         if (debugLevel > 0 or opts.Verbose == true) then print concatenate("randomPointViaLinearIntersection:  Doing a loop with:", toString(phiMatrix));
         phi = map(targetSpace, R1, phiMatrix);
         J1 = phi(I1);        
-        if (dim J1 == 0) then (
+        if ((opts.DimensionFunction) J1 == 0) then (
         --if ((dimViaBezout(J1, DimensionIntersectionAttempts=>1, MinimumFieldSize=>5)) == 0) then (
         --if (dimViaBezoutIsZero(J1)) then (
             if (c1 == 1) then ( --if we are intersecting with a line, we can go slightly faster by using factor instead of decompose
@@ -514,7 +519,7 @@ randomPointViaGenericProjection(ZZ, Ideal) := opts -> (n1, I1) -> (
     c1 := opts.Codimension;
     while (flag) and (i < opts.ProjectionAttempts) and (#pointsList < n1) do (
         if (opts.Codimension === null) then (
-            c1 = dim ring I1 - dimViaBezout(I1);
+            c1 = dim ring I1 - (opts.DimensionFunction)(I1);
             if (c1 == infinity) then (
                 if (opts.Verbose or debugLevel > 0) then print "randomPointViaGenericProjection: no points, the ideal is the unit ideal."; 
                 return pointsList;
@@ -546,7 +551,7 @@ randomPointViaGenericProjection(ZZ, Ideal) := opts -> (n1, I1) -> (
         else(
             (phi, I0) = projectionToHypersurface(I1, Homogeneous=>opts.Homogeneous, Replacement => opts.Replacement, MaxCoordinatesToReplace => opts.MaxCoordinatesToReplace, Codimension => opts.Codimension, Verbose=>opts.Verbose);
         );
-        if ((dim ring I0 - dimViaBezout(I0)) == 1) then (
+        if ((dim ring I0 - (opts.DimensionFunction)(I0)) == 1) then (
             if (debugLevel > 0) or opts.Verbose then print "randomPointViaGenericProjection:  found a good generic projection, now finding a point on it.";
             if (opts.Strategy == GenericProjection) then (
                 pts = randomPoints(n1-#pointsList, I0, switchStrategy(opts, BruteForce)))
@@ -621,7 +626,7 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
     if (#pointsList >= n1) then return pointsList;
     if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 0): brute force failed, now computing the dimension (if not provided)";    
     c1 := opts.Codimension;
-    if (c1 === null) then (c1 = dim ring I1 - dimViaBezout(I1, Verbose=>opts.Verbose)); --don't compute it if we already know it.
+    if (c1 === null) then (c1 = dim ring I1 - (opts.DimensionFunction)(I1)); --don't compute it if we already know it.
     if (c1 == infinity) then (
         if (opts.Verbose or debugLevel > 0) then print "randomPointViaDefaultStrategy: the ideal has no points (it is the unit ideal)";
         return pointsList;
@@ -806,7 +811,7 @@ randomPointViaMultiplicationTable=method(Options => optRandomPoints);
 randomPointViaMultiplicationTable(ZZ,Ideal) := opts-> (n1,I) -> (
     local d;
     if not (opts.Codimension === null) then (d = (dim ring I) - opts.Codimension;)
-    else (d = dimViaBezout I;);
+    else (d = (opts.DimensionFunction) I;);
     --d:= dimViaBezout I;
     ptlist:={};
     while (#ptlist<n1) do (
@@ -861,7 +866,7 @@ getNextValidFieldSize(ZZ, ZZ, ZZ) := (pp, d, targetSize) -> (
     i
 );
 
-dimViaBezout=method(Options => {Verbose => false, DimensionIntersectionAttempts => null, MinimumFieldSize => 100});
+
 
 --better canceling provided by Dan Grayson
 cancel = task -> (
@@ -870,7 +875,7 @@ cancel = task -> (
      while true do (
 	  if isCanceled task then (<< "cancelled task terminated " << task << endl; break);
 	  if isReady task then (taskResult task ; << "cancelled task finished " << task << endl; break);
-	  sleep 1;
+	  nanosleep(10000000);
 	  );
      << "cancelled task " << task << endl;
 )
@@ -881,47 +886,53 @@ dimViaBezout(Ideal) := opts-> I1 -> (
     local attempts;
     local tr;
     local tempResult;
+    local homog;
+    if (opts.Homogeneous === null) then (homog = isHomogeneous I1) else (homog = opts.Homogeneous);
     pp := char ring I1;
     d := floor(log_pp(m) + 0.5);
     i := getNextValidFieldSize(pp, d, opts.MinimumFieldSize);
-    if (opts.DimensionIntersectionAttempts === null) then (attempts = ceiling(log_10(5000/(pp^(i*d))))) else (attempts = opts.DimensionIntersectionAttempts;);
+    if (opts.DimensionIntersectionAttempts === null) then (attempts = ceiling(log_10(1 + 5000/(pp^(i*d))))) else (attempts = opts.DimensionIntersectionAttempts;);
     if opts.Verbose then print ("dimViaBezout: Checking each dimension " | toString(attempts) | " times.");
     if (m >= opts.MinimumFieldSize) then (
-        -*backtrace=false;
-        t1 := createTask(myI -> (backtrace=false; return dimViaBezoutNonhomogeneous myI), (I1, Verbose=>opts.Verbose, DimensionIntersectionAttempts=>attempts));
+        --The following is code for multithreading, if that is fixed.
+        -*
+        backtrace=false;
+        t1 := createTask(myI -> (backtrace=false; return dimViaBezoutNonhomogeneous myI), (I1, Verbose=>false, DimensionIntersectionAttempts=>attempts));
         t2 := createTask(myI -> (backtrace=false; return dim myI), (I1));
         schedule t1;
         schedule t2;
         r1 := isReady(t1);
         r2 := isReady(t2);
         if opts.Verbose then print ("dimViaBezout:  starting threads, one classical dim, one probabilistic dim ");
-        while (r1==false and r2==false) do ( nanosleep(1000000); r1 = isReady(t1); r2 = isReady(t2););
+        while (r1==false and r2==false) do ( nanosleep(100000); r1 = isReady(t1); r2 = isReady(t2););
+        if opts.Verbose then print ("dimViaBezout:  found an answer" );
         if (r2) then (
-            if opts.Verbose then print ("dimViaBezout:  classical dim finished first.");
             tr = taskResult(t2);
+            if opts.Verbose then print ("dimViaBezout:  classical dim finished first: " | toString(tr) );            
             cancel t1;                       
+            return tr;
         )
         else if (r1) then (
-            if opts.Verbose then print ("dimViaBezout:  probabilistic dim finished first.");
             tr = taskResult(t1);
+            if opts.Verbose then print ("dimViaBezout:  probabilistic dim finished first: " | toString(tr));
             cancel t2;
+            return tr;
+            
         );
-        return tr;      *-  
-        if (isHomogeneous I1) then return dimViaBezoutHomogeneous(I1, DimensionIntersectionAttempts=>attempts) else 
+        if opts.Verbose then print "dimViaBezout: Something went wrong with multithrading.";              
+        return null;
+        *-
+        if (homog) then return dimViaBezoutHomogeneous(I1, DimensionIntersectionAttempts=>attempts) else 
         return dimViaBezoutNonhomogeneous(I1, Verbose=>opts.Verbose, DimensionIntersectionAttempts=>attempts);
     );
     if opts.Verbose then print "dimViaBezout: The field is too small, extending it.";
-    -*pp := char ring I1;
-    d := floor(log_pp(m) + 0.5);
-    i := 1;
-    while (pp^(i*d) < opts.MinimumFieldSize) do (
-        i = i+1;
-    );*-
+ 
     
     if opts.Verbose then print ("dimViaBezout: New field size is " | toString(pp) | "^" | toString(i*d) | " = " | toString(pp^(i*d)) );
     (S2, phi1) := fieldBaseChange(S1, GF(pp, i*d));
-    I2 := phi1(I1);
-    dimViaBezoutNonhomogeneous(I2, Verbose=>opts.Verbose, DimensionIntersectionAttempts=>attempts)
+    I2 := phi1(I1);    
+    if (homog) then return dimViaBezoutHomogeneous(I2, DimensionIntersectionAttempts=>attempts) else 
+    return dimViaBezoutNonhomogeneous(I2, Verbose=>opts.Verbose, DimensionIntersectionAttempts=>attempts);
 )
 
 --dimViaBezout(ZZ, Ideal) := (n1,I1) -> (
@@ -1736,6 +1747,7 @@ doc ///
         (randomPoints, ZZ, Ideal)
         [randomPoints, Homogeneous]        
         [randomPoints, Codimension]
+        [randomPoints, DimensionFunction]
     Headline
         a function to find random points  in a variety. 
     Usage
@@ -1764,6 +1776,8 @@ doc ///
 	        points to search in total, see @TO PointCheckAttempts@
         NumThreadsToUse => ZZ
 	        number of threads to use in the BruteForce strategy, see @TO NumThreadsToUse@
+        DimensionFunction => Function
+            specify a custom dimension function, such as the default dimViaBezout or the Macaulay2 function dim
     Outputs
         :List
             a list of points in the variety with possible repetitions.
@@ -1799,8 +1813,9 @@ doc ///
         [dimViaBezout, DimensionIntersectionAttempts]
         [dimViaBezout, MinimumFieldSize]
         [dimViaBezout, Verbose]
+        [dimViaBezout, Homogeneous]
         MinimumFieldSize
-        DimensionIntersectionAttempts
+        DimensionIntersectionAttempts        
     Headline
         computes the dimension of the given ideal $I$ probabilistically
     Usage
@@ -1826,6 +1841,25 @@ doc ///
             elapsedTime dim I
         Text
             The user may set the {\tt MinimumFieldSize} to ensure that the field being worked over is big enough.  For instance, there are relatively few linear spaces over a field of characteristic 2, and this can cause incorrect results to be provided. 
+        Text
+            This function computes things in two ways, depending on if the ideal is homogeneous or not.  If you wish to force non-homogeneous computation, set the option {\tt Homogeneous=false}.  This can be faster in some examples.
+    SeeAlso
+        DimensionFunction
+///
+
+doc ///
+    Key
+        DimensionFunction
+    Headline
+        an option for specifying custom dimension functions
+    Usage
+        DimensionFunction => myFunction
+    Description
+        Text
+            This package provides a custom dimension function for probabilistically computing the dimension, {\tt dimViaBezout}.  However, in some cases this can be substantially slower than calling the built in function {\tt dim}.  Thus the user may switch to using the built in function, or their own custom dimension function, via the option {\tt DimensionFunction => ...}.
+    SeeAlso
+        dim
+        dimViaBezout
 ///
 
 doc ///
@@ -1835,6 +1869,7 @@ doc ///
         [findANonZeroMinor, Verbose]
         [findANonZeroMinor, Homogeneous]        
         [findANonZeroMinor, MinorPointAttempts]
+        [findANonZeroMinor, DimensionFunction]
         MinorPointAttempts
     Headline
         finds a non-vanishing minor at some randomly chosen point 
@@ -1855,6 +1890,8 @@ doc ///
             controls if the computations are homogeneous (in calls to {\tt randomPoints})
         MinorPointAttempts => ZZ
             how many points to check the rank of the matrix at
+        DimensionFunction => Function
+            specify a custom dimension function, such as the default dimViaBezout or the Macaulay2 function dim       
     Outputs
         : Sequence
             The functions outputs the following:
@@ -1892,6 +1929,7 @@ doc ///
         [extendIdealByNonZeroMinor, Homogeneous]        
         [extendIdealByNonZeroMinor, MinorPointAttempts]        
         [extendIdealByNonZeroMinor, Verbose]        
+        [extendIdealByNonZeroMinor, DimensionFunction]        
     Headline
         extends the ideal to aid finding singular locus
     Usage
@@ -1910,7 +1948,9 @@ doc ///
         Verbose => Boolean
             turns on or off verbose output
         MinorPointAttempts => ZZ
-            how many points to check the rank of the matrix at            
+            how many points to check the rank of the matrix at     
+        DimensionFunction => Function
+            specify a custom dimension function, such as the default dimViaBezout or the Macaulay2 function dim       
     Outputs
         : Ideal
             the original ideal extended by the determinant of 

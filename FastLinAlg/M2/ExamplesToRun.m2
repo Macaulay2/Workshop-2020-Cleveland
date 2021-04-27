@@ -4,7 +4,7 @@ installPackage "RandomRationalPoints";
 check RandomRationalPoints
 
 allowableThreads = 8;
-loadPackage "RandomRationalPoints";
+loadPackage("RandomRationalPoints", Reload=>true);
 loadPackage "FastLinAlg";
 loadPackage "Cremona";
 
@@ -19,6 +19,7 @@ J = I + chooseGoodMinors(8, 4, M);  T2 = ZZ/101[x1,x2,x3,x4,x5,x6,x7, Z]; J2 = i
 
 elapsedTime randomPoints(J2, Verbose=>true)
 
+time randomPoints(J)
 time randomPoints(J, Strategy=>LinearIntersection)
 time randomPoints(J, Strategy=>MultiplicationTable)
 
@@ -29,6 +30,15 @@ I2 =  ideal(YY_8^2-YY_7*YY_9,YY_6*YY_8-YY_5*YY_9,YY_3*YY_8-YY_2*YY_9,YY_2*YY_8-Y
 M2 = jacobian I2;
 J2 = I2 + chooseGoodMinors(15, 7, M2);
 J3 = I2 + chooseGoodMinors(35, 7, M2);
+
+time randomPoints(J2)
+time randomPoints(J2, Strategy=>LinearIntersection)
+time randomPoints(J2, Strategy=>MultiplicationTable)
+time randomPoints(J2, DimensionFunction=>dim)
+time randomPoints(J2, Strategy=>LinearIntersection, DimensionFunction=>dim)
+time randomPoints(J2, Strategy=>MultiplicationTablem, DimensionFunction=>dim)
+
+
 
 
 extendingIdealByNonVanishingMinor(I, M, 4, Strategy=>GenericProjection)
