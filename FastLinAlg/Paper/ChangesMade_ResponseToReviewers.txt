@@ -1,4 +1,4 @@
-We thank the reviewers for their helpful suggestions, comments and preliminary codes and examples. We would be very happy to invite the reviewer to be a coauthor to the source code (and also for the paper, if desired).
+We thank the reviewers for their helpful suggestions, comments preliminary code and examples. We would very much like to invite the reviewer to be a coauthor to the source code (and also for the paper, if desired).  In particular, there are some issues we think we would benefit with working with them on (see below).
 
 Changes Made to Paper:
 
@@ -10,7 +10,9 @@ c) Sentence before Example 2.5 added on Page 4
 
 d) Page 5 Remark 2.2.1 added following reviewer's suggestion to discuss a bit about the probability of succesful output.
 
-e) Page 5 Section 5 dimViaBezout added with example 3.1 and paragraph following it. 
+e) Page 5 dimViaBezout added with example 3.1 and paragraph following it. 
+
+f)  Page 5, Remark 2.2.2 added explaining how generic projection works and why we aren't using it currently.
 
 MAIN CHANGES: 
 
@@ -18,15 +20,17 @@ MAIN CHANGES:
 
     Some comments on implementation.  We have implemented this in the affine case and the projective case.
 
-    In the projective case, saturate against all coordinates, instead of just the last coordinate.  Otherwise, we were getting incorrect answers too frequently.
+    In the projective case, we saturate against all coordinates, instead of just the last coordinate.  Otherwise, we were getting incorrect answers too frequently, especially in iterative processes where a point is found, used to identify a submatrix and a minor is computed, a new point is found, a minor computed, etc.  Perhaps it would instead be better to saturate with respect to ceiling(sqrt(# of variables))?  In cases where there are many variables, saturating with respect to all of them can be pretty slow.
 
-    We also implemented this in the affine setting affine examples where we do not saturate.
+    We also implemented this in the affine setting affine examples where we do not saturate but instead try to compute whether 1 is in the ideal.  
     
     In the projective case, the referee suggested a binary search pattern, and we still use that there.   In the affine case however, we found that in practice, it is much faster to start with a 1-dimensional linear space, then a 2-dimensional linear space, and so on, until we find an intersection.  This is because in our examples, checking whether an intersection is empty is much faster when the intersection is indeed empty.  
 
-    Unfortunately, there are large classes of examples where either the probablistic code, for either the affine or non-affine examples, are much slower than simply calling dim.  We would like to implement both simultaneously by multi-threading.  Unfortunately, canceling tasks in multithreaded examples still creates a great deal of instability in M2.
+    Unfortunately, there are large classes of examples where either the probablistic code, for either the affine or non-affine examples, are much slower than simply calling dim.  We would like to implement both simultaneously by multi-threading.  Unfortunately, canceling tasks in multithreaded examples still creates a great deal of instability in M2.  Hence we have created the option 
+    DimensionFunction
+        which by default is DimensionFunction => dimViaBezout and through which the user can specify to use the built in Macaulay2 dimension function, or their own custom dimension function.
 
-Optional Inputs:
+Optional Inputs for dimViaBezout:
 
 DimensionIntersectionAttempts => ZZ : the number of linear spaces to try before moving to the next dimension
 MinimumFieldSize => ZZ: if the ambient field is smaller than this value it will automatically be replaced with an extension. (The user may set the  MinimumFieldSize to ensure that the field being worked over is big enough.  For instance, there are relatively few linear spaces over a field of characteristic 2, and this can cause incorrect results to be provided.) 
@@ -37,7 +41,7 @@ MinimumFieldSize => ZZ: if the ambient field is smaller than this value it will 
 
 Changes Made to the Source Code:
 
-We have added the MultiplicationStrategy verbatim as provided by the reviewer but have changed the computation of the dimension to be done via dimViaBezout instead of dimDegViaBezout. (This MultiplicationTable strategy essentially is still a LinearIntersection but it handles the point issue differently. The previous strategy was using decompose to break up the ideal.)  
+We have added the MultiplicationStrategy verbatim as provided by the reviewer but have changed the computation of the dimension to be done via dimViaBezout instead of dimDegViaBezout. This MultiplicationTable strategy essentially is still a LinearIntersection but it handles the point issue differently. The previous strategy was using decompose to break up the ideal.
 
 There are some aspects of this code we do not totally understand.  In particular, we do not understand what is occurring in the lines:
 
@@ -49,14 +53,14 @@ Js:=saturateInGenericCoordinates J;
 (which only saturates in the last coordinate)
 will saturate away the points, and thus causes this function to crash.  
 
-However, doing a saturation with respect to every variable (even separately) seems to make this function quite a bit slower.  We are tempted to saturate with respect to a (random) variable, then use a try command to see if that yields a good result, and if it crashed try saturating with respect to a different (random) variable.  However, we
+However, doing a saturation with respect to every variable (even separately) seems to make this function quite a bit slower.  We are tempted to saturate with respect to a (random) variable, then use a try command to see if that yields a good result, and if it crashed try saturating with respect to a different (random) variable.  However, we are not completely sure what the best way forward would be.  
 
 
 New documentation and examples have been provided. 
 
 All the strategies now make use of the dimViaBezout to compute the dimension of the given ideal, if the codimension is not already known. In case that it is known, it should be specified along with the call of randomPoints.
 
-ProjectionAttempts has been set to 0 in the Default Strategy now for reasons discussed.
+ProjectionAttempts has been set to 0 in the Default Strategy because in too many examples, especially when iteratively computing minors, it runs into a situation where trying to do even a simple projection to a coordinate hangs (takes much too long).  
 
 
 -------------------------------
@@ -64,9 +68,155 @@ ProjectionAttempts has been set to 0 in the Default Strategy now for reasons dis
 We also provide some examples demonstrating performance in some somewhat larger examples.
 
 -------------------------
-----Large Example #1-----
+----Largish Example #1-----
 -------------------------
 
+The first example just grabs 15 minors of some matrix.  Notice that dimDegViaBezout is much faster, as it does much less saturation.  The dimension function does seem to be the slowdown in this example, and MultiplicationTable is almost immediate if you specify that Codimesion=>8, whereas the default strategy is still on the order of 0.5 seconds.
+
+i2 : loadPackage "FastLinAlg";
+
+i3 : R = (ZZ/101)[YY_1, YY_2, YY_3, YY_4, YY_5, YY_6, YY_7, YY_8, YY_9];
+
+i4 : I2 =  ideal(YY_8^2-YY_7*YY_9,YY_6*YY_8-YY_5*YY_9,YY_3*YY_8-YY_2*YY_9,YY_2*YY_8-YY_1*YY_9,YY_6*YY_7-YY_5*YY_8,YY_3*YY_7-YY_1*YY_9,YY_2*YY_7-YY_1*YY_8,YY_6^2-YY_4*YY_9,YY_5*YY_6-YY_4*YY_8,YY_4*YY_6+YY_1*YY_8-10*YY_1*YY_9-YY_2*YY_9+10*YY_3*YY_9,YY_3*YY_6-YY_8*YY_9-10*YY_9^2,YY_2*YY_6-YY_7*YY_9-10*YY_8*YY_9,YY_1*YY_6-YY_7*YY_8-10*YY_7*YY_9,YY_5^2-YY_4*YY_7,YY_4*YY_5+YY_1*YY_7-10*YY_1*YY_8-YY_1*YY_9+10*YY_2*YY_9,YY_3*YY_5-YY_7*YY_9-10*YY_8*YY_9,YY_2*YY_5-YY_7*YY_8-10*YY_7*YY_9,YY_1*YY_5-YY_7^2-10*YY_7*YY_8,YY_4^2+YY_7^2-YY_9^2,YY_3*YY_4-YY_5*YY_9-10*YY_6*YY_9,YY_2*YY_4-YY_5*YY_8-10*YY_5*YY_9,YY_1*YY_4-YY_5*YY_7-10*YY_5*YY_8,YY_2^2-YY_1*YY_3,YY_1*YY_2-10*YY_1*YY_3-YY_2*YY_3+10*YY_3^2+YY_4*YY_8+10*YY_4*YY_9,YY_1^2-YY_3^2+YY_4*YY_7+20*YY_4*YY_8-YY_4*YY_9);
+
+o4 : Ideal of R
+
+i5 : M2 = jacobian I2;
+
+i6 : J2 = I2 + chooseGoodMinors(15, 7, M2);
+
+o6 : Ideal of R
+
+i7 : time dim J2
+     -- used 0.00395536 seconds                                                                                                                
+
+o7 = 1
+
+i8 : time dimViaBezout(J2)
+     -- used 0.965556 seconds                                                                                                                  
+
+o8 = 1
+
+i14 : time dimDegViaBezout(J2)
+     -- used 0.0362843 seconds                                                                                                                 
+
+o14 = (1, 7)
+
+o14 : Sequence
+
+i29 : time randomPoints(J2)
+     -- used 1.26618 seconds                                                                                                                   
+
+o29 = {{0, 0, 0, 0, 0, 0, 30, -3, -30}}
+
+o29 : List
+
+i30 : time randomPoints(J2, Strategy=>MultiplicationTable)
+     -- used 1.03038 seconds                                                                                                                   
+
+o30 = {{0, 0, 0, 0, 0, 0, -1, -10, 1}}
+
+o30 : List
+
+i31 : time randomPoints(J2, Strategy=>LinearIntersection)
+     -- used 1.90992 seconds                                                                                                                   
+
+o31 = {{0, 0, 0, 0, 0, 0, 15, 49, -15}}
+
+o31 : List
+
+i32 : time randomPoints(J2, Strategy=>LinearIntersection)
+     -- used 3.00063 seconds                                                                                                                   
+
+o32 = {{0, 0, 0, 0, 0, 0, 7, -31, -7}}
+
+o32 : List
+
+-------------------------
+----Large Example #2-----
+-------------------------
+
+Here we have an example where dimDegViaBezout sometimes quickly gives the right answer, but more frequently gives the wrong answer.  The best performance is actually via the non homogeneous version of the function in this case.  dimDegViaBezout usually also gives the wrong answer (probably due to saturation issues).  The Macaulay2 dimension function does not terminate on this example.  We run each version of the function 100 times.  Note, in this case usually Strategy=>MultiplicationTable typically crashes, 90% of the time (so this might be a case where a try function would be good, or more aggressive saturation).
+
+p=101;
+(ZZ/p)[YY_1..YY_9, Degrees => {9:1}, Heft => {1}, MonomialOrder => VerticalList{MonomialSize => 32, GRevLex => {9:1}, Position => Up}, DegreeRank => 1]; 
+
+f1 =-2*YY_2*YY_6*YY_7*YY_8^2*YY_9^2-2*YY_4*YY_6^2*YY_7*YY_9^3-4*YY_1*YY_6*YY_7*YY_8*YY_9^3-20*YY_2*YY_6*YY_7*YY_8*YY_9^3+2*YY_4^2*YY_8^2*YY_9^3+2*YY_7^2*YY_8^2*YY_9^3-40*YY_1*YY_6*YY_7*YY_9^4-6*YY_2*YY_6*YY_7*YY_9^4+20*YY_3*YY_6*YY_7*YY_9^4-20*YY_4^2*YY_8*YY_9^4-20*YY_7^2*YY_8*YY_9^4+4*YY_7*YY_8^2*YY_9^4-2*YY_4^2*YY_9^5-2*YY_7^2*YY_9^5-40*YY_7*YY_8*YY_9^5+2*YY_8^2*YY_9^5-4*YY_7*YY_9^6-20*YY_8*YY_9^6-2*YY_9^7;
+f2 = -2*YY_4^7-40*YY_2*YY_4^5*YY_5-4*YY_3*YY_4^5*YY_5+8*YY_1^2*YY_4^3*YY_5^2+21*YY_1*YY_2*YY_4^3*YY_5^2-8*YY_1*YY_3*YY_4^3*YY_5^2-41*YY_1*YY_4^5*YY_6+4*YY_2*YY_4^5*YY_6-40*YY_3*YY_4^5*YY_6+40*YY_1^2*YY_4^3*YY_5*YY_6+4*YY_1*YY_2*YY_4^3*YY_5*YY_6-40*YY_1*YY_3*YY_4^3*YY_5*YY_6-4*YY_1*YY_3*YY_4^3*YY_6^2+4*YY_1^2*YY_4^4*YY_7-40*YY_1*YY_2*YY_4^4*YY_7+8*YY_1^3*YY_4^2*YY_5*YY_7+21*YY_1^2*YY_2*YY_4^2*YY_5*YY_7-8*YY_1*YY_3^2*YY_4^2*YY_5*YY_7-21*YY_2*YY_3^2*YY_4^2*YY_5*YY_7-20*YY_4^4*YY_5*YY_6*YY_7-40*YY_3*YY_4^2*YY_5^2*YY_6*YY_7+4*YY_3*YY_4^2*YY_5*YY_6^2*YY_7-8*YY_1*YY_4^3*YY_5*YY_7^2+40*YY_2*YY_4^3*YY_5*YY_7^2-8*YY_1*YY_3*YY_4*YY_5^2*YY_7^2+41*YY_1*YY_4^3*YY_6*YY_7^2-4*YY_2*YY_4^3*YY_6*YY_7^2-40*YY_1^2*YY_4*YY_5*YY_6*YY_7^2-4*YY_1*YY_2*YY_4*YY_5*YY_6*YY_7^2-19*YY_1*YY_3*YY_4*YY_5*YY_6*YY_7^2+4*YY_1*YY_3*YY_4*YY_6^2*YY_7^2-4*YY_1^2*YY_4^2*YY_7^3+40*YY_1*YY_2*YY_4^2*YY_7^3+20*YY_4^2*YY_5*YY_6*YY_7^3+40*YY_3*YY_5^2*YY_6*YY_7^3-4*YY_3*YY_5*YY_6^2*YY_7^3+2*YY_4^3*YY_7^4+4*YY_3*YY_4*YY_5*YY_7^4+40*YY_3*YY_4*YY_6*YY_7^4+40*YY_1^2*YY_4^4*YY_8+4*YY_1*YY_2*YY_4^4*YY_8+40*YY_4^4*YY_5^2*YY_8-21*YY_3*YY_4^2*YY_5^3*YY_8-2*YY_4^4*YY_5*YY_6*YY_8-12*YY_3*YY_4^2*YY_5^2*YY_6*YY_8-40*YY_3*YY_4^2*YY_5*YY_6^2*YY_8-21*YY_1*YY_4^3*YY_5*YY_7*YY_8-21*YY_1^2*YY_4*YY_5^2*YY_7*YY_8+8*YY_1*YY_2*YY_4*YY_5^2*YY_7*YY_8-42*YY_1*YY_3*YY_4*YY_5^2*YY_7*YY_8-16*YY_1*YY_3*YY_4*YY_5*YY_6*YY_7*YY_8-40*YY_1^2*YY_4^2*YY_7^2*YY_8-4*YY_1*YY_2*YY_4^2*YY_7^2*YY_8-40*YY_4^2*YY_5^2*YY_7^2*YY_8+21*YY_3*YY_5^3*YY_7^2*YY_8+2*YY_4^2*YY_5*YY_6*YY_7^2*YY_8+12*YY_3*YY_5^2*YY_6*YY_7^2*YY_8+40*YY_3*YY_5*YY_6^2*YY_7^2*YY_8-2*YY_4^5*YY_8^2-4*YY_3*YY_4^3*YY_5*YY_8^2-40*YY_3*YY_4^3*YY_6*YY_8^2-4*YY_4^2*YY_5^2*YY_7*YY_8^2-8*YY_3*YY_5^3*YY_7*YY_8^2+21*YY_3*YY_5^2*YY_6*YY_7*YY_8^2+2*YY_4^3*YY_7^2*YY_8^2+4*YY_3*YY_4*YY_5*YY_7^2*YY_8^2+40*YY_3*YY_4*YY_6*YY_7^2*YY_8^2-4*YY_1^2*YY_4^4*YY_9-4*YY_1*YY_3*YY_4^4*YY_9+40*YY_2*YY_3*YY_4^4*YY_9+4*YY_3^2*YY_4^4*YY_9-8*YY_1^3*YY_4^2*YY_5*YY_9+8*YY_1*YY_3^2*YY_4^2*YY_5*YY_9-8*YY_1*YY_4^2*YY_5^3*YY_9+8*YY_3*YY_4^2*YY_5^3*YY_9+40*YY_1^3*YY_4^2*YY_6*YY_9-40*YY_1*YY_3^2*YY_4^2*YY_6*YY_9-20*YY_4^4*YY_5*YY_6*YY_9-40*YY_1*YY_4^2*YY_5^2*YY_6*YY_9+19*YY_3*YY_4^2*YY_5^2*YY_6*YY_9-4*YY_3*YY_4^2*YY_5*YY_6^2*YY_9+2*YY_4^5*YY_7*YY_9+8*YY_1*YY_4^3*YY_5*YY_7*YY_9-40*YY_2*YY_4^3*YY_5*YY_7*YY_9+4*YY_3*YY_4^3*YY_5*YY_7*YY_9+8*YY_1*YY_3*YY_4*YY_5^2*YY_7*YY_9+8*YY_3^2*YY_4*YY_5^2*YY_7*YY_9-21*YY_1*YY_4^3*YY_6*YY_7*YY_9+40*YY_3*YY_4^3*YY_6*YY_7*YY_9-21*YY_1^2*YY_4*YY_5*YY_6*YY_7*YY_9-21*YY_1*YY_3*YY_4*YY_5*YY_6*YY_7*YY_9+40*YY_3^2*YY_4*YY_5*YY_6*YY_7*YY_9+4*YY_1^2*YY_4^2*YY_7^2*YY_9+4*YY_1*YY_3*YY_4^2*YY_7^2*YY_9-40*YY_2*YY_3*YY_4^2*YY_7^2*YY_9+4*YY_3^2*YY_4^2*YY_7^2*YY_9+4*YY_4^2*YY_5^2*YY_7^2*YY_9+20*YY_4^2*YY_5*YY_6*YY_7^2*YY_9-40*YY_3*YY_5^2*YY_6*YY_7^2*YY_9+4*YY_3*YY_5*YY_6^2*YY_7^2*YY_9-2*YY_4^3*YY_7^3*YY_9-4*YY_3*YY_4*YY_5*YY_7^3*YY_9-40*YY_3*YY_4*YY_6*YY_7^3*YY_9+20*YY_4^5*YY_8*YY_9+42*YY_1*YY_4^3*YY_5*YY_8*YY_9+40*YY_3*YY_4^3*YY_5*YY_8*YY_9+42*YY_1^2*YY_4*YY_5^2*YY_8*YY_9+21*YY_3^2*YY_4*YY_5^2*YY_8*YY_9+8*YY_1*YY_4^3*YY_6*YY_8*YY_9-4*YY_3*YY_4^3*YY_6*YY_8*YY_9+4*YY_3^2*YY_4*YY_5*YY_6*YY_8*YY_9+40*YY_4^2*YY_5^2*YY_7*YY_8*YY_9-21*YY_3*YY_5^3*YY_7*YY_8*YY_9-8*YY_3*YY_5^2*YY_6*YY_7*YY_8*YY_9-20*YY_4^3*YY_7^2*YY_8*YY_9-40*YY_3*YY_4*YY_5*YY_7^2*YY_8*YY_9+4*YY_3*YY_4*YY_6*YY_7^2*YY_8*YY_9+4*YY_1^2*YY_4^2*YY_8^2*YY_9+4*YY_3^2*YY_4^2*YY_8^2*YY_9+4*YY_4^2*YY_5^2*YY_8^2*YY_9+40*YY_4^2*YY_5*YY_6*YY_8^2*YY_9-2*YY_4^5*YY_9^2-8*YY_1*YY_4^3*YY_5*YY_9^2+4*YY_3*YY_4^3*YY_5*YY_9^2-8*YY_3^2*YY_4*YY_5^2*YY_9^2-20*YY_1*YY_4^3*YY_6*YY_9^2-40*YY_3^2*YY_4*YY_5*YY_6*YY_9^2-8*YY_1*YY_3*YY_4^2*YY_7*YY_9^2-4*YY_3^2*YY_4^2*YY_7*YY_9^2-8*YY_4^2*YY_5^2*YY_7*YY_9^2+41*YY_4^2*YY_5*YY_6*YY_7*YY_9^2-2*YY_4^3*YY_7^2*YY_9^2-4*YY_3*YY_4*YY_5*YY_7^2*YY_9^2-21*YY_1*YY_3*YY_4^2*YY_8*YY_9^2-40*YY_3^2*YY_4^2*YY_8*YY_9^2+2*YY_4^2*YY_5*YY_6*YY_8*YY_9^2-2*YY_4^3*YY_8^2*YY_9^2-4*YY_3*YY_4*YY_5*YY_8^2*YY_9^2+4*YY_1*YY_3*YY_4^2*YY_9^3+4*YY_4^2*YY_5^2*YY_9^3+20*YY_4^2*YY_5*YY_6*YY_9^3+2*YY_4^3*YY_7*YY_9^3+4*YY_3*YY_4*YY_5*YY_7*YY_9^3+20*YY_4^3*YY_8*YY_9^3+40*YY_3*YY_4*YY_5*YY_8*YY_9^3;
+f3 = -2*YY_1^7+20*YY_1^6*YY_2+2*YY_1^6*YY_3-20*YY_1^5*YY_2*YY_3-2*YY_1^5*YY_3^2+20*YY_1^4*YY_2*YY_3^2+2*YY_1^4*YY_3^3-20*YY_1^3*YY_2*YY_3^3-YY_1^4*YY_4^2*YY_5-20*YY_1^3*YY_2*YY_4^2*YY_5+YY_1^3*YY_3*YY_4^2*YY_5-2*YY_1^5*YY_5^2-20*YY_1^4*YY_2*YY_5^2-2*YY_1^3*YY_3^2*YY_5^2-20*YY_1^2*YY_2*YY_3^2*YY_5^2+2*YY_1^5*YY_4*YY_7+10*YY_1^4*YY_2*YY_4*YY_7-2*YY_1^4*YY_3*YY_4*YY_7+30*YY_1^3*YY_2*YY_3*YY_4*YY_7+2*YY_1^2*YY_2^2*YY_3*YY_4*YY_7-YY_1^2*YY_3*YY_4*YY_5^2*YY_7-10*YY_1*YY_2*YY_3*YY_4*YY_5^2*YY_7+YY_1^4*YY_5*YY_7^2+10*YY_1^3*YY_2*YY_5*YY_7^2+YY_1^3*YY_3*YY_5*YY_7^2+YY_1*YY_2^2*YY_3*YY_5*YY_7^2+40*YY_1^5*YY_4*YY_8+4*YY_1^4*YY_2*YY_4*YY_8-40*YY_1^4*YY_3*YY_4*YY_8-4*YY_1^3*YY_2*YY_3*YY_4*YY_8+10*YY_1^3*YY_4*YY_5^2*YY_8+10*YY_1^2*YY_3*YY_4*YY_5^2*YY_8+30*YY_1^4*YY_5*YY_7*YY_8-YY_1^3*YY_2*YY_5*YY_7*YY_8+10*YY_1^3*YY_3*YY_5*YY_7*YY_8-YY_1^2*YY_2*YY_3*YY_5*YY_7*YY_8+20*YY_1*YY_2^2*YY_3*YY_5*YY_7*YY_8-2*YY_1^4*YY_5*YY_8^2+20*YY_1^3*YY_2*YY_5*YY_8^2+2*YY_1^3*YY_3*YY_5*YY_8^2-20*YY_1^2*YY_2*YY_3*YY_5*YY_8^2-2*YY_1^5*YY_4*YY_9+10*YY_1^4*YY_2*YY_4*YY_9+2*YY_1^3*YY_2^2*YY_4*YY_9+2*YY_1^4*YY_3*YY_4*YY_9-10*YY_1^3*YY_2*YY_3*YY_4*YY_9-YY_1^3*YY_4*YY_5^2*YY_9-10*YY_1^2*YY_2*YY_4*YY_5^2*YY_9-YY_1^4*YY_5*YY_7*YY_9-20*YY_1^3*YY_2*YY_5*YY_7*YY_9+YY_1^2*YY_2^2*YY_5*YY_7*YY_9-YY_1^3*YY_3*YY_5*YY_7*YY_9-YY_1*YY_2^2*YY_3*YY_5*YY_7*YY_9-10*YY_1^4*YY_5*YY_8*YY_9+YY_1^3*YY_2*YY_5*YY_8*YY_9+20*YY_1^2*YY_2^2*YY_5*YY_8*YY_9+10*YY_1^3*YY_3*YY_5*YY_8*YY_9+YY_1^2*YY_2*YY_3*YY_5*YY_8*YY_9+10*YY_1^3*YY_2*YY_5*YY_9^2-YY_1^2*YY_2^2*YY_5*YY_9^2;
+f4 = -4*YY_7*YY_8^2*YY_9^4-2*YY_4^2*YY_9^5-2*YY_7^2*YY_9^5+21*YY_7*YY_8*YY_9^5-2*YY_9^7;
+f5 = 2*YY_1^2*YY_3^5+2*YY_3^7+2*YY_3^5*YY_4*YY_7+40*YY_3^5*YY_4*YY_8+YY_1*YY_3^4*YY_4*YY_9-YY_3^5*YY_4*YY_9+YY_3^4*YY_5*YY_7*YY_9+10*YY_3^4*YY_6*YY_7*YY_9+20*YY_3^4*YY_5*YY_8*YY_9-2*YY_3^4*YY_6*YY_8*YY_9-YY_3^4*YY_5*YY_9^2-10*YY_3^4*YY_6*YY_9^2+YY_3^3*YY_7^2*YY_9^2+40*YY_3^3*YY_7*YY_8*YY_9^2-4*YY_3^3*YY_8^2*YY_9^2+YY_1*YY_3^2*YY_7*YY_9^3-YY_3^3*YY_7*YY_9^3+20*YY_1*YY_3^2*YY_8*YY_9^3-20*YY_3^3*YY_8*YY_9^3-YY_1*YY_3^2*YY_9^4;
+
+i93 : J = ideal(f1,f2,f3, f4);
+
+i103 : time apply(100, t -> dimViaBezout(J))
+     -- used 222.619 seconds  
+
+o103 = {6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+       --------------------------------------------------------------------------------                                                        
+       6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+       --------------------------------------------------------------------------------                                                        
+       6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+       --------------------------------------------------------------------------------                                                        
+       6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6}
+
+i104 : time apply(100, t -> dimViaBezout(J, Homogeneous=>false))
+     -- used 62.712 seconds                                                                                                                    
+
+o104 = {6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+       --------------------------------------------------------------------------------                                                        
+       6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+       --------------------------------------------------------------------------------                                                        
+       6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+       --------------------------------------------------------------------------------                                                        
+       6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6}
+
+i106 : time apply(100, t -> (dimDegViaBezout(J))#0)
+     -- used 323.897 seconds                                                                                                                   
+
+o106 = {5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+       --------------------------------------------------------------------------------                                                        
+       5, 5, 5, 5, 6, 5, 5, 5, 5, 5, 5, 5, 5, 6, 5, 6, 5, 5, 5, 5, 5, 6, 5, 5, 5, 5, 5,
+       --------------------------------------------------------------------------------                                                        
+       5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+       --------------------------------------------------------------------------------                                                        
+       5, 5, 5, 5, 5, 5, 5, 5, 6, 5, 5, 5, 5, 5, 5, 6, 5, 5, 5, 6}
+
+i111 : time randomPoints(J, Strategy=>MultiplicationTable)
+RandomRationalPoints.m2:847:17:(3):[12]: error: expected a polynomial ring
+RandomRationalPoints.m2:847:17:(3):[12]: --entering debugger (type help to see debugger commands)                                              
+RandomRationalPoints.m2:847:17-847:79: --source code:                                                                                          
+            m0:=contract(transpose matrix entries b2,matrix entries((xx_0*b1)%Js));
+
+ii112 : break
+     -- used 2.37748 seconds       
+    
+i115 : time randomPoints(J, Strategy=>MultiplicationTable)
+     -- used 2.29754 seconds                                                                                                                   
+
+o115 = {{0, 17, -17, -10, -35, 37, 0, 34, 1}}
+
+o115 : List
+
+i119 : time randomPoints(J)
+     -- used 2.2024 seconds                                                                                                                    
+
+o119 = {{-20, 31, 26, -12, -16, -42, 12, -8, 0}}
+
+o119 : List
+
+i135 : time randomPoints(J, Codimension=>3)
+     -- used 0.13706 seconds                                                                                                                   
+
+o135 = {{-14, -17, -25, -37, 23, -22, 12, 10, 0}}
+
+o135 : List
+
+i136 : time randomPoints(J, Strategy=>MultiplicationTable, Codimension=>3)
+RandomRationalPoints.m2:847:17:(3):[12]: error: expected a polynomial ring
+RandomRationalPoints.m2:847:17:(3):[12]: --entering debugger (type help to see debugger commands)                                              
+RandomRationalPoints.m2:847:17-847:79: --source code:                                                                                          
+            m0:=contract(transpose matrix entries b2,matrix entries((xx_0*b1)%Js));
 
 
 -------------------------
@@ -75,7 +225,7 @@ We also provide some examples demonstrating performance in some somewhat larger 
 
 Here is an example (coming out of a jacobian computation) where the rational points tend to be saturated away, which causes the MultiplicationTable strategy to fail (at least based on our understanding).  
 
-In this example, the primary speed limitation still appears to be the dimension computation.
+In this particular example, dim is much faster than dimViaBezout, or even the referee's original dimDegViaBezout.  Notice that dimDegViaBezout gives the wrong answer more than half the time in this example, most likely due to saturating away things that it should not...  
 
 T2 = ZZ/101[x1,x2,x3,x4,x5,x6,x7, Z];
 J2 = ideal(x5*x6-x4*x7,x1*x6-x2*x7,x5^2-x1*x7,x4*x5-x2*x7,x4^2-x2*x6,x1*x4-x2*x5,x2*x3^3*x5+3*x2*x3^2*x7*Z+8*x2^2*x5*Z^2+3*x3*
@@ -149,15 +299,31 @@ J2 = ideal(x5*x6-x4*x7,x1*x6-x2*x7,x5^2-x1*x7,x4*x5-x2*x7,x4^2-x2*x6,x1*x4-x2*x5
       Z^3-12*x2^2*x3^2*x5*x7^2*Z^3-5*x1*x2^2*x5^2*x6*Z^4-5*x2*x3*x5^3*x6*Z^4-43*x2^3*x5^2*x7*Z^4+5*x2*x3*x4*x5^2*x7*Z^4-12*x2*x3
       *x5^2*x6*x7*Z^4+12*x2*x3*x4*x5*x7^2*Z^4);
 
-i55 :  time randomPoints(J2, Strategy=>MultiplicationTable)
+i55 : time dim J2
+     -- used 0.0122921 seconds 
+
+o55 = 3
+
+i56 : time dimDegViaBezout(J2)
+     -- used 0.723174 seconds                                                                                                                  
+o56 = (2, 54)
+
+i57 : time dimViaBezout(J2)
+     -- used 2.09779 seconds                                                                                                                   
+
+o57 = 3
+
+i60 :  time randomPoints(J2, Strategy=>MultiplicationTable)
 RandomRationalPoints.m2:840:17:(3):[12]: error: expected a polynomial ring
 RandomRationalPoints.m2:840:17:(3):[12]: --entering debugger (type help to see debugger commands)                                
 RandomRationalPoints.m2:840:17-840:79: --source code:                                                                            
             m0:=contract(transpose matrix entries b2,matrix entries((xx_0*b1)%Js));
 
-i56 : time randomPoints(J2, Strategy=>Default)
+i61 : time randomPoints(J2, Strategy=>Default)
      -- used 4.2498 seconds                                                                                                      
 
 o56 = {{0, 0, 23, 0, 0, 42, 29, 0}}
 
 o56 : List
+
+
