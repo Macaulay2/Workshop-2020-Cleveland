@@ -840,22 +840,25 @@ randomPointViaMultiplicationTable(Ideal,ZZ) := opts-> (I,d) -> (
     	Js:=saturateInGenericCoordinates J;
         --Js := saturate(J, ideal first entries vars S);
 	    r:=degree ideal last (entries gens gb Js)_0;
-        b1 :=basis(r+1,S^1/Js);
+        b1 :=basis(r+1,S^1/Js); --if not homogeneous
 	    b2 :=basis(r+2,S^1/Js);
 	    j:=#gens S-d;
-	    xx:=(support (vars S%L))_{j-1,j};
-	    m0:=contract(transpose matrix entries b2,matrix entries((xx_0*b1)%Js));
+	    xx:=(support (vars S%L))_{j-1,j}; --last two equations (why last?)
+	    m0:=contract(transpose matrix entries b2,matrix entries((xx_0*b1)%Js));  --contract 
 	    m1:=contract(transpose matrix entries b2,matrix entries((xx_1*b1)%Js));
         M:=map(S^(rank target m0),S^{rank source m0:-1},xx_0*m1-xx_1*m0);
- 	    DetM:=(M^{0}*syz M^{1..rank source M-1})_(0,0);
-	 -- computing DetM is the bottleneck
+ 	    DetM:=(M^{0}*syz M^{1..rank source M-1})_(0,0); --fake determinant computation  
+         --look at examples of this matrix and see what happens, is this syz trick the way to compute
+         --this will be slow if the degree is large since the size of this matrix is the degree
+	     --computing DetM is the bottleneck
 	    h:=ideal first first factor DetM;
 	    --print degree h <<endl;
-	    degree h>1 and attemps<opts.IntersectionAttempts) do (attemps=attemps+1);
+	    degree h>1 and attemps<opts.IntersectionAttempts) 
+    do (attemps=attemps+1); --end of while
     if degree h >1 then return {};
-    pt:=radical saturateInGenericCoordinates(h+Js);
+    pt:=radical saturateInGenericCoordinates(h+Js); --lift to a higher dimensional space
     flatten (entries syz transpose jacobian pt)
-   )
+)
 
 getNextValidFieldSize = method();
 getNextValidFieldSize(ZZ, ZZ, ZZ) := (pp, d, targetSize) -> (
@@ -916,8 +919,7 @@ dimViaBezout(Ideal) := opts-> I1 -> (
             tr = taskResult(t1);
             if opts.Verbose then print ("dimViaBezout:  probabilistic dim finished first: " | toString(tr));
             cancel t2;
-            return tr;
-            
+            return tr;            
         );
         if opts.Verbose then print "dimViaBezout: Something went wrong with multithrading.";              
         return null;
