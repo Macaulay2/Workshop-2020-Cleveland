@@ -15,6 +15,8 @@ J = I + chooseGoodMinors(25, 4, M);
 T2 = ZZ/101[x1,x2,x3,x4,x5,x6,x7, Z];
 J2 = ideal(apply(first entries gens J, t->homogenize(sub(t, T2), Z) ));
 mm = ideal vars T2;
+J3 = J2 + ideal(random(1, T2), random(1, T2), random(1, T2));
+
 
 J = I + chooseGoodMinors(8, 4, M);  T2 = ZZ/101[x1,x2,x3,x4,x5,x6,x7, Z]; J2 = ideal(apply(first entries gens J, t->homogenize(sub(t, T2), Z) ));
 

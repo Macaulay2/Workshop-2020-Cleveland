@@ -1,9 +1,10 @@
-allowableThreads = 2;
+allowableThreads = 12;
 
 threadedSaturate = method();
 
 threadedSaturate(Ideal, List) := (I1, L1) -> (    
-    taskList := apply(L1, z -> createTask(saturate, (I1, ideal(z))) );
+    IList := apply(#L1, u -> new Ideal from I1);
+    taskList := apply(#L1, i -> createTask(saturate, (IList#i, ideal(L1#i))) );
     apply(taskList, t -> schedule t);
     while true do (
 	    nanosleep 1000000; --one thousandth of a second
