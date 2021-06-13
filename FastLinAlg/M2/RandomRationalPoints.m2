@@ -24,6 +24,7 @@ export {
 	"projectionToHypersurface", --documented, tested    
 	"randomCoordinateChange", --documented, tested
 	"randomPoints", 
+    "geometricPointsNew",
 	"extendIdealByNonZeroMinor",
 	"findANonZeroMinor",
     --"randomPointViaLinearIntersection", --these are here for debugging purposes
@@ -496,6 +497,8 @@ randomPointViaLinearIntersection(ZZ, Ideal) := opts -> (n1, I1) -> (
     return returnPointsList;
 );
 
+
+
 randomPointViaGenericProjection = method(Options => optRandomPoints);
 randomPointViaGenericProjection(ZZ, Ideal) := opts -> (n1, I1) -> (
     pointsList := {}; --a list of points to output
@@ -935,6 +938,75 @@ dimViaBezout(Ideal) := opts-> I1 -> (
     I2 := phi1(I1);    
     if (homog) then return dimViaBezoutHomogeneous(I2, DimensionIntersectionAttempts=>attempts) else 
     return dimViaBezoutNonhomogeneous(I2, Verbose=>opts.Verbose, DimensionIntersectionAttempts=>attempts);
+)
+
+geometricPointsNew = method(Options => optRandomPoints);
+geometricPointsNew(ZZ, Ideal) := opts -> (n1, I1) -> (
+    --this code is for the non-homogeneous case
+    --the idea in this code is simple.  Extend the field.  Intersect with binomials.  
+    --Then find the point, either by decompose or with a multiplication table
+    local J2;
+    local I3;
+    local myDeg;
+    local newS2;
+    local psi;
+    local j;
+    local l; --a linear space
+    local m2;  --a point, in an extended field
+    local finalPoint; --the point to be returned
+    local L2;
+    local J2;
+    local ptList; --list of points, before extending the field.
+    local newPtList; --list of points after extending the field
+    returnPointsList := {};
+
+    S1 := ring I1;
+    m := getFieldSize coefficientRing S1;
+    pp := char ring I1;
+    d := ceiling(log_pp(max(m, 100)) + 0.5); --this should force a bigger field extension
+    if opts.Verbose then print "geometricPointsNew: Extending the field";
+    if opts.Verbose then print ("geometricPointsNew: New field size is " | toString(pp) | "^" | toString(d) | " = " | toString(pp^(d)) );
+    (S2, phi1) := fieldBaseChange(S1, GF(pp, d));
+    I2 := phi1(I1);    
+    
+    i := dim S1;
+    while (i >= 0) do (
+        if opts.Verbose then print("geometricPointsNew: Trying intersection with a binomial linear space of dimension " | toString(dim S2 - i));
+        L2 = getRandomLinearForms(S2, {0,0,0,i,0});
+        J2 = ideal(L2) + I2;
+        if (J2 != ideal 1_S2) then (--we found a point
+            --we should have bifurcating code here, to turn the point into 
+            if opts.Verbose then print("geometricPointsNew: We found at least one point");
+            ptList = random decompose(J2);
+            if opts.Verbose then print("geometricPointsNew: We found " | toString(#ptList) | " points.");
+            j=0;
+            while (j < #ptList) and (#returnPointsList < n1) do (
+                myDeg = degree(ptList#j);                
+                if opts.Verbose then print("geometricPointsNew: Looking at a point of degree " | toString(myDeg));
+                if (myDeg == 1) then (
+                    finalPoint = idealToPoint(ptList#j);                    
+                    if (verifyPoint(finalPoint, I2, opts)) then returnPointsList = append(returnPointsList, finalPoint);
+                )
+                else if (opts.ExtendField == true) then (
+                    if (debugLevel > 0) or (opts.Verbose) then print "geometricPointsNew:  extending the field.";
+                    psi = (extendFieldByDegree(myDeg, S2))#1;
+                    I3 = psi(I2);
+                    newS2 := target psi;
+                    m2 = psi(ptList#j);
+                    newPtList = random decompose(m2); --make sure we are picking points randomly from this decomposition
+                    --since these points are going to be conjugate, we only pick 1.                      
+                    if (#newPtList > 0) then ( 
+                        finalPoint = idealToPoint(newPtList#0);
+                        --finalPoint =  apply(idealToPoint(newPtList#0), s -> sub(s, target phi));
+                        if (verifyPoint(finalPoint, I3, opts)) then (returnPointsList = append(returnPointsList, finalPoint);)                        
+                    ); 
+                );
+                j = j+1;
+            );
+            return returnPointsList;
+        );
+        i = i-1;        
+    );
 )
 
 --dimViaBezout(ZZ, Ideal) := (n1,I1) -> (
