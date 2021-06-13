@@ -11,7 +11,7 @@ newPackage(
 	     {Name => "Zhan Jiang", Email => "zoeng@umich.edu", HomePage => "http://www-personal.umich.edu/~zoeng/"}
 	     },
     	Headline => "compute a random point in a given variety over a finite field",
-        PackageImports => {"SwitchingFields", "MinimalPrimes"}, 
+        PackageImports => {"SwitchingFields", "MinimalPrimes", "ConwayPolynomials"}, 
 		DebuggingMode => true, 
 		Reload=>false,
 		AuxiliaryFiles => false -- set to true if package comes with auxiliary files
@@ -27,6 +27,7 @@ export {
     "geometricPointsNew",
 	"extendIdealByNonZeroMinor",
 	"findANonZeroMinor",
+    "verifyPoint",
     --"randomPointViaLinearIntersection", --these are here for debugging purposes
     --"randomPointViaLinearIntersectionOld", --these are here for debugging purposes
     "getRandomLinearForms", --here for debugging purposes    
@@ -987,7 +988,7 @@ geometricPointsNew(ZZ, Ideal) := opts -> (n1, I1) -> (
                     finalPoint = idealToPoint(ptList#j);                    
                     if (verifyPoint(finalPoint, I2, opts)) then returnPointsList = append(returnPointsList, finalPoint);
                 )
-                else if (opts.ExtendField == true) then (
+                else if (not (null === conwayPolynomial(pp, d*myDeg))) then (
                     if (debugLevel > 0) or (opts.Verbose) then print "geometricPointsNew:  extending the field.";
                     psi = (extendFieldByDegree(myDeg, S2))#1;
                     I3 = psi(I2);
@@ -1000,6 +1001,9 @@ geometricPointsNew(ZZ, Ideal) := opts -> (n1, I1) -> (
                         --finalPoint =  apply(idealToPoint(newPtList#0), s -> sub(s, target phi));
                         if (verifyPoint(finalPoint, I3, opts)) then (returnPointsList = append(returnPointsList, finalPoint);)                        
                     ); 
+                )
+                else (
+                    if (debugLevel > 0) or (opts.Verbose) then print "geometricPointsNew: Macaulay2 cannot handle a field extension this large, moving to the next point.";
                 );
                 j = j+1;
             );
