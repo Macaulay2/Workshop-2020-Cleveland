@@ -1,6 +1,6 @@
 
 newPackage(
-        "RandomRationalPoints",
+        "RandomPoints",
     	Version => "1.4",
     	Date => "March 16th, 2021",
     	Authors => {
@@ -10,7 +10,7 @@ newPackage(
 	     {Name => "Sarasij Maitra", Email => "sm3vg@virginia.edu", HomePage => "https://sarasij93.github.io/"},
 	     {Name => "Zhan Jiang", Email => "zoeng@umich.edu", HomePage => "http://www-personal.umich.edu/~zoeng/"}
 	     },
-    	Headline => "compute a random point in a given variety over a finite field",
+    	Headline => "find a point in a given variety over a finite field",
         PackageImports => {"SwitchingFields", "MinimalPrimes", "ConwayPolynomials"}, 
 		DebuggingMode => true, 
 		Reload=>false,
@@ -25,6 +25,7 @@ export {
 	"randomCoordinateChange", --documented, tested
 	"randomPoints", 
     "geometricPointsNew",
+    "randomPointViaMultiplicationTableNew",
 	"extendIdealByNonZeroMinor",
 	"findANonZeroMinor",
     "verifyPoint",
@@ -803,10 +804,9 @@ saturateInGenericCoordinates=method()
 saturateInGenericCoordinates(Ideal):= I1 -> (
     S1 := ring I1;
     --x:=random(0, S1)*random(1, S1) + random(1, S1);
-    x:=last gens ring I1;
+    x:=getRandomLinearForms(S1, {0,0,0,1,0}, Homogeneous => true);
     saturate(I1,ideal x)
 )
-
 
 
 randomPointViaMultiplicationTable=method(Options => optRandomPoints);
@@ -954,12 +954,13 @@ geometricPointsNew(ZZ, Ideal) := opts -> (n1, I1) -> (
     local j;
     local l; --a linear space
     local m2;  --a point, in an extended field
-    local finalPoint; --the point to be returned
-    local L2;
+    local finalPoint; --the point to be returned    
     local J2;
     local ptList; --list of points, before extending the field.
+    local sortedPtList; --list of points, before extending the field.
     local newPtList; --list of points after extending the field
     returnPointsList := {};
+    checks := 3*n1+4;
 
     S1 := ring I1;
     m := getFieldSize coefficientRing S1;
@@ -971,47 +972,103 @@ geometricPointsNew(ZZ, Ideal) := opts -> (n1, I1) -> (
     I2 := phi1(I1);    
     
     i := dim S1;
+    k:= 0;
+    L2 := apply(checks, t-> getRandomLinearForms(S2, {0,max(0, i-t),0,min(t, i),0}, Homogeneous=>false)); --a list of linear forms
     while (i >= 0) do (
         if opts.Verbose then print("geometricPointsNew: Trying intersection with a binomial linear space of dimension " | toString(dim S2 - i));
-        L2 = getRandomLinearForms(S2, {0,0,0,i,0});
-        J2 = ideal(L2) + I2;
-        if (J2 != ideal 1_S2) then (--we found a point
-            --we should have bifurcating code here, to turn the point into 
-            if opts.Verbose then print("geometricPointsNew: We found at least one point");
-            ptList = random decompose(J2);
-            if opts.Verbose then print("geometricPointsNew: We found " | toString(#ptList) | " points.");
-            j=0;
-            while (j < #ptList) and (#returnPointsList < n1) do (
-                myDeg = degree(ptList#j);                
-                if opts.Verbose then print("geometricPointsNew: Looking at a point of degree " | toString(myDeg));
-                if (myDeg == 1) then (
-                    finalPoint = idealToPoint(ptList#j);                    
-                    if (verifyPoint(finalPoint, I2, opts)) then returnPointsList = append(returnPointsList, finalPoint);
-                )
-                else if (not (null === conwayPolynomial(pp, d*myDeg))) then (
-                    if (debugLevel > 0) or (opts.Verbose) then print "geometricPointsNew:  extending the field.";
-                    psi = (extendFieldByDegree(myDeg, S2))#1;
-                    I3 = psi(I2);
-                    newS2 := target psi;
-                    m2 = psi(ptList#j);
-                    newPtList = random decompose(m2); --make sure we are picking points randomly from this decomposition
-                    --since these points are going to be conjugate, we only pick 1.                      
-                    if (#newPtList > 0) then ( 
-                        finalPoint = idealToPoint(newPtList#0);
-                        --finalPoint =  apply(idealToPoint(newPtList#0), s -> sub(s, target phi));
-                        if (verifyPoint(finalPoint, I3, opts)) then (returnPointsList = append(returnPointsList, finalPoint);)                        
-                    ); 
-                )
-                else (
-                    if (debugLevel > 0) or (opts.Verbose) then print "geometricPointsNew: Macaulay2 cannot handle a field extension this large, moving to the next point.";
-                );
-                j = j+1;
+        L2 = apply(checks, t->drop(L2#t, 1));
+        J2 = apply(L2, l -> ideal(l) + I2);
+        k = 0;
+        while (k < checks) and (#returnPointsList < n1) do (
+            if opts.Verbose then print("geometricPointsNew: trying linear intersection #" | toString(k));
+            if (J2#k != ideal 1_S2) and (#returnPointsList < n1) then (--we found a point                
+                i = -1; --stop the exterior loop, we found the dimension
+                if opts.Verbose then print("geometricPointsNew: We found at least one point");
+                --we should have bifurcating code here, so instead of running this, call a function, or call the multiplication table
+                ptList = random decompose(J2#k);
+                if opts.Verbose then print("geometricPointsNew: We found " | toString(#ptList) | " points.");
+                j=0;
+                sortedPtList = sort apply(#ptList, t -> {dim (ptList#t), degree (ptList#t), t});
+                while (j < #ptList) and (#returnPointsList < n1) and (sortedPtList#j#0 == 0) do (
+                    myDeg = sortedPtList#j#1;                
+                    if opts.Verbose then print("geometricPointsNew: Looking at a point of degree " | toString(myDeg));
+                    if (myDeg == 1) then (
+                        finalPoint = idealToPoint(ptList#(sortedPtList#j#2));                    
+                        if (verifyPoint(finalPoint, I2, opts)) then returnPointsList = append(returnPointsList, finalPoint);
+                    )
+                    else if (not (null === conwayPolynomial(pp, d*myDeg))) then (
+                        if (debugLevel > 0) or (opts.Verbose) then print "geometricPointsNew:  extending the field.";
+                        psi = (extendFieldByDegree(myDeg, S2))#1;
+                        I3 = psi(I2);
+                        newS2 = target psi;
+                        m2 = psi(ptList#j);
+                        newPtList = random decompose(m2); --make sure we are picking points randomly from this decomposition
+                        --since these points are going to be conjugate, we only pick 1.                      
+                        if (#newPtList > 0) then ( 
+                            finalPoint = idealToPoint(newPtList#0);
+                            --finalPoint =  apply(idealToPoint(newPtList#0), s -> sub(s, target phi));
+                            if (verifyPoint(finalPoint, I3, opts)) then (returnPointsList = append(returnPointsList, finalPoint);)                        
+                        ); 
+                    )
+                    else (
+                        if (debugLevel > 0) or (opts.Verbose) then print "geometricPointsNew: Macaulay2 cannot handle a field extension this large, moving to the next point.";
+                    );
+                    j = j+1;
+                );                
             );
-            return returnPointsList;
+            if (#returnPointsList >= n1) then return returnPointsList;
+            k = k+1;
         );
         i = i-1;        
     );
+    return returnPointsList;
 )
+
+
+randomPointViaMultiplicationTableNew=method(Options => optRandomPoints);
+randomPointViaMultiplicationTableNew(ZZ, Ideal) := opts-> (n1, I) -> (
+    -- Input: I, a homogeneous ideal, d its dimension
+    --Output: a K-rational point on V(I) where K is  the finite ground field.
+    if not isHomogeneous I then error "randomPointViaMultiplicationTable: expected a homogeneous ideal";
+    switchStrategy(opts,MultiplicationTable);
+    -- we cut down with a linear space to a zero-dimensional projective scheme
+    -- and compute how the last two variables act on the quotient ring truncated  
+    -- at the regularity. 
+    -- In case of an absolutely irreducible I over K, we will find with 
+    -- high probability a point, 
+    -- since the determinant will has a linear factor in at least 50% of the cases
+    S:= ring I;
+    checks := 3*n1+4;
+    attemps:=1;
+    d := 2;
+    while (
+        L:=ideal random(S^1,S^{d-1:-1});
+	--elapsedTime J=saturate(I+L);
+	    J:=I+L;
+    	Js:=saturateInGenericCoordinates J;
+        --Js := saturate(J, ideal first entries vars S);
+	    r:=degree ideal last (entries gens gb Js)_0;
+        b1 :=basis(r+1,S^1/Js); --if not homogeneous
+	    b2 :=basis(r+2,S^1/Js);
+	    j:=#gens S-d;
+	    xx:=(support (vars S%L))_{j-1,j}; --last two equations (why last?)
+	    m0:=contract(transpose matrix entries b2,matrix entries((xx_0*b1)%Js));  --contract 
+	    m1:=contract(transpose matrix entries b2,matrix entries((xx_1*b1)%Js));
+        M:=map(S^(rank target m0),S^{rank source m0:-1},xx_0*m1-xx_1*m0);
+ 	    DetM:=(M^{0}*syz M^{1..rank source M-1})_(0,0); --fake determinant computation  
+         --look at examples of this matrix and see what happens, is this syz trick the way to compute
+         --this will be slow if the degree is large since the size of this matrix is the degree
+	     --computing DetM is the bottleneck
+	    h:=ideal first first factor DetM;
+	    --print degree h <<endl;
+	    degree h>1 and attemps<opts.IntersectionAttempts) 
+    do (attemps=attemps+1); --end of while
+    if degree h >1 then return {};
+    pt:=radical saturateInGenericCoordinates(h+Js); --lift to a higher dimensional space
+    flatten (entries syz transpose jacobian pt)
+)
+
+
 
 --dimViaBezout(ZZ, Ideal) := (n1,I1) -> (
     --if (isHomogeneous I1) then (
@@ -1349,9 +1406,9 @@ extendIdealByNonZeroMinor(ZZ,Matrix,Ideal):= opts -> (n, M, I) -> (
 
 beginDocumentation()
 document {
-        Key => RandomRationalPoints,
+        Key => RandomPoints,
         Headline => "Obtain random points in a variety",
-        EM "RandomRationalPoints", "Find random points inside a variety.",
+        EM "RandomPoints", "Find random points inside a variety.",
         BR{},BR{},
         "This package provides tools for quickly finding a point (rational, or over a field extension) in the vanishing set of an ideal.  The search is highly customizable.  This package also includes tools for finding submatrices of a given rank at some point.  Furthermore, it provides tools for generic projections and producing collections of linear forms with specified properties.",
         BR{},
@@ -2057,7 +2114,7 @@ doc ///
         Text
             In this particular example, there tend to be about 5 associated primes when adding the first minor to J, and so one would expect about 5 steps as each minor computed most likely will eliminate one of those primes.
         Text
-            There is some similar functionality obtained via heuristics (as opposed to actually finding rational points) in the package "FastLinAlg".
+            There is some similar functionality obtained via heuristics (as opposed to actually finding rational points) in the package "FastMinors".
     SeeAlso
         findANonZeroMinor
 ///
@@ -2196,10 +2253,10 @@ end
 -- package.  None of it will be executed when the file is loaded,
 -- because loading stops when the symbol "end" is encountered.
 
-installPackage "RandomRationalPoints"
-installPackage("RandomRationalPoints", RemakeAllDocumentation=>true)
-check RandomRationalPoints
+installPackage "RandomPoints"
+installPackage("RandomPoints", RemakeAllDocumentation=>true)
+check RandomPoints
 
 -- Local Variables:
--- compile-command: "make -C $M2BUILDDIR/Macaulay2/packages PACKAGES=RandomRationalPoints pre-install"
+-- compile-command: "make -C $M2BUILDDIR/Macaulay2/packages PACKAGES=RandomPoints pre-install"
 -- End:
