@@ -804,8 +804,8 @@ saturateInGenericCoordinates=method()
 saturateInGenericCoordinates(Ideal):= I1 -> (
     S1 := ring I1;
     --x:=random(0, S1)*random(1, S1) + random(1, S1);
-    x:=getRandomLinearForms(S1, {0,0,0,1,0}, Homogeneous => true);
-    saturate(I1,ideal x)
+    x:=getRandomLinearForms(S1, {0,0,0,2,0}, Homogeneous => true);    
+    (saturate(I1,ideal x#0)) *( saturate(I1,ideal x#1))
 )
 
 
@@ -1035,58 +1035,67 @@ randomPointViaMultiplicationTableNew(ZZ, Ideal) := opts-> (n1, I1) -> (
     -- at the regularity.     
     local k;
     local J2;
-    
+    local Js;
     returnPointsList := {};
 
     S1:= ring I1;
     checks := 3*n1+3;
     m := getFieldSize coefficientRing S1;
     pp := char ring I1;
-    d := floor(log_pp(max(m, 1000)) + 0.5); --this should force a field with > 1000 elts
+    d := ceiling(log_pp(max(m, 1000)) + 0.1); --this should force a field with > 1000 elts
     if opts.Verbose then print "randomPointViaMultiplicationTableNew: Extending the field";
     if opts.Verbose then print ("randomPointViaMultiplicationTableNew: New field size is " | toString(pp) | "^" | toString(d) | " = " | toString(pp^(d)) );
     (S2, phi1) := fieldBaseChange(S1, GF(pp, d));
     I2 := phi1(I1);    
     
     i := dim S1-1;
-    L2 := apply(checks, t-> getRandomLinearForms(S2, {0,max(0, i-t),0,min(t, i),0}, Homogeneous=>true)); 
+    L2 := apply(checks, t-> getRandomLinearForms(S2, {0,0,0,i,0}, Homogeneous=>true, Verify=>true)); 
         --a list of all the linear forms to use    
     
-    while (i >= 0) do (
+    while (i >= 0) and (#returnPointsList < n1) do (
         if opts.Verbose then print("randomPointViaMultiplicationTableNew: Trying intersection with a binomial linear space of dimension " | toString(dim S2 - i));        
         J2 = apply(L2, l -> ideal(l) + I2); -- a list of intersections
         k = 0;
         while (k < checks) and (#returnPointsList < n1) do (
-            if (saturateInGenericCoordinates(J2#k) != ideal 1_S2) and (#returnPointsList < n1) then (
-
-                -----THE FOLLOWING CODE NEEDS TO BE MODIFIED
-                -*
-                while (
-                    --L:=ideal random(S^1,S^{d-1:-1});
-                --elapsedTime J=saturate(I+L);
-                    J:=I+L;
-                    Js:=saturateInGenericCoordinates J;
-                    --Js := saturate(J, ideal first entries vars S);
-                    r:=degree ideal last (entries gens gb Js)_0;
-                    b1 :=basis(r+1,S1^1/Js); --if not homogeneous
-                    b2 :=basis(r+2,S1^1/Js);
-                    j:=#gens S1-d;
-                    xx:=(support (vars S1%L))_{j-1,j}; --last two equations (why last?)
-                    m0:=contract(transpose matrix entries b2,matrix entries((xx_0*b1)%Js));  --contract 
-                    m1:=contract(transpose matrix entries b2,matrix entries((xx_1*b1)%Js));
-                    M:=map(S1^(rank target m0),S^{rank source m0:-1},xx_0*m1-xx_1*m0);
-                    DetM:=(M^{0}*syz M^{1..rank source M-1})_(0,0); --fake determinant computation  
-                    --look at examples of this matrix and see what happens, is this syz trick the way to compute
-                    --this will be slow if the degree is large since the size of this matrix is the degree
-                    --computing DetM is the bottleneck
-                    h:=ideal first first factor DetM;
-                    --print degree h <<endl;
-                    degree h>1 and attemps<opts.IntersectionAttempts) 
-                do (attemps=attemps+1); --end of while
-                if degree h >1 then return {};
-                pt:=radical saturateInGenericCoordinates(h+Js); --lift to a higher dimensional space
-                flatten (entries syz transpose jacobian pt);            
-            *-
+             if opts.Verbose then print("randomPointViaMultiplicationTableNew: trying linear intersection #" | toString(k));
+            Js = saturate(J2#k);
+            if (Js != ideal 1_S2) and (#returnPointsList < n1) then (
+               
+                -----THE FOLLOWING CODE MAY NEED TO BE MODIFIED FURTHER
+                --Js:=saturateInGenericCoordinates(J2#k); --this should saturate pretty quickly                
+                r:=degree ideal last (entries gens gb Js)_0;
+                b1 :=basis(r+1,S2^1/Js); 
+                b2 :=basis(r+2,S2^1/Js);
+                j:=dim S1 - i-1; --the expected codimension of I2
+                xx:=(support (vars S2%(ideal(L2#k))))_{j-1,j}; 
+                m0:=contract(transpose matrix entries b2,matrix entries((xx_0*b1)%Js));  --contract 
+                m1:=contract(transpose matrix entries b2,matrix entries((xx_1*b1)%Js));
+                M:=map(S2^(rank target m0),S2^{rank source m0:-1},xx_0*m1-xx_1*m0);
+                DetM:=(M^{0}*syz M^{1..rank source M-1})_(0,0); --fake determinant computation  
+                --look at examples of this matrix and see what happens, is this syz trick the way to compute
+                --this will be slow if the degree is large since the size of this matrix is the degree
+                --computing DetM is the bottleneck
+                --h:=ideal first first factor DetM;                
+                if (not DetM == 0) then (
+                    h:= factor DetM;
+                    count := 0;
+                    while (count < #h) and (#returnPointsList < n1) do (
+                        myH := first (h#count);
+                        if (degree myH >= degree(0_S2)) and (degree myH == degree first first entries vars S2) then (--check to see if we have a degree 1 factor
+                            pt:=radical saturateInGenericCoordinates((ideal myH)+Js); --lift to a higher dimensional space
+                            if (degree pt == 1) then (
+                                returnPointsList = append(returnPointsList, flatten (entries syz transpose jacobian pt));
+                                i = -1; --also, stop the big loop
+                            );
+                        );            
+                        count = count+1;
+                    );
+                );
+                --print degree h <<endl;
+                    --degree h>1 and attemps<opts.IntersectionAttempts
+                --) 
+                --do (attemps=attemps+1); --end of while
+                --if degree h >1 then return {};                
             );
             k = k+1;
         );
@@ -1095,6 +1104,7 @@ randomPointViaMultiplicationTableNew(ZZ, Ideal) := opts-> (n1, I1) -> (
         L2 = apply(checks, t->drop(L2#t, 1));
         i = i-1;
     );
+    return returnPointsList;
 )
 
 

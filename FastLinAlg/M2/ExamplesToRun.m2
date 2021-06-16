@@ -28,6 +28,7 @@ J = I + chooseGoodMinors(8, 4, M);  T2 = ZZ/101[x1,x2,x3,x4,x5,x6,x7, Z]; J2 = i
 elapsedTime randomPoints(J2, Verbose=>true)
 time randomPoints(J2, Strategy=>MultiplicationTable);
 time geometricPointsNew(1, J2, Verbose=>true);
+time randomPointViaMultiplicationTableNew(1, J2, Verbose=>true)
 
 time geometricPointsNew(1, J, Verbose=>true)
 time randomPoints(J, Verbose=>true)
