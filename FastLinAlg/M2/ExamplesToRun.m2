@@ -53,10 +53,14 @@ J3 = I2 + chooseGoodMinors(35, 7, M2);
 
 time randomPoints(J2)
 time randomPoints(J2, Strategy=>LinearIntersection)
+time randomPoints(J3, Strategy=>LinearIntersection)
 time randomPoints(J2, Strategy=>MultiplicationTable)
 time randomPoints(J2, DimensionFunction=>dim)
+time randomPoints(J3, DimensionFunction=>dim)
+time randomPoints(J3)
 time randomPoints(J2, Strategy=>LinearIntersection, DimensionFunction=>dim)
 time randomPoints(J2, Strategy=>MultiplicationTablem, DimensionFunction=>dim)
+time randomPoints(J3, Strategy=>MultiplicationTablem, DimensionFunction=>dim)
 
 elapsedTime randomPoints(J3, Verbose=>true)
 time randomPoints(J3, Strategy=>MultiplicationTable);

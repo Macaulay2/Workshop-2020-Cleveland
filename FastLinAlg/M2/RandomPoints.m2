@@ -26,10 +26,12 @@ export {
 	"randomPoints", 
     "geometricPointsNew",
     "rationalPointsNew",
+    "linearIntersectionNew",
     "randomPointViaMultiplicationTableNew",
 	"extendIdealByNonZeroMinor",
 	"findANonZeroMinor",
     "verifyPoint",
+    "verifyDimZero",
     --"randomPointViaLinearIntersection", --these are here for debugging purposes
     --"randomPointViaLinearIntersectionOld", --these are here for debugging purposes
     "getRandomLinearForms", --here for debugging purposes    
@@ -979,8 +981,9 @@ rationalPointsNew(ZZ, Ideal) := opts -> (n1, I1) -> (
     local ptList; --list of points, before extending the field.
     local sortedPtList; --list of points, before extending the field.
     local newPtList; --list of points after extending the field
+    local checks;
     returnPointsList := {};
-    checks := 3*n1+3;
+    if (opts.PointCheckAttempts > 0) then checks = opts.PointCheckAttempts else checks = 3*n1+3;    
 
     S1 := ring I1;
     m := getFieldSize coefficientRing S1;
@@ -990,21 +993,25 @@ rationalPointsNew(ZZ, Ideal) := opts -> (n1, I1) -> (
     
     i := dim S1;
     k:= 0;
-    L2 := apply(checks, t-> getRandomLinearForms(S2, {0,max(0, i-t),0,min(t, i), 0,0}, Homogeneous=>false)); --a list of linear forms
+    --L2 := apply(checks, t-> getRandomLinearForms(S2, {0,max(0, i-t),0,min(t, i), 0,0}, Homogeneous=>false)); --a list of linear forms
+    L2 := apply(checks, t-> getRandomLinearForms(S2, {0,i,0,0,0,0}, Homogeneous=>false));
     while (i >= 0) do (
         if opts.Verbose then print("rationalPointsNew: Trying intersection with a binomial linear space of dimension " | toString(dim S2 - i));        
         J2 = apply(L2, l -> ideal(l) + I2);
         k = 0;
         while (k < checks) and (#returnPointsList < n1) do (
             if opts.Verbose then print("rationalPointsNew: trying linear intersection #" | toString(k));
+            --print (J2#k == ideal(1_S2));
+            --print dim(J2#k);
             if (J2#k != ideal 1_S2) and (#returnPointsList < n1) then (--we found a point                
-                i = -1; --stop the exterior loop, we found the dimension
+                --i = -1; --stop the exterior loop, we found the dimension
                 if opts.Verbose then print("rationalPointsNew: We found at least one point");
                 --we should have bifurcating code here, so instead of running this, call a function, or call the multiplication table
-                ptList = random decompose(J2#k);
+                ptList = random decompose trim  (J2#k);
                 if opts.Verbose then print("rationalPointsNew: We found " | toString(#ptList) | " points.");
                 j=0;
                 sortedPtList = sort apply(#ptList, t -> {dim (ptList#t), degree (ptList#t), t});
+                if opts.Verbose then print sortedPtList;
                 while (j < #ptList) and (#returnPointsList < n1) and (sortedPtList#j#0 == 0) do (
                     myDeg = sortedPtList#j#1;                
                     if opts.Verbose then print("rationalPointsNew: Looking at a point of degree " | toString(myDeg));
@@ -1016,7 +1023,10 @@ rationalPointsNew(ZZ, Ideal) := opts -> (n1, I1) -> (
                         if (debugLevel > 0) or (opts.Verbose) then print "rationalPointsNew: Found a non-rational point.";
                     );
                     j = j+1;
-                );                
+                );    
+                --now we need to remove this item from the list of things to check       
+                L2 = drop(L2, {k,k});    
+                checks = checks - 1; --we have fewer things to check against now that this one is used up     
             );
             if (#returnPointsList >= n1) then return returnPointsList;
             k = k+1;
@@ -1026,6 +1036,29 @@ rationalPointsNew(ZZ, Ideal) := opts -> (n1, I1) -> (
     );
     return returnPointsList;
 )
+
+verifyDimZero = method();--verify if an ideal has dimension zero
+verifyDimZero(Ideal) := (I1) -> (
+    local S2;
+    local phi1;
+    local I2;
+    S1 := ring I1;
+    m := getFieldSize coefficientRing S1;    
+    pp := char S1;
+    curD := floor(log_pp(m) + 0.5);    
+    if (m < 100000) then (
+        d := ceiling(log_pp(max(m, 100000)));
+        d = ceiling(d/curD)*d;
+        (S2, phi1) = fieldBaseChange(S1, GF(pp, d));
+        I2 = phi1(I1);  
+    )
+    else (
+        I2 = I1;
+        S2 = S1;
+    );
+    h := getRandomLinearForms(S2, {0,1,0,0,0,0}, Homogeneous => false);
+    return (I2 + ideal(h) == ideal(1_S2));
+);
 
 geometricPointsNew = method(Options => optRandomPoints);
 geometricPointsNew(ZZ, Ideal) := opts -> (n1, I1) -> (
@@ -1045,13 +1078,16 @@ geometricPointsNew(ZZ, Ideal) := opts -> (n1, I1) -> (
     local ptList; --list of points, before extending the field.
     local sortedPtList; --list of points, before extending the field.
     local newPtList; --list of points after extending the field
+    local checks;
     returnPointsList := {};
-    checks := 3*n1+3;
+    if (opts.PointCheckAttempts > 0) then checks = opts.PointCheckAttempts else checks = 3*n1+3; 
 
     S1 := ring I1;
     m := getFieldSize coefficientRing S1;
     pp := char ring I1;
     d := ceiling(log_pp(max(m, 100)) + 0.5); --this should force a bigger field extension
+    curD := floor(log_pp(m) + 0.5);--current degree
+    d = ceiling(d/curD)*d;
     if opts.Verbose then print "geometricPointsNew: Extending the field";
     if opts.Verbose then print ("geometricPointsNew: New field size is " | toString(pp) | "^" | toString(d) | " = " | toString(pp^(d)) );
     (S2, phi1) := fieldBaseChange(S1, GF(pp, d));
@@ -1059,50 +1095,57 @@ geometricPointsNew(ZZ, Ideal) := opts -> (n1, I1) -> (
     
     i := dim S1;
     k:= 0;
-    L2 := apply(checks, t-> getRandomLinearForms(S2, {0,max(0, i-t),0,min(t, i), 0,0}, Homogeneous=>false)); --a list of linear forms
+    L2 := apply(checks, t-> getRandomLinearForms(S2, {0,i,0,0,0,0}, Homogeneous=>false));
+    --L2 := apply(checks, t-> getRandomLinearForms(S2, {0,max(0, i-t),0,min(t, i), 0,0}, Homogeneous=>false)); --a list of linear forms
     while (i >= 0) do (
         if opts.Verbose then print("geometricPointsNew: Trying intersection with a binomial linear space of dimension " | toString(dim S2 - i));        
         J2 = apply(L2, l -> ideal(l) + I2);
-        k = 0;
-        while (k < checks) and (#returnPointsList < n1) do (
+        k = checks - 1;
+        while (k >= 0) and (#returnPointsList < n1) do (
             if opts.Verbose then print("geometricPointsNew: trying linear intersection #" | toString(k));
             if (J2#k != ideal 1_S2) and (#returnPointsList < n1) then (--we found a point                
-                i = -1; --stop the exterior loop, we found the dimension
-                if opts.Verbose then print("geometricPointsNew: We found at least one point");
-                --we should have bifurcating code here, so instead of running this, call a function, or call the multiplication table
-                ptList = random decompose(J2#k);
-                if opts.Verbose then print("geometricPointsNew: We found " | toString(#ptList) | " points.");
-                j=0;
-                sortedPtList = sort apply(#ptList, t -> {dim (ptList#t), degree (ptList#t), t});
-                while (j < #ptList) and (#returnPointsList < n1) and (sortedPtList#j#0 == 0) do (
-                    myDeg = sortedPtList#j#1;                
-                    if opts.Verbose then print("geometricPointsNew: Looking at a point of degree " | toString(myDeg));
-                    if (myDeg == 1) then (
-                        finalPoint = idealToPoint(ptList#(sortedPtList#j#2));                    
-                        if (verifyPoint(finalPoint, I2, opts)) then returnPointsList = append(returnPointsList, finalPoint);
-                    )
-                    else if (not (null === conwayPolynomial(pp, d*myDeg))) then (
-                        if (debugLevel > 0) or (opts.Verbose) then print "geometricPointsNew:  extending the field.";
-                        psi = (extendFieldByDegree(myDeg, S2))#1;
-                        I3 = psi(I2);
-                        newS2 = target psi;
-                        m2 = psi(ptList#j);
-                        newPtList = random decompose(m2); --make sure we are picking points randomly from this decomposition
-                        --since these points are going to be conjugate, we only pick 1.                      
-                        if (#newPtList > 0) then ( 
-                            finalPoint = idealToPoint(newPtList#0);
-                            --finalPoint =  apply(idealToPoint(newPtList#0), s -> sub(s, target phi));
-                            if (verifyPoint(finalPoint, I3, opts)) then (returnPointsList = append(returnPointsList, finalPoint);)                        
-                        ); 
-                    )
-                    else (
-                        if (debugLevel > 0) or (opts.Verbose) then print "geometricPointsNew: Macaulay2 cannot handle a field extension this large, moving to the next point.";
-                    );
-                    j = j+1;
-                );                
+                if opts.Verbose then print("geometricPointsNew: We found something");
+                if (dim (J2#k) == 0) then (
+                    --i = -1; --stop the exterior loop, we found the dimension
+                    if opts.Verbose then print("geometricPointsNew: We found at least one point");
+                    --we should have bifurcating code here, so instead of running this, call a function, or call the multiplication table
+                    ptList = random decompose(J2#k);
+                    if opts.Verbose then print("geometricPointsNew: We found " | toString(#ptList) | " points.");
+                    j=0;
+                    sortedPtList = sort apply(#ptList, t -> {dim (ptList#t), degree (ptList#t), t});
+                    while (j < #ptList) and (#returnPointsList < n1) and (sortedPtList#j#0 == 0) do (
+                        myDeg = sortedPtList#j#1;                
+                        if opts.Verbose then print("geometricPointsNew: Looking at a point of degree " | toString(myDeg));
+                        if (myDeg == 1) then (
+                            finalPoint = idealToPoint(ptList#(sortedPtList#j#2));                    
+                            if (verifyPoint(finalPoint, I2, opts)) then returnPointsList = append(returnPointsList, finalPoint);
+                        )
+                        else if (not (null === conwayPolynomial(pp, d*myDeg))) then (
+                            if (debugLevel > 0) or (opts.Verbose) then print "geometricPointsNew:  extending the field.";
+                            psi = (extendFieldByDegree(myDeg, S2))#1;
+                            I3 = psi(I2);
+                            newS2 = target psi;
+                            m2 = psi(ptList#j);
+                            newPtList = random decompose(m2); --make sure we are picking points randomly from this decomposition
+                            --since these points are going to be conjugate, we only pick 1.                      
+                            if (#newPtList > 0) then ( 
+                                finalPoint = idealToPoint(newPtList#0);
+                                --finalPoint =  apply(idealToPoint(newPtList#0), s -> sub(s, target phi));
+                                if (verifyPoint(finalPoint, I3, opts)) then (returnPointsList = append(returnPointsList, finalPoint);)                        
+                            ); 
+                        )
+                        else (
+                            if (debugLevel > 0) or (opts.Verbose) then print "geometricPointsNew: Macaulay2 cannot handle a field extension this large, moving to the next point.";
+                        );
+                        j = j+1;                    
+                    );   
+                );
+                --now we need to remove this item from the list of things to check    
+                L2 = drop(L2, {k,k});    
+                checks = checks - 1;     --we have fewer things to check against now that this one is used up
             );
             if (#returnPointsList >= n1) then return returnPointsList;
-            k = k+1;
+            k = k-1;
         );
         L2 = apply(checks, t->drop(L2#t, 1)); --drop something for next run
         i = i-1;        
@@ -1136,19 +1179,22 @@ linearIntersectionNew(ZZ, Ideal) := opts -> (n1, I1) -> (
     local L2;
     local workingIdeal;
     returnPointsList := {};
-    if (opts.PointCheckAttempts >= 1 ) then checks = opts.PointCheckAttempts else if (opts.ExtendField) then  checks = 6*n1+5 else checks = 6*n1+5;  
+    if (opts.PointCheckAttempts >= 1 ) then checks = opts.PointCheckAttempts else if (opts.ExtendField) then  checks = 3*n1+3 else checks = 3*n1+3;  
 
     S1 := ring I1;
     m := getFieldSize coefficientRing S1;
     pp := char ring I1;
     if (opts.ExtendField) then ( 
         d = ceiling(log_pp(max(m, 100)) + 0.5); --this should force a bigger field extension
+        curD := floor(log_pp(m) + 0.5);--current degree
         if opts.Verbose then print "linearIntersectionNew: Extending the field";
         if opts.Verbose then print ("linearIntersectionNew: New field size is " | toString(pp) | "^" | toString(d) | " = " | toString(pp^(d)) );
+        d = ceiling(d/curD)*d; --make sure our extension degree is a multiple of the old degree
         (S2, phi1) = fieldBaseChange(S1, GF(pp, d));
         I2 = phi1(I1);    
     )
     else(
+        d = floor(log_pp(m) + 0.5); --the current degree, for later storage
         S2 = S1;
         I2 = I1;
     );
@@ -1160,22 +1206,22 @@ linearIntersectionNew(ZZ, Ideal) := opts -> (n1, I1) -> (
     --depending on what was passed, we choose a list of 
     if (class opts.Replacement === List) then (
         if (not (sum opts.Replacement == i)) and (opts.Verbose) then print "linearIntersectionNew: Warning, you passed a replacement scheme but the terms did not add up to the ambient dimension."; 
-        L2 = apply(checks, t-> getRandomLinearForms(S2, opts.Replacement, Homogeneous=>homogFlag)); --a list of linear forms
+        L2 = apply(checks, t-> getRandomLinearForms(S2, opts.Replacement, Homogeneous=>homogFlag, Verify=>true)); --a list of linear forms
     )
     else if (opts.Replacement === Monomial) then (
-        L2 = apply(checks, t -> getRandomLinearForms(S2, {0, i, 0, 0, 0, 0}), , Homogeneous=>homogFlag);
+        L2 = apply(checks, t -> getRandomLinearForms(S2, {0, i, 0, 0, 0, 0}, Homogeneous=>homogFlag, Verify=>true));
     )
     else if (opts.Replacement === Binomial) then (
-        L2 = apply(checks, t -> getRandomLinearForms(S2, {0, 0, 0, i, 0, 0}),Homogeneous=>homogFlag);
+        L2 = apply(checks, t -> getRandomLinearForms(S2, {0, 0, 0, i, 0, 0},Homogeneous=>homogFlag, Verify=>true));
     )
     else if (opts.Replacement === Trinomial) then (
-        L2 = apply(checks, t -> getRandomLinearForms(S2, {0, 0, 0, 0, i, 0}),Homogeneous=>homogFlag);
+        L2 = apply(checks, t -> getRandomLinearForms(S2, {0, 0, 0, 0, i, 0},Homogeneous=>homogFlag, Verify=>true));
     )
     else if (opts.Replacement === Full) then (
-        L2 = apply(checks, t -> getRandomLinearForms(S2, {0, 0, 0, 0, 0, i}), Homogeneous=>homogFlag);
+        L2 = apply(checks, t -> getRandomLinearForms(S2, {0, 0, 0, 0, 0, i}, Homogeneous=>homogFlag, Verify=>true));
     )
     else (
-        L2 = apply(checks, t-> getRandomLinearForms(S2, {0,max(0, i-t),0,min(t, i), 0,0}, Homogeneous=>homogFlag)); --a list of linear forms, some monomial, some binomial
+        L2 = apply(checks, t-> getRandomLinearForms(S2, {0,max(0, i-t),0,min(t, i), 0,0}, Homogeneous=>homogFlag, Verify=>true)); --a list of linear forms, some monomial, some binomial
     ); --now we have picked the linear forms, we begin our loop
     while (i >= 0) do (
         if opts.Verbose then print("linearIntersectionNew: Trying intersection with a linear space of dimension " | toString(dim S2 - i));        
@@ -1187,10 +1233,12 @@ linearIntersectionNew(ZZ, Ideal) := opts -> (n1, I1) -> (
             if (homogFlag) then workingIdeal = saturate workingIdeal; --make this saturation faster
             if (workingIdeal != ideal 1_S2) and (#returnPointsList < n1) then (--we found a point                
                 --i = -1; --stop the exterior loop, we found the dimension
-                if opts.Verbose then print("linearIntersectionNew: We found at least one point");
-                --we should have bifurcating code here, so instead of running this, call a function, or call the multiplication table
-                if (not homogFlag) then (
-                    ptList = random decompose(J2#k);
+                if opts.Verbose then print("linearIntersectionNew: We found something.");
+                if ((not homogFlag) and (dim workingIdeal == 0)) then (--if we are using decompose
+                    if opts.Verbose then print("linearIntersectionNew: We found at least one point");
+                    --we should have bifurcating code here, so instead of running this, call a function, or call the multiplication table
+                    
+                    ptList = random decompose trim (workingIdeal);                        
                     if opts.Verbose then print("linearIntersectionNew: We found " | toString(#ptList) | " points.");
                     j=0;
                     sortedPtList = sort apply(#ptList, t -> {dim (ptList#t), degree (ptList#t), t});
@@ -1201,7 +1249,7 @@ linearIntersectionNew(ZZ, Ideal) := opts -> (n1, I1) -> (
                             finalPoint = idealToPoint(ptList#(sortedPtList#j#2));                    
                             if (verifyPoint(finalPoint, I2, opts)) then returnPointsList = append(returnPointsList, finalPoint);
                         )
-                        else if (not (null === conwayPolynomial(pp, d*myDeg))) and (opts.ExtendField) then (
+                        else if (opts.ExtendField) and (not (null === conwayPolynomial(pp, d*myDeg)))  then (
                             if (debugLevel > 0) or (opts.Verbose) then print "linearIntersectionNew:  extending the field.";
                             psi = (extendFieldByDegree(myDeg, S2))#1;
                             I3 = psi(I2);
@@ -1218,12 +1266,16 @@ linearIntersectionNew(ZZ, Ideal) := opts -> (n1, I1) -> (
                         else if (opts.ExtendField) then (
                             if (debugLevel > 0) or (opts.Verbose) then print "geometricPointsNew: Macaulay2 cannot handle a field extension this large, moving to the next point.";
                         );
-                    );
-                    j = j+1;
-                );    
-                --drop this entry, we dealt with it
-                L2 = drop(L2, {k,k});
-                checks = checks-1; --we have fewer linear forms now      
+                        j = j+1;
+                    );                        
+                    
+                    --drop this entry, we dealt with it
+                    L2 = drop(L2, {k,k});
+                    checks = checks-1; --we have fewer linear forms now      
+                )
+                else if homogFlag and (dim workingIdeal == 1) then (--we should use MultiplicationTable to do the factoring
+                    returnPointsList = returnPointsList | multiplicationTableInternal(n1 - #returnPointsList, I2, workingIdeal, ideal(L2#k), ExtendField => opts.ExtendField, Verbose=>opts.Verbose);
+                );  
             );
             if (#returnPointsList >= n1) then return returnPointsList;
             k = k-1;
@@ -1234,6 +1286,48 @@ linearIntersectionNew(ZZ, Ideal) := opts -> (n1, I1) -> (
     return returnPointsList;
 )
 
+multiplicationTableInternal = method(Options=>{ExtendField => false, Verbose=>false});
+multiplicationTableInternal(ZZ, Ideal, Ideal, Ideal) := opts->(n1, I2, workingIdeal, linearSpace) -> (
+    local newPt;
+    returnPointsList := {};
+    S2 := ring I2;
+    if (degree workingIdeal == 1) then (--we don't have to do anything
+        newPt = flatten (entries syz transpose jacobian workingIdeal);
+        if (#newPt > dim S2) then error "multiplicationTableInternal: What is going on?";
+        returnPointsList = append(returnPointsList, newPt);    
+    )
+    else ( --do the multiplication table thing
+        r:=degree ideal last (entries gens gb workingIdeal)_0;
+        b1 :=basis(r+1,S2^1/workingIdeal); 
+        b2 :=basis(r+2,S2^1/workingIdeal);
+        j := dim S2 - #(first entries gens linearSpace) - 1; --what size linear space did we intersect with
+        if (opts.Verbose) then print ("multiplicationTableInternal: linear space codim is " | toString(j) | "," | toString(dim linearSpace) | " deg " | toString(degree workingIdeal));    
+        xx:=(support (vars S2%(linearSpace)))_{j-1,j}; 
+        m0:=contract(transpose matrix entries b2,matrix entries((xx_0*b1)%workingIdeal));  
+        m1:=contract(transpose matrix entries b2,matrix entries((xx_1*b1)%workingIdeal));
+        M:=map(S2^(rank target m0),S2^{rank source m0:-1},xx_0*m1-xx_1*m0);
+
+        DetM:=(M^{0}*syz M^{1..rank source M-1})_(0,0);--fake determinant computation  
+        if (not DetM == 0) then (
+            h:= factor DetM;
+            count := 0;
+            while (count < #h) and (#returnPointsList < n1) do (
+                myH := first (h#count);
+                if (degree myH >= degree(0_S2)) and (degree myH == degree first first entries vars S2) then (--check to see if we have a degree 1 factor
+                    pt:=radical saturate((ideal myH)+workingIdeal); --lift to a higher dimensional space
+                    if (degree pt == 1) then (
+                        newPt = flatten (entries syz transpose jacobian pt);
+                        verifyPoint(newPt, I2);
+                        if (#newPt > dim S2) then error "multiplicationTableInternal: What is going on?";
+                        returnPointsList = append(returnPointsList, newPt);                    
+                    );
+                );            
+                count = count+1;
+            );
+        );
+    );
+    return returnPointsList; --return what we have done
+);
 
 
 randomPointViaMultiplicationTableNew=method(Options => optRandomPoints);
