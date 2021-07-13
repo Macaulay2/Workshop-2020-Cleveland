@@ -1,5 +1,9 @@
 {
     "editor.detectIndentation": false,
     "editor.wordWrap": "bounded",
-    "editor.wordWrapColumn": 110
+    "editor.wordWrapColumn": 110,
+    "workbench.colorCustomizations" : {
+        "terminal.foreground" : "#000000",
+        "terminal.background" : "#FFFFFF"
+    }
 }

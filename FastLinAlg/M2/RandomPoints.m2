@@ -1,8 +1,8 @@
 
 newPackage(
         "RandomPoints",
-    	Version => "1.4",
-    	Date => "March 16th, 2021",
+    	Version => "1.5",
+    	Date => "July 2nd, 2021",
     	Authors => {
 	     {Name => "Sankhaneel Bisui", Email => "sbisu@tulane.edu", HomePage=>"https://sites.google.com/view/sankhaneelbisui/home"},
 	     {Name=> "Thai Nguyen", Email =>"tnguyen11@tulane.edu", HomePage=>"https://sites.google.com/view/thainguyenmath "},
@@ -25,6 +25,7 @@ export {
 	"randomCoordinateChange", --documented, tested
 	"randomPoints", 
     "geometricPointsNew",
+    "rationalPointsNew",
     "randomPointViaMultiplicationTableNew",
 	"extendIdealByNonZeroMinor",
 	"findANonZeroMinor",
@@ -40,6 +41,7 @@ export {
     "MaxCoordinatesToTrivialize",
     "Replacement",
     "Full", 
+    "Trinomial",
     "Default", --a valid value for [RandomPoint, Strategy]
 	"BruteForce", --a valid value for [RandomPoint, Strategy], documented, 
     "GenericProjection",  --a valid value for [RandomPoint, Strategy]
@@ -53,6 +55,7 @@ export {
     "PointCheckAttempts",
     "MinorPointAttempts",
     "MinimumFieldSize",
+    "DecompositionStrategy",
     "DimensionIntersectionAttempts",
     "NumThreadsToUse" -- used in the BruteForce strategy
     }
@@ -73,7 +76,8 @@ optRandomPoints := {
     IntersectionAttempts => 20,
     ProjectionAttempts => 0,
     ExtendField => false,
-    PointCheckAttempts => 100,
+    PointCheckAttempts => 0,
+    DecompositionStrategy => null,
     NumThreadsToUse => 1,
     DimensionFunction => dimViaBezout,
     Verbose => false
@@ -169,9 +173,9 @@ randomCoordinateChange(Ring) := opts -> (R1) -> (
     d1 := #gens R1;
     local genList;
     if (opts.Replacement == Binomial) then (
-        genList = getRandomLinearForms(R1, {0, max(d1 - opts.MaxCoordinatesToReplace, 0), 0, min(d1, opts.MaxCoordinatesToReplace), 0}, Homogeneous => opts.Homogeneous, Verbose=>opts.Verbose, Verify=>true); )
+        genList = getRandomLinearForms(R1, {0, max(d1 - opts.MaxCoordinatesToReplace, 0), 0, min(d1, opts.MaxCoordinatesToReplace),0, 0}, Homogeneous => opts.Homogeneous, Verbose=>opts.Verbose, Verify=>true); )
     else if (opts.Replacement == Full) then (
-        genList = getRandomLinearForms(R1, {0, max(d1 - opts.MaxCoordinatesToReplace, 0), 0, 0, min(d1, opts.MaxCoordinatesToReplace)}, Homogeneous => opts.Homogeneous, Verbose=>opts.Verbose, Verify=>true); );
+        genList = getRandomLinearForms(R1, {0, max(d1 - opts.MaxCoordinatesToReplace, 0), 0, 0, 0, min(d1, opts.MaxCoordinatesToReplace)}, Homogeneous => opts.Homogeneous, Verbose=>opts.Verbose, Verify=>true); );
 --    genList = random apply(genCount, t -> if (t < opts.MaxCoordinatesToReplace) then replacementFunction(genList#t) else genList#t);
     return map(R1, S1, genList);
 );
@@ -230,9 +234,9 @@ genericProjectionByKernel(ZZ, Ideal) := opts -> (n1, I1) -> (
     d2 := #myVars;
     local genList;
     if (opts.Replacement == Binomial) then (
-        genList = getRandomLinearForms(R1, {0, max(d2 - opts.MaxCoordinatesToReplace, 0), 0, min(d2, opts.MaxCoordinatesToReplace), 0}, Homogeneous => opts.Homogeneous, Verbose=>opts.Verbose, Verify=>true); )
+        genList = getRandomLinearForms(R1, {0, max(d2 - opts.MaxCoordinatesToReplace, 0), 0, min(d2, opts.MaxCoordinatesToReplace), 0, 0}, Homogeneous => opts.Homogeneous, Verbose=>opts.Verbose, Verify=>true); )
     else if (opts.Replacement == Full) then (
-        genList = getRandomLinearForms(R1, {0, max(d2 - opts.MaxCoordinatesToReplace, 0), 0, 0, min(d2, opts.MaxCoordinatesToReplace)}, Homogeneous => opts.Homogeneous, Verbose=>opts.Verbose, Verify=>true); );
+        genList = getRandomLinearForms(R1, {0, max(d2 - opts.MaxCoordinatesToReplace, 0), 0, 0, 0, min(d2, opts.MaxCoordinatesToReplace)}, Homogeneous => opts.Homogeneous, Verbose=>opts.Verbose, Verify=>true); );
 --    genList = random apply(genCount, t -> if (t < opts.MaxCoordinatesToReplace) then replacementFunction(genList#t) else genList#t);
     psi = map(R1, Rs, genList);
     myMap := map(R1/I1, Rs, genList);
@@ -297,9 +301,9 @@ projectionToHypersurface(Ideal) := opts -> (I1) -> (
     --build the replacement map
     local genList;
     if (opts.Replacement == Binomial) then (
-        genList = getRandomLinearForms(R1, {0, max(d2 - opts.MaxCoordinatesToReplace, 0), 0, min(d2, opts.MaxCoordinatesToReplace), 0}, Homogeneous => opts.Homogeneous, Verbose=>opts.Verbose, Verify=>true); )
+        genList = getRandomLinearForms(R1, {0, max(d2 - opts.MaxCoordinatesToReplace, 0), 0, min(d2, opts.MaxCoordinatesToReplace), 0, 0}, Homogeneous => opts.Homogeneous, Verbose=>opts.Verbose, Verify=>true); )
     else if (opts.Replacement == Full) then (
-        genList = getRandomLinearForms(R1, {0, max(d2 - opts.MaxCoordinatesToReplace, 0), 0, 0, min(d2, opts.MaxCoordinatesToReplace)}, Homogeneous => opts.Homogeneous, Verbose=>opts.Verbose, Verify=>true); );
+        genList = getRandomLinearForms(R1, {0, max(d2 - opts.MaxCoordinatesToReplace, 0), 0, 0, 0, min(d2, opts.MaxCoordinatesToReplace)}, Homogeneous => opts.Homogeneous, Verbose=>opts.Verbose, Verify=>true); );
 --    genList = random apply(genCount, t -> if (t < opts.MaxCoordinatesToReplace) then replacementFunction(genList#t) else genList#t);
     psi := map(R1, Rs, genList);
     myMap := map(R1/I1, Rs, genList);
@@ -365,7 +369,8 @@ getRandomLinearForms(Ring, List) := opts -> (R1, L1) ->(
     monomialForms := L1#1;
     trueMonomialForms := L1#2; --forced to be monomial whether or not Homogeneous is true
     binomialForms := L1#3; 
-    randForms := L1#4;
+    trinomialForms := L1#4;
+    randForms := L1#5;
     formList := {}; 
     genList := gens R1;
     d := #genList;
@@ -380,22 +385,36 @@ getRandomLinearForms(Ring, List) := opts -> (R1, L1) ->(
     );
     if (opts.Homogeneous) then (
         if (opts.Verbose) or (debugLevel > 0) then print "getRandomLinearForms: generating homogeneous forms.";
+        --monomialForms x,y,z
         if (opts.Verify) then (formList = formList | apply(monomialForms, i -> (tempList)#i);)
         else (formList = formList | apply(monomialForms, i -> (genList)#(random(d))););
+        --true monomialForms, which is the same as monomial forms in the homogeneous case
         if (opts.Verify) then (formList = formList | apply(trueMonomialForms, i -> (tempList)#(i+monomialForms));)
         else (formList = formList | apply(trueMonomialForms, i -> (genList)#(random(d))););
+        --binomial forms, x+by
         if (opts.Verify) then (formList = formList | apply(binomialForms, i -> (tempList)#(i+monomialForms+trueMonomialForms) + (random(0, R1))*(genList)#(random(d)));) 
         else (formList = formList | apply(binomialForms, i -> (genList)#(random(d)) + (random(0, R1))*(genList)#(random(d))););
+        --trinomial forms, x+by+cz
+        if (opts.Verify) then (formList = formList | apply(trinomialForms, i -> (tempList)#(i+monomialForms+trueMonomialForms) + (random(0, R1))*(genList)#(random(d))  + (random(0, R1))*(genList)#(random(d))  );) 
+        else (formList = formList | apply(trinomialForms, i -> (genList)#(random(d)) + (random(0, R1))*(genList)#(random(d)) + (random(0, R1))*(genList)#(random(d))  ););
+        --random forms
         formList = formList | apply(randForms, i-> random(1, R1));
     )
     else(
         if (opts.Verbose) or (debugLevel > 0) then print "getRandomLinearForms: generating non-homogeneous forms.";
+        --monomial forms, x+a
         if (opts.Verify) then (formList = formList | apply(monomialForms, i -> random(0, R1) + (tempList)#i);)
         else (formList = formList | apply(monomialForms, i -> random(0, R1) + (genList)#(random(d))););
+        --true monomial forms, x, y, z
         if (opts.Verify) then (formList = formList | apply(trueMonomialForms, i -> (tempList)#(i+monomialForms));)
-        else (formList = formList | apply(trueMonomialForms, i -> (genList)#(random(d))););        
+        else (formList = formList | apply(trueMonomialForms, i -> (genList)#(random(d))););
+        --binomial forms, x+by+c        
         if (opts.Verify) then (formList = formList | apply(binomialForms, i -> random(0, R1) + (tempList)#(i+monomialForms+trueMonomialForms) + (random(0, R1))*(genList)#(random(d)));) 
         else (formList = formList | apply(binomialForms, i -> random(0, R1) + (genList)#(random(d)) + (random(0, R1))*(genList)#(random(d))););
+        --trinomial forms x+by+cz + d
+        if (opts.Verify) then (formList = formList | apply(trinomialForms, i -> random(0, R1) + (tempList)#(i+monomialForms+trueMonomialForms) + (random(0, R1))*(genList)#(random(d))  + (random(0, R1))*(genList)#(random(d)));) 
+        else (formList = formList | apply(trinomialForms, i -> random(0, R1) + (genList)#(random(d)) + (random(0, R1))*(genList)#(random(d)) + (random(0, R1))*(genList)#(random(d))));
+        --random forms
         formList = formList | apply(randForms, i->random(0, R1) + random(1, R1));
     );
     if (opts.Verify) and (#formList > 0) then ( --if we are checking our work
@@ -447,10 +466,10 @@ randomPointViaLinearIntersection(ZZ, Ideal) := opts -> (n1, I1) -> (
     while(i < opts.IntersectionAttempts) and (#returnPointsList < n1) do (
         targetSpace = kk[varList];        
         if (opts.Replacement == Binomial) then (
-            phiMatrix = getRandomLinearForms(targetSpace, {toTrivialize, 0, c1-toReplace + (d1 - toTrivialize), toReplace, 0}, Homogeneous => false, Verify=>true);
+            phiMatrix = getRandomLinearForms(targetSpace, {toTrivialize, 0, c1-toReplace + (d1 - toTrivialize), toReplace, 0,  0}, Homogeneous => false, Verify=>true);
         )
         else if (opts.Replacement == Full) then (
-            phiMatrix = getRandomLinearForms(targetSpace, {toTrivialize, 0, c1-toReplace + (d1 - toTrivialize), 0, toReplace}, Homogeneous => false, Verify=>true);
+            phiMatrix = getRandomLinearForms(targetSpace, {toTrivialize, 0, c1-toReplace + (d1 - toTrivialize), 0, 0, toReplace}, Homogeneous => false, Verify=>true);
         );
         if (opts.Verbose) or (debugLevel > 0) then print concatenate("randomPointViaLinearIntersection: doing loop with ", toString( phiMatrix));
         if (debugLevel > 0 or opts.Verbose == true) then print concatenate("randomPointViaLinearIntersection:  Doing a loop with:", toString(phiMatrix));
@@ -804,8 +823,8 @@ saturateInGenericCoordinates=method()
 saturateInGenericCoordinates(Ideal):= I1 -> (
     S1 := ring I1;
     --x:=random(0, S1)*random(1, S1) + random(1, S1);
-    x:=getRandomLinearForms(S1, {0,0,0,2,0}, Homogeneous => true);    
-    (saturate(I1,ideal x#0)) *( saturate(I1,ideal x#1))
+    x:=getRandomLinearForms(S1, {0,0,0,1, 0,0}, Homogeneous => true);
+    saturate(I1,ideal x)
 )
 
 
@@ -941,6 +960,73 @@ dimViaBezout(Ideal) := opts-> I1 -> (
     return dimViaBezoutNonhomogeneous(I2, Verbose=>opts.Verbose, DimensionIntersectionAttempts=>attempts);
 )
 
+
+rationalPointsNew = method(Options => optRandomPoints);
+rationalPointsNew(ZZ, Ideal) := opts -> (n1, I1) -> (
+    --this code is for the non-homogeneous case
+    --the idea in this code is simple.  Extend the field.  Intersect with binomials.  
+    --Then find the point, either by decompose or with a multiplication table
+    local J2;
+    local I3;
+    local myDeg;
+    local newS2;
+    local psi;
+    local j;
+    local l; --a linear space
+    local m2;  --a point, in an extended field
+    local finalPoint; --the point to be returned    
+    local J2;
+    local ptList; --list of points, before extending the field.
+    local sortedPtList; --list of points, before extending the field.
+    local newPtList; --list of points after extending the field
+    returnPointsList := {};
+    checks := 3*n1+3;
+
+    S1 := ring I1;
+    m := getFieldSize coefficientRing S1;
+    pp := char ring I1;
+    S2 := S1;
+    I2 := I1;    
+    
+    i := dim S1;
+    k:= 0;
+    L2 := apply(checks, t-> getRandomLinearForms(S2, {0,max(0, i-t),0,min(t, i), 0,0}, Homogeneous=>false)); --a list of linear forms
+    while (i >= 0) do (
+        if opts.Verbose then print("rationalPointsNew: Trying intersection with a binomial linear space of dimension " | toString(dim S2 - i));        
+        J2 = apply(L2, l -> ideal(l) + I2);
+        k = 0;
+        while (k < checks) and (#returnPointsList < n1) do (
+            if opts.Verbose then print("rationalPointsNew: trying linear intersection #" | toString(k));
+            if (J2#k != ideal 1_S2) and (#returnPointsList < n1) then (--we found a point                
+                i = -1; --stop the exterior loop, we found the dimension
+                if opts.Verbose then print("rationalPointsNew: We found at least one point");
+                --we should have bifurcating code here, so instead of running this, call a function, or call the multiplication table
+                ptList = random decompose(J2#k);
+                if opts.Verbose then print("rationalPointsNew: We found " | toString(#ptList) | " points.");
+                j=0;
+                sortedPtList = sort apply(#ptList, t -> {dim (ptList#t), degree (ptList#t), t});
+                while (j < #ptList) and (#returnPointsList < n1) and (sortedPtList#j#0 == 0) do (
+                    myDeg = sortedPtList#j#1;                
+                    if opts.Verbose then print("rationalPointsNew: Looking at a point of degree " | toString(myDeg));
+                    if (myDeg == 1) then (
+                        finalPoint = idealToPoint(ptList#(sortedPtList#j#2));                    
+                        if (verifyPoint(finalPoint, I2, opts)) then returnPointsList = append(returnPointsList, finalPoint);
+                    )
+                    else (
+                        if (debugLevel > 0) or (opts.Verbose) then print "rationalPointsNew: Found a non-rational point.";
+                    );
+                    j = j+1;
+                );                
+            );
+            if (#returnPointsList >= n1) then return returnPointsList;
+            k = k+1;
+        );
+        L2 = apply(checks, t->drop(L2#t, 1)); --drop something for next run
+        i = i-1;        
+    );
+    return returnPointsList;
+)
+
 geometricPointsNew = method(Options => optRandomPoints);
 geometricPointsNew(ZZ, Ideal) := opts -> (n1, I1) -> (
     --this code is for the non-homogeneous case
@@ -973,7 +1059,7 @@ geometricPointsNew(ZZ, Ideal) := opts -> (n1, I1) -> (
     
     i := dim S1;
     k:= 0;
-    L2 := apply(checks, t-> getRandomLinearForms(S2, {0,max(0, i-t),0,min(t, i),0}, Homogeneous=>false)); --a list of linear forms
+    L2 := apply(checks, t-> getRandomLinearForms(S2, {0,max(0, i-t),0,min(t, i), 0,0}, Homogeneous=>false)); --a list of linear forms
     while (i >= 0) do (
         if opts.Verbose then print("geometricPointsNew: Trying intersection with a binomial linear space of dimension " | toString(dim S2 - i));        
         J2 = apply(L2, l -> ideal(l) + I2);
@@ -1024,6 +1110,131 @@ geometricPointsNew(ZZ, Ideal) := opts -> (n1, I1) -> (
     return returnPointsList;
 )
 
+linearIntersectionNew = method(Options => optRandomPoints);
+linearIntersectionNew(ZZ, Ideal) := opts -> (n1, I1) -> (
+    --this code is for the non-homogeneous case
+    --the idea in this code is simple.  Extend the field.  Intersect with binomials.  
+    --Then find the point, either by decompose or with a multiplication table
+    local J2;
+    local I3;
+    local myDeg;
+    local S2;
+    local I2;
+    local phi1;
+    local newS2;
+    local psi;
+    local j;
+    local l; --a linear space
+    local m2;  --a point, in an extended field
+    local finalPoint; --the point to be returned    
+    local J2;
+    local ptList; --list of points, before extending the field.
+    local sortedPtList; --list of points, before extending the field.
+    local newPtList; --list of points after extending the field
+    local checks;
+    local d;
+    local L2;
+    local workingIdeal;
+    returnPointsList := {};
+    if (opts.PointCheckAttempts >= 1 ) then checks = opts.PointCheckAttempts else if (opts.ExtendField) then  checks = 6*n1+5 else checks = 6*n1+5;  
+
+    S1 := ring I1;
+    m := getFieldSize coefficientRing S1;
+    pp := char ring I1;
+    if (opts.ExtendField) then ( 
+        d = ceiling(log_pp(max(m, 100)) + 0.5); --this should force a bigger field extension
+        if opts.Verbose then print "linearIntersectionNew: Extending the field";
+        if opts.Verbose then print ("linearIntersectionNew: New field size is " | toString(pp) | "^" | toString(d) | " = " | toString(pp^(d)) );
+        (S2, phi1) = fieldBaseChange(S1, GF(pp, d));
+        I2 = phi1(I1);    
+    )
+    else(
+        S2 = S1;
+        I2 = I1;
+    );
+    i := dim S1;
+    k:= 0;
+
+    homogFlag := (opts.DecompositionStrategy === MultiplicationTable) and isHomogeneous(I1); --this flag is set to true if we are homogeneous, and the DecompositionStrategy is multiplication table
+    
+    --depending on what was passed, we choose a list of 
+    if (class opts.Replacement === List) then (
+        if (not (sum opts.Replacement == i)) and (opts.Verbose) then print "linearIntersectionNew: Warning, you passed a replacement scheme but the terms did not add up to the ambient dimension."; 
+        L2 = apply(checks, t-> getRandomLinearForms(S2, opts.Replacement, Homogeneous=>homogFlag)); --a list of linear forms
+    )
+    else if (opts.Replacement === Monomial) then (
+        L2 = apply(checks, t -> getRandomLinearForms(S2, {0, i, 0, 0, 0, 0}), , Homogeneous=>homogFlag);
+    )
+    else if (opts.Replacement === Binomial) then (
+        L2 = apply(checks, t -> getRandomLinearForms(S2, {0, 0, 0, i, 0, 0}),Homogeneous=>homogFlag);
+    )
+    else if (opts.Replacement === Trinomial) then (
+        L2 = apply(checks, t -> getRandomLinearForms(S2, {0, 0, 0, 0, i, 0}),Homogeneous=>homogFlag);
+    )
+    else if (opts.Replacement === Full) then (
+        L2 = apply(checks, t -> getRandomLinearForms(S2, {0, 0, 0, 0, 0, i}), Homogeneous=>homogFlag);
+    )
+    else (
+        L2 = apply(checks, t-> getRandomLinearForms(S2, {0,max(0, i-t),0,min(t, i), 0,0}, Homogeneous=>homogFlag)); --a list of linear forms, some monomial, some binomial
+    ); --now we have picked the linear forms, we begin our loop
+    while (i >= 0) do (
+        if opts.Verbose then print("linearIntersectionNew: Trying intersection with a linear space of dimension " | toString(dim S2 - i));        
+        J2 = apply(L2, l -> ideal(l) + I2);
+        k = checks-1; --this should change to start at checks-1 and loop backwards
+        while (k >= 0) and (#returnPointsList < n1) do (
+            if opts.Verbose then print("linearIntersectionNew: trying linear intersection #" | toString(k));
+            workingIdeal = J2#k;
+            if (homogFlag) then workingIdeal = saturate workingIdeal; --make this saturation faster
+            if (workingIdeal != ideal 1_S2) and (#returnPointsList < n1) then (--we found a point                
+                --i = -1; --stop the exterior loop, we found the dimension
+                if opts.Verbose then print("linearIntersectionNew: We found at least one point");
+                --we should have bifurcating code here, so instead of running this, call a function, or call the multiplication table
+                if (not homogFlag) then (
+                    ptList = random decompose(J2#k);
+                    if opts.Verbose then print("linearIntersectionNew: We found " | toString(#ptList) | " points.");
+                    j=0;
+                    sortedPtList = sort apply(#ptList, t -> {dim (ptList#t), degree (ptList#t), t});
+                    while (j < #ptList) and (#returnPointsList < n1) and (sortedPtList#j#0 == 0) do (
+                        myDeg = sortedPtList#j#1;                
+                        if opts.Verbose then print("linearIntersectionNew: Looking at a point of degree " | toString(myDeg));
+                        if (myDeg == 1) then (
+                            finalPoint = idealToPoint(ptList#(sortedPtList#j#2));                    
+                            if (verifyPoint(finalPoint, I2, opts)) then returnPointsList = append(returnPointsList, finalPoint);
+                        )
+                        else if (not (null === conwayPolynomial(pp, d*myDeg))) and (opts.ExtendField) then (
+                            if (debugLevel > 0) or (opts.Verbose) then print "linearIntersectionNew:  extending the field.";
+                            psi = (extendFieldByDegree(myDeg, S2))#1;
+                            I3 = psi(I2);
+                            newS2 = target psi;
+                            m2 = psi(ptList#j);
+                            newPtList = random decompose(m2); --make sure we are picking points randomly from this decomposition
+                            --since these points are going to be conjugate, we only pick 1.                      
+                            if (#newPtList > 0) then ( 
+                                finalPoint = idealToPoint(newPtList#0);
+                                --finalPoint =  apply(idealToPoint(newPtList#0), s -> sub(s, target phi));
+                                if (verifyPoint(finalPoint, I3, opts)) then (returnPointsList = append(returnPointsList, finalPoint);)                        
+                            ); 
+                        )
+                        else if (opts.ExtendField) then (
+                            if (debugLevel > 0) or (opts.Verbose) then print "geometricPointsNew: Macaulay2 cannot handle a field extension this large, moving to the next point.";
+                        );
+                    );
+                    j = j+1;
+                );    
+                --drop this entry, we dealt with it
+                L2 = drop(L2, {k,k});
+                checks = checks-1; --we have fewer linear forms now      
+            );
+            if (#returnPointsList >= n1) then return returnPointsList;
+            k = k-1;
+        );
+        L2 = apply(checks, t->drop(L2#t, 1)); --drop something for next run
+        i = i-1;        
+    );
+    return returnPointsList;
+)
+
+
 
 randomPointViaMultiplicationTableNew=method(Options => optRandomPoints);
 randomPointViaMultiplicationTableNew(ZZ, Ideal) := opts-> (n1, I1) -> (
@@ -1049,7 +1260,7 @@ randomPointViaMultiplicationTableNew(ZZ, Ideal) := opts-> (n1, I1) -> (
     I2 := phi1(I1);    
     
     i := dim S1-1;
-    L2 := apply(checks, t-> getRandomLinearForms(S2, {0,0,0,i,0}, Homogeneous=>true, Verify=>true)); 
+    L2 := apply(checks, t-> getRandomLinearForms(S2, {0,max(0, i-t),0,min(t, i),0,0}, Homogeneous=>true)); 
         --a list of all the linear forms to use    
     
     while (i >= 0) and (#returnPointsList < n1) do (
@@ -1130,7 +1341,7 @@ dimViaBezoutNonhomogeneous(Ideal) := opts -> (I1)->(
     while (i >= 0) do (
         if opts.Verbose then print("dimViaBezoutNonhomogeneous: Trying intersection with a linear space of dimension " | toString(dim S1 - i));
         if (i == 0) then checks = 1;
-        L1 := apply(checks, t->ideal getRandomLinearForms(S1, {0,0,0,0,i}));
+        L1 := apply(checks, t->ideal getRandomLinearForms(S1, {0,0,0,0,0,i}));
         --print L1;
         --print trim(I1 + L1);
         myList := apply(L1, l -> (l + I1 != ideal 1_S1));
@@ -1480,7 +1691,7 @@ doc ///
         R:Ring
             the ring where the forms should live
         L:List
-            a list with 5 entries, each a number of types of forms.  Constant forms, monomial forms (plus a constant term if {\tt Homogeneous => false}), monomial forms, binomial forms, and random forms.
+            a list with 6 entries, each a number of types of forms.  Constant forms, monomial forms (plus a constant term if {\tt Homogeneous => false}), monomial forms, binomial forms, trinomial forms, and random forms.
         Verify => Boolean
             whether to check if the output linear forms have Jacobian of maximal rank
         Verbose => Boolean
@@ -1497,26 +1708,26 @@ doc ///
             The types of form are specified via the second argument, a list with 5 entries.  The first entry is how many constant forms are allowed.
         Example
             R = ZZ/31[a,b,c]
-            getRandomLinearForms(R, {2,0,0,0,0})
+            getRandomLinearForms(R, {2,0,0,0,0,0})
         Text
             The second entry in the list is how many monomial forms are returned.  Note if {\tt Homogeneous=>false} then these forms will usually have constant terms.
         Example
-            getRandomLinearForms(R, {0,2,0,0,0}, Homogeneous=>true)
-            getRandomLinearForms(R, {0,2,0,0,0}, Homogeneous=>false)
+            getRandomLinearForms(R, {0,2,0,0,0,0}, Homogeneous=>true)
+            getRandomLinearForms(R, {0,2,0,0,0,0}, Homogeneous=>false)
         Text
             Next, the third entry is how many monomial forms (without constant terms, even if {\tt Homogeneous=>false}).
         Example
-            getRandomLinearForms(R, {0,0,2,0,0}, Homogeneous=>false)
+            getRandomLinearForms(R, {0,0,2,0,0,0}, Homogeneous=>false)
         Text
             The fourth entry is how many binomial forms should be returned.
         Example
-            getRandomLinearForms(R, {0,0,0,1,0}, Homogeneous=>true)
-            getRandomLinearForms(R, {0,0,0,1,0}, Homogeneous=>false)
+            getRandomLinearForms(R, {0,0,0,1,0,0}, Homogeneous=>true)
+            getRandomLinearForms(R, {0,0,0,1,0,0}, Homogeneous=>false)
         Text
             The ultimate entry is how many truly random forms to produce.
         Example
-            getRandomLinearForms(R, {0,0,0,0,1}, Homogeneous=>true)
-            getRandomLinearForms(R, {0,0,0,0,1}, Homogeneous=>false)
+            getRandomLinearForms(R, {0,0,0,0,0,1}, Homogeneous=>true)
+            getRandomLinearForms(R, {0,0,0,0,0,1}, Homogeneous=>false)
         Text
             You may combine the different specifications to create a list of the desired type.  The order is randomized.
 
