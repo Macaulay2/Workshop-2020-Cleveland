@@ -34,7 +34,7 @@ export {
     "getRandomLinearForms", --here for debugging purposes    
     "dimViaBezout",    
     --"dimViaBezoutHomogeneous",    
-    --"dimViaBezoutNonhomogeneous", 
+    "dimViaBezoutNonhomogeneous", 
 	"Codimension",
 	"MaxCoordinatesToReplace",    
     "Replacement",
@@ -58,7 +58,7 @@ exportMutable {}
 installMinprimes();
 
 --this appears to need to be here, otherwise the options don't realize dimViaBezout is a function, it thinks its a symbol.
-dimViaBezout=method(Options => {Verbose => false, Homogeneous => null, DimensionIntersectionAttempts => null, MinimumFieldSize => 200});
+dimViaBezout=method(Options => {Verbose => false, Homogeneous => null, DimensionIntersectionAttempts => null, MinimumFieldSize => 1000});
 
 optRandomPoints := {
     Strategy=>Default, 
@@ -451,6 +451,9 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
     local fieldSize;
     pointsList := {}; --a list of points to output
     homog := (isHomogeneous I1) and (opts.DecompositionStrategy === MultiplicationTable);
+    d1 := dim ring I1;
+    d1Half := ceiling(d1/2);
+    d1Half2 := d1 - d1Half;
 
     if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 0): trying a quick brute force with 10 attempts.";
     pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
@@ -464,7 +467,7 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
             Homogeneous => opts.Homogeneous,          
             Replacement => Binomial,        
             ExtendField => opts.ExtendField,
-            PointCheckAttempts => 2*(n1 - #pointsList),
+            PointCheckAttempts => 5*(n1 - #pointsList),
             DecompositionStrategy => MultiplicationTable,        
             DimensionFunction => opts.DimensionFunction,
             Verbose => false);
@@ -476,26 +479,50 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
         Homogeneous => opts.Homogeneous,          
         Replacement => Monomial,        
         ExtendField => opts.ExtendField,
-        PointCheckAttempts => 2*(n1 - #pointsList),
+        PointCheckAttempts => 5*(n1 - #pointsList),
         DecompositionStrategy => Decompose,        
         DimensionFunction => opts.DimensionFunction,
         Verbose => false);
-    if (#pointsList >= n1) then return pointsList;    
+    if (#pointsList >= n1) then return pointsList;   
+
+    if (homog) then (
+        if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 2): attempting linear intersection via multiplication table with binomials + trinomials.";
+        pointsList = pointsList | linearIntersectionNew(n1 - #pointsList, I1, 
+            Homogeneous => opts.Homogeneous,          
+            Replacement => {0,0,0,d1Half, d1Half2, 0},        
+            ExtendField => opts.ExtendField,
+            PointCheckAttempts => 3*(n1 - #pointsList),
+            DecompositionStrategy => MultiplicationTable,        
+            DimensionFunction => opts.DimensionFunction,
+            Verbose => false);
+    );
+    if (#pointsList >= n1) then return pointsList;
+
+    if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 2a): attempting linear intersection with monomials + binomials.";
+    pointsList = pointsList | linearIntersectionNew(n1 - #pointsList, I1, 
+        Homogeneous => opts.Homogeneous,          
+        Replacement => {0,0,d1Half, d1Half2, 0,0},        
+        ExtendField => opts.ExtendField,
+        PointCheckAttempts => 5*(n1 - #pointsList),
+        DecompositionStrategy => Decompose,        
+        DimensionFunction => opts.DimensionFunction,
+        Verbose => false);
+    if (#pointsList >= n1) then return pointsList;     
     
 
-    if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 2): attempting linear intersection with binomials.";
+    if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 3): attempting linear intersection with binomials.";
     pointsList = pointsList | linearIntersectionNew(n1 - #pointsList, I1, 
         Homogeneous => opts.Homogeneous,          
         Replacement => Binomial,        
         ExtendField => opts.ExtendField,
-        PointCheckAttempts => 2*(n1 - #pointsList),
+        PointCheckAttempts => 5*(n1 - #pointsList),
         DecompositionStrategy => Decompose,        
         DimensionFunction => opts.DimensionFunction,
         Verbose => false);
     if (#pointsList >= n1) then return pointsList;
 
     if (homog) then (
-        if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 2a): attempting linear intersection via multiplication table with trinomials.";
+        if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 3a): attempting linear intersection via multiplication table with trinomials.";
         pointsList = pointsList | linearIntersectionNew(n1 - #pointsList, I1, 
             Homogeneous => opts.Homogeneous,          
             Replacement => Trinomial,        
@@ -602,13 +629,91 @@ dimViaBezout(Ideal) := opts-> I1 -> (
         return dimViaBezoutNonhomogeneous(I1, Verbose=>opts.Verbose, DimensionIntersectionAttempts=>attempts);
     );
     if opts.Verbose then print "dimViaBezout: The field is too small, extending it.";
- 
-    
     if opts.Verbose then print ("dimViaBezout: New field size is " | toString(pp) | "^" | toString(i*d) | " = " | toString(pp^(i*d)) );
     (S2, phi1) := fieldBaseChange(S1, GF(pp, i*d));
     I2 := phi1(I1);    
     if (homog) then return dimViaBezoutHomogeneous(I2, DimensionIntersectionAttempts=>attempts) else 
     return dimViaBezoutNonhomogeneous(I2, Verbose=>opts.Verbose, DimensionIntersectionAttempts=>attempts);
+)
+
+dimViaBezoutNonhomogeneous=method(Options => {Verbose => false, DimensionIntersectionAttempts => 1, MinimumFieldSize => 1000, Homogeneous => false});
+
+dimViaBezoutNonhomogeneous(Ideal) := opts -> (I1)->(
+    S1 := ring I1;
+    --if (getFieldSize(S1)<39) then return codim I1;
+    i := dim S1-1;
+    checks := opts.DimensionIntersectionAttempts;
+    while (i >= 0) do (
+        if opts.Verbose then print("dimViaBezoutNonhomogeneous: Trying intersection with a linear space of dimension " | toString(dim S1 - i));
+        if (i == 0) then checks = 1;
+        L1 := apply(checks, t->ideal getRandomLinearForms(S1, {0,0,0,0,i,0}, Homogeneous=>opts.Homogeneous));
+        --print L1;
+        --print trim(I1 + L1);
+        myList := apply(L1, l -> (l + I1 != ideal 1_S1));
+        if all(myList, b->b) then return i;
+        --if (L1 + I1 != ideal 1_S1) then return i;
+        --print dim(L1 + I1);
+        i = i-1;
+        --print i;
+    );        
+    return -1;
+)
+
+
+
+getFieldSize = method();
+
+needsPackage "PushForward";
+
+getFieldSize(Ring):= (k1) -> (    
+    if instance(k1, GaloisField) then return (char k1)^((degree (ideal ambient k1)_0)#0);
+    if instance(k1, QuotientRing) then (
+        if ambient(k1) === ZZ then return char k1;
+        pp := char k1;
+        l1 := ZZ/pp[];
+        inc := map(k1, l1, {});
+        return pp^(rank ((pushFwd(inc))#0));
+    );
+    infinity
+)
+
+dimViaBezoutHomogeneous=method(Options => {DimensionIntersectionAttempts => 1});
+
+dimViaBezoutHomogeneous(Ideal) := opts-> (I1) -> (
+    S1:=ring I1;
+--    randomMon := ideal((gens S1)#(random(#gens S1)));
+    --if (I1 == ideal 1_S1) then return -1;
+    if (I1 == ideal 0_S1) then return dim S1;
+    lowerBound := max(dim S1-rank source gens I1,0);
+    upperBound := dim S1;
+    mid:= null; 
+    i := 0;
+    checks := opts.DimensionIntersectionAttempts;
+    --print lowerBound;        
+    while upperBound - lowerBound >1 do (
+        mid = floor ((upperBound+lowerBound)/2);
+        --L := ideal random(S1^1,S1^{mid-1:-1});        
+        L := apply(checks, tz -> ideal random(S1^1,S1^{mid-1:-1}));        
+        --print ("L: "|toString(L));
+        Is := {ideal(1_S1)}; 
+        i = 0;
+        varList := random gens S1;
+        --while (Is == ideal(1_S1)) and (i < #varList) do (
+        while all(Is, tz -> (tz == ideal(1_S1))) and (i < #varList) do (
+            mySat := ideal(varList#i); --ideal((gens S1)#(random(#gens S1)));
+            --Is = saturate(I1+L, mySat); --saturateInGenericCoordinates(I+L);
+            Is = apply(L, tz -> saturate(I1 + tz, mySat));
+            --print ("mySat: " | toString(mySat));            
+            --print ("Is: " | toString(Is));
+            i = i+1;
+        );
+        --print ("Is == 1: " | toString(Is == ideal 1_S1));
+        if 
+            all(Is, tz -> (tz == ideal(1_S1)))
+        then (upperBound=mid;) else (lowerBound=mid;) ;
+        --print mid
+	);
+    lowerBound
 )
 
 
@@ -799,85 +904,7 @@ multiplicationTableInternal(ZZ, Ideal, Ideal, Ideal) := opts->(n1, I2, workingId
 
 
 
-dimViaBezoutNonhomogeneous=method(Options => {Verbose => false, DimensionIntersectionAttempts => 1, MinimumFieldSize => 100});
 
-dimViaBezoutNonhomogeneous(Ideal) := opts -> (I1)->(
-    S1 := ring I1;
-    --if (getFieldSize(S1)<39) then return codim I1;
-    i := dim S1-1;
-    checks := opts.DimensionIntersectionAttempts;
-    while (i >= 0) do (
-        if opts.Verbose then print("dimViaBezoutNonhomogeneous: Trying intersection with a linear space of dimension " | toString(dim S1 - i));
-        if (i == 0) then checks = 1;
-        L1 := apply(checks, t->ideal getRandomLinearForms(S1, {0,0,0,0,0,i}));
-        --print L1;
-        --print trim(I1 + L1);
-        myList := apply(L1, l -> (l + I1 != ideal 1_S1));
-        if all(myList, b->b) then return i;
-        --if (L1 + I1 != ideal 1_S1) then return i;
-        --print dim(L1 + I1);
-        i = i-1;
-        --print i;
-    );        
-    return -1;
-)
-
-
-
-getFieldSize = method();
-
-needsPackage "PushForward";
-
-getFieldSize(Ring):= (k1) -> (    
-    if instance(k1, GaloisField) then return (char k1)^((degree (ideal ambient k1)_0)#0);
-    if instance(k1, QuotientRing) then (
-        if ambient(k1) === ZZ then return char k1;
-        pp := char k1;
-        l1 := ZZ/pp[];
-        inc := map(k1, l1, {});
-        return pp^(rank ((pushFwd(inc))#0));
-    );
-    infinity
-)
-
-dimViaBezoutHomogeneous=method(Options => {DimensionIntersectionAttempts => 1});
-
-dimViaBezoutHomogeneous(Ideal) := opts-> (I1) -> (
-    S1:=ring I1;
---    randomMon := ideal((gens S1)#(random(#gens S1)));
-    --if (I1 == ideal 1_S1) then return -1;
-    if (I1 == ideal 0_S1) then return dim S1;
-    lowerBound := max(dim S1-rank source gens I1,0);
-    upperBound := dim S1;
-    mid:= null; 
-    i := 0;
-    checks := opts.DimensionIntersectionAttempts;
-    --print lowerBound;        
-    while upperBound - lowerBound >1 do (
-        mid = floor ((upperBound+lowerBound)/2);
-        --L := ideal random(S1^1,S1^{mid-1:-1});        
-        L := apply(checks, tz -> ideal random(S1^1,S1^{mid-1:-1}));        
-        --print ("L: "|toString(L));
-        Is := {ideal(1_S1)}; 
-        i = 0;
-        varList := random gens S1;
-        --while (Is == ideal(1_S1)) and (i < #varList) do (
-        while all(Is, tz -> (tz == ideal(1_S1))) and (i < #varList) do (
-            mySat := ideal(varList#i); --ideal((gens S1)#(random(#gens S1)));
-            --Is = saturate(I1+L, mySat); --saturateInGenericCoordinates(I+L);
-            Is = apply(L, tz -> saturate(I1 + tz, mySat));
-            --print ("mySat: " | toString(mySat));            
-            --print ("Is: " | toString(Is));
-            i = i+1;
-        );
-        --print ("Is == 1: " | toString(Is == ideal 1_S1));
-        if 
-            all(Is, tz -> (tz == ideal(1_S1)))
-        then (upperBound=mid;) else (lowerBound=mid;) ;
-        --print mid
-	);
-    lowerBound
-)
 
 
 

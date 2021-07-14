@@ -122,18 +122,15 @@ StrategyRandom = new HashTable from {LexLargest=>0, LexSmallestTerm => 0, LexSma
 
 StrategyPoints = new HashTable from {LexLargest=>0, LexSmallestTerm => 0, LexSmallest=>0, GRevLexSmallestTerm=>0, GRevLexSmallest=>0, GRevLexLargest=>0,Random=>0, RandomNonzero=>0, Points => 100};
 
-optPoints = new HashTable from {
+optPoints := {
     Strategy=>Default, 
-    Homogeneous => false,  
-    MaxCoordinatesToReplace => 1, 
-    MaxCoordinatesToTrivialize => infinity,
-    Replacement => Binomial,
-    Codimension => null,
-    IntersectionAttempts => 20,
-    ProjectionAttempts => 0,
-    ExtendField => true,
-    PointCheckAttempts => 100,
+    Homogeneous => true,  
+    Replacement => Binomial,    
+    ExtendField => false,
+    PointCheckAttempts => 0,
+    DecompositionStrategy => MultiplicationTable,
     NumThreadsToUse => 1,
+    DimensionFunction => dim,
     Verbose => false
 };
 
