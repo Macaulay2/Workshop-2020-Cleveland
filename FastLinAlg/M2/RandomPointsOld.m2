@@ -1,6 +1,6 @@
 
 newPackage(
-        "RandomPoints",
+        "RandomPointsOld",
     	Version => "1.5",
     	Date => "July 2nd, 2021",
     	Authors => {
@@ -1760,7 +1760,7 @@ extendIdealByNonZeroMinor(ZZ,Matrix,Ideal):= opts -> (n, M, I) -> (
 
 beginDocumentation()
 document {
-        Key => RandomPoints,
+        Key => RandomPointsOld,
         Headline => "Obtain random points in a variety",
         EM "RandomPoints", "Find random points inside a variety.",
         BR{},BR{},

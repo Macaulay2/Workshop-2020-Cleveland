@@ -24,14 +24,11 @@ export {
 	"projectionToHypersurface", --documented, tested    
 	"randomCoordinateChange", --documented, tested
 	"randomPoints", 
-    "geometricPointsNew",
-    "rationalPointsNew",
-    "linearIntersectionNew",
-    "randomPointViaMultiplicationTableNew",
+    --"linearIntersectionNew",
+    --"randomPointViaMultiplicationTableNew",
 	"extendIdealByNonZeroMinor",
 	"findANonZeroMinor",
-    "verifyPoint",
-    "verifyDimZero",
+    --"verifyPoint",    
     --"randomPointViaLinearIntersection", --these are here for debugging purposes
     --"randomPointViaLinearIntersectionOld", --these are here for debugging purposes
     "getRandomLinearForms", --here for debugging purposes    
@@ -39,20 +36,15 @@ export {
     --"dimViaBezoutHomogeneous",    
     --"dimViaBezoutNonhomogeneous", 
 	"Codimension",
-	"MaxCoordinatesToReplace",
-    "MaxCoordinatesToTrivialize",
+	"MaxCoordinatesToReplace",    
     "Replacement",
     "Full", 
     "Trinomial",
-    "Default", --a valid value for [RandomPoint, Strategy]
-	"BruteForce", --a valid value for [RandomPoint, Strategy], documented, 
-    "GenericProjection",  --a valid value for [RandomPoint, Strategy]
-    "HybridProjectionIntersection", --a valid value for [RandomPoint, Strategy]
-    "LinearIntersection",  --a valid value for [RandomPoint, Strategy]
-    "MultiplicationTable", --a valid value for [RandomPoint,Strategy]
-	"ProjectionAttempts", --used in the GenericProjection strategy
-    "IntersectionAttempts", --used in the LinearIntersection strategy
-    "ExtendField", --used in GenericProjection and LinearIntersection strategy
+    "Default", --a valid value for [randomPoints, Strategy]
+	"BruteForce", --a valid value for [randomPoints, Strategy], documented,     
+    "LinearIntersection",  --a valid value for [randomPoints, Strategy]
+    "MultiplicationTable", --a valid value for [randomPoints,DecompositionStrategy]	        
+    "ExtendField", --an option controls whether the field is extended
     "DimensionFunction", --
     "PointCheckAttempts",
     "MinorPointAttempts",
@@ -71,17 +63,12 @@ dimViaBezout=method(Options => {Verbose => false, Homogeneous => null, Dimension
 optRandomPoints := {
     Strategy=>Default, 
     Homogeneous => true,  
-    MaxCoordinatesToReplace => 1, 
-    MaxCoordinatesToTrivialize => infinity,
-    Replacement => Binomial,
-    Codimension => null,
-    IntersectionAttempts => 20,
-    ProjectionAttempts => 0,
+    Replacement => Binomial,    
     ExtendField => false,
     PointCheckAttempts => 0,
-    DecompositionStrategy => null,
+    DecompositionStrategy => MultiplicationTable,
     NumThreadsToUse => 1,
-    DimensionFunction => dimViaBezout,
+    DimensionFunction => dim,
     Verbose => false
 };
 
@@ -447,450 +434,95 @@ getRandomLinearForms(Ring, List) := opts -> (R1, L1) ->(
     return random formList;
 );
 
-randomPointViaLinearIntersection = method(Options => optRandomPoints);
 
-randomPointViaLinearIntersection(ZZ, Ideal) := opts -> (n1, I1) -> (
-    returnPointsList := {};
-    R1 := ring I1;
-    dR1 := dim R1;
-    c1 := opts.Codimension;
-    local d1;
-    if (c1 === null) then (c1 = dR1 - (opts.DimensionFunction)(I1)); --don't compute it if we already know it.
-    if (c1 == 0) then (
-        if (opts.Verbose or debugLevel > 0) then print "randomPointViaLinearIntersection: 0 ideal was passed, switching to brute force.";
-        return searchPoints(n1, ring I1, first entries gens I1, opts++{PointCheckAttempts => 10*n1});
-    );
-    d1 = dR1-c1;
-    i := 0;
-    j := 0;
-    local finalPoint;
-    local ptList; local newPtList;
-    local phi;
-    local psi;
-    local myDeg;
-    local myDim;
-    local m2;
-    local targetSpace;
-    local phiMatrix;
-    local J1;
-    local myPowerList;
-    local kk; --the extended field, if we extended
-    local varList;
-    kk = coefficientRing(R1);
-    if (d1 == -infinity) then (if (opts.Verbose or debugLevel > 0) then print "randomPointViaLinearIntersection: no points, the ideal is the unit ideal."; return returnPointsList;) else (varList = drop(gens R1, d1););  --if the unit ideal is passed, then there are no points
-    toReplace := max(0, min(opts.MaxCoordinatesToReplace, c1));
-    toTrivialize := min(d1, opts.MaxCoordinatesToTrivialize);
-    while(i < opts.IntersectionAttempts) and (#returnPointsList < n1) do (
-        targetSpace = kk[varList];        
-        if (opts.Replacement == Binomial) then (
-            phiMatrix = getRandomLinearForms(targetSpace, {toTrivialize, 0, c1-toReplace + (d1 - toTrivialize), toReplace, 0,  0}, Homogeneous => false, Verify=>true);
-        )
-        else if (opts.Replacement == Full) then (
-            phiMatrix = getRandomLinearForms(targetSpace, {toTrivialize, 0, c1-toReplace + (d1 - toTrivialize), 0, 0, toReplace}, Homogeneous => false, Verify=>true);
-        );
-        if (opts.Verbose) or (debugLevel > 0) then print concatenate("randomPointViaLinearIntersection: doing loop with ", toString( phiMatrix));
-        if (debugLevel > 0 or opts.Verbose == true) then print concatenate("randomPointViaLinearIntersection:  Doing a loop with:", toString(phiMatrix));
-        phi = map(targetSpace, R1, phiMatrix);
-        J1 = phi(I1);        
-        if ((opts.DimensionFunction) J1 == 0) then (
-        --if ((dimViaBezout(J1, DimensionIntersectionAttempts=>1, MinimumFieldSize=>5)) == 0) then (
-        --if (dimViaBezoutIsZero(J1)) then (
-            if (c1 == 1) then ( --if we are intersecting with a line, we can go slightly faster by using factor instead of decompose
-                ptList = apply(toList factor(gcd(first entries gens J1)), t->ideal(t#0));
-            )
-            else (
-                ptList = random decompose(J1);
-            );
-            j = 0;
-            while (j < #ptList) and (#returnPointsList < n1) do (
-                myDeg = degree(ptList#j);                
-                if (myDeg == 1) then (
-                    finalPoint = first entries evalAtPoint(R1, matrix{phiMatrix}, idealToPoint(ptList#j));
-                    --finalPoint = apply(idealToPoint(ptList#j), s -> sub(s, R1));
-                    if (verifyPoint(finalPoint, I1, opts)) then returnPointsList = append(returnPointsList, finalPoint);
-                )
-                else if (opts.ExtendField == true) then (
-                    if (debugLevel > 0) or (opts.Verbose) then print "randomPointViaLinearIntersection:  extending the field.";
-                    psi = (extendFieldByDegree(myDeg, targetSpace))#1;
-                    newR1 := target psi;
-                    m2 = psi(ptList#j);
-                    newPtList = random decompose(m2); --make sure we are picking points randomly from this decomposition
-                    --since these points are going to be conjugate, we only pick 1.  
-                    if (#newPtList > 0) then ( 
-                        finalPoint = first entries evalAtPoint(newR1, matrix{phiMatrix}, idealToPoint(newPtList#0));
-                        --finalPoint =  apply(idealToPoint(newPtList#0), s -> sub(s, target phi));
-                        if (verifyPoint(finalPoint, I1, opts)) then returnPointsList = append(returnPointsList, finalPoint);
-                    ); 
-                );
-                j = j+1;
-            );
-        );
-        if (debugLevel > 0) or (opts.Verbose) then(
-            if (#returnPointsList < n1) then 
-                print ("randomPointViaLinearIntersection:  found " | toString(#returnPointsList) | " points so far, trying a new linear space.")
-            else print ("randomPointViaLinearIntersection:  found " | toString(#returnPointsList) | " points so far, stopping.");
-        );
-        i = i+1;
-    );
-    return returnPointsList;
-);
-
-
-
-randomPointViaGenericProjection = method(Options => optRandomPoints);
-randomPointViaGenericProjection(ZZ, Ideal) := opts -> (n1, I1) -> (
-    pointsList := {}; --a list of points to output
-    flag := true;
-    local phi;
-    local psi;
-    local I0;
-    local J0;
-    local pt;
-    local pts; --a list of points produced by 
-    local ptList;
-    local j;
-    local k;
-    local finalPoint;
-    local newPtList;
-    local phi;
-    local myDeg;
-    local myDim;
-    local m2; 
-    i := 0;
-    c1 := opts.Codimension;
-    while (flag) and (i < opts.ProjectionAttempts) and (#pointsList < n1) do (
-        if (opts.Codimension === null) then (
-            c1 = dim ring I1 - (opts.DimensionFunction)(I1);
-            if (c1 == infinity) then (
-                if (opts.Verbose or debugLevel > 0) then print "randomPointViaGenericProjection: no points, the ideal is the unit ideal."; 
-                return pointsList;
-            )
-            else if (c1 == 0) then (
-                if (opts.Verbose or debugLevel > 0) then print "randomPointViaGenericProjection: 0 ideal was passed, switching to brute force.";
-                return searchPoints(n1, ring I1, first entries gens I1, opts++{PointCheckAttempts => 10*n1});
-            )
-            else if (c1 == 1) then ( --don't project, if we are already a hypersurface
-                phi = map(ring I1, ring I1);
-                I0 = I1;
-            )
-            else(
-                (phi, I0) = projectionToHypersurface(I1, Homogeneous=>opts.Homogeneous, Replacement => opts.Replacement, MaxCoordinatesToReplace => opts.MaxCoordinatesToReplace, Codimension => c1, Verbose=>opts.Verbose);
-            );
-        )
-        else if (opts.Codimension == 1) then (
-            phi = map(ring I1, ring I1);
-            I0 = I1;
-        )
-        else if (opts.Codimension == infinity) then (
-            if (opts.Verbose or debugLevel > 0) then print "randomPointViaGenericProjection: no points, the ideal is the unit ideal."; 
-            return pointsList;
-        )
-        else if (c1 == 0) then (
-            if (opts.Verbose or debugLevel > 0) then print "randomPointViaGenericProjection: 0 ideal was passed, switching to brute force.";
-            return searchPoints(n1, ring I1, first entries gens I1, opts++{PointCheckAttempts => 10*n1});
-        )
-        else(
-            (phi, I0) = projectionToHypersurface(I1, Homogeneous=>opts.Homogeneous, Replacement => opts.Replacement, MaxCoordinatesToReplace => opts.MaxCoordinatesToReplace, Codimension => opts.Codimension, Verbose=>opts.Verbose);
-        );
-        if ((dim ring I0 - (opts.DimensionFunction)(I0)) == 1) then (
-            if (debugLevel > 0) or opts.Verbose then print "randomPointViaGenericProjection:  found a good generic projection, now finding a point on it.";
-            if (opts.Strategy == GenericProjection) then (
-                pts = randomPoints(n1-#pointsList, I0, switchStrategy(opts, BruteForce)))
-            else if (opts.Strategy == HybridProjectionIntersection) then (
-                pts = random randomPoints(n1-#pointsList, I0, switchStrategy(opts, LinearIntersection))
-            ); --find a point on the generic projection (differently, depending on strategy)
-            if (#pts > 0) then (
-                k = 0;
-                while (k < #pts) and (#pointsList < n1) do ( --we produced some other points, now lift them
-                    pt = pts#k;
-                    J0 = I1 + sub(ideal apply(dim source phi, i -> (first entries matrix phi)#i - sub(pt#i, target phi)), target phi); --lift the point to the original locus
-                    if dim(J0) == 0 then( --hopefully the preimage is made of points
-                        ptList = random decompose(J0);
-                        j = 0;
-                        while (j < #ptList) and (#pointsList < n1) do ( --points we produced
-                            myDeg = degree (ptList#j);
-                            --print myDeg;
-                            if (myDeg == 1) then (
-                                finalPoint = apply(idealToPoint(ptList#j), s -> sub(s, coefficientRing ring I1));
-                                if (verifyPoint(finalPoint, I1, opts)) then pointsList = append(pointsList, finalPoint);
-                            )                        
-                            else if (opts.ExtendField == true) then (
-                                if (debugLevel > 0) or (opts.Verbose) then print "randomPointViaGenericProjection:  extending the field.";
-                                psi = (extendFieldByDegree(myDeg, ring ptList#j))#1;
-                                m2 = psi(ptList#j);
-                                newPtList = random decompose(m2);
-                                if (#newPtList > 0) then ( 
-                                    finalPoint =  apply(idealToPoint(newPtList#0), s -> sub(s, target psi));
-                                    if (verifyPoint(finalPoint, I1, opts)) then pointsList = append(pointsList, finalPoint);
-                                ); 
-                            );
-                            j = j+1;
-                        )
-                    )
-                    else(
-                        if (debugLevel > 0) or opts.Verbose then print "randomPointViaGenericProjection:  Lift of point is not a point (our projection was not sufficiently generic).";
-                    );
-                    k = k+1;
-                );
-            );
-        );
-        if (debugLevel > 0) or (opts.Verbose) then print ("randomPointViaGenericProjection: found " | toString(#pointsList) | " points so far.  We may do another loop.");
-        i = i+1;
-    );
-    return pointsList;
-);
-
--*
-checkRandomPoint =(I1)->(
-    genList:= first entries gens I1;
-	K:=coefficientRing ring I1;
-    point:=randomPoints(ring I1);
-	eval:= map(K,ring I1,point);
-	j:=0;
-	while(j< #genList) do (
-        tempEval:=eval(genList_j);
-        if not (tempEval==0) then return {};
-        j=j+1
-    );
-    if (tempEval ==0) then return point else return {};
-)*-
 
 randomPointViaDefaultStrategy = method(Options => optRandomPoints);
 randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
     local fieldSize;
     pointsList := {}; --a list of points to output
+    homog := (isHomogeneous I1) and (opts.DecompositionStrategy === MultiplicationTable);
 
     if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 0): trying a quick brute force with 10 attempts.";
     pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
             opts++{ Strategy=>BruteForce, PointCheckAttempts => 10 }
         );
     if (#pointsList >= n1) then return pointsList;
-    if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 0): brute force failed, now computing the dimension (if not provided)";    
-    c1 := opts.Codimension;
-    if (c1 === null) then (c1 = dim ring I1 - (opts.DimensionFunction)(I1)); --don't compute it if we already know it.
-    if (c1 == infinity) then (
-        if (opts.Verbose or debugLevel > 0) then print "randomPointViaDefaultStrategy: the ideal has no points (it is the unit ideal)";
-        return pointsList;
-    );
 
-    if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy: starting";
-    --we can do a brute force attempt for hypersurfaces when the field is small
-    if (c1 == 1) then (
-        if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 0): trying BruteForce";
-        kk := coefficientRing ring I1;
-        if (instance(kk, GaloisField)) then (
-            fieldSize = ((degree (ideal ambient kk)_0)#0);
-        )
-        else if (ambient kk === ZZ) then (
-            fieldSize = char kk;
-        )
-        else(
-            error "You must be working over ZZ/p or a GaloisField";
-        );
-        pointsList = pointsList | randomPointsBranching(n1, I1, opts++{Strategy=>BruteForce, PointCheckAttempts=>min(30*n1, 4*n1*fieldSize)});
+    if (homog) then (
+        if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 1): attempting linear intersection via multiplication table with binomials.";
+        pointsList = pointsList | linearIntersectionNew(n1 - #pointsList, I1, 
+            Homogeneous => opts.Homogeneous,          
+            Replacement => Binomial,        
+            ExtendField => opts.ExtendField,
+            PointCheckAttempts => 2*(n1 - #pointsList),
+            DecompositionStrategy => MultiplicationTable,        
+            DimensionFunction => opts.DimensionFunction,
+            Verbose => false);
     );
+    if (#pointsList >= n1) then return pointsList;
+
+    if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 1a): attempting linear intersection with monomials.";
+    pointsList = pointsList | linearIntersectionNew(n1 - #pointsList, I1, 
+        Homogeneous => opts.Homogeneous,          
+        Replacement => Monomial,        
+        ExtendField => opts.ExtendField,
+        PointCheckAttempts => 2*(n1 - #pointsList),
+        DecompositionStrategy => Decompose,        
+        DimensionFunction => opts.DimensionFunction,
+        Verbose => false);
+    if (#pointsList >= n1) then return pointsList;    
     
 
-
-
-
-    --lets give a quick generic projection a shot (well, the hybrid version)
-    if (opts.ProjectionAttempts > 0) then (
-        if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 1): trying a quick projection, coordinates only";
-        pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
-            opts++{ Strategy=>HybridProjectionIntersection,
-                    Codimension=>c1,
-                    MaxCoordinatesToReplace => 0,
-                    Replacement => Binomial,
-                    MaxCoordinatesToTrivialize => infinity,
-                    ProjectionAttempts => 2,
-                    IntersectionAttempts => 2*n1,                    
-                }
-        );
-    );
+    if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 2): attempting linear intersection with binomials.";
+    pointsList = pointsList | linearIntersectionNew(n1 - #pointsList, I1, 
+        Homogeneous => opts.Homogeneous,          
+        Replacement => Binomial,        
+        ExtendField => opts.ExtendField,
+        PointCheckAttempts => 2*(n1 - #pointsList),
+        DecompositionStrategy => Decompose,        
+        DimensionFunction => opts.DimensionFunction,
+        Verbose => false);
     if (#pointsList >= n1) then return pointsList;
 
-
-    --next do a very fast intersection with coordinate linear spaces
-    if (#pointsList >= n1) then return pointsList;
-    if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 2): trying a quick linear intersection, coordinates only";
-    pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
-        opts++{ Strategy=>LinearIntersection,
-                Codimension=>c1,
-                MaxCoordinatesToReplace => 0,
-                IntersectionAttempts => 2*n1,
-                MaxCoordinatesToTrivialize => infinity
-            }
-    );
-
-    if (#pointsList >= n1) then return pointsList;
-    
-    --next do a very fast intersection with nearly coordinate linear spaces
-    if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 3): trying a quick linear intersection, coordinates and one binomial only";
-    pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
-        opts++{ Strategy=>LinearIntersection,
-                Codimension=>c1,
-                MaxCoordinatesToReplace => 1,
-                Replacement => Binomial,
-                MaxCoordinatesToTrivialize => infinity,
-                IntersectionAttempts => 4*n1
-            }
+    if (homog) then (
+        if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 2a): attempting linear intersection via multiplication table with trinomials.";
+        pointsList = pointsList | linearIntersectionNew(n1 - #pointsList, I1, 
+            Homogeneous => opts.Homogeneous,          
+            Replacement => Trinomial,        
+            ExtendField => opts.ExtendField,
+            PointCheckAttempts => 2*(n1 - #pointsList),
+            DecompositionStrategy => MultiplicationTable,        
+            DimensionFunction => opts.DimensionFunction,
+            Verbose => false);
     );
     if (#pointsList >= n1) then return pointsList;
     
-    --next do a fast intersection with slightly less trivial coordinate linear spaces
-    if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 4): trying a quick linear intersection, coordinates and one random term only";
-    pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
-        opts++{ Strategy=>LinearIntersection,
-                Codimension=>c1,
-                MaxCoordinatesToReplace => 1,
-                Replacement => Full,
-                MaxCoordinatesToTrivialize => infinity,
-                IntersectionAttempts => 4*n1
-            }
-    );
-    if (#pointsList >= n1) then return pointsList;
-    
-    --lets give generic projection another shot
-    if (opts.ProjectionAttempts > 0) then (
-        if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 5): giving projection another shot, coordinates and one binomial only";
-        pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
-            opts++{ Strategy=>HybridProjectionIntersection,
-                    Codimension=>c1,
-                    MaxCoordinatesToReplace => 1,
-                    Replacement => Binomial,
-                    MaxCoordinatesToTrivialize => infinity,
-                    ProjectionAttempts => 3,
-                    IntersectionAttempts => 4*n1
-                }
-        );
-    );
-    if (#pointsList >= n1) then return pointsList;
-    
-    --now do a intersection with linear spaces involving fewer coordinates
-    if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 6): trying a quick linear intersection, coordinates and two binomials only";
-    pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
-        opts++{ Strategy=>LinearIntersection,
-                Codimension=>c1,
-                MaxCoordinatesToReplace => 2,
-                Replacement => Binomial,
-                MaxCoordinatesToTrivialize => 4,
-                IntersectionAttempts => 4*n1
-            }
-    );
-    if (#pointsList >= n1) then return pointsList;
-    
-    --first do a slower intersection with linear spaces involving fewer coordinates
-    if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 7): trying a quick linear intersection, coordinates and two linear terms only";
-    pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
-        opts++{ Strategy=>LinearIntersection,
-                Codimension=>c1,
-                MaxCoordinatesToReplace => 2,
-                Replacement => Full,
-                MaxCoordinatesToTrivialize => 2,
-                IntersectionAttempts => 4*n1
-            }
-    );
-    if (#pointsList >= n1) then return pointsList;
-    
-    --this one is probably quite slow
-    if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 8): trying a linear intersection, binomials only";
-    pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
-        opts++{ Strategy=>LinearIntersection,
-                Codimension=>c1,
-                MaxCoordinatesToReplace => infinity,
-                Replacement => Binomial,
-                MaxCoordinatesToTrivialize => 1,
-                IntersectionAttempts => 4*n1
-            }
-    );
+    if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 3): attempting linear intersection with trinomials.";
+    pointsList = pointsList | linearIntersectionNew(n1 - #pointsList, I1, 
+        Homogeneous => opts.Homogeneous,          
+        Replacement => Trinomial,        
+        ExtendField => opts.ExtendField,
+        PointCheckAttempts => 2*(n1 - #pointsList),
+        DecompositionStrategy => Decompose,        
+        DimensionFunction => opts.DimensionFunction,
+        Verbose => false);
     if (#pointsList >= n1) then return pointsList;
 
-        --lets try another projection
-    if (opts.ProjectionAttempts > 0) then (
-        if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 9): giving projection another shot, coordinates and two binomials only";
-        pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
-            opts++{ Strategy=>HybridProjectionIntersection,
-                    Codimension=>c1,
-                    MaxCoordinatesToReplace => 2,
-                    Replacement => Binomial,
-                    MaxCoordinatesToTrivialize => 2,
-                    ProjectionAttempts => 3*n1,
-                    IntersectionAttempts => 4*n1
-                }
-        );
-    );
+    if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 4): attempting linear intersection with full replacement.";
+    pointsList = pointsList | linearIntersectionNew(n1 - #pointsList, I1, 
+        Homogeneous => opts.Homogeneous,          
+        Replacement => Full,        
+        ExtendField => opts.ExtendField,
+        PointCheckAttempts => 2*(n1 - #pointsList),
+        DecompositionStrategy => Decompose,        
+        DimensionFunction => opts.DimensionFunction,
+        Verbose => false);
     if (#pointsList >= n1) then return pointsList;
     
-    --this one can be extremely slow
-    if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 10): trying a linear intersection, full random";
-    pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
-        opts++{ Strategy=>LinearIntersection,
-                Codimension=>c1,
-                MaxCoordinatesToReplace => infinity,
-                Replacement => Full,
-                MaxCoordinatesToTrivialize => 1,
-                IntersectionAttempts => 4*n1
-            }
-    );
     return pointsList;
 );
 
 
-randomPointViaMultiplicationTable=method(Options => optRandomPoints);
-
-
-randomPointViaMultiplicationTable(ZZ,Ideal) := opts-> (n1,I) -> (
-    local d;
-    if not (opts.Codimension === null) then (d = (dim ring I) - opts.Codimension;)
-    else (d = (opts.DimensionFunction) I;);
-    --d:= dimViaBezout I;
-    ptlist:={};
-    while (#ptlist<n1) do (
-           ptlist = append(ptlist, randomPointViaMultiplicationTable(I,d,opts));
-	   );
-    return ptlist
-)
-
-randomPointViaMultiplicationTable(Ideal,ZZ) := opts-> (I,d) -> (
-    -- Input: I, a homogeneous ideal, d its dimension
-    --Output: a K-rational point on V(I) where K is  the finite ground field.
-    if not isHomogeneous I then error "randomPointViaMultiplicationTable: expected a homogeneous ideal";
-    switchStrategy(opts,MultiplicationTable);
-    -- we cut down with a linear space to a zero-dimensional projective scheme
-    -- and compute how the last two variables act on the quotient ring truncated  
-    -- at the regularity. 
-    -- In case of an absolutely irreducible I over K, we will find with 
-    -- high probability a point, 
-    -- since the determinant will has a linear factor in at least 50% of the cases
-    S:= ring I;
-    attemps:=1;
-    while (
-        L:=ideal random(S^1,S^{d-1:-1});
-	--elapsedTime J=saturate(I+L);
-	    J:=I+L;
-    	Js:=saturateInGenericCoordinates J;
-        --Js := saturate(J, ideal first entries vars S);
-	    r:=degree ideal last (entries gens gb Js)_0;
-        b1 :=basis(r+1,S^1/Js); --if not homogeneous
-	    b2 :=basis(r+2,S^1/Js);
-	    j:=#gens S-d;
-	    xx:=(support (vars S%L))_{j-1,j}; --last two equations (why last?)
-	    m0:=contract(transpose matrix entries b2,matrix entries((xx_0*b1)%Js));  --contract 
-	    m1:=contract(transpose matrix entries b2,matrix entries((xx_1*b1)%Js));
-        M:=map(S^(rank target m0),S^{rank source m0:-1},xx_0*m1-xx_1*m0);
- 	    DetM:=(M^{0}*syz M^{1..rank source M-1})_(0,0); --fake determinant computation  
-         --look at examples of this matrix and see what happens, is this syz trick the way to compute
-         --this will be slow if the degree is large since the size of this matrix is the degree
-	     --computing DetM is the bottleneck
-	    h:=ideal first first factor DetM;
-	    --print degree h <<endl;
-	    degree h>1 and attemps<opts.IntersectionAttempts) 
-    do (attemps=attemps+1); --end of while
-    if degree h >1 then return {};
-    pt:=radical saturateInGenericCoordinates(h+Js); --lift to a higher dimensional space
-    flatten (entries syz transpose jacobian pt)
-)
 
 getNextValidFieldSize = method();
 getNextValidFieldSize(ZZ, ZZ, ZZ) := (pp, d, targetSize) -> (
@@ -969,196 +601,6 @@ dimViaBezout(Ideal) := opts-> I1 -> (
     return dimViaBezoutNonhomogeneous(I2, Verbose=>opts.Verbose, DimensionIntersectionAttempts=>attempts);
 )
 
-
-rationalPointsNew = method(Options => optRandomPoints);
-rationalPointsNew(ZZ, Ideal) := opts -> (n1, I1) -> (
-    --this code is for the non-homogeneous case
-    --the idea in this code is simple.  Extend the field.  Intersect with binomials.  
-    --Then find the point, either by decompose or with a multiplication table
-    local J2;
-    local I3;
-    local myDeg;
-    local newS2;
-    local psi;
-    local j;
-    local l; --a linear space
-    local m2;  --a point, in an extended field
-    local finalPoint; --the point to be returned    
-    local J2;
-    local ptList; --list of points, before extending the field.
-    local sortedPtList; --list of points, before extending the field.
-    local newPtList; --list of points after extending the field
-    local checks;
-    returnPointsList := {};
-    if (opts.PointCheckAttempts > 0) then checks = opts.PointCheckAttempts else checks = 3*n1+3;    
-
-    S1 := ring I1;
-    m := getFieldSize coefficientRing S1;
-    pp := char ring I1;
-    S2 := S1;
-    I2 := I1;    
-    
-    i := dim S1;
-    k:= 0;
-    --L2 := apply(checks, t-> getRandomLinearForms(S2, {0,max(0, i-t),0,min(t, i), 0,0}, Homogeneous=>false)); --a list of linear forms
-    L2 := apply(checks, t-> getRandomLinearForms(S2, {0,i,0,0,0,0}, Homogeneous=>false));
-    while (i >= 0) do (
-        if opts.Verbose then print("rationalPointsNew: Trying intersection with a binomial linear space of dimension " | toString(dim S2 - i));        
-        J2 = apply(L2, l -> ideal(l) + I2);
-        k = 0;
-        while (k < checks) and (#returnPointsList < n1) do (
-            if opts.Verbose then print("rationalPointsNew: trying linear intersection #" | toString(k));
-            --print (J2#k == ideal(1_S2));
-            --print dim(J2#k);
-            if (J2#k != ideal 1_S2) and (#returnPointsList < n1) then (--we found a point                
-                --i = -1; --stop the exterior loop, we found the dimension
-                if opts.Verbose then print("rationalPointsNew: We found at least one point");
-                --we should have bifurcating code here, so instead of running this, call a function, or call the multiplication table
-                ptList = random decompose trim  (J2#k);
-                if opts.Verbose then print("rationalPointsNew: We found " | toString(#ptList) | " points.");
-                j=0;
-                sortedPtList = sort apply(#ptList, t -> {dim (ptList#t), degree (ptList#t), t});
-                if opts.Verbose then print sortedPtList;
-                while (j < #ptList) and (#returnPointsList < n1) and (sortedPtList#j#0 == 0) do (
-                    myDeg = sortedPtList#j#1;                
-                    if opts.Verbose then print("rationalPointsNew: Looking at a point of degree " | toString(myDeg));
-                    if (myDeg == 1) then (
-                        finalPoint = idealToPoint(ptList#(sortedPtList#j#2));                    
-                        if (verifyPoint(finalPoint, I2, opts)) then returnPointsList = append(returnPointsList, finalPoint);
-                    )
-                    else (
-                        if (debugLevel > 0) or (opts.Verbose) then print "rationalPointsNew: Found a non-rational point.";
-                    );
-                    j = j+1;
-                );    
-                --now we need to remove this item from the list of things to check       
-                L2 = drop(L2, {k,k});    
-                checks = checks - 1; --we have fewer things to check against now that this one is used up     
-            );
-            if (#returnPointsList >= n1) then return returnPointsList;
-            k = k+1;
-        );
-        L2 = apply(checks, t->drop(L2#t, 1)); --drop something for next run
-        i = i-1;        
-    );
-    return returnPointsList;
-)
-
-verifyDimZero = method();--verify if an ideal has dimension zero
-verifyDimZero(Ideal) := (I1) -> (
-    local S2;
-    local phi1;
-    local I2;
-    S1 := ring I1;
-    m := getFieldSize coefficientRing S1;    
-    pp := char S1;
-    curD := floor(log_pp(m) + 0.5);    
-    if (m < 100000) then (
-        d := ceiling(log_pp(max(m, 100000)));
-        d = ceiling(d/curD)*d;
-        (S2, phi1) = fieldBaseChange(S1, GF(pp, d));
-        I2 = phi1(I1);  
-    )
-    else (
-        I2 = I1;
-        S2 = S1;
-    );
-    h := getRandomLinearForms(S2, {0,1,0,0,0,0}, Homogeneous => false);
-    return (I2 + ideal(h) == ideal(1_S2));
-);
-
-geometricPointsNew = method(Options => optRandomPoints);
-geometricPointsNew(ZZ, Ideal) := opts -> (n1, I1) -> (
-    --this code is for the non-homogeneous case
-    --the idea in this code is simple.  Extend the field.  Intersect with binomials.  
-    --Then find the point, either by decompose or with a multiplication table
-    local J2;
-    local I3;
-    local myDeg;
-    local newS2;
-    local psi;
-    local j;
-    local l; --a linear space
-    local m2;  --a point, in an extended field
-    local finalPoint; --the point to be returned    
-    local J2;
-    local ptList; --list of points, before extending the field.
-    local sortedPtList; --list of points, before extending the field.
-    local newPtList; --list of points after extending the field
-    local checks;
-    returnPointsList := {};
-    if (opts.PointCheckAttempts > 0) then checks = opts.PointCheckAttempts else checks = 3*n1+3; 
-
-    S1 := ring I1;
-    m := getFieldSize coefficientRing S1;
-    pp := char ring I1;
-    d := ceiling(log_pp(max(m, 100)) + 0.5); --this should force a bigger field extension
-    curD := floor(log_pp(m) + 0.5);--current degree
-    d = ceiling(d/curD)*d;
-    if opts.Verbose then print "geometricPointsNew: Extending the field";
-    if opts.Verbose then print ("geometricPointsNew: New field size is " | toString(pp) | "^" | toString(d) | " = " | toString(pp^(d)) );
-    (S2, phi1) := fieldBaseChange(S1, GF(pp, d));
-    I2 := phi1(I1);    
-    
-    i := dim S1;
-    k:= 0;
-    L2 := apply(checks, t-> getRandomLinearForms(S2, {0,i,0,0,0,0}, Homogeneous=>false));
-    --L2 := apply(checks, t-> getRandomLinearForms(S2, {0,max(0, i-t),0,min(t, i), 0,0}, Homogeneous=>false)); --a list of linear forms
-    while (i >= 0) do (
-        if opts.Verbose then print("geometricPointsNew: Trying intersection with a binomial linear space of dimension " | toString(dim S2 - i));        
-        J2 = apply(L2, l -> ideal(l) + I2);
-        k = checks - 1;
-        while (k >= 0) and (#returnPointsList < n1) do (
-            if opts.Verbose then print("geometricPointsNew: trying linear intersection #" | toString(k));
-            if (J2#k != ideal 1_S2) and (#returnPointsList < n1) then (--we found a point                
-                if opts.Verbose then print("geometricPointsNew: We found something");
-                if (dim (J2#k) == 0) then (
-                    --i = -1; --stop the exterior loop, we found the dimension
-                    if opts.Verbose then print("geometricPointsNew: We found at least one point");
-                    --we should have bifurcating code here, so instead of running this, call a function, or call the multiplication table
-                    ptList = random decompose(J2#k);
-                    if opts.Verbose then print("geometricPointsNew: We found " | toString(#ptList) | " points.");
-                    j=0;
-                    sortedPtList = sort apply(#ptList, t -> {dim (ptList#t), degree (ptList#t), t});
-                    while (j < #ptList) and (#returnPointsList < n1) and (sortedPtList#j#0 == 0) do (
-                        myDeg = sortedPtList#j#1;                
-                        if opts.Verbose then print("geometricPointsNew: Looking at a point of degree " | toString(myDeg));
-                        if (myDeg == 1) then (
-                            finalPoint = idealToPoint(ptList#(sortedPtList#j#2));                    
-                            if (verifyPoint(finalPoint, I2, opts)) then returnPointsList = append(returnPointsList, finalPoint);
-                        )
-                        else if (not (null === conwayPolynomial(pp, d*myDeg))) then (
-                            if (debugLevel > 0) or (opts.Verbose) then print "geometricPointsNew:  extending the field.";
-                            psi = (extendFieldByDegree(myDeg, S2))#1;
-                            I3 = psi(I2);
-                            newS2 = target psi;
-                            m2 = psi(ptList#j);
-                            newPtList = random decompose(m2); --make sure we are picking points randomly from this decomposition
-                            --since these points are going to be conjugate, we only pick 1.                      
-                            if (#newPtList > 0) then ( 
-                                finalPoint = idealToPoint(newPtList#0);
-                                --finalPoint =  apply(idealToPoint(newPtList#0), s -> sub(s, target phi));
-                                if (verifyPoint(finalPoint, I3, opts)) then (returnPointsList = append(returnPointsList, finalPoint);)                        
-                            ); 
-                        )
-                        else (
-                            if (debugLevel > 0) or (opts.Verbose) then print "geometricPointsNew: Macaulay2 cannot handle a field extension this large, moving to the next point.";
-                        );
-                        j = j+1;                    
-                    );   
-                );
-                --now we need to remove this item from the list of things to check    
-                L2 = drop(L2, {k,k});    
-                checks = checks - 1;     --we have fewer things to check against now that this one is used up
-            );
-            if (#returnPointsList >= n1) then return returnPointsList;
-            k = k-1;
-        );
-        L2 = apply(checks, t->drop(L2#t, 1)); --drop something for next run
-        i = i-1;        
-    );
-    return returnPointsList;
-)
 
 linearIntersectionNew = method(Options => optRandomPoints);
 linearIntersectionNew(ZZ, Ideal) := opts -> (n1, I1) -> (
@@ -1243,14 +685,14 @@ linearIntersectionNew(ZZ, Ideal) := opts -> (n1, I1) -> (
             if (workingIdeal != ideal 1_S2) and (#returnPointsList < n1) then (--we found a point                
                 --i = -1; --stop the exterior loop, we found the dimension
                 if opts.Verbose then print("linearIntersectionNew: We found something.");
-                if ((not homogFlag) and (dim workingIdeal == 0)) then (--if we are using decompose
+                if ((not homogFlag) and ((opts.DimensionFunction)(workingIdeal) == 0)) then (--if we are using decompose
                     if opts.Verbose then print("linearIntersectionNew: We found at least one point");
                     --we should have bifurcating code here, so instead of running this, call a function, or call the multiplication table
                     
                     ptList = random decompose trim (workingIdeal);                        
                     if opts.Verbose then print("linearIntersectionNew: We found " | toString(#ptList) | " points.");
                     j=0;
-                    sortedPtList = sort apply(#ptList, t -> {dim (ptList#t), degree (ptList#t), t});
+                    sortedPtList = sort apply(#ptList, t -> {(opts.DimensionFunction)(ptList#t), degree (ptList#t), t});
                     while (j < #ptList) and (#returnPointsList < n1) and (sortedPtList#j#0 == 0) do (
                         myDeg = sortedPtList#j#1;                
                         if opts.Verbose then print("linearIntersectionNew: Looking at a point of degree " | toString(myDeg));
@@ -1278,7 +720,7 @@ linearIntersectionNew(ZZ, Ideal) := opts -> (n1, I1) -> (
                         j = j+1;
                     );                                                                
                 )
-                else if homogFlag and (dim workingIdeal == 1) then (--we should use MultiplicationTable to do the factoring
+                else if homogFlag and ((opts.DimensionFunction)(workingIdeal) == 1) then (--we should use MultiplicationTable to do the factoring
                     newPts = multiplicationTableInternal(n1 - #returnPointsList, I2, workingIdeal, sub(ideal(L2#k), S2), ExtendField => opts.ExtendField, Verbose=>opts.Verbose);
                     returnPointsList = returnPointsList | newPts;                                       
                 );  
@@ -1310,7 +752,8 @@ multiplicationTableInternal(ZZ, Ideal, Ideal, Ideal) := opts->(n1, I2, workingId
         b1 :=basis(r+1,S2^1/workingIdeal); 
         b2 :=basis(r+2,S2^1/workingIdeal);
         j := dim S2 - #(first entries gens linearSpace) - 1; --what size linear space did we intersect with
-        if (opts.Verbose) then print ("multiplicationTableInternal: linear space codim is " | toString(j) | "," | toString(dim linearSpace) | " deg " | toString(degree workingIdeal));    
+        if (opts.Verbose) then print ("multiplicationTableInternal: linear space codim is " | toString(j) );
+        --| "," | toString(dim linearSpace) | " deg " | toString(degree workingIdeal));    
         xx:=(support (vars S2%(linearSpace)))_{j-1,j}; 
         m0:=contract(transpose matrix entries b2,matrix entries((xx_0*b1)%workingIdeal));  
         m1:=contract(transpose matrix entries b2,matrix entries((xx_1*b1)%workingIdeal));
@@ -1340,99 +783,10 @@ multiplicationTableInternal(ZZ, Ideal, Ideal, Ideal) := opts->(n1, I2, workingId
 );
 
 
-randomPointViaMultiplicationTableNew=method(Options => optRandomPoints);
-randomPointViaMultiplicationTableNew(ZZ, Ideal) := opts-> (n1, I1) -> (
-    --this variant of the function finds geometric points
-    -- Input: I, a homogeneous ideal, n1, the number of points to find
-    --Output: a K-rational point on V(I) where K is  the finite ground field.    
-    -- we cut down with a linear space to a zero-dimensional projective scheme
-    -- and compute how the last two variables act on the quotient ring truncated  
-    -- at the regularity.     
-    local k;
-    local J2;
-    local Js;
-    returnPointsList := {};
-
-    S1:= ring I1;
-    checks := 3*n1+3;
-    m := getFieldSize coefficientRing S1;
-    pp := char ring I1;
-    d := ceiling(log_pp(max(m, 1000)) + 0.1); --this should force a field with > 1000 elts
-    if opts.Verbose then print "randomPointViaMultiplicationTableNew: Extending the field";
-    if opts.Verbose then print ("randomPointViaMultiplicationTableNew: New field size is " | toString(pp) | "^" | toString(d) | " = " | toString(pp^(d)) );
-    (S2, phi1) := fieldBaseChange(S1, GF(pp, d));
-    I2 := phi1(I1);    
-    
-    i := dim S1-1;
-    L2 := apply(checks, t-> getRandomLinearForms(S2, {0,max(0, i-t),0,min(t, i),0,0}, Homogeneous=>true)); 
-        --a list of all the linear forms to use    
-    
-    while (i >= 0) and (#returnPointsList < n1) do (
-        if opts.Verbose then print("randomPointViaMultiplicationTableNew: Trying intersection with a binomial linear space of dimension " | toString(dim S2 - i));        
-        J2 = apply(L2, l -> ideal(l) + I2); -- a list of intersections
-        k = 0;
-        while (k < checks) and (#returnPointsList < n1) do (
-             if opts.Verbose then print("randomPointViaMultiplicationTableNew: trying linear intersection #" | toString(k));
-            Js = saturate(J2#k);
-            if (Js != ideal 1_S2) and (#returnPointsList < n1) then (
-               
-                -----THE FOLLOWING CODE MAY NEED TO BE MODIFIED FURTHER
-                --Js:=saturateInGenericCoordinates(J2#k); --this should saturate pretty quickly                
-                r:=degree ideal last (entries gens gb Js)_0;
-                b1 :=basis(r+1,S2^1/Js); 
-                b2 :=basis(r+2,S2^1/Js);
-                j:=dim S1 - i-1; --the expected codimension of I2
-                xx:=(support (vars S2%(ideal(L2#k))))_{j-1,j}; 
-                m0:=contract(transpose matrix entries b2,matrix entries((xx_0*b1)%Js));  --contract 
-                m1:=contract(transpose matrix entries b2,matrix entries((xx_1*b1)%Js));
-                M:=map(S2^(rank target m0),S2^{rank source m0:-1},xx_0*m1-xx_1*m0);
-                DetM:=(M^{0}*syz M^{1..rank source M-1})_(0,0); --fake determinant computation  
-                --look at examples of this matrix and see what happens, is this syz trick the way to compute
-                --this will be slow if the degree is large since the size of this matrix is the degree
-                --computing DetM is the bottleneck
-                --h:=ideal first first factor DetM;                
-                if (not DetM == 0) then (
-                    h:= factor DetM;
-                    count := 0;
-                    while (count < #h) and (#returnPointsList < n1) do (
-                        myH := first (h#count);
-                        if (degree myH >= degree(0_S2)) and (degree myH == degree first first entries vars S2) then (--check to see if we have a degree 1 factor
-                            pt:=radical saturateInGenericCoordinates((ideal myH)+Js); --lift to a higher dimensional space
-                            if (degree pt == 1) then (
-                                returnPointsList = append(returnPointsList, flatten (entries syz transpose jacobian pt));
-                                i = -1; --also, stop the big loop
-                            );
-                        );            
-                        count = count+1;
-                    );
-                );
-                --print degree h <<endl;
-                    --degree h>1 and attemps<opts.IntersectionAttempts
-                --) 
-                --do (attemps=attemps+1); --end of while
-                --if degree h >1 then return {};                
-            );
-            k = k+1;
-        );
-        
-        --drop a form for next run
-        L2 = apply(checks, t->drop(L2#t, 1));
-        i = i-1;
-    );
-    return returnPointsList;
-)
 
 
 
---dimViaBezout(ZZ, Ideal) := (n1,I1) -> (
-    --if (isHomogeneous I1) then (
-        --valList := sort apply(n1, i->dimViaBezoutHomogeneous(5, I1));
-        --max valList
-    --)
-    --else(
-        --dimViaBezoutNonhomogeneous(1, I1)
-    --)
---)
+
 
 
 dimViaBezoutNonhomogeneous=method(Options => {Verbose => false, DimensionIntersectionAttempts => 1, MinimumFieldSize => 100});
@@ -1549,17 +903,12 @@ randomPointsBranching(ZZ, Ideal) := List => opts -> (n1, I) -> (
         if (opts.NumThreadsToUse > 1) then return randomPointViaMultiThreads(n1, I, opts)
         else return searchPoints(n1, R, genList, opts);
     )	
-    else if (opts.Strategy == GenericProjection) 
-    then return randomPointViaGenericProjection(n1, I, opts)
 	
     else if (opts.Strategy == LinearIntersection) 
-    then return randomPointViaLinearIntersection(n1, I, opts)
-
-    else if (opts.Strategy == HybridProjectionIntersection) 
-    then return randomPointViaGenericProjection(n1, I, opts)
+    then return linearIntersectionNew(n1, I, opts)
     
-    else if (opts.Strategy == MultiplicationTable)
-    then return randomPointViaMultiplicationTable(n1, I, opts)
+    --else if (opts.Strategy == MultiplicationTable)
+    --then return linearIntersectionNew(n1, I, opts++{DecompositionStrategy=>MultiplicationTable})
 --    else if (opts.Strategy == LinearProjection) 
 --    then return randomPointViaLinearProjection(I, opts)
     --else if (opts.Strategy == MultiThreads)
@@ -1838,23 +1187,6 @@ doc ///
             If the option {\tt Verify=>true}, then this will check the jacobian of the list of forms (discounting the constant forms), to make sure it has maximal rank.  Random forms in small numbers of variables over small fields will produce non-injective ring maps occasionally otherwise.        
 ///
 
-doc ///
-    Key
-        Codimension
-        [extendIdealByNonZeroMinor, Codimension]
-        [findANonZeroMinor, Codimension]
-        [randomPointViaLinearIntersection, Codimension]        
-    Headline
-        an option to specify the codimension so as not to compute it
-    Usage
-        Codimension => n
-    Inputs
-        n:ZZ
-            an integer, or null
-    Description
-        Text
-            Various functions need to know the codimension/height of the scheme/ideal it is working with.  Setting this to be an integer will tell the function not to compute the codimension and to use this value instead.  The default value is {\tt null}, in which case the function will compute the codimension.
-///
 
 doc ///
     Key
@@ -2000,6 +1332,7 @@ doc ///
         (projectionToHypersurface, Ring)
         [projectionToHypersurface, Codimension]
         [projectionToHypersurface, Homogeneous]
+        Codimension
     Headline
         Generic projection to a hypersurface
     Usage
@@ -2039,47 +1372,9 @@ doc ///
 
 doc///
     Key
-        ProjectionAttempts
-        [randomPoints, ProjectionAttempts]
-        [extendIdealByNonZeroMinor, ProjectionAttempts]
-        [findANonZeroMinor, ProjectionAttempts]
-    Headline
-         Number of projection trials using in randomPoints when doing generic projection
-    Description
-        Text
-            When calling the Strategy {\tt GenericProjection} or {\tt HybridProjectionIntersection} from {\tt randomPoints}, this option denotes the number of trials before giving up.  This option is also passed to randomPoints by other functions.
-    SeeAlso
-        randomPoints
-///
-
-
-doc ///
-    Key
-        IntersectionAttempts
-        [randomPoints, IntersectionAttempts]
-        [extendIdealByNonZeroMinor, IntersectionAttempts]
-        [findANonZeroMinor, IntersectionAttempts]
-    Headline
-        an option which controls how many linear intersections are attempted when looking for rational points
-    Usage
-        IntersectionAttempts => n
-    Inputs
-        n:ZZ
-            the maximum attempts to make
-    Description
-        Text
-            This option is used by {\tt randomPoints} in some strategies to determine the maximum number of attempts to intersect with a linear space when looking for random rational points.  Other functions pass this option through to {\tt randomPoints}.
-    
-///
-
-doc///
-    Key
         MaxCoordinatesToReplace
-        [randomCoordinateChange, MaxCoordinatesToReplace]
-        [randomPoints, MaxCoordinatesToReplace]
-        [genericProjection, MaxCoordinatesToReplace]
-        [extendIdealByNonZeroMinor, MaxCoordinatesToReplace]
-        [findANonZeroMinor, MaxCoordinatesToReplace]        
+        [randomCoordinateChange, MaxCoordinatesToReplace]        
+        [genericProjection, MaxCoordinatesToReplace]        
         [projectionToHypersurface, MaxCoordinatesToReplace]        
     Headline
         The maximum number of coordinates to turn into non-monomial functions when calling {\tt randomCoordinateChange}
@@ -2104,14 +1399,15 @@ doc ///
         [randomPoints, Replacement]
         [extendIdealByNonZeroMinor, Replacement]
         Full
+        Trinomial
     Headline
-        When changing coordinates, whether to replace variables by general degre 1 forms or binomials
+        When changing coordinates, whether to replace variables by general degre 1 forms, binomials, etc.
     Usage
         Replacement => Full
         Replacement => Binomial
     Description
         Text
-            When calling {\tt randomCoordinateChange}, or functions that call it, setting {\tt Replacement => Full} will mean that coordinates are changed to a general degree 1 form.  If {\tt Replacement => Binomial}, the coordiates are only changed to bionomials, which can be much faster for certain applications.
+            When calling {\tt randomCoordinateChange}, or functions that call it, setting {\tt Replacement => Full} will mean that coordinates are changed to a general degree 1 form.  If {\tt Replacement => Binomial}, the coordiates are only changed to bionomials, which can be much faster for certain applications.  Other options include {\tt Replacement => Monomial} and {\tt Replacement => Trinomial} 
         Example
             R = ZZ/11[a,b,c];
             randomCoordinateChange(R, Replacement=>Full)
@@ -2132,11 +1428,9 @@ doc ///
         [findANonZeroMinor, Strategy]
         [extendIdealByNonZeroMinor, Strategy]
         Default
-        BruteForce
-        GenericProjection
-        LinearIntersection
-        HybridProjectionIntersection
-        MultiplicationTable
+        BruteForce        
+        LinearIntersection    
+        MultiplicationTable    
     Headline
         values for the option Strategy when calling randomPoints
     Description
@@ -2144,39 +1438,15 @@ doc ///
             When calling {\tt randomPoints}, set the strategy to one of these.
             {\tt BruteForce} simply tries random points and sees if they are on the variety.
 	    
-            {\tt GenericProjection} projects to a hypersurface, via {\tt projectionToHypersurface} and then uses a {\tt BruteForce} strategy.
-	    
-            {\tt LinearIntersection} intersects with an appropriately random linear space.
-	    
-            {\tt HybridProjectionIntersection} does a generic projection, followed by a linear intersection. Notice that speed, or success, varies depending on the strategy.
+            {\tt LinearIntersection} intersects with an random linear space.  Setting the {\tt DecompositionStrategy => MultiplicationTable} will change how ideals corresponding to points are broken up into minimal primes, which can be faster for some homogeneous ideals.  See @TO DecompositionStrategy@.
 
-            {\tt Default} performs a sequence of different strategies, depending on the context.
-
-            {\tt MultiplicationTable} works for homogeneous ideals only. It computes the dimension of $I$ probabilistically, speeding up
-            the process. It cuts down with a linear space to a zero-dimensional projective scheme and computes how the last two variables act on the quotient ring truncated  
-            at the regularity. In case of an absolutely irreducible $I$ over the field, we will find with  high probability a point, 
-            since the determinant will have a linear factor in at least 50% of the cases.  
+            {\tt Default} performs a sequence of different strategies, with successively increasing complexity of the linear subspaces that are intersected.
     SeeAlso
         randomPoints
         randomKRationalPoint
         projectionToHypersurface
 ///
 
--*doc///
-    Key
-        Codimension
-        [randomPoints, Codimension]
-        [projectionToHypersurface, Codimension]
-    Headline
-        Checks the 
-    Description 
-        Text
-            
-    SeeAlso
-        randomPoints
-        projectionToHypersurface
-///
-*-
 doc///
     Key 
         NumThreadsToUse
@@ -2204,7 +1474,7 @@ doc///
         Number of times the the function will search for a point 
     Description
         Text
-            When calling {\tt randomPoints}, and functions that call it, with a {\tt BruteForce} strategy or {\tt GenericProjection} strategy, this denotes the number of trials for brute force point checking.
+            When calling {\tt randomPoints}, and functions that call it, with a {\tt BruteForce} strategy strategy, this denotes the number of trials for brute force point checking.  When calling it with a {\tt LinearIntersection} strategy, this controls how many linear spaces are created.
         Example
             R = ZZ/11[x,y,z];
             I = ideal(x,y);
@@ -2218,15 +1488,15 @@ doc///
 
 doc ///
     Key
-        MaxCoordinatesToTrivialize
-        [extendIdealByNonZeroMinor, MaxCoordinatesToTrivialize]
-        [findANonZeroMinor, MaxCoordinatesToTrivialize]
-        [randomPoints, MaxCoordinatesToTrivialize]
+        DecompositionStrategy
+        [randomPoints, DecompositionStrategy]
+        [extendIdealByNonZeroMinor,DecompositionStrategy]
+        [findANonZeroMinor, DecompositionStrategy]
     Headline
-        the number of coordinates to set to random values when doing a linear intersection
+        control how ideals of points are factored into minimal primes
     Description
         Text
-            When calling {\tt randomPoints} and performing an intersection with a linear space, this is the number of defining equations of the linear space of the form $x_i - a_i$.  Having a large number of these will provide faster intersections.
+            For homogeneous ideals, in many cases uses a multiplication table (ie, computing how a variable acts on points in two different ways) can be used to more quickly decompose ideals.  This is turned on by setting {\tt DecompositionStrategy => MultiplicationTable}.  However, in other cases, especially when there are many variables, using {\tt DecompositionStrategy => Decompose} can be substantially faster.
 ///
 
 doc ///
@@ -2234,9 +1504,8 @@ doc ///
         randomPoints
         (randomPoints, Ideal)
         (randomPoints, ZZ, Ideal)
-        [randomPoints, Homogeneous]        
-        [randomPoints, Codimension]
-        [randomPoints, DimensionFunction]
+        [randomPoints, Homogeneous]                
+        [randomPoints, DimensionFunction]        
     Headline
         a function to find random points  in a variety. 
     Usage
@@ -2250,23 +1519,17 @@ doc ///
         R:Ring
             a polynomial ring
         Strategy => Symbol
-            to specify which strategy to use, Default, BruteForce, LinearIntersection, GenericProjection, HybridProjectionIntersection, MultiplicationTable.
-        ProjectionAttempts => ZZ
-            see @TO ProjectionAttempts@
-        MaxCoordinatesToReplace => ZZ
-            see @TO MaxCoordinatesToReplace@
-        Codimension => ZZ
-            see @TO Codimension@
+            to specify which strategy to use, Default, BruteForce, LinearIntersection.        
         ExtendField => Boolean
-            whether to allow points not rational over the base field
-        IntersectionAttempts => ZZ
-            see @TO IntersectionAttempts@
+            whether to allow points not rational over the base field        
 	    PointCheckAttempts => ZZ
 	        points to search in total, see @TO PointCheckAttempts@
         NumThreadsToUse => ZZ
 	        number of threads to use in the BruteForce strategy, see @TO NumThreadsToUse@
         DimensionFunction => Function
             specify a custom dimension function, such as the default dimViaBezout or the Macaulay2 function dim
+        DecompositionStrategy => Symbol
+            see @TO DecompositionStrategy@
     Outputs
         :List
             a list of points in the variety with possible repetitions.
@@ -2280,19 +1543,18 @@ doc ///
             randomPoints(4, I, Strategy => Default)            
             randomPoints(4, I, Strategy => LinearIntersection)
         Text 
-            Using the MultiplicationTable Strategy is sometimes faster:
+            Using the MultiplicationTable Strategy is sometimes faster and other times not.
         Example
-            S=ZZ/103[y_0..y_14];
+            S=ZZ/103[y_0..y_16];
             I=minors(2,random(S^3,S^{5:-1}));
-            elapsedTime randomPoints(I,Strategy=>MultiplicationTable, Codimension=>8)
-            elapsedTime randomPoints(I,Codimension=>8)
-        Text
-            and other times not:
+            elapsedTime randomPoints(I, DecompositionStrategy=>MultiplicationTable)
+            elapsedTime randomPoints(I, DecompositionStrategy=>null)
+        Text            
         Example
-            S=ZZ/101[y_0..y_9];
+            S=ZZ/101[y_0..y_5];
             I=ideal random(S^1,S^{-2,-2,-2,-3})+(ideal random(2,S))^2;
-            elapsedTime randomPoints(I,Strategy=>MultiplicationTable,Codimension=>5)
-            elapsedTime randomPoints(I,Codimension=>5)
+            elapsedTime randomPoints(I,DecompositionStrategy=>MultiplicationTable)          
+            elapsedTime randomPoints(I, DecompositionStrategy=>null)                         
 ///
 
 doc ///

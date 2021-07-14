@@ -145,3 +145,6 @@ elapsedTime randomPoints(I,Strategy=>LinearIntersection)
 elapsedTime randomPointViaMultiplicationTable(I,d)
 
 
+S=ZZ/101[y_0..y_9];
+I=ideal random(S^1,S^{-2,-2,-2,-3})+(ideal random(2,S))^2;
+time randomPoints(1, I, Strategy=>MultiplicationTable)
