@@ -153,6 +153,12 @@ createRandomPoints(Ideal):=List => opts->(I1) ->(
 
 randomCoordinateChange = method(Options=>optCoorindateChange);
 
+    --constForms := L1#0;
+    --monomialForms := L1#1;
+    --trueMonomialForms := L1#2; --forced to be monomial whether or not Homogeneous is true
+    --binomialForms := L1#3; 
+    --trinomialForms := L1#4;
+    --randForms := L1#5;
 randomCoordinateChange(Ring) := opts -> (R1) -> (
     if (debugLevel > 0) or (opts.Verbose) then print "randomCoordinateChange: starting.";
     local phi;
@@ -163,6 +169,10 @@ randomCoordinateChange(Ring) := opts -> (R1) -> (
     local genList;
     if (opts.Replacement == Binomial) then (
         genList = getRandomLinearForms(R1, {0, max(d1 - opts.MaxCoordinatesToReplace, 0), 0, min(d1, opts.MaxCoordinatesToReplace),0, 0}, Homogeneous => opts.Homogeneous, Verbose=>opts.Verbose, Verify=>true); )
+    else if (opts.Replacement == Trinomial) then (
+        genList = getRandomLinearForms(R1, {0, max(d1 - opts.MaxCoordinatesToReplace, 0), 0, 0, min(d1, opts.MaxCoordinatesToReplace),0}, Homogeneous => opts.Homogeneous, Verbose=>opts.Verbose, Verify=>true); )
+    else if (opts.Replacement == Monomial) then (
+        genList = getRandomLinearForms(R1, {0,d1, 0, 0,0, 0}, Homogeneous => opts.Homogeneous, Verbose=>opts.Verbose, Verify=>true); )
     else if (opts.Replacement == Full) then (
         genList = getRandomLinearForms(R1, {0, max(d1 - opts.MaxCoordinatesToReplace, 0), 0, 0, 0, min(d1, opts.MaxCoordinatesToReplace)}, Homogeneous => opts.Homogeneous, Verbose=>opts.Verbose, Verify=>true); );
 --    genList = random apply(genCount, t -> if (t < opts.MaxCoordinatesToReplace) then replacementFunction(genList#t) else genList#t);
@@ -1407,17 +1417,21 @@ doc ///
         Replacement => Binomial
     Description
         Text
-            When calling {\tt randomCoordinateChange}, or functions that call it, setting {\tt Replacement => Full} will mean that coordinates are changed to a general degree 1 form.  If {\tt Replacement => Binomial}, the coordiates are only changed to bionomials, which can be much faster for certain applications.  Other options include {\tt Replacement => Monomial} and {\tt Replacement => Trinomial} 
+            When calling {\tt randomCoordinateChange}, or functions that call it, setting {\tt Replacement => Full} will mean that coordinates are changed to a general degree 1 form.  If {\tt Replacement => Binomial}, the coordiates are only changed to bionomials, which can be much faster for certain applications.  Other options include {\tt Replacement => Monomial} and {\tt Replacement => Trinomial}.
         Example
-            R = ZZ/11[a,b,c];
-            randomCoordinateChange(R, Replacement=>Full)
+            R = ZZ/101[a,b,c,d,e];            
+            randomCoordinateChange(R, Replacement=>Monomial)
             randomCoordinateChange(R, Replacement=>Binomial)
+            randomCoordinateChange(R, Replacement=>Trinomial)
+            randomCoordinateChange(R, Replacement=>Full)
         Text
-            If {\tt Homogeneous => false}, then there will be constant terms, and we view $mx + b$ as a binomial.
+            If {\tt Homogeneous => false}, then there will be constant terms, and we view $mx + b$ as a monomial.
         Example
-            S = ZZ/11[x,y];
-            randomCoordinateChange(S, Replacement => Full, Homogeneous => false)
+            S = ZZ/103[x,y,z,u,v];            
+            randomCoordinateChange(S, Replacement => Monomial, Homogeneous => false)
             randomCoordinateChange(S, Replacement => Binomial, Homogeneous => false)
+            randomCoordinateChange(S, Replacement => Trinomial, Homogeneous => false)
+            randomCoordinateChange(S, Replacement => Full, Homogeneous => false)
     SeeAlso
         randomCoordinateChange
 ///
@@ -1522,6 +1536,8 @@ doc ///
             to specify which strategy to use, Default, BruteForce, LinearIntersection.        
         ExtendField => Boolean
             whether to allow points not rational over the base field        
+        Homogeneous => Boolean
+            whether to include the origin as a valid point to output
 	    PointCheckAttempts => ZZ
 	        points to search in total, see @TO PointCheckAttempts@
         NumThreadsToUse => ZZ
