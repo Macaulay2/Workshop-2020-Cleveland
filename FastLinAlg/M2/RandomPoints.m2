@@ -362,6 +362,21 @@ verifyPoint(List, Ideal) := opts -> (finalPoint, I1) -> (
     return true;
 );
 
+
+saturateInGenericCoordinates=method(Options => {Replacement=>Binomial})
+saturateInGenericCoordinates(Ideal):= opts -> I1 -> (
+    local x;
+    S1 := ring I1;
+    --x:=random(0, S1)*random(1, S1) + random(1, S1);
+    if (opts.Replacement == Monomial) then x=getRandomLinearForms(S1, {0,1,0,0, 0,0}, Homogeneous => true)
+    else if (opts.Replacement == Binomial) then x=getRandomLinearForms(S1, {0,0,0,1, 0,0}, Homogeneous => true)
+    else if (opts.Replacement == Trinomial) then x=getRandomLinearForms(S1, {0,0,0,0, 1,0}, Homogeneous => true)
+    else if (opts.Replacement == Full) then x=getRandomLinearForms(S1, {0,0,0,0, 0,1}, Homogeneous => true)
+    else x=getRandomLinearForms(S1, {0,0,0,1, 0,0}, Homogeneous => true);
+    saturate(I1,ideal x)
+)
+
+
 --The following gets a list of random forms in a ring.  You specify how many.  
 --if Verify is true, it will check to for linear independence of the monomial, binomial and randForms 
 getRandomLinearForms = method(Options => {Verify => false, Homogeneous => false, Verbose=>false});
@@ -821,14 +836,6 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
     return pointsList;
 );
 
-saturateInGenericCoordinates=method()
-saturateInGenericCoordinates(Ideal):= I1 -> (
-    S1 := ring I1;
-    --x:=random(0, S1)*random(1, S1) + random(1, S1);
-    x:=getRandomLinearForms(S1, {0,0,0,1, 0,0}, Homogeneous => true);
-    saturate(I1,ideal x)
-)
-
 
 randomPointViaMultiplicationTable=method(Options => optRandomPoints);
 
@@ -1175,6 +1182,7 @@ linearIntersectionNew(ZZ, Ideal) := opts -> (n1, I1) -> (
     local sortedPtList; --list of points, before extending the field.
     local newPtList; --list of points after extending the field
     local checks;
+    local newPts; --new points as found by the multiplication table helper function
     local d;
     local L2;
     local workingIdeal;
@@ -1230,7 +1238,8 @@ linearIntersectionNew(ZZ, Ideal) := opts -> (n1, I1) -> (
         while (k >= 0) and (#returnPointsList < n1) do (
             if opts.Verbose then print("linearIntersectionNew: trying linear intersection #" | toString(k));
             workingIdeal = J2#k;
-            if (homogFlag) then workingIdeal = saturate workingIdeal; --make this saturation faster
+            --if (homogFlag) then workingIdeal = saturate workingIdeal; --make this saturation faster
+            if (homogFlag) then workingIdeal = saturateInGenericCoordinates workingIdeal; --make this saturation faster
             if (workingIdeal != ideal 1_S2) and (#returnPointsList < n1) then (--we found a point                
                 --i = -1; --stop the exterior loop, we found the dimension
                 if opts.Verbose then print("linearIntersectionNew: We found something.");
@@ -1264,18 +1273,18 @@ linearIntersectionNew(ZZ, Ideal) := opts -> (n1, I1) -> (
                             ); 
                         )
                         else if (opts.ExtendField) then (
-                            if (debugLevel > 0) or (opts.Verbose) then print "geometricPointsNew: Macaulay2 cannot handle a field extension this large, moving to the next point.";
+                            if (debugLevel > 0) or (opts.Verbose) then print "linearIntersectionNew: Macaulay2 cannot handle a field extension this large, moving to the next point.";
                         );
                         j = j+1;
-                    );                        
-                    
-                    --drop this entry, we dealt with it
-                    L2 = drop(L2, {k,k});
-                    checks = checks-1; --we have fewer linear forms now      
+                    );                                                                
                 )
                 else if homogFlag and (dim workingIdeal == 1) then (--we should use MultiplicationTable to do the factoring
-                    returnPointsList = returnPointsList | multiplicationTableInternal(n1 - #returnPointsList, I2, workingIdeal, ideal(L2#k), ExtendField => opts.ExtendField, Verbose=>opts.Verbose);
+                    newPts = multiplicationTableInternal(n1 - #returnPointsList, I2, workingIdeal, sub(ideal(L2#k), S2), ExtendField => opts.ExtendField, Verbose=>opts.Verbose);
+                    returnPointsList = returnPointsList | newPts;                                       
                 );  
+                L2 = drop(L2, {k,k});
+                checks = checks-1; --we have fewer linear forms now      
+                if (debugLevel > 0) or (opts.Verbose) then print "linearIntersectionNew: Removing linear space from the list, this one found something.";
             );
             if (#returnPointsList >= n1) then return returnPointsList;
             k = k-1;
@@ -1314,7 +1323,8 @@ multiplicationTableInternal(ZZ, Ideal, Ideal, Ideal) := opts->(n1, I2, workingId
             while (count < #h) and (#returnPointsList < n1) do (
                 myH := first (h#count);
                 if (degree myH >= degree(0_S2)) and (degree myH == degree first first entries vars S2) then (--check to see if we have a degree 1 factor
-                    pt:=radical saturate((ideal myH)+workingIdeal); --lift to a higher dimensional space
+                    --pt:=radical saturate((ideal myH)+workingIdeal); --lift to a higher dimensional space
+                    pt:=radical saturateInGenericCoordinates((ideal myH)+workingIdeal); --lift to a higher dimensional space
                     if (degree pt == 1) then (
                         newPt = flatten (entries syz transpose jacobian pt);
                         verifyPoint(newPt, I2);
