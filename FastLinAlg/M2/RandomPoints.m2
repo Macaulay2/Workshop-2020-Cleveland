@@ -33,7 +33,7 @@ export {
     --"randomPointViaLinearIntersectionOld", --these are here for debugging purposes
     "getRandomLinearForms", --here for debugging purposes    
     "dimViaBezout",        
-    "dimViaBezoutInternal", 
+    --"dimViaBezoutInternal", 
 	"Codimension",
 	"MaxCoordinatesToReplace",    
     "Replacement",
@@ -606,11 +606,12 @@ dimViaBezout(Ideal) := opts-> I1 -> (
         --Then we need to worry about one of the linear forms containing the point.  
         --The chance a given hypersurface contains a point is probably on the order of 1/p.  
         --So if we want say a 99% chance of things going well, we need 1 - ((p-1)/p)^d <= 1/1000.
+        --here I'm using d for dim (instead of ambD)
         --(p-1)/p >= (1 -(1/100))^(1/d)
         --1-1/p >= (1 -(1/100))^(1/d)
         --1 - (1 -(1/100))^(1/d) >= 1/p
         --p >= 1/(1 - (1 -(1/100))^(1/d))
-        --This basically turns out to be p >= d*100 after simplification
+        --This basically turns out to be very similar to p >= d*100 after simplification
         minFieldSize = ambD*100;        
     )
     else (
