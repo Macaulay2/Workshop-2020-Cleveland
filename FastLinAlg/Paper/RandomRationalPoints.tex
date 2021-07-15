@@ -94,7 +94,7 @@
     All polynomial rings considered here will be over finite fields. In the subsequent sections, we explain  the core and helper functions and describe the strategies that we have implemented.
 
    \vspace{1em}
-    \noindent \textbf{Acknowledgements:} The authors would like to thank David Eisenbud and Mike Stillman for useful conversations and comments on the development of this package.  The authors began work on this package at the virtual Cleveland 2020 Macaulay2 workshop. The authors are also grateful to the reviewers for suggesting and providing preliminary codes to speed up computations, thereby improving the efficacy of the package substantially. 
+    \noindent \textbf{Acknowledgements:} The authors would like to thank David Eisenbud and Mike Stillman for useful conversations and comments on the development of this package.  The authors began work on this package at the virtual Cleveland 2020 Macaulay2 workshop. The authors are also grateful to the reviewers for suggesting and providing preliminary codes to speed up computations, thereby improving the efficacy of the package substantially.  Frank Olaf-Schreyer is also an author on this package, as he provided code related to the {\tt MultiplicationTable} decomposition strategy and suggested using a probabilistic approach to compute dimension.
 
 \section{Our primary purpose: {\tt randomPoints}}\label{randomPoints}
     We start with the core function in this package:  {\tt randomPoints} is a function to find rational or geometric points in a variety. The typical usages are as follows: 
@@ -121,12 +121,8 @@
     \item {\tt Default} performs a sequence of the different strategies below, aimed at finding a point quickly.  It begins begins with brute force and moves to linear intersections with particularly simple linear forms, and gradually ramps up the randomness.  
     \item {\tt BruteForce} simply tries random points and sees if they are on the variety.
            
-    \item {\tt LinearIntersection} intersects with a random linear space.  Within this strategy, one can also specify the option {\tt DecompositionStrategy}.  Valid values are {\tt Decompose} and {\tt MultiplicationTable}, the latter of which is currently only implemented for homogeneous ideals.  
-    
-    The point is, after intersecting the linear space and obtaining an ideal defining a set of (possibly thickened) points, we need to find the minimal associated primes.  By default we use Macaulay2's built-in {\tt decompose} command.  We also have implemented a {\tt MultiplicationTable} algorithm, as provided by Frank Olaf-Schreyer, which utilizes the fact that we can compute the action of a variable on the residue fields of these points in more than one way.  This method is frequently faster for smaller numbers of variables.
+    \item {\tt LinearIntersection} intersects with a random linear space.  
     \end{itemize}
-
-    
 
     Notice that the speed, or success, varies depending on the strategy (see also \Cref{helper}).
 
@@ -142,25 +138,25 @@ i3 : J = ideal(x^3 + y^2 + 1, z^3 - x^2 - y^2 + 2);
 
 o3 : Ideal of R
 
-i4 : randomPoints(J)
-    -- used 0.0181549 seconds
-    
-o4 = {{32, 37, -30}}
+i4 : time randomPoints(J,Strategy=>BruteForce, PointCheckAttempts=>10)
+        -- used 0.00186098 seconds        
+
+o4 = {}
 
 o4 : List
 
-i5 : time randomPoints(J,Strategy=>BruteForce)
-    -- used 0.0146932 seconds
-    
-o5 = {}
+i5 : time randomPoints(J)
+        -- used 0.0205099 seconds
+
+o5 = {{-1, 0, -1}}
 
 o5 : List
 
-i6 : randomPoints(J,Strategy=>LinearIntersection)
-    -- used 0.0146932 seconds
-    
-o6 = {{2, -30, -8}}
-        \end{verbatim}
+i6 : time randomPoints(J, Strategy=>LinearIntersection)
+        -- used 0.0334881 seconds                
+
+o6 = {{0, 10, 48}}
+\end{verbatim}
     \end{quote}
         }
     \end{example}%
@@ -174,6 +170,11 @@ o6 = {{2, -30, -8}}
     Setting {\tt ExtendField => true} will tell the function that such points are valid.  Setting {\tt ExtendField => false} will tell the function ignore such points.  
     In fact, {\tt ExtendField => true} will also tell Macaulay2 to use linear spaces defined over a field extension, which can improve randomness properties.
     This sometimes can slow computation, and other times can substantially speed it up when the variety has few rational points.  For some applications, points over extended fields may also have better randomness properties.
+
+    \item[\tt DecompositionStrategy]  Within the {\tt LinearIntersection} strategy, one can also specify the option {\tt DecompositionStrategy}.  Valid values are {\tt Decompose} and {\tt MultiplicationTable}, the latter of which is currently only implemented for homogeneous ideals.  
+    
+    The point is, after intersecting the linear space and obtaining an ideal defining a set of (possibly thickened) points, we need to find the minimal associated primes.  By default we use Macaulay2's built-in {\tt decompose} command.  We also have implemented a {\tt MultiplicationTable} algorithm, as provided by Frank Olaf-Schreyer, which utilizes the action of a variable on the residue fields of these points computed in more than one way.  This method is frequently faster for rings with smaller numbers of variables.
+
 
     \item[\tt Replacement => Monomial, Binomial, Trinomial, Full]
         When intersecting with a random linear space, it is frequently much faster to use a linear space defined by relatively sparse equations (ie, equations that do not involve all variables).   Specifying {\tt Monomial} will mean linear forms such as $ax + b$ are used (for constants $a$ and $b$), involving only one variable.  Binomial means forms like $ax + by + c$, using two variables.  Trinomial means forms like $ax + by + cz + d$.  {\tt Full} means all variables will have coefficients.  Alternately, one can specify that a certain number of monomial, binomial, trinomial and full forms are used by passing a list, see the documentation for details.
@@ -191,10 +192,10 @@ o6 = {{2, -30, -8}}
     ~~
     \begin{quote}
 \begin{verbatim}    
-i7 : randomPoints(J, Strategy => BruteForce, PointCheckAttempts => 20000)
-    -- used 0.84679 seconds
-    
-o7 = {{-39, -43, 28}}
+i7 : time randomPoints(J, Strategy => BruteForce, PointCheckAttempts => 10000)
+-- used 1.16294 seconds
+
+o7 = {{-43, 25, 29}}
     \end{verbatim}%        
 \end{quote}\vspace{-1em}%
 }}%
@@ -220,8 +221,9 @@ o7 = {{-39, -43, 28}}
     % randomPoints(4, I, Strategy => LinearIntersection)
 
     \subsection{Comments on performance and implementation}
+    \label{subsec.CommentOnPerformanceAndImplementation}
 
-    When working over very small fields, frequently {\tt BruteForce} is most efficient.  This is not surprising as there may not be many points to check.  However, if the field size is larger, {\tt BruteForce} will perform poorly.  Even for some simple examples, it could not provide any rational points if the number of trials is not large enough.  Other strategies work differently on different examples, and the same strategy can sometimes work very quickly even if it typically works very slowly.  
+    When working over very small fields, especially with hypersurfaces, frequently {\tt BruteForce} is most efficient.  This is not surprising as there may not be many points to check.  However, if the field size is larger, {\tt BruteForce} will perform poorly.  Even for some simple examples, it could not provide any rational points if the number of trials is not large enough.  Other strategies work differently on different examples, and the same strategy can sometimes work very quickly even if it typically works very slowly.  
 
     The current version of the {\tt LinearIntersection} strategy no longer computes the dimension of the algebraic set.  Instead, it first finds a point defined by linear equations.  If the point is on the algebraic set, we are done.  If not, we throw away one of the forms and so now have a line and we see if this line intersects our algebraic set.  We continue in this way until we find a point.  This appears to avoid a number of bottlenecks in our previous implementation since Macaulay2 is very fast at identifying when a linear space and a variety do \emph{not} intersect.  
     
@@ -241,17 +243,17 @@ i3 : I = ideal(random(2, R), random(3, R));
 o3 : Ideal of R
 
 i4 : time randomPoints(I, Strategy => BruteForce, PointCheckAttempts => 20000)
-    -- used 0.0102075 seconds
-    
-o4 = {{-2, -1, 3, -2, -2, 2, 0, -2, -2, -2}}
+        -- used 0.00311884 seconds        
+
+o4 = {{-1, -1, 0, 2, 2, -2, -2, -3, -3, -3}}
 
 o4 : List
 
 i5 : time randomPoints(I, Strategy => Default)
-    -- used 0.085741 seconds
-    
-o5 = {{1, -2, 2, 2, -2, 0, 0, -1, -1, 3}}
-    \end{verbatim}
+        -- used 0.081349 seconds          
+
+o5 = {{3, 0, 3, 3, 2, -2, 1, -1, 3, 1}}
+\end{verbatim}
 \end{quote}\vspace{-1em}
     }}
     \end{example}    
@@ -268,80 +270,80 @@ i7 : J = ideal(random(2, S), random(3, S));
 o7 : Ideal of S
 
 i8 : time randomPoints(J, Strategy => BruteForce, PointCheckAttempts => 2000000)
-    -- used 25.3479 seconds
-    
-o8 = {{-36, 26, -63, -7, -48, 78, -44, -22, 105, 39}}
+        -- used 17.7988 seconds
+                   
+o8 = {{15, 67, -27, -103, 56, 66, -23, 28, -50, 13}}
+
+o8 : List
 
 i9 : time randomPoints(J, Strategy => Default)
--- used 0.102918 seconds
+        -- used 0.0864013 seconds         
 
-o9 = {{0, -42, -53, -33, -65, -27, -105, -37, 99, 64}}
-
-o9 : List
-
-i10 : time randomPoints(J, Strategy => LinearIntersection)
--- used 0.0169781 seconds
-
-o10 = {{-51, -11, -34, -33, -65, 19, -86, 50, -44, -97}}
-
-o10 : List
-
-i11 : time randomPoints(J, Strategy => GenericProjection)
--- used 0.364902 seconds
-
-o11 = {{31, -15, 53, 41, 87, 9, -21, -43, -12, 85}}      
+o9 = {{0, 0, 0, 0, 34, 76, 51, 0, 1, 0}}
     \end{verbatim}
 \end{quote}\vspace{-2em}
         }}
     \end{example}
-To enable speed ups as indicated in the above discussion, the {\tt ProjectionAttempts} has been set to $0$ in the {\tt Default} strategy so that {\tt GenericProjection} is not opted for unless specified by user.
+
 \begin{example}
         Finally, we allow our functions to extend our field.
         {{\small\color{blue}
         \begin{quote}
-        \begin{verbatim}
-i12 : time randomPoints(J, Strategy => LinearIntersection, ExtendField => true)
--- used 0.0612306 seconds
+            {\small
+\begin{verbatim}
+i11 : time randomPoints(J, Strategy => Default, ExtendField => true)
+            -- used 0.144332 seconds              
+       
+              3      2                      3      2                        
+o11 = {{0, - a  + 62a  - 47a - 76, 0, 0, 13a  - 18a  + 63a - 31, 0, 0, 
+             3      2                 3      2
+        - 20a  - 82a  + 35a - 19,  55a  - 64a  - 8a - 50, 1}}
 
-               5      4      3      2                                      5  
-o12 = {{54, 14a  - 48a  - 56a  + 56a  - 13a + 48, -101, 56, -42, -27, - 26a  -
-    -------------------------------------------------------------------------
-       4      3      2
-    43a  - 70a  - 96a  + 50a - 103, -29, 0, -37}}
-        \end{verbatim}
+i12 : coefficientRing ring first first o11
+
+o12 = GF 1982119441       
+
+i13 : log_211 1982119441
+
+o13 = 4
+\end{verbatim}
+            }
     \end{quote}
         }}
+In this case, we found a degree 4 point.
     \end{example}
 
-\begin{remark}[Finding a point]
+
+
+\begin{remark}[Comments on the probability of finding a point]
 	In the case of an absolutely irreducible hypersurface in $\bA^n_{\bF_q}$ (defined by $f$ say), there is significant discussion in the literature estimating lower bounds of number of rational points (see for instance, \cite{RationalKPointsSource,lang1954number,ghorpade2002number,cafure2006improved}) all of which point to the fact that there is ``good probability" of finding a rational point in this case when we intersect with a random line. Heuristically, we can make the following rough estimation.  We expect that each equation $f = \lambda$ for $\lambda \in \bF_q$ has approximately the same number of solutions.  Since each point on $\bF_q^n$ solves exactly one of these equations, we expect that $f = 0$ has approximately $q^{n-1}$ solutions, or in other words, our hypersurface has $q^{n-1}$-points.  
        Now, a random line $L$ has $q$ points. We want to find the probability that one of these points is  rational for $V(f)$.  We would expect that if these points are randomly distributed, then the probability that our line contains one of those points $1-(1-{1 \over q})^q$ which tends to $1-e^{-1} \approx 0.63$ for $q$ large.   Alternately, one can use the proof of \cite[Proposition 2.12]{bothmer2005quick} for a more precise statement.  For each point of $L$, we see that the probability that  the chosen point does not lie in the intersection, $L\cap V(f)$, is $1-\frac{1}{q}$. We then exhaust this search over all the points on $L$ to get the probability that there is indeed a successful intersection is $1-(1-\frac{1}{q})^{q}$. As $q$ gets larger, this value tends to $1-e^{-1}\approx 0.63$.
 
-       Of course, there are certainly examples schemes over $\bF_q$ with no rational points at all, even for curves in $\bA^2$.
+       Of course, there are schemes over $\bF_q$ with no rational points at all, even for plane curves.
 \end{remark}
 
 \begin{remark}[Projecting to a hypersurface first]
     \label{rem.ProjectingToAHypersurfaceFirst}
-    Suppose $X \subseteq \bA^n$ is an algebraic set.  In a number of existing algorithms, one first does a generic (or even not very generic) projection $h : \bA^n \to \bA^m$ and so that $h(X)$ is a hypersurface (at least set theoretically).  Then we find a point $x \in h(X)$ (say as above), and compute $h^{-1}(\{ x \})$ which is a linear space in $\bA^n$ that typically intersects $X$ in a rational point.   For example, this is done in {\tt randomKRationalPoint} in core Macaulay2.  Note that projecting to a hypersurface \emph{still is performing an intersection with a linear space}, but it just tries to choose the linear space more intelligently.
+    Suppose $X \subseteq \bA^n$ is an algebraic set.  In a number of existing algorithms, one first does a generic (or even not very generic) projection $h : \bA^n \to \bA^m$ and so that $h(X)$ is a hypersurface (at least set theoretically).  Then one finds a point $x \in h(X)$ (say as above), and computes $h^{-1}(\{ x \})$ which is a linear space in $\bA^n$ that typically intersects $X$ in a rational point.   For example, this is done in {\tt randomKRationalPoint} in core Macaulay2.  Note that projecting to a hypersurface \emph{still is performing an intersection with a linear space}, since $h^{-1}(\{ x \})$ is linear, but it tries to choose the linear space intelligently.
 
-    However, in our experience, doing this generic projection first yields slower results. First, one has to compute the dimension.  Furthermore, there are numerous cases where computing this hypersurface $h(X)$ can be extremely slow.  This particularly appears in cases when one is computing successive minors to identify the locus where some variety is nonsingular.  Thus we no longer have an option to project to a hypersurface first.  
+    However, in our experience, doing this generic projection first yields slower results. First, one has to compute the dimension.  There are also numerous cases where computing this hypersurface $h(X)$ can be quite slow.  This particularly appears in cases when one is computing successive minors to identify the locus where some variety is nonsingular.  
 
-    On the other hand, instead of using a truly random linear space to intersect with, in the default strategy, we normally choose a linear space whose defining equations are particularly non-complicated (i.e., with many linear or binomial terms).  Such simple linear spaces are the ones implicitly considered in {\tt randomKRationalPoint} for instance.  In practice, our approach seems to give at superior performance compared to projecting to a hypersurface, without the chance of the code getting hung up on the generic projection or dimension computations.
+    On the other hand, instead of using a truly random linear space to intersect with, in the default strategy, we normally choose a linear space whose defining equations are particularly non-complicated (i.e., with many linear or binomial terms).  Such simple linear spaces are the ones implicitly considered in {\tt randomKRationalPoint} for instance since that generic projection is so simple.  In practice, our approach seems to give at least as good performance compared to projecting to a hypersurface, without the chance of the code getting hung up on the generic projection or dimension computations.  We also do successive intersections in a way that avoids computing the dimension as described above in \Cref{subsec.CommentOnPerformanceAndImplementation}.
 \end{remark}
 
 
-\section{Two related functions: {\tt dimViaBezout} and {\tt randomCoordinateChange}}{\label{helper}}
+\section{Other functions {\tt dimViaBezout} and {\tt randomCoordinateChange}}{\label{helper}}
 
-\subsection*{\tt dimViaBezout:} We thank the reviewer for pointing out that in most of the computations, computing the codimension of the given ideal, significantly slows down some computations. While we have avoided most dimension computations in our current implementation, we have also implemented a probibalistic dimension computation of $V(I)$.
+\subsection*{\tt dimViaBezout:} We thank the reviewer for pointing out that in most of the computations, computing the codimension of the given ideal, is a significant bottleneck. While we have avoided most dimension computations in our current implementation, we have also implemented a probibalistic dimension computation of $V(I)$.
 This function takes as input an ideal $I$ in a polynomial ring over a field and intersects $V(I)$ with successively higher dimensional random linear spaces until there is an intersection.  For example, if $V(I)$ intersect a random line has a point, then we expect that $V(I)$ contains a hypersurface.  If there was no intersection, this function tries a $2$-dimensional linear space, and so on.  This can speed up a number of computations.  The function also takes in optional inputs as described below:
 
 \begin{itemize}
 	\item {\tt DimensionIntersectionAttempts}: 
-	This integer input denotes the number of linear spaces to try before moving to the next dimension.
+        Our function actually estimates dimension several times and then averages the result (rounding down) since we tend to overestimate the dimension by the above.  By default it does this 3 times unless the {\tt Homogeneous} flag is set, in which case it is done 5 times.
 	\item {\tt MinimumFieldSize}:
-	If the ambient field is smaller than this integer value, it will automatically be replaced with an extension field. The user may set the {\tt MinimumFieldSize} to ensure that the field being worked over is big enough.  For instance, there are relatively few linear spaces over a field of characteristic $2$, and this can cause incorrect results to be returned to the user. 
+	If the ambient field is smaller than this integer value, it will automatically be replaced with an extension field.  For instance, there are relatively few linear spaces over a field of characteristic $2$, and this can cause incorrect results to be returned to the user. The user may set the {\tt MinimumFieldSize} to ensure that the field being worked over is big enough.  If this is not set, the program tries to choose a reasonable minimum field size based on the ambient ring.
     \item {\tt Homogeneous}: 
-    If the ideal is homogeneous, we can use homogeneous linear spaces to compute dimension, which has speed advantages.
+    If the ideal is homogeneous, we can use homogeneous linear spaces to compute dimension.  However, in practice, this appears slower than the non-homogeneous strategy due to the fact that we must saturate the result.  Hence this is turned off by default.
         %By default, the function uses one of two algorithms depending on whether the ideal is homogeneous.
         %There are homogeneous examples where the non-Homogeneous method is faster.  Setting this to {\tt false} will force non-homogeneous computation even in homogeneous examples.  Setting it to true will force homogeneous computation, which may behave unexpectedly in non-homogeneous examples.
 \end{itemize}
@@ -350,28 +352,31 @@ This function takes as input an ideal $I$ in a polynomial ring over a field and 
 	{\color{blue}{
 			\begin{quote}
 				\begin{verbatim}
-				i3 : kk=ZZ/nextPrime 10^2;
-				
-				i4 : S=kk[y_0..y_14];
-				
-				i5 : I=minors(2,random(S^3,S^{5:-1}));
-				
-				o5 : Ideal of S
-				
-				i6 : elapsedTime dimViaBezout(I)
-				-- 0.303629 seconds elapsed
-				
-				o6 = 7
-				
-				i7 : elapsedTime dim I
-				-- 1.47916 seconds elapsed
-				
-				o7 = 7
+i2 : S = ZZ/101[y_0..y_9];
+
+i3 : I=ideal random(S^1,S^{-2,-2,-2,-3})+(ideal random(2,S))^2;
+
+o3 : Ideal of S
+
+i4 : time dimViaBezout I
+        -- used 0.837359 seconds        
+
+o4 = 5
+
+i5 : time dim I
+        -- used 36.8496 seconds           
+
+o5 = 5
+
+i6 : time dimViaBezout(I, DimensionIntersectionAttempts=>1)
+        -- used 0.280803 seconds  
+
+o6 = 5
 				\end{verbatim}
 			\end{quote}
 	}}
+As you can see doing a single intersection attempt is about three times faster, and it usually gives the right answer (more than 99\% of the time in this particular example, but in others doing the computation in triplicate avoids returning incorrect answers).
 \end{example}
-
 
 
 \subsection*{\tt randomCoordinateChange:} 
@@ -385,7 +390,7 @@ This is controlled with the following options.
 \begin{itemize}
 \item {\tt Replacement}: This works like the {\tt Replacement} option for {\tt RandomPoints}.
 \item {\tt MaxCoordinatesToReplace}: The user can specify that only a specified number of coordinates should be non-monomial (assuming {\tt Homogeneous => true}).  
-  This option is passed to {\tt randomCoordinateChange} by other functions that call it. 		
+  %This option is passed to {\tt randomCoordinateChange} by other functions that call it. 		
 \item {\tt Homogeneous}:  Setting {\tt Homogeneous => false} will cause degree zero terms to be added to modified coordinates (including monomial coordinates).		
 \end{itemize} 
 %\par
@@ -540,7 +545,7 @@ o4 : Sequence
 \noindent where $I$ is an ideal in a polynomial ring, respectively, $R$ is a quotient of a polynomial ring. The output is
 a list with two entries: the generic projection map and the ideal (respectively the ring).
 
-It differs from {\tt genericProjection(codim I - 1, I)} as it only tries to find a hypersurface equation that vanishes along the projection, instead of finding one that vanishes exactly at the projection.  This can be faster and can be useful for finding points.   If we already know the codimension is {\tt c}, we can set {\tt Codimension=>c} so the function does not compute it. 
+It differs from {\tt genericProjection(codim I - 1, I)} as it only tries to find a hypersurface equation that vanishes along the projection, instead of finding one that vanishes exactly at the projection.  This can be faster and can be useful for finding points.   If we already know the codimension is {\tt c}, we can set {\tt Codimension=>c} so the function does not compute it.  The same approach was used in the {\tt point} command in the {\tt Cremona} package \cite{CremonaSource}.
 
 %\vspace{1em}
 \begin{comment}~~
@@ -624,7 +629,7 @@ The function outputs the following:
 The user may also provide the following additional information: 
 
 \begin{description}
-\item[\tt Strategy => Symbol] To specify which strategy to use when calling {\tt randomPoints} (see \Cref{strategydetails}).
+\item[\tt Strategy => Symbol] Specify a strategy to use when calling {\tt randomPoints} (see \Cref{strategydetails}).
   
 \item[\tt Verbose => Boolean]
   Set the option {\tt Verbose => true} to turn on verbose output.  This may be useful in debugging or in determining why a computation is running slowly.
@@ -632,7 +637,7 @@ The user may also provide the following additional information:
 \item[\tt Homogeneous => Boolean] (see \Cref{helper})
   
 \item[\tt MinorPointAttempts => ZZ] 
-  This controls how many points at which to check the rank of the matrix.
+  This controls how many points at which to check the rank.
 \end{description}
 %\vspace{0.25em}
 \begin{example}
@@ -739,28 +744,26 @@ One can use this function to show that rings are $(R_1)$, that is, regular in co
 		o3 : Ideal of T
 		
 		i4 : M = jacobian I;
-		
-		             7       12
-		o4 : Matrix T  <--- T
-		
-		i5 : i = 0;
-		
-		i6 : J = I;
-		
-		o6 : Ideal of T
-		
-		i7 : elapsedTime(while (i < 10) and dim J > 1 do (
-                                i = i + 1; 
+
+             7       12
+o4 : Matrix T  <--- T          
+
+i5 : i = 0; J = I;
+
+o6 : Ideal of T
+
+i7 : elapsedTime(while (i < 10) and dim J > 1 do (
+                                i = i + 1;                       
                                 J = extendIdealByNonZeroMinor(4, M, J)));
-		-- 0.903328 seconds elapsed
-		
-		i8 : dim J
-		
-		o8 = 1
-		
-		i9 : i
-		
-		o9 = 5
+           -- 0.640164 seconds elapsed        
+
+i8 : dim J
+
+o8 = 1
+
+i9 : i
+
+o9 = 5
 \end{verbatim}
 \end{quote}
     }}    

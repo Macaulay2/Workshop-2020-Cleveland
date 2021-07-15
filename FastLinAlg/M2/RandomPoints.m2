@@ -39,7 +39,7 @@ export {
     "Replacement",
     "Full", 
     "Trinomial",
-    "Default", --a valid value for [randomPoints, Strategy]
+    --"Default", --a valid value for [randomPoints, Strategy]
 	"BruteForce", --a valid value for [randomPoints, Strategy], documented,     
     "LinearIntersection",  --a valid value for [randomPoints, Strategy]
     "MultiplicationTable", --a valid value for [randomPoints,DecompositionStrategy]	        
@@ -54,7 +54,7 @@ export {
     }
 exportMutable {}
 
-installMinprimes();
+--installMinprimes();
 
 --this appears to need to be here, otherwise the options don't realize dimViaBezout is a function, it thinks its a symbol.
 dimViaBezout=method(Options => {
