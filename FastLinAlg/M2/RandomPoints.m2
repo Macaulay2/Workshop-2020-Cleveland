@@ -605,15 +605,13 @@ dimViaBezout(Ideal) := opts-> I1 -> (
         --one bad case is if I1 defines a point.  
         --Then we need to worry about one of the linear forms containing the point.  
         --The chance a given hypersurface contains a point is probably on the order of 1/p.  
-        --So if we want say a 99.999% chance of things going well, we need 1 - ((p-1)/p)^d <= 1/1000.
-        --(p-1)/p >= (1 -(1/10000))^(1/d)
-        --1-1/p >= (1 -(1/10000))^(1/d)
-        --1 - (1 -(1/10000))^(1/d) >= 1/p
-        --p >= 1/(1 - (1 -(1/10000))^(1/d))
-        --This basically turns out to be p >= d*100000 after simplification
-        minFieldSize = ambD*100000;
-        --due to slightly lower randomness for homogeneous, we multiply by 10 in that case
-        if homog then minFieldSize = minFieldSize*10;
+        --So if we want say a 99% chance of things going well, we need 1 - ((p-1)/p)^d <= 1/1000.
+        --(p-1)/p >= (1 -(1/100))^(1/d)
+        --1-1/p >= (1 -(1/100))^(1/d)
+        --1 - (1 -(1/100))^(1/d) >= 1/p
+        --p >= 1/(1 - (1 -(1/100))^(1/d))
+        --This basically turns out to be p >= d*100 after simplification
+        minFieldSize = ambD*100;        
     )
     else (
         minFieldSize = opts.MinimumFieldSize; --or the user can specify it
@@ -621,7 +619,7 @@ dimViaBezout(Ideal) := opts-> I1 -> (
     i := getNextValidFieldSize(pp, d, minFieldSize);
     --if (opts.DimensionIntersectionAttempts === null) then (attempts = ceiling(log_10(1 + 10000/(pp^(i*d))))) else (attempts = opts.DimensionIntersectionAttempts;);
     if (opts.DimensionIntersectionAttempts === null) then (
-        if (opts.Homogeneous) then attempts = 6 else attempts = 4;
+        if (opts.Homogeneous) then attempts = 5 else attempts = 3;
     )
     else(
         attempts = opts.DimensionIntersectionAttempts;
@@ -629,6 +627,7 @@ dimViaBezout(Ideal) := opts-> I1 -> (
     
     if opts.Verbose then print ("dimViaBezout: Checking each dimension " | toString(attempts) | " times.");
     if (m >= minFieldSize) then (
+        if opts.Verbose then print ("dimViaBezout: field size is big enough, not extending.");
         --The following is code for multithreading, if that is fixed.
         -*
         backtrace=false;
@@ -664,7 +663,8 @@ dimViaBezout(Ideal) := opts-> I1 -> (
     if opts.Verbose then print ("dimViaBezout: New field size is " | toString(pp) | "^" | toString(i*d) | " = " | toString(pp^(i*d)) );
     (S2, phi1) := fieldBaseChange(S1, GF(pp, i*d));
     I2 := phi1(I1);    
-    val = floor(0.01 + sum(apply(attempts, i -> dimViaBezoutInternal(I1, DimensionIntersectionAttempts=>1, Homogeneous => homog, Verbose=>opts.Verbose)))/attempts); 
+    
+    val = floor(0.01 + sum(apply(attempts, i -> dimViaBezoutInternal(I2, DimensionIntersectionAttempts=>1, Homogeneous => homog, Verbose=>opts.Verbose)))/attempts); 
         --run it *attempts* times, then average
     return val;
 )
@@ -681,6 +681,7 @@ dimViaBezoutInternal(Ideal) := opts -> (I1)->(
     --i := dim S1-1;
     checks := opts.DimensionIntersectionAttempts;
     L1 := apply(checks, t->getRandomLinearForms(S1, {0,0,0,0,0,i}, Verify => true, Homogeneous=>opts.Homogeneous));
+    
     while (i >= 0) do (
         if opts.Verbose then print("dimViaBezoutInternal: Trying intersection with a linear space of dimension " | toString(dim S1 - i) | "," | toString(dim ideal (L1#0)));
         if (i == 0) then checks = 1;        
