@@ -621,7 +621,7 @@ dimViaBezout(Ideal) := opts-> I1 -> (
     i := getNextValidFieldSize(pp, d, minFieldSize);
     --if (opts.DimensionIntersectionAttempts === null) then (attempts = ceiling(log_10(1 + 10000/(pp^(i*d))))) else (attempts = opts.DimensionIntersectionAttempts;);
     if (opts.DimensionIntersectionAttempts === null) then (
-        if (opts.Homogeneous) then attempts = 5 else attempts = 4;
+        if (opts.Homogeneous) then attempts = 6 else attempts = 4;
     )
     else(
         attempts = opts.DimensionIntersectionAttempts;
@@ -656,7 +656,7 @@ dimViaBezout(Ideal) := opts-> I1 -> (
         if opts.Verbose then print "dimViaBezout: Something went wrong with multithrading.";              
         return null;
         *-
-        val = floor(0.1 + sum(apply(attempts, i -> dimViaBezoutInternal(I1, DimensionIntersectionAttempts=>1, Homogeneous => homog, Verbose=>opts.Verbose)))/attempts); --sort of a weighted rounding, since it seems we normally overestimate dim by this method
+        val = floor(0.01 + sum(apply(attempts, i -> dimViaBezoutInternal(I1, DimensionIntersectionAttempts=>1, Homogeneous => homog, Verbose=>opts.Verbose)))/attempts); --sort of a weighted rounding, since it seems we normally overestimate dim by this method
         --run it *attempts* times, then average
         return val;
     );
@@ -664,7 +664,7 @@ dimViaBezout(Ideal) := opts-> I1 -> (
     if opts.Verbose then print ("dimViaBezout: New field size is " | toString(pp) | "^" | toString(i*d) | " = " | toString(pp^(i*d)) );
     (S2, phi1) := fieldBaseChange(S1, GF(pp, i*d));
     I2 := phi1(I1);    
-    val = floor(0.1 + sum(apply(attempts, i -> dimViaBezoutInternal(I1, DimensionIntersectionAttempts=>1, Homogeneous => homog, Verbose=>opts.Verbose)))/attempts); 
+    val = floor(0.01 + sum(apply(attempts, i -> dimViaBezoutInternal(I1, DimensionIntersectionAttempts=>1, Homogeneous => homog, Verbose=>opts.Verbose)))/attempts); 
         --run it *attempts* times, then average
     return val;
 )

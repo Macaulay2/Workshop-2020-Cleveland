@@ -6,7 +6,7 @@ check RandomRationalPoints
 allowableThreads = 8;
 loadPackage("RandomPoints", Reload=>true);
 loadPackage("FastMinors", Reload=>true);
-loadPackage "Cremona";
+loadPackage("Cremona", Reload=>true);
 
 k2 = GF(101^4);
 k = ZZ/101;
