@@ -94,7 +94,7 @@
     All polynomial rings considered here will be over finite fields. In the subsequent sections, we explain  the core and helper functions and describe the strategies that we have implemented.
 
    \vspace{1em}
-    \noindent \textbf{Acknowledgements:} The authors would like to thank David Eisenbud and Mike Stillman for useful conversations and comments on the development of this package.  The authors began work on this package at the virtual Cleveland 2020 Macaulay2 workshop. The authors are also grateful to the reviewers for suggesting and providing preliminary codes to speed up computations, thereby improving the efficacy of the package substantially.  Frank Olaf-Schreyer is also an author on this package, as he provided code related to the {\tt MultiplicationTable} decomposition strategy and suggested using a probabilistic approach to compute dimension.
+    \noindent \textbf{Acknowledgements:} The authors would like to thank David Eisenbud and Mike Stillman for useful conversations and comments on the development of this package.  The authors began work on this package at the virtual Cleveland 2020 Macaulay2 workshop. The authors are also grateful to the reviewers for suggesting and providing preliminary codes to speed up computations, thereby improving the efficacy of the package substantially.  Frank-Olaf Schreyer is also an author on this package, as he provided code related to the {\tt MultiplicationTable} decomposition strategy and suggested using a probabilistic approach to compute dimension.
 
 \section{Our primary purpose: {\tt randomPoints}}\label{randomPoints}
     We start with the core function in this package:  {\tt randomPoints} is a function to find rational or geometric points in a variety. The typical usages are as follows: 
@@ -173,7 +173,7 @@ o6 = {{0, 10, 48}}
 
     \item[\tt DecompositionStrategy]  Within the {\tt LinearIntersection} strategy, one can also specify the option {\tt DecompositionStrategy}.  Valid values are {\tt Decompose} and {\tt MultiplicationTable}, the latter of which is currently only implemented for homogeneous ideals.  Additionally, the {\tt Default} strategy switches back and forth between {\tt Decompose} and {\tt MultiplicationTable} for homogeneous ideals.  Setting this to {\tt Decompose} in the default strategy will force only {\tt Decompose} to be used.
     
-    The point is, after intersecting the linear space and obtaining an ideal defining a set of (possibly thickened) points, we need to find the minimal associated primes.  By default we use Macaulay2's built-in {\tt decompose} command.  We also have implemented a {\tt MultiplicationTable} algorithm, as provided by Frank Olaf-Schreyer, which utilizes the action of a variable on the residue fields of these points computed in more than one way.  This method is frequently faster for rings with smaller numbers of variables.
+    The point is, after intersecting the linear space and obtaining an ideal defining a set of (possibly thickened) points, we need to find the minimal associated primes.  By default we use Macaulay2's built-in {\tt decompose} command.  We also have implemented a {\tt MultiplicationTable} algorithm, as provided by Frank-Olaf Schreyer, which utilizes the action of a variable on the residue fields of these points computed in more than one way.  This method is frequently faster for rings with smaller numbers of variables.
 
     \item[\tt Homogeneous]  Setting this true specifies that the origin (corresponding to the irrelevant ideal) is not a valid point.
 
