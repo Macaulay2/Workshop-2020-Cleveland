@@ -32,9 +32,8 @@ export {
     --"randomPointViaLinearIntersection", --these are here for debugging purposes
     --"randomPointViaLinearIntersectionOld", --these are here for debugging purposes
     "getRandomLinearForms", --here for debugging purposes    
-    "dimViaBezout",    
-    --"dimViaBezoutHomogeneous",    
-    "dimViaBezoutNonhomogeneous", 
+    "dimViaBezout",        
+    "dimViaBezoutInternal", 
 	"Codimension",
 	"MaxCoordinatesToReplace",    
     "Replacement",
@@ -58,7 +57,11 @@ exportMutable {}
 installMinprimes();
 
 --this appears to need to be here, otherwise the options don't realize dimViaBezout is a function, it thinks its a symbol.
-dimViaBezout=method(Options => {Verbose => false, Homogeneous => null, DimensionIntersectionAttempts => null, MinimumFieldSize => 1000});
+dimViaBezout=method(Options => {
+    Verbose => false, 
+    Homogeneous => false, 
+    DimensionIntersectionAttempts => null, 
+    MinimumFieldSize => null});
 
 optRandomPoints := {
     Strategy=>Default, 
@@ -584,20 +587,48 @@ cancel = task -> (
      << "cancelled task " << task << endl;
 )
 
-dimViaBezout(Ideal) := opts-> I1 -> (
+dimViaBezout(Ideal) := opts-> I1 -> (    
     S1 := ring I1;
+    if not (class S1 === PolynomialRing) then error "dimViaBezout: Expected an ideal in a polynomial ring.";
     m := getFieldSize coefficientRing S1;
+    ambD := dim S1;
     local attempts;
     local tr;
     local tempResult;
     local homog;
-    if (opts.Homogeneous === null) then (homog = isHomogeneous I1) else (homog = opts.Homogeneous);
+    local val;
+    local minFieldSize;    
+    if (opts.Homogeneous) then (homog = isHomogeneous I1) else (homog = opts.Homogeneous);
     pp := char ring I1;
     d := floor(log_pp(m) + 0.5);
-    i := getNextValidFieldSize(pp, d, opts.MinimumFieldSize);
-    if (opts.DimensionIntersectionAttempts === null) then (attempts = ceiling(log_10(1 + 5000/(pp^(i*d))))) else (attempts = opts.DimensionIntersectionAttempts;);
+    if (opts.MinimumFieldSize === null) then (
+        --one bad case is if I1 defines a point.  
+        --Then we need to worry about one of the linear forms containing the point.  
+        --The chance a given hypersurface contains a point is probably on the order of 1/p.  
+        --So if we want say a 99.999% chance of things going well, we need 1 - ((p-1)/p)^d <= 1/1000.
+        --(p-1)/p >= (1 -(1/10000))^(1/d)
+        --1-1/p >= (1 -(1/10000))^(1/d)
+        --1 - (1 -(1/10000))^(1/d) >= 1/p
+        --p >= 1/(1 - (1 -(1/10000))^(1/d))
+        --This basically turns out to be p >= d*100000 after simplification
+        minFieldSize = ambD*100000;
+        --due to slightly lower randomness for homogeneous, we multiply by 10 in that case
+        if homog then minFieldSize = minFieldSize*10;
+    )
+    else (
+        minFieldSize = opts.MinimumFieldSize; --or the user can specify it
+    );
+    i := getNextValidFieldSize(pp, d, minFieldSize);
+    --if (opts.DimensionIntersectionAttempts === null) then (attempts = ceiling(log_10(1 + 10000/(pp^(i*d))))) else (attempts = opts.DimensionIntersectionAttempts;);
+    if (opts.DimensionIntersectionAttempts === null) then (
+        if (opts.Homogeneous) then attempts = 5 else attempts = 4;
+    )
+    else(
+        attempts = opts.DimensionIntersectionAttempts;
+    );
+    
     if opts.Verbose then print ("dimViaBezout: Checking each dimension " | toString(attempts) | " times.");
-    if (m >= opts.MinimumFieldSize) then (
+    if (m >= minFieldSize) then (
         --The following is code for multithreading, if that is fixed.
         -*
         backtrace=false;
@@ -625,39 +656,54 @@ dimViaBezout(Ideal) := opts-> I1 -> (
         if opts.Verbose then print "dimViaBezout: Something went wrong with multithrading.";              
         return null;
         *-
-        if (homog) then return dimViaBezoutHomogeneous(I1, DimensionIntersectionAttempts=>attempts) else 
-        return dimViaBezoutNonhomogeneous(I1, Verbose=>opts.Verbose, DimensionIntersectionAttempts=>attempts);
+        val = floor(0.1 + sum(apply(attempts, i -> dimViaBezoutInternal(I1, DimensionIntersectionAttempts=>1, Homogeneous => homog, Verbose=>opts.Verbose)))/attempts); --sort of a weighted rounding, since it seems we normally overestimate dim by this method
+        --run it *attempts* times, then average
+        return val;
     );
     if opts.Verbose then print "dimViaBezout: The field is too small, extending it.";
     if opts.Verbose then print ("dimViaBezout: New field size is " | toString(pp) | "^" | toString(i*d) | " = " | toString(pp^(i*d)) );
     (S2, phi1) := fieldBaseChange(S1, GF(pp, i*d));
     I2 := phi1(I1);    
-    if (homog) then return dimViaBezoutHomogeneous(I2, DimensionIntersectionAttempts=>attempts) else 
-    return dimViaBezoutNonhomogeneous(I2, Verbose=>opts.Verbose, DimensionIntersectionAttempts=>attempts);
+    val = floor(0.1 + sum(apply(attempts, i -> dimViaBezoutInternal(I1, DimensionIntersectionAttempts=>1, Homogeneous => homog, Verbose=>opts.Verbose)))/attempts); 
+        --run it *attempts* times, then average
+    return val;
 )
 
-dimViaBezoutNonhomogeneous=method(Options => {Verbose => false, DimensionIntersectionAttempts => 1, MinimumFieldSize => 1000, Homogeneous => false});
+dimViaBezoutInternal=method(Options => {Verbose => false, Homogeneous => false, DimensionIntersectionAttempts => 1});
 
-dimViaBezoutNonhomogeneous(Ideal) := opts -> (I1)->(
+dimViaBezoutInternal(Ideal) := opts -> (I1)->(
+    local myList;
+    local i;
+    local val;
     S1 := ring I1;
     --if (getFieldSize(S1)<39) then return codim I1;
-    i := dim S1-1;
+    if (opts.Homogeneous) then i = dim S1 - 1 else i = dim S1;
+    --i := dim S1-1;
     checks := opts.DimensionIntersectionAttempts;
+    L1 := apply(checks, t->getRandomLinearForms(S1, {0,0,0,0,0,i}, Verify => true, Homogeneous=>opts.Homogeneous));
     while (i >= 0) do (
-        if opts.Verbose then print("dimViaBezoutNonhomogeneous: Trying intersection with a linear space of dimension " | toString(dim S1 - i));
-        if (i == 0) then checks = 1;
-        L1 := apply(checks, t->ideal getRandomLinearForms(S1, {0,0,0,0,i,0}, Homogeneous=>opts.Homogeneous));
+        if opts.Verbose then print("dimViaBezoutInternal: Trying intersection with a linear space of dimension " | toString(dim S1 - i) | "," | toString(dim ideal (L1#0)));
+        if (i == 0) then checks = 1;        
         --print L1;
         --print trim(I1 + L1);
-        myList := apply(L1, l -> (l + I1 != ideal 1_S1));
-        if all(myList, b->b) then return i;
+        if (opts.Homogeneous) then (
+            myList = apply(L1, l -> ( saturateInGenericCoordinates((ideal l) + I1) != ideal 1_S1));
+        )
+        else (
+            myList = apply(L1, l -> ((ideal l) + I1 != ideal 1_S1));
+        );
+        val = i;
+        if (opts.Homogeneous) then val = val + 1;
+        if all(myList, b->b) then return val;
         --if (L1 + I1 != ideal 1_S1) then return i;
         --print dim(L1 + I1);
+        L1 = apply(L1, l -> drop(l, 1)); --drop something from each set
         i = i-1;
         --print i;
     );        
     return -1;
 )
+
 
 
 
@@ -677,44 +723,31 @@ getFieldSize(Ring):= (k1) -> (
     infinity
 )
 
+--The following is a Bezout function done via a binary search
+-*
 dimViaBezoutHomogeneous=method(Options => {DimensionIntersectionAttempts => 1});
 
 dimViaBezoutHomogeneous(Ideal) := opts-> (I1) -> (
-    S1:=ring I1;
---    randomMon := ideal((gens S1)#(random(#gens S1)));
-    --if (I1 == ideal 1_S1) then return -1;
-    if (I1 == ideal 0_S1) then return dim S1;
-    lowerBound := max(dim S1-rank source gens I1,0);
-    upperBound := dim S1;
-    mid:= null; 
-    i := 0;
+    S1 := ring I1;
+    --if (getFieldSize(S1)<39) then return codim I1;
+    i := dim S1-1;
     checks := opts.DimensionIntersectionAttempts;
-    --print lowerBound;        
-    while upperBound - lowerBound >1 do (
-        mid = floor ((upperBound+lowerBound)/2);
-        --L := ideal random(S1^1,S1^{mid-1:-1});        
-        L := apply(checks, tz -> ideal random(S1^1,S1^{mid-1:-1}));        
-        --print ("L: "|toString(L));
-        Is := {ideal(1_S1)}; 
-        i = 0;
-        varList := random gens S1;
-        --while (Is == ideal(1_S1)) and (i < #varList) do (
-        while all(Is, tz -> (tz == ideal(1_S1))) and (i < #varList) do (
-            mySat := ideal(varList#i); --ideal((gens S1)#(random(#gens S1)));
-            --Is = saturate(I1+L, mySat); --saturateInGenericCoordinates(I+L);
-            Is = apply(L, tz -> saturate(I1 + tz, mySat));
-            --print ("mySat: " | toString(mySat));            
-            --print ("Is: " | toString(Is));
-            i = i+1;
-        );
-        --print ("Is == 1: " | toString(Is == ideal 1_S1));
-        if 
-            all(Is, tz -> (tz == ideal(1_S1)))
-        then (upperBound=mid;) else (lowerBound=mid;) ;
-        --print mid
-	);
-    lowerBound
+    while (i >= 0) do (
+        if opts.Verbose then print("dimViaBezoutNonhomogeneous: Trying intersection with a linear space of dimension " | toString(dim S1 - i));
+        if (i == 0) then checks = 1;
+        L1 := apply(checks, t->ideal getRandomLinearForms(S1, {0,0,0,0,i,0}, Homogeneous=>opts.Homogeneous));
+        --print L1;
+        --print trim(I1 + L1);
+        myList := apply(L1, l -> (l + I1 != ideal 1_S1));
+        if all(myList, b->b) then return i;
+        --if (L1 + I1 != ideal 1_S1) then return i;
+        --print dim(L1 + I1);
+        i = i-1;
+        --print i;
+    );        
+    return -1;
 )
+*-
 
 
 linearIntersectionNew = method(Options => optRandomPoints);
