@@ -1668,7 +1668,7 @@ doc ///
             When calling {\tt randomPoints}, set the strategy to one of these.
             {\tt BruteForce} simply tries random points and sees if they are on the variety.
 	    
-            {\tt LinearIntersection} intersects with an random linear space.  Setting the {\tt DecompositionStrategy => MultiplicationTable} will change how ideals corresponding to points are broken up into minimal primes, which can be faster for some homogeneous ideals.  See @TO DecompositionStrategy@.
+            {\tt LinearIntersection} intersects with an random linear space.  Setting the {\tt DecompositionStrategy => MultiplicationTable} or {\tt DecompositionStrategy=>Decompose} will change how ideals corresponding to points are broken up into minimal primes which can have a substantial impact on speed.  Otherwise, the function chooses which strategy it thinks will be better.  See @TO DecompositionStrategy@.  
 
             {\tt Default} performs a sequence of different strategies, with successively increasing complexity of the linear subspaces that are intersected.
     SeeAlso
@@ -1823,7 +1823,7 @@ doc ///
         Text
             If you wish to force homogeneous computation (via homogeneous linear spaces), set the option {\tt Homogeneous=true}.  In our experience, the default {\tt Homogeneous=>false} is faster.
         Text
-            The user may 
+            The user may also specify what sort of linear forms to intersect with via the @TO Replacement@ option.
     SeeAlso
         DimensionFunction
 ///
