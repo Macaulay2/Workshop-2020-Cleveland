@@ -126,7 +126,7 @@ elapsedTime d=dim I
 elapsedTime randomPointViaMultiplicationTable(I,dim I)
 elapsedTime randomPoints(I,Strategy=>LinearIntersection, Codimension=>8)
 I=minors(2,genericMatrix(S,y_0,3,5));
-dim I
+time dim I
 elapsedTime pt=matrix{randomPointViaMultiplicationTable(I)}
 elapsedTime randomPoints(I)
 
