@@ -171,17 +171,17 @@ o6 = {{0, 10, 48}}
     In fact, {\tt ExtendField => true} will also tell Macaulay2 to use linear spaces defined over a field extension, which can improve randomness properties.
     This sometimes can slow computation, and other times can substantially speed it up when the variety has few rational points.  For some applications, points over extended fields may also have better randomness properties.
 
-    \item[\tt DecompositionStrategy]  Within the {\tt LinearIntersection} strategy, one can also specify the option {\tt DecompositionStrategy}.  Valid values are {\tt Decompose} and {\tt MultiplicationTable}, the latter of which is currently only implemented for homogeneous ideals.  Additionally, the {\tt Default} strategy switches back and forth between {\tt Decompose} and {\tt MultiplicationTable} for homogeneous ideals.  Setting this to {\tt Decompose} in the default strategy will force only {\tt Decompose} to be used.
+    \item[\tt DecompositionStrategy]  Within the {\tt LinearIntersection} strategy, one can also specify the option {\tt DecompositionStrategy}.  Valid values are {\tt Decompose} and {\tt MultiplicationTable}, the latter of which is currently only implemented for homogeneous ideals.  The point is, after intersecting the linear space and obtaining an ideal defining a set of (possibly thickened) points, we need to find the minimal associated primes.  By default we use Macaulay2's built-in {\tt decompose} command.  We also have implemented a {\tt MultiplicationTable} algorithm, as provided by Frank-Olaf Schreyer, which utilizes the action of a variable on the residue fields of these points computed in more than one way.  This method is frequently faster for rings with smaller numbers of variables.
     
-    The point is, after intersecting the linear space and obtaining an ideal defining a set of (possibly thickened) points, we need to find the minimal associated primes.  By default we use Macaulay2's built-in {\tt decompose} command.  We also have implemented a {\tt MultiplicationTable} algorithm, as provided by Frank-Olaf Schreyer, which utilizes the action of a variable on the residue fields of these points computed in more than one way.  This method is frequently faster for rings with smaller numbers of variables.
+    The {\tt Default} strategy switches back and forth between {\tt Decompose} and {\tt MultiplicationTable} for homogeneous ideals (starting with one the function thinks will be fastest).  Setting this to {\tt Decompose} in the default strategy will force only {\tt Decompose} to be used; setting it to {\tt MultiplicationTable} will force only {\tt MultiplicationTable} to be used (if the ideal is homogeneous).      
 
     \item[\tt Homogeneous]  Setting this true specifies that the origin (corresponding to the irrelevant ideal) is not a valid point.
 
     \item[\tt Replacement => Monomial, Binomial, Trinomial, Full]
-        When intersecting with a random linear space, it is frequently much faster to use a linear space defined by relatively sparse equations (ie, equations that do not involve all variables).   Specifying {\tt Monomial} will mean linear forms such as $ax + b$ are used (for constants $a$ and $b$), involving only one variable.  Binomial means forms like $ax + by + c$, using two variables.  Trinomial means forms like $ax + by + cz + d$.  {\tt Full} means all variables will have coefficients.  Alternately, one can specify that a certain number of monomial, binomial, trinomial and full forms are used by passing a list, see the documentation for details.
+        When intersecting with a random linear space, it is frequently much faster to use a linear space defined by relatively sparse equations (ie, equations that do not involve all variables).   Specifying {\tt Monomial} will mean linear forms such as $ax + b$ are used (for constants $a$ and $b$), involving only one variable.  Binomial means forms like $ax + by + c$, using two variables.  Trinomial means forms like $ax + by + cz + d$.  {\tt Full} means all variables will have coefficients.  %Alternately, one can specify that a certain number of monomial, binomial, trinomial and full forms are used by passing a list, see the documentation for details.
 
     \item[\tt DimensionFunction => Function]
-        Our current implementation does not need to know the dimension of $V(I)$.  However, there are places where we try to verify the dimension.  You can pass this function {\tt dim} (the default) or our probabilistic {\tt dimViaBezout} or any other dimension function you might prefer.
+        Our current implementation does not need to know the dimension of $V(I)$.  However, there are places where we try to verify the dimension of an ideal before we decompose the ideal.  You can pass this function {\tt dim} (the default) or our probabilistic {\tt dimViaBezout} or any other dimension function you might prefer.
 
     \item[\tt PointCheckAttempts => ZZ]
 
@@ -226,7 +226,7 @@ o7 = {{-43, 25, 29}}
 
     When working over very small fields, especially with hypersurfaces, frequently {\tt BruteForce} is most efficient.  This is not surprising as there may not be many points to check.  However, if the field size is larger, {\tt BruteForce} will perform poorly.  Even for some simple examples, it could not provide any rational points if the number of trials is not large enough.  Other strategies work differently on different examples, and the same strategy can sometimes work very quickly even if it typically works very slowly.  
 
-    The current version of the {\tt LinearIntersection} strategy no longer computes the dimension of the algebraic set.  Instead, it first finds a point defined by linear equations.  If the point is on the algebraic set, we are done.  If not, we throw away one of the forms and so now have a line and we see if this line intersects our algebraic set.  We continue in this way until we find a point.  This appears to avoid a number of bottlenecks in our previous implementation since Macaulay2 is very fast at identifying when a linear space and a variety do \emph{not} intersect.  
+    The current version of the {\tt LinearIntersection} strategy no longer computes the dimension of the algebraic set.  Instead, it first finds a point defined by linear equations.  If the point is on the algebraic set, we are done.  If not, we throw away one of the forms and so now have a line and we see if this line intersects our algebraic set.  We continue in this way until we find a point.  This appears to avoid a number of bottlenecks in our previous implementation since Macaulay2 is relatively fast at identifying when a linear space and a variety do \emph{not} intersect.  
     
     %Providing {\tt codimension} speeds up computations significantly as computing codimension using the default command {\tt codim} creates a bottleneck in some cases. If codimension needs to be computed, we  circumvent this issue using a probabilistic code to compute it (see \Cref{helper}). A quick comment, while in many examples generic projection works well, there are some examples where it is many orders of magnitude slower.  By default, generic projection is turned off in the default strategy, that is we set {\tt ProjectionAttempts=>0}.  See \autoref{rem.ProjectingToAHypersurfaceFirst} for additional related discussion.
 
@@ -287,7 +287,7 @@ o9 = {{0, 0, 0, 0, 34, 76, 51, 0, 1, 0}}
     \end{example}
 
 \begin{example}
-        Finally, we allow our functions to extend our field.
+        Finally, we can allow our functions to extend our field.
         {{\small\color{blue}
         \begin{quote}
             {\small
@@ -438,14 +438,9 @@ This function finds a random (somewhat, depending on options) generic projection
 The typical usages are as follows: 
 \vspace{0.5em}
 
--- {\tt genericProjection(n, I)},
+-- {\tt genericProjection(n, I)}
 
--- {\tt genericProjection(n, R)},
-
-
--- {\tt genericProjection(I)},  
-
--- {\tt genericProjection(R)} 
+-- {\tt genericProjection(n, R)}
 
 \vspace{0.5em}
 \noindent where 
@@ -542,7 +537,7 @@ o4 : Sequence
 \noindent where $I$ is an ideal in a polynomial ring, respectively, $R$ is a quotient of a polynomial ring. The output is
 a list with two entries: the generic projection map and the ideal (respectively the ring).
 
-It differs from {\tt genericProjection(codim I - 1, I)} as it only tries to find a hypersurface equation that vanishes along the projection, instead of finding one that vanishes exactly at the projection.  This can be faster and can be useful for finding points.   If we already know the codimension is {\tt c}, we can set {\tt Codimension=>c} so the function does not compute it.  The same approach was used in the {\tt point} command in the {\tt Cremona} package \cite{CremonaSource}.
+It differs from {\tt genericProjection(codim I - 1, I)} as it only tries to find a hypersurface equation that vanishes along the projection, instead of finding one that vanishes exactly at the projection.  This can be faster and can be useful for finding points.  The same approach was used in the {\tt point} command in the {\tt Cremona} package \cite{CremonaSource}.  If we already know the codimension is {\tt c}, we can set {\tt Codimension=>c} so the function does not compute it.
 
 %\vspace{1em}
 \begin{comment}~~
@@ -717,7 +712,7 @@ o5 : Ideal of R
 One can use this function to show that rings are $(R_1)$, that is, regular in codimension $1$.
 
 \begin{example}
-    Consider the following example (which is $(R_1)$) where computing the dimension of the singular locus takes around $30$ seconds as there are $15500$ minors of size $4 \times 4$ in the associated $7 \times 12$ Jacobian matrix.  However, we can use this function to quickly find interesting minors.
+    Consider the following 3-dimensional example (which is $(R_1)$, regular in codimension 1) where computing the dimension of the singular locus takes around $30$ seconds as there are $15500$ minors of size $4 \times 4$ in the associated $7 \times 12$ Jacobian matrix.  However, we can use this function to quickly find interesting minors.
   {{\small\color{blue}
   \begin{quote}
 \begin{verbatim}
