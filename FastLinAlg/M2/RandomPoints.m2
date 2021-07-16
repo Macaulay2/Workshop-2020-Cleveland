@@ -486,7 +486,19 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
     homog := (isHomogeneous I1) and (opts.DecompositionStrategy === MultiplicationTable);
     d1 := dim ring I1;
     d1Half := ceiling(d1/2);
-    d1Half2 := d1 - d1Half;
+    d1Half2 := d1 - d1Half;    
+    
+    --make sure we aren't doing something stupid...
+    if (isHomogeneous I1) and (isDimAtMost(0, I1) === true) then (
+        if (opts.Homogeneous == true) then (
+            if opts.Verbose then print "randomPointViaDefaultStrategy: empty set";
+            return {}
+        ) 
+        else( 
+            if opts.Verbose then print "randomPointViaDefaultStrategy: origin";
+            return {idealToPoint(ideal first entries vars ring I1)};
+        );
+    );
 
     if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 0): trying a quick brute force with 20 attempts.";
     pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
@@ -518,7 +530,10 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
             DecompositionStrategy => Decompose,        
             DimensionFunction => opts.DimensionFunction,
             Verbose => false);
-        if (#pointsList >= n1) then return pointsList;   
+        if (#pointsList >= n1) then(
+            if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 1a):success";
+            return pointsList;   
+        ); 
     );
 
     if (runMult2) then (
@@ -662,7 +677,7 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
             Verbose => false);
     );
     if (#pointsList >= n1) then return pointsList;
-    
+    if opts.Verbose then print "randomPointViaDefaultStrategy: failure";
     return pointsList;
 );
 
@@ -694,17 +709,30 @@ linearIntersectionNew(ZZ, Ideal) := opts -> (n1, I1) -> (
     local d;
     local L2;
     local workingIdeal;
+    local fastDim0;
+    local fastDim1;
+
+    if (opts.DimensionFunction === null) then (
+        fastDim0 = Ii -> (isDimAtMost(0, Ii) === true);
+        fastDim1 = Ii -> (isDimAtMost(1, Ii) === true);
+    )
+    else (
+        fastDim0 = Ii -> ((opts.DimensionFunction)(Ii) == 0);
+        fastDim1 = Ii -> ((opts.DimensionFunction)(Ii) == 1);
+    );
     returnPointsList := {};
     if (opts.PointCheckAttempts >= 1 ) then checks = opts.PointCheckAttempts else if (opts.ExtendField) then  checks = 3*n1+3 else checks = 3*n1+3;  
 
+    if (opts.Verbose) or (debugLevel > 1) then print "linearIntersectionNew: starting";
+    
     S1 := ring I1;
     m := getFieldSize coefficientRing S1;
     pp := char ring I1;
     if (opts.ExtendField) then ( 
         d = ceiling(log_pp(max(m, 100)) + 0.5); --this should force a bigger field extension
         curD := floor(log_pp(m) + 0.5);--current degree
-        if opts.Verbose then print "linearIntersectionNew: Extending the field";
-        if opts.Verbose then print ("linearIntersectionNew: New field size is " | toString(pp) | "^" | toString(d) | " = " | toString(pp^(d)) );
+        if opts.Verbose or debugLevel > 0 then print "linearIntersectionNew: Extending the field";
+        if opts.Verbose or debugLevel > 0 then print ("linearIntersectionNew: New field size is " | toString(pp) | "^" | toString(d) | " = " | toString(pp^(d)) );
         d = ceiling(d/curD)*d; --make sure our extension degree is a multiple of the old degree
         (S2, phi1) = fieldBaseChange(S1, GF(pp, d));
         I2 = phi1(I1);    
@@ -716,6 +744,7 @@ linearIntersectionNew(ZZ, Ideal) := opts -> (n1, I1) -> (
     );
     i := dim S1;
     k:= 0;
+    
 
     --this flag is set to true if we going to use MultiplicationTables
     local homogFlag;    
@@ -754,29 +783,29 @@ linearIntersectionNew(ZZ, Ideal) := opts -> (n1, I1) -> (
         L2 = apply(checks, t-> getRandomLinearForms(S2, {0,max(0, i-t),0,min(t, i), 0,0}, Homogeneous=>homogFlag, Verify=>true)); --a list of linear forms, some monomial, some binomial
     ); --now we have picked the linear forms, we begin our loop
     while (i >= 0) do (
-        if opts.Verbose then print("linearIntersectionNew: Trying intersection with a linear space of dimension " | toString(dim S2 - i));        
+        if opts.Verbose or debugLevel > 0 then print("linearIntersectionNew: Trying intersection with a linear space of dimension " | toString(dim S2 - i));        
         J2 = apply(L2, l -> ideal(l) + I2);
         k = checks-1; --this should change to start at checks-1 and loop backwards
         while (k >= 0) and (#returnPointsList < n1) do (
-            if opts.Verbose then print("linearIntersectionNew: trying linear intersection #" | toString(k));
+            if opts.Verbose or debugLevel > 0 then print("linearIntersectionNew: trying linear intersection #" | toString(k));
             workingIdeal = J2#k;
             --if (homogFlag) then workingIdeal = saturate workingIdeal; --make this saturation faster
-            if (homogFlag) then workingIdeal = saturateInGenericCoordinates workingIdeal; --make this saturation faster
+            if (homogFlag) then workingIdeal = saturateInGenericCoordinates workingIdeal; --make this saturation faster, maybe call isDimAtMost(0, workingIdeal) here instead, or at least first
             if (workingIdeal != ideal 1_S2) and (#returnPointsList < n1) then (--we found a point                
                 --i = -1; --stop the exterior loop, we found the dimension
-                if opts.Verbose then print("linearIntersectionNew: We found something.");
-                oldPtCt := #returnPointsList;
-                if ((not homogFlag) and ((opts.DimensionFunction)(workingIdeal) == 0)) then (--if we are using decompose
-                    if opts.Verbose then print("linearIntersectionNew: We found at least one point");
+                if opts.Verbose or debugLevel > 0 then print("linearIntersectionNew: We found something.");
+                oldPtCt := #returnPointsList;                
+                if ((not homogFlag) and ((fastDim0(workingIdeal) == true))) then (--if we are using decompose
+                    if opts.Verbose or debugLevel > 0 then print("linearIntersectionNew: We found at least one point");
                     --we should have bifurcating code here, so instead of running this, call a function, or call the multiplication table
                     
                     ptList = random decompose trim (workingIdeal);                        
-                    if opts.Verbose then print("linearIntersectionNew: We found " | toString(#ptList) | " points.");
+                    if opts.Verbose or debugLevel > 0 then print("linearIntersectionNew: We found " | toString(#ptList) | " points.");
                     j=0;
-                    sortedPtList = sort apply(#ptList, t -> {(opts.DimensionFunction)(ptList#t), degree (ptList#t), t});                    
+                    sortedPtList = sort apply(#ptList, t -> {0, degree (ptList#t), t});                    
                     while (j < #ptList) and (#returnPointsList < n1) and (sortedPtList#j#0 == 0) do (
                         myDeg = sortedPtList#j#1;                
-                        if opts.Verbose then print("linearIntersectionNew: Looking at a point of degree " | toString(myDeg));
+                        if opts.Verbose or debugLevel > 0 then print("linearIntersectionNew: Looking at a point of degree " | toString(myDeg));
                         if (myDeg == 1) then (
                             finalPoint = idealToPoint(ptList#(sortedPtList#j#2));                    
                             if (verifyPoint(finalPoint, I2, opts)) then returnPointsList = append(returnPointsList, finalPoint);
@@ -803,7 +832,7 @@ linearIntersectionNew(ZZ, Ideal) := opts -> (n1, I1) -> (
                         j = j+1;
                     );                                                                                   
                 )
-                else if homogFlag and ((opts.DimensionFunction)(workingIdeal) == 1) then (--we should use MultiplicationTable to do the factoring
+                else if homogFlag and (fastDim1(workingIdeal) == true) then (--we should use MultiplicationTable to do the factoring
                     newPts = multiplicationTableInternal(n1 - #returnPointsList, I2, workingIdeal, sub(ideal(L2#k), S2), ExtendField => opts.ExtendField, Verbose=>opts.Verbose);
                     returnPointsList = returnPointsList | newPts;                                       
                 );  
@@ -839,6 +868,7 @@ multiplicationTableInternal(ZZ, Ideal, Ideal, Ideal) := opts->(n1, I2, workingId
         if (opts.Verbose) then print ("multiplicationTableInternal: linear space codim is " | toString(j) );
         --| "," | toString(dim linearSpace) | " deg " | toString(degree workingIdeal));    
         xx:=(support (vars S2%(linearSpace)))_{j-1,j}; 
+        --the above should be written to choose something more intelligent, like a random variable instead of the last one
         m0:=contract(transpose matrix entries b2,matrix entries((xx_0*b1)%workingIdeal));  
         m1:=contract(transpose matrix entries b2,matrix entries((xx_1*b1)%workingIdeal));
         M:=map(S2^(rank target m0),S2^{rank source m0:-1},xx_0*m1-xx_1*m0);
@@ -961,9 +991,9 @@ dimViaBezout(Ideal) := opts-> I1 -> (
         attempts = opts.DimensionIntersectionAttempts;
     );
     
-    if opts.Verbose then print ("dimViaBezout: Checking each dimension " | toString(attempts) | " times.");
+    if opts.Verbose or debugLevel > 0 then print ("dimViaBezout: Checking each dimension " | toString(attempts) | " times.");
     if (m >= minFieldSize) then (
-        if opts.Verbose then print ("dimViaBezout: field size is big enough, not extending.");
+        if opts.Verbose or debugLevel > 0 then print ("dimViaBezout: field size is big enough, not extending.");
         --The following is code for multithreading, if that is fixed.
         -*
         backtrace=false;
@@ -973,30 +1003,30 @@ dimViaBezout(Ideal) := opts-> I1 -> (
         schedule t2;
         r1 := isReady(t1);
         r2 := isReady(t2);
-        if opts.Verbose then print ("dimViaBezout:  starting threads, one classical dim, one probabilistic dim ");
+        if opts.Verbose or debugLevel > 0 then print ("dimViaBezout:  starting threads, one classical dim, one probabilistic dim ");
         while (r1==false and r2==false) do ( nanosleep(100000); r1 = isReady(t1); r2 = isReady(t2););
-        if opts.Verbose then print ("dimViaBezout:  found an answer" );
+        if opts.Verbose or debugLevel > 0 then print ("dimViaBezout:  found an answer" );
         if (r2) then (
             tr = taskResult(t2);
-            if opts.Verbose then print ("dimViaBezout:  classical dim finished first: " | toString(tr) );            
+            if opts.Verbose or debugLevel > 0 then print ("dimViaBezout:  classical dim finished first: " | toString(tr) );            
             cancel t1;                       
             return tr;
         )
         else if (r1) then (
             tr = taskResult(t1);
-            if opts.Verbose then print ("dimViaBezout:  probabilistic dim finished first: " | toString(tr));
+            if opts.Verbose or debugLevel > 0 then print ("dimViaBezout:  probabilistic dim finished first: " | toString(tr));
             cancel t2;
             return tr;            
         );
-        if opts.Verbose then print "dimViaBezout: Something went wrong with multithrading.";              
+        if opts.Verbose or debugLevel > 0 then print "dimViaBezout: Something went wrong with multithrading.";              
         return null;
         *-
         val = floor(0.25 + sum(apply(attempts, i -> dimViaBezoutInternal(I1, DimensionIntersectionAttempts=>1, Replacement => replacementList, Homogeneous => homog, Verbose=>opts.Verbose)))/attempts); --sort of a weighted rounding, since it seems we normally overestimate dim by this method
         --run it *attempts* times, then average
         return val;
     );
-    if opts.Verbose then print "dimViaBezout: The field is too small, extending it.";
-    if opts.Verbose then print ("dimViaBezout: New field size is " | toString(pp) | "^" | toString(i*d) | " = " | toString(pp^(i*d)) );
+    if opts.Verbose or debugLevel > 0 then print "dimViaBezout: The field is too small, extending it.";
+    if opts.Verbose or debugLevel > 0 then print ("dimViaBezout: New field size is " | toString(pp) | "^" | toString(i*d) | " = " | toString(pp^(i*d)) );
     (S2, phi1) := fieldBaseChange(S1, GF(pp, i*d));
     I2 := phi1(I1);    
     
@@ -1019,7 +1049,7 @@ dimViaBezoutInternal(Ideal) := opts -> (I1)->(
     L1 := apply(checks, t->getRandomLinearForms(S1, opts.Replacement, Verify => true, Homogeneous=>opts.Homogeneous));
     
     while (i >= 0) do (
-        if opts.Verbose then print("dimViaBezoutInternal: Trying intersection with a linear space of dimension " | toString(dim S1 - i) | "," | toString(dim ideal (L1#0)));
+        if opts.Verbose or debugLevel > 0 then print("dimViaBezoutInternal: Trying intersection with a linear space of dimension " | toString(dim S1 - i) | "," | toString(dim ideal (L1#0)));
         if (i == 0) then checks = 1;        
         --print L1;
         --print trim(I1 + L1);
@@ -1070,7 +1100,7 @@ dimViaBezoutHomogeneous(Ideal) := opts-> (I1) -> (
     i := dim S1-1;
     checks := opts.DimensionIntersectionAttempts;
     while (i >= 0) do (
-        if opts.Verbose then print("dimViaBezoutNonhomogeneous: Trying intersection with a linear space of dimension " | toString(dim S1 - i));
+        if opts.Verbose or debugLevel > 0 then print("dimViaBezoutNonhomogeneous: Trying intersection with a linear space of dimension " | toString(dim S1 - i));
         if (i == 0) then checks = 1;
         L1 := apply(checks, t->ideal getRandomLinearForms(S1, {0,0,0,0,i,0}, Homogeneous=>opts.Homogeneous));
         --print L1;
@@ -1269,24 +1299,24 @@ findANonZeroMinor(ZZ, Matrix, Ideal) := opts -> (n,M,I)->(
     remove(mutOptions, MinorPointAttempts);
     ptOpts := new OptionTable from mutOptions;
     while (i < opts.MinorPointAttempts) and (rk < n) do (
-        if opts.Verbose then print concatenate("findANonZeroMinor: Finding a point on the given ideal, attempt #", toString i);
+        if opts.Verbose or debugLevel > 0 then print concatenate("findANonZeroMinor: Finding a point on the given ideal, attempt #", toString i);
         P = randomPoints(I, ptOpts);
         if #P > 0 then (
             P = P#0;
-            if opts.Verbose then print concatenate("findANonZeroMinor: Found a point over the ring ", toString(kk2));
-            kk2 = ring P#0;            
+            kk2 = ring P#0;
+            if opts.Verbose or debugLevel > 0 then print concatenate("findANonZeroMinor: Found a point over the ring ", toString(kk2));                        
             phi =  map(kk2,R,sub(matrix{P},kk2));    
             N = mutableMatrix phi(M);
             rk = rank(N);
             if opts.Verbose and  (rk < n) then print "findANonZeroMinor: The matrix didn't have the desired rank at this point.  We may try again";
         )
         else(
-            if opts.Verbose then print concatenate("findANonZeroMinor: Failed to find a point, we may try again.");
+            if opts.Verbose or debugLevel > 0 then print concatenate("findANonZeroMinor: Failed to find a point, we may try again.");
         );
         i = i+1;
     );    
     if (rk < n) then error "findANonZeroMinor: All minors of given size vanish at the randomly chosen points. You may want to increase MinorPointAttempts, or change Strategy.";    
-    if opts.Verbose then print "findANonZeroMinor:  The point had full rank.  Now finding the submatrix.";
+    if opts.Verbose or debugLevel > 0 then print "findANonZeroMinor:  The point had full rank.  Now finding the submatrix.";
     N1 = (columnRankProfile(N));
     Mcolumnextract = M_N1;
     M11 := mutableMatrix phi(Mcolumnextract);
@@ -1320,7 +1350,79 @@ extendIdealByNonZeroMinor(ZZ,Matrix,Ideal):= opts -> (n, M, I) -> (
     return Ifin;
 );
 
+--**************************************
+--the following is taken from FastMinors
+--**************************************
 
+isGBDone := (myGB) -> (
+    --a temporary function for finding out if a gb computation is done.
+    myStr := status myGB;
+    return 0 < #select("status: done", myStr);
+);
+isCodimAtLeast = method(Options => {
+    Verbose => false,
+    PairLimit => 100
+    --DegreeFunction => ( (t,i) -> ceiling((i+1)*t))
+});
+
+isCodimAtLeast(ZZ, Ideal) := opts -> (n1, I1) -> (
+    R1 := ring I1;
+    S1 := ambient R1;
+    if (not isPolynomialRing(S1)) then error "isCodimAtLeast:  This requires an ideal in a polynomial ring, or in a quotient of a polynomial ring.";
+    if (n1 <= 0) then return true; --if for some reason we are checking codim 0.
+    if (isMonomialIdeal(I1)) then (
+        if (codim monomialIdeal(I1) >= n1) then return true;
+    );
+    if (#first entries gens I1 == 0) then ( return false; ); 
+    J1 := ideal R1;
+    dAmb := codim J1;
+    I2 := sub(I1, S1) + sub(J1, S1); --lift to the polynomial ring.
+    --now we have an ideal in a polynomial ring.  The idea is that we should compute a partial Groebner basis.
+    --and compute the codim of that.
+    --But first, we just try a quick codim computation based on the ideal generators.
+    monIdeal := null;
+    if (#first entries gens I2 > 0) then (
+        monIdeal = monomialIdeal(apply(first entries gens I2, t->leadTerm t));
+        if (opts.Verbose or debugLevel > 2) then print concatenate("isCodimAtLeast: Computing codim of monomials based on ideal generators.");
+        if (codim monIdeal - dAmb >= n1) then return true;
+        if (opts.Verbose or debugLevel > 2) then print concatenate("isCodimAtLeast: Didn't work, going to find the partial Groebner basis.");
+    );
+    --now we set stuff up for the loop if that doesn't work.  
+    vCount := # first entries vars S1;
+ --   baseDeg := apply(sum(apply(first entries vars S1, t1 -> degree t1)), v -> ceiling(v/vCount)); --use this as the base degree to step by (probably we should use a different value)
+    i := 1;
+    --curLimit := baseDeg;
+    local curLimit;
+    local myGB;
+    
+    gensList := null;
+    while (i < opts.PairLimit) do(
+        curLimit = ceiling(i^1.5);
+--        curLimit = apply(baseDeg, tt -> (opts.SPairsFunction)(tt,i));
+        if (opts.Verbose or debugLevel > 2) then print concatenate("isCodimAtLeast: about to compute gb PairLimit => ", toString curLimit);
+        myGB = gb(I2, PairLimit=>curLimit);
+        gensList = first entries leadTerm gb(I2, PairLimit=>curLimit);    
+        if (#gensList > 0) then (
+            monIdeal = monomialIdeal(first entries leadTerm myGB);
+            if (opts.Verbose or debugLevel > 2) then print concatenate("isCodimAtLeast: computed gb, now computing codim ");
+            if (codim monIdeal - dAmb >= n1) then return true;
+        );
+        if (isGBDone(myGB)) then i = opts.PairLimit;
+        i = i + 1;
+    );
+    return null;
+);
+
+isDimAtMost = method(Options => {
+    Verbose => false,
+    PairLimit => 100
+    --DegreeFunction => ( (t,i) -> ceiling((i+1)*t))    
+});
+
+isDimAtMost(ZZ, Ideal) := opts -> (n1, I1) -> (
+    d := dim ring I1;
+    return isCodimAtLeast(d-n1, I1, opts);
+);
 
 
 

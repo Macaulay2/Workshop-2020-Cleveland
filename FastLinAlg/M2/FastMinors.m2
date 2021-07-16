@@ -128,7 +128,7 @@ optPoints := {
     Replacement => Binomial,    
     ExtendField => false,
     PointCheckAttempts => 0,
-    DecompositionStrategy => MultiplicationTable,
+    DecompositionStrategy => Decompose,
     NumThreadsToUse => 1,
     DimensionFunction => dim,
     Verbose => false
@@ -773,7 +773,7 @@ internalChooseMinor(ZZ, Ideal, Matrix, Matrix) := opts -> (minorSize, I1, nonzer
             submatrixS1 = chooseRandomSubmatrix(minorSize, M1); 
         )
         else (
-            if (opts.Verbose) or debugLevel > 0 then print "internalChooseMinor: Choosing Points";            
+            if (opts.Verbose) or debugLevel > 0 then print "internalChooseMinor: Choosing Points";                        
             try (o = findANonZeroMinor(minorSize, M1, I1, new OptionTable from opts.PointOptions);) then submatrixS1 = {o#2, o#1} else ( submatrixS1 = chooseRandomSubmatrix(minorSize, M1); if (opts.Verbose) or debugLevel > 0 then print "internalChooseMinor: failed to find a point"; );
         );
     );
@@ -1022,9 +1022,9 @@ isCodimAtLeast(ZZ, Ideal) := opts -> (n1, I1) -> (
     monIdeal := null;
     if (#first entries gens I2 > 0) then (
         monIdeal = monomialIdeal(apply(first entries gens I2, t->leadTerm t));
-        if (opts.Verbose or debugLevel > 0) then print concatenate("isCodimAtLeast: Computing codim of monomials based on ideal generators.");
+        if (opts.Verbose or debugLevel > 2) then print concatenate("isCodimAtLeast: Computing codim of monomials based on ideal generators.");
         if (codim monIdeal - dAmb >= n1) then return true;
-        if (opts.Verbose or debugLevel > 0) then print concatenate("isCodimAtLeast: Didn't work, going to find the partial Groebner basis.");
+        if (opts.Verbose or debugLevel > 2) then print concatenate("isCodimAtLeast: Didn't work, going to find the partial Groebner basis.");
     );
     --now we set stuff up for the loop if that doesn't work.  
     vCount := # first entries vars S1;
@@ -1038,12 +1038,12 @@ isCodimAtLeast(ZZ, Ideal) := opts -> (n1, I1) -> (
     while (i < opts.PairLimit) do(
         curLimit = opts.SPairsFunction(i);
 --        curLimit = apply(baseDeg, tt -> (opts.SPairsFunction)(tt,i));
-        if (opts.Verbose or debugLevel > 0) then print concatenate("isCodimAtLeast: about to compute gb PairLimit => ", toString curLimit);
+        if (opts.Verbose or debugLevel > 2) then print concatenate("isCodimAtLeast: about to compute gb PairLimit => ", toString curLimit);
         myGB = gb(I2, PairLimit=>curLimit);
         gensList = first entries leadTerm gb(I2, PairLimit=>curLimit);    
         if (#gensList > 0) then (
             monIdeal = monomialIdeal(first entries leadTerm myGB);
-            if (opts.Verbose or debugLevel > 0) then print concatenate("isCodimAtLeast: computed gb, now computing codim ");
+            if (opts.Verbose or debugLevel > 2) then print concatenate("isCodimAtLeast: computed gb, now computing codim ");
             if (codim monIdeal - dAmb >= n1) then return true;
         );
         if (isGBDone(myGB)) then i = opts.PairLimit;
