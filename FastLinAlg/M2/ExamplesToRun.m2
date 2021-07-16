@@ -89,6 +89,10 @@ debugLevel = 0
 S = ZZ/101[x_0..x_8];
 J = ideal(x_5*x_7-x_4*x_8,x_2*x_7-x_1*x_8,x_5*x_6-x_3*x_8,x_4*x_6-x_3*x_7,x_2*x_6-x_0*x_8,x_1*x_6-x_0*x_7,x_2*x_4-x_1*x_5,x_2*x_3-x_0*x_5,x_1*x_3-x_0*x_4,x_6^3+x_7^3+x_8^3,x_3*x_6^2+x_4*x_7^2+x_5*x_8^2,x_0*x_6^2+x_1*x_7^2+x_2*x_8^2,x_3^2*x_6+x_4^2*x_7+x_5^2*x_8,x_0*x_3*x_6+x_1*x_4*x_7+x_2*x_5*x_8,x_0^2*x_6+x_1^2*x_7+x_2^2*x_8,x_3^3+x_4^3+x_5^3,x_0*x_3^2+x_1*x_4^2+x_2*x_5^2,x_0^2*x_3+x_1^2*x_4+x_2^2*x_5,x_2^3+x_5^3+x_8^3,x_1*x_2^2+x_4*x_5^2+x_7*x_8^2,x_0*x_2^2+x_3*x_5^2+x_6*x_8^2,x_1^2*x_2+x_4^2*x_5+x_7^2*x_8,x_0*x_1*x_2+x_3*x_4*x_5+x_6*x_7*x_8,x_0^2*x_2+x_3^2*x_5+x_6^2*x_8,x_1^3+x_4^3+x_7^3,x_0*x_1^2+x_3*x_4^2+x_6*x_7^2,x_0^2*x_1+x_3^2*x_4+x_6^2*x_7,x_0^3-x_4^3-x_5^3-x_7^3-x_8^3);
 
-elapsedTime regularInCodimension(2, S/J, Strategy=>StrategyPoints, Verbose=>true, PointOptions=>{DecompositionStrategy=>Decompose, Homogeneous => false, Verbose=>true})
+elapsedTime regularInCodimension(2, S/J, Strategy=>StrategyPoints, Verbose=>true, PointOptions=>{DecompositionStrategy=>Decompose, Homogeneous => false, Verbose=>false})
 
-elapsedTime regularInCodimension(2, S/J, Strategy=>StrategyDefaultWithPoints, Verbose=>true, PointOptions=>{DecompositionStrategy=>Decompose, Homogeneous => false, ExtendField => false, Verbose=>true})
+elapsedTime regularInCodimension(2, S/J, Strategy=>StrategyPoints, Verbose=>true, PointOptions=>{DecompositionStrategy=>null, Homogeneous => false, Verbose=>false})
+
+elapsedTime regularInCodimension(2, S/J, Strategy=>StrategyDefaultWithPoints, Verbose=>true, PointOptions=>{DecompositionStrategy=>Decompose, Homogeneous => false, ExtendField => false, Verbose=>false})
+
+elapsedTime regularInCodimension(2, S/J, Strategy=>StrategyDefaultWithPoints, Verbose=>true, PointOptions=>{DecompositionStrategy=>null, Homogeneous => false, ExtendField => false, Verbose=>true})

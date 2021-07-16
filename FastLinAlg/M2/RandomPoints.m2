@@ -60,7 +60,7 @@ exportMutable {}
 --this appears to need to be here, otherwise the options don't realize dimViaBezout is a function, it thinks its a symbol.
 dimViaBezout=method(Options => {
     Verbose => false, 
-    Homogeneous => false, 
+    Homogeneous => true, 
     DimensionIntersectionAttempts => null, 
     MinimumFieldSize => null,
     Replacement => Full});
@@ -789,15 +789,30 @@ linearIntersectionNew(ZZ, Ideal) := opts -> (n1, I1) -> (
         while (k >= 0) and (#returnPointsList < n1) do (
             if opts.Verbose or debugLevel > 0 then print("linearIntersectionNew: trying linear intersection #" | toString(k));
             workingIdeal = J2#k;
+            
+            ---trying some things to speed stuff up.            
+            curFlag := false;
+            if (homogFlag) then (
+                if not (isDimAtMost(0, workingIdeal) === true) then --do a fast attempt to show the dimension is bounded above by 0, in which case don't even try to saturate
+                    (
+                        workingIdeal = saturateInGenericCoordinates workingIdeal;
+                        curFlag = (workingIdeal != ideal 1_S2); 
+                    );
+            )
+            else(
+               curFlag = (workingIdeal != ideal 1_S2); 
+            );
+            --end of attempt to speed things up
+
+            --the old code is below
             --if (homogFlag) then workingIdeal = saturate workingIdeal; --make this saturation faster
-            if (homogFlag) then workingIdeal = saturateInGenericCoordinates workingIdeal; --make this saturation faster, maybe call isDimAtMost(0, workingIdeal) here instead, or at least first
+            --if (homogFlag) then workingIdeal = saturateInGenericCoordinates workingIdeal; --make this saturation faster, maybe call isDimAtMost(0, workingIdeal) here instead, or at least first
             if (workingIdeal != ideal 1_S2) and (#returnPointsList < n1) then (--we found a point                
                 --i = -1; --stop the exterior loop, we found the dimension
                 if opts.Verbose or debugLevel > 0 then print("linearIntersectionNew: We found something.");
                 oldPtCt := #returnPointsList;                
                 if ((not homogFlag) and ((fastDim0(workingIdeal) == true))) then (--if we are using decompose
                     if opts.Verbose or debugLevel > 0 then print("linearIntersectionNew: We found at least one point");
-                    --we should have bifurcating code here, so instead of running this, call a function, or call the multiplication table
                     
                     ptList = random decompose trim (workingIdeal);                        
                     if opts.Verbose or debugLevel > 0 then print("linearIntersectionNew: We found " | toString(#ptList) | " points.");
@@ -943,27 +958,31 @@ dimViaBezout(Ideal) := opts-> I1 -> (
     local minFieldSize;   
     local replacementList;
 
+    if (opts.Homogeneous) then (homog = isHomogeneous I1) else (homog = opts.Homogeneous);
+    effAmbD := ambD;
+    if (homog) then effAmbD = effAmbD - 1;
+
     if (class opts.Replacement === List) then (
-        if not (sum (opts.Replacement) == ambD) then error "dimViaBezout: sum of replacement terms does not add up to the dimension";
+        if not (sum (opts.Replacement) == effAmbD) then error "dimViaBezout: sum of replacement terms does not add up to the effective dimension";
         replacementList = opts.Replacement;
     )
     else if (opts.Replacement === Monomial) then (
-        replacementList = {0, ambD, 0, 0, 0, 0};
+        replacementList = {0, effAmbD, 0, 0, 0, 0};
     )
     else if (opts.Replacement === Binomial) then (
-        replacementList = {0, 0, 0, ambD, 0, 0};
+        replacementList = {0, 0, 0, effAmbD, 0, 0};
     )
     else if (opts.Replacement === Trinomial) then (
-        replacementList = {0, 0, 0, 0, ambD, 0};
+        replacementList = {0, 0, 0, 0, effAmbD, 0};
     )
     else if (opts.Replacement === Full) then (
-        replacementList = {0, 0, 0, 0, 0, ambD};
+        replacementList = {0, 0, 0, 0, 0, effAmbD};
     )
     else (
         error "dimViaBezout: not a valid replacement option";
     );
 
-    if (opts.Homogeneous) then (homog = isHomogeneous I1) else (homog = opts.Homogeneous);
+    
     pp := char ring I1;
     d := floor(log_pp(m) + 0.5);
     if (opts.MinimumFieldSize === null) then (
@@ -985,7 +1004,7 @@ dimViaBezout(Ideal) := opts-> I1 -> (
     i := getNextValidFieldSize(pp, d, minFieldSize);
     --if (opts.DimensionIntersectionAttempts === null) then (attempts = ceiling(log_10(1 + 10000/(pp^(i*d))))) else (attempts = opts.DimensionIntersectionAttempts;);
     if (opts.DimensionIntersectionAttempts === null) then (
-        if (opts.Homogeneous) then attempts = 5 else attempts = 3;
+        if (homog) then attempts = 3 else attempts = 3;
     )
     else(
         attempts = opts.DimensionIntersectionAttempts;
@@ -1021,7 +1040,10 @@ dimViaBezout(Ideal) := opts-> I1 -> (
         if opts.Verbose or debugLevel > 0 then print "dimViaBezout: Something went wrong with multithrading.";              
         return null;
         *-
-        val = floor(0.25 + sum(apply(attempts, i -> dimViaBezoutInternal(I1, DimensionIntersectionAttempts=>1, Replacement => replacementList, Homogeneous => homog, Verbose=>opts.Verbose)))/attempts); --sort of a weighted rounding, since it seems we normally overestimate dim by this method
+        
+        curAttemptList := apply(attempts, i -> dimViaBezoutInternal(I1, DimensionIntersectionAttempts=>1, Replacement => replacementList, Homogeneous => homog, Verbose=>opts.Verbose));
+        if opts.Verbose or debugLevel > 0 then print ("dimViaBezout: answers" | toString(curAttemptList));
+        val = floor(0.25 + sum(curAttemptList)/attempts); --sort of a weighted rounding, since it seems we normally overestimate dim by this method
         --run it *attempts* times, then average
         return val;
     );
@@ -1029,11 +1051,23 @@ dimViaBezout(Ideal) := opts-> I1 -> (
     if opts.Verbose or debugLevel > 0 then print ("dimViaBezout: New field size is " | toString(pp) | "^" | toString(i*d) | " = " | toString(pp^(i*d)) );
     (S2, phi1) := fieldBaseChange(S1, GF(pp, i*d));
     I2 := phi1(I1);    
-    
-    val = floor(0.25 + sum(apply(attempts, i -> dimViaBezoutInternal(I2, DimensionIntersectionAttempts=>1, Replacement => replacementList, Homogeneous => homog, Verbose=>opts.Verbose)))/attempts); 
+    attemptList := apply(attempts, i -> dimViaBezoutInternal(I2, DimensionIntersectionAttempts=>1, Replacement => replacementList, Homogeneous => homog, Verbose=>opts.Verbose));
+    if opts.Verbose or debugLevel > 0 then print ("dimViaBezout: answers" | toString(attemptList));
+    val = floor(0.25 + sum(attemptList)/attempts); 
         --run it *attempts* times, then average
     return val;
 )
+
+--this function checks quickly hopefully, whether the following ideal saturates to nothing
+fastCheckHomogIdealEmpty = method();
+
+fastCheckHomogIdealEmpty := J1 -> (
+    if (isDimAtMost(0, J1) === true) then return true;
+    S1 := ring J1;
+    return (dim(J1) <= 0);
+    --return (saturateInGenericCoordinates(J1, Replacement => Monomial) == ideal 1_S1);    
+);
+
 
 dimViaBezoutInternal=method(Options => {Verbose => false, Replacement => null, Homogeneous => false, DimensionIntersectionAttempts => 1});
 
@@ -1049,12 +1083,13 @@ dimViaBezoutInternal(Ideal) := opts -> (I1)->(
     L1 := apply(checks, t->getRandomLinearForms(S1, opts.Replacement, Verify => true, Homogeneous=>opts.Homogeneous));
     
     while (i >= 0) do (
-        if opts.Verbose or debugLevel > 0 then print("dimViaBezoutInternal: Trying intersection with a linear space of dimension " | toString(dim S1 - i) | "," | toString(dim ideal (L1#0)));
+        if opts.Verbose or debugLevel > 0 then print("dimViaBezoutInternal: Trying intersection with a linear space of dimension " | toString(dim S1 - i) | ",");-- | toString(dim ideal (L1#0)));
         if (i == 0) then checks = 1;        
         --print L1;
         --print trim(I1 + L1);
         if (opts.Homogeneous) then (
-            myList = apply(L1, l -> ( saturateInGenericCoordinates((ideal l) + I1) != ideal 1_S1));
+            --myList = apply(L1, l -> ( saturateInGenericCoordinates((ideal l) + I1) != ideal 1_S1));
+            myList = apply(L1, l -> (not fastCheckHomogIdealEmpty( (ideal l) + I1) ));
         )
         else (
             myList = apply(L1, l -> ((ideal l) + I1 != ideal 1_S1));
@@ -1923,7 +1958,7 @@ doc ///
         Text
             The user may set the {\tt MinimumFieldSize} to ensure that the field being worked over is big enough.  For instance, there are relatively few linear spaces over a field of characteristic 2, and this can cause incorrect results to be provided.  If no size is provided, the function tries to guess a good size based on ambient ring.
         Text
-            If you wish to force homogeneous computation (via homogeneous linear spaces), set the option {\tt Homogeneous=true}.  In our experience, the default {\tt Homogeneous=>false} is faster.
+            If you wish to force homogeneous computation (via homogeneous linear spaces), set the option {\tt Homogeneous=true}.  
         Text
             The user may also specify what sort of linear forms to intersect with via the @TO Replacement@ option.
     SeeAlso
