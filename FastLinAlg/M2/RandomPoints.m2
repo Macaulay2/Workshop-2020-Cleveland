@@ -13,7 +13,7 @@ newPackage(
 	     },
     	Headline => "find a point in a given variety over a finite field",
         PackageImports => {"SwitchingFields", "MinimalPrimes", "ConwayPolynomials"}, 
-		DebuggingMode => true, 
+		DebuggingMode => false, 
 		Reload=>false,
 		AuxiliaryFiles => false -- set to true if package comes with auxiliary files
     	)
@@ -77,7 +77,7 @@ optRandomPoints := {
     Verbose => false
 };
 
-optFindANonZeroMinor := optRandomPoints | {MinorPointAttempts => 5} | {ExtendField => true}
+optFindANonZeroMinor := optRandomPoints | {MinorPointAttempts => 5} | {ExtendField => true} | {Homogeneous => false}
 
 optCoorindateChange := {
     Verbose => false, 
@@ -747,15 +747,17 @@ linearIntersectionNew(ZZ, Ideal) := opts -> (n1, I1) -> (
     
 
     --this flag is set to true if we going to use MultiplicationTables
-    local homogFlag;    
-    if (opts.DecompositionStrategy === MultiplicationTable) then (
-        homogFlag = isHomogeneous(I1);
-    )
-    else if (opts.DecompositionStrategy === Decompose) then (
-        homogFlag = false;
-    )
-    else (
-        homogFlag = isHomogeneous(I1) and (dim S1 <= 15);
+    homogFlag := false;    
+    if (opts.Homogeneous) then (
+        if (opts.DecompositionStrategy === MultiplicationTable) then (
+            homogFlag = isHomogeneous(I1);
+        )
+        else if (opts.DecompositionStrategy === Decompose) then (
+            homogFlag = false;
+        )
+        else (
+            homogFlag = isHomogeneous(I1) and (dim S1 <= 15);
+        );
     );
     if (opts.Verbose) then (
         if (homogFlag) then print "linearIntersectionNew: using MultiplicationTable";
@@ -793,11 +795,12 @@ linearIntersectionNew(ZZ, Ideal) := opts -> (n1, I1) -> (
             ---trying some things to speed stuff up.            
             curFlag := false;
             if (homogFlag) then (
+                --print (dim workingIdeal);
                 if not (isDimAtMost(0, workingIdeal) === true) then --do a fast attempt to show the dimension is bounded above by 0, in which case don't even try to saturate
-                    (
-                        workingIdeal = saturateInGenericCoordinates workingIdeal;
-                        curFlag = (workingIdeal != ideal 1_S2); 
-                    );
+                (
+                    workingIdeal = saturateInGenericCoordinates workingIdeal;
+                    curFlag = (workingIdeal != ideal 1_S2); 
+                );                
             )
             else(
                curFlag = (workingIdeal != ideal 1_S2); 
@@ -807,7 +810,7 @@ linearIntersectionNew(ZZ, Ideal) := opts -> (n1, I1) -> (
             --the old code is below
             --if (homogFlag) then workingIdeal = saturate workingIdeal; --make this saturation faster
             --if (homogFlag) then workingIdeal = saturateInGenericCoordinates workingIdeal; --make this saturation faster, maybe call isDimAtMost(0, workingIdeal) here instead, or at least first
-            if (workingIdeal != ideal 1_S2) and (#returnPointsList < n1) then (--we found a point                
+            if (curFlag) and (#returnPointsList < n1) then (--we found a point                
                 --i = -1; --stop the exterior loop, we found the dimension
                 if opts.Verbose or debugLevel > 0 then print("linearIntersectionNew: We found something.");
                 oldPtCt := #returnPointsList;                

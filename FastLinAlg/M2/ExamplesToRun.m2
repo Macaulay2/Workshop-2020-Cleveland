@@ -22,12 +22,13 @@ J4 = sub(J2, T3);
 mm = ideal vars T2;
 J3 = J2 + ideal(random(1, T2), random(1, T2), random(1, T2));
 
+time randomPoints(J2, Verbose=>true)
 
 J = I + chooseGoodMinors(8, 4, M);  T2 = ZZ/101[x1,x2,x3,x4,x5,x6,x7, Z]; J2 = ideal(apply(first entries gens J, t->homogenize(sub(t, T2), Z) ));
 
 elapsedTime randomPoints(J2, Verbose=>true)
-time randomPoints(J2, Strategy=>MultiplicationTable);
 time geometricPointsNew(1, J2, Verbose=>true)
+time randomPoints(J2, Strategy=>LinearIntersection, Verbose=>true)
 time rationalPointsNew(10, J2, Verbose=>false)
 time geometricPointsNew(10, J2, Verbose=>false)
 
@@ -96,3 +97,25 @@ elapsedTime regularInCodimension(2, S/J, Strategy=>StrategyPoints, Verbose=>true
 elapsedTime regularInCodimension(2, S/J, Strategy=>StrategyDefaultWithPoints, Verbose=>true, PointOptions=>{DecompositionStrategy=>Decompose, Homogeneous => false, ExtendField => false, Verbose=>false})
 
 elapsedTime regularInCodimension(2, S/J, Strategy=>StrategyDefaultWithPoints, Verbose=>true, PointOptions=>{DecompositionStrategy=>null, Homogeneous => false, ExtendField => false, Verbose=>true})
+
+M = jacobian J;
+J5 = J + chooseGoodMinors(10, 4, M);
+
+
+
+uninstallPackage "RandomPoints"
+uninstallPackage "FastMinors"
+uninstallPackage "RationalMaps"
+
+loadPackage "RandomPoints"
+loadPackage "FastMinors"
+loadPackage "RationalMaps"
+
+installPackage "RandomPoints"
+installPackage "FastMinors"
+installPackage "RationalMaps"
+
+check RandomPoints
+check FastMinors
+check RationalMaps
+
