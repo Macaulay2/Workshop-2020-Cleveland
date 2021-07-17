@@ -86,6 +86,7 @@
     We provide the following core functions:
     \begin{itemize}    
     \item {\tt randomPoints}:  This tries to find a point in the vanishing set of an ideal. (\Cref{randomPoints})
+    \item {\tt dimViaBezout}:  This tries to compute the dimension of an algebraic set by intersecting with hyperplanes.  (\Cref{subsec.DimViaBezout})
     \item {\tt projectionToHypersurface} and {\tt genericProjection}: These functions provide customizable projection. (\Cref{projectionfunctions}) 	
     \item {\tt findANonZeroMinor} and {\tt extendIdealByNonZeroMinor}:  The first function finds a submatrix of a given matrix that is nonsingular at a point of a given ideal.  The second, adds said submatrix to an ideal, which is useful for computing partial Jacobian ideals.  (\Cref{findANonZeroMinor})          
     %\item :  This extends an ideal by a minor produced by \\{\tt findANonZeroMinor}. (\Cref{extendIdealByNonZeroMinor})	
@@ -333,9 +334,11 @@ In this case, we found a degree 4 point.
 \end{remark}
 
 
-\section{Other functions {\tt dimViaBezout} and {\tt randomCoordinateChange}}{\label{helper}}
+\section{Useful functions {\tt dimViaBezout} and {\tt randomCoordinateChange}}{\label{helper}}
 
-\subsection*{\tt dimViaBezout:} We thank the reviewer for pointing out that in most of the computations, computing the codimension of the given ideal, is a significant bottleneck. While we have avoided most dimension computations in our current implementation, we have also implemented a probibalistic dimension computation of $V(I)$.
+\subsection{\tt dimViaBezout:} 
+\label{subsec.DimViaBezout}
+We thank the Frank-Olaf Scheyer for pointing out that in most of the computations, computing the codimension of the given ideal, is a significant bottleneck. While we have avoided most dimension computations in our current implementation, we have also implemented a probibalistic dimension computation of $V(I)$.
 This function takes as input an ideal $I$ in a polynomial ring over a field and intersects $V(I)$ with successively higher dimensional random linear spaces until there is an intersection.  For example, if $V(I)$ intersect a random line has a point, then we expect that $V(I)$ contains a hypersurface.  If there was no intersection, this function tries a $2$-dimensional linear space, and so on.  This can speed up a number of computations.  The function also takes in optional inputs as described below:
 
 \begin{itemize}
@@ -344,7 +347,7 @@ This function takes as input an ideal $I$ in a polynomial ring over a field and 
 	\item {\tt MinimumFieldSize}:
 	If the ambient field is smaller than this integer value, it will automatically be replaced with an extension field.  For instance, there are relatively few linear spaces over a field of characteristic $2$, and this can cause incorrect results to be returned to the user. The user may set the {\tt MinimumFieldSize} to ensure that the field being worked over is big enough.  If this is not set, the program tries to choose a reasonable minimum field size based on the ambient ring.
     \item {\tt Homogeneous}: 
-    If the ideal is homogeneous, we can use homogeneous linear spaces to compute dimension.  However, in practice, this appears slower than the non-homogeneous strategy due to the fact that we must saturate the result.  Hence this is turned off by default.
+    If the ideal is homogeneous, we can use homogeneous linear spaces to compute dimension. Sometimes this is faster and other times slower.
         %By default, the function uses one of two algorithms depending on whether the ideal is homogeneous.
         %There are homogeneous examples where the non-Homogeneous method is faster.  Setting this to {\tt false} will force non-homogeneous computation even in homogeneous examples.  Setting it to true will force homogeneous computation, which may behave unexpectedly in non-homogeneous examples.
 \end{itemize}
@@ -376,16 +379,17 @@ o6 = 5
 				\end{verbatim}
 			\end{quote}
 	}}
-As you can see doing a single intersection attempt is about three times faster, and it usually gives the right answer (more than 99\% of the time in this particular example, but in others doing the computation in triplicate avoids returning incorrect answers).
+As you can see doing a single intersection attempt is about three times faster, and it usually gives the right answer (far more than 99\% of the time in this particular example, but in others doing the computation in triplicate avoids returning incorrect answers).
 \end{example}
 
 
-\subsection*{\tt randomCoordinateChange:} 
+\subsection{\tt randomCoordinateChange:} 
+\label{subSec.randomCoordinateChange}
 
-This function takes a polynomial ring as an input and outputs the coordinate change map,
+This function takes a polynomial ring as an input and outputs a coordinate change map,
 i.e. given a polynomial ring, this will produce a linear automorphism of the ring.  This function checks whether the map is an isomorphism by computing the Jacobian.
 
-In some applications, a full change of coordinates is not desired, as it might cause code to run very slowly.  A binomial change of coordinates might be preferred, or we might only replace some monomials by other monomials.  
+In some applications, a full random change of coordinates is not desired, as it might cause code to run very slowly.  A binomial change of coordinates might be preferred, or we might only replace some monomials by other monomials.  
 This is controlled with the following options.
 
 \begin{itemize}
