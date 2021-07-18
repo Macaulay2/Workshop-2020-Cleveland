@@ -2,7 +2,7 @@
 newPackage(
         "RandomPoints",
     	Version => "1.5",
-    	Date => "July 2nd, 2021",
+    	Date => "July 18th, 2021",
     	Authors => {
 	     {Name => "Sankhaneel Bisui", Email => "sbisu@tulane.edu", HomePage=>"https://sites.google.com/view/sankhaneelbisui/home"},
          {Name => "Zhan Jiang", Email => "zoeng@umich.edu", HomePage => "http://www-personal.umich.edu/~zoeng/"},
@@ -2246,3 +2246,12 @@ check RandomPoints
 -- Local Variables:
 -- compile-command: "make -C $M2BUILDDIR/Macaulay2/packages PACKAGES=RandomPoints pre-install"
 -- End:
+
+--
+--Version notes
+--**Version 1.5
+------Renamed to RandomPoints
+------Added dimViaBezout
+------Improved speed of finding points
+------Removed options related to generic projection (since its performance is relatively lower now)
+------Other minor speed increases
