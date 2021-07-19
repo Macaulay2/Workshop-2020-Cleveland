@@ -2,14 +2,14 @@
 newPackage(
 	"SwitchingFields",
     	Version => "1.0", 
-    	Date => "May 12, 2020",
+    	Date => "September 11th, 2020",
     	Authors => {
 	     {Name => "Zhan Jiang", Email => "zoeng@umich.edu", HomePage => "http://www-personal.umich.edu/~zoeng/"},
-	     {Name => "Sarasij Maitra", Email => "sm3vg@virginia.edu", HomePage => "https://people.virginia.edu/~sm3vg"}
+	     {Name => "Sarasij Maitra", Email => "sm3vg@virginia.edu", HomePage => "https://sarasij93.github.io/"}
 	     },
     	Headline => "Switch Base Fields and Obtain Natural Maps",
-        Reload=>true,
-        DebuggingMode => true,
+        Reload=>false,
+        DebuggingMode => false,
 	AuxiliaryFiles => false -- set to true if package comes with auxiliary files
     	)
 
@@ -231,7 +231,7 @@ doc ///
 	    f(t)^3+f(t)+1
 	   
         Text
-       	    The switchFieldMap makes the user defined map compatible with the natural map between the coeffiecient fields.
+       	    The switchFieldMap makes the user defined map compatible with the natural map between the coefficient fields.
 	   
     --SeeAlso
     
