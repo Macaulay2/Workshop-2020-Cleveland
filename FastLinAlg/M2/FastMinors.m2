@@ -1,5 +1,5 @@
 newPackage( "FastMinors",
-Version => "1.1", Date => "March 12th, 2021", Authors => {
+Version => "1.2", Date => "July 19th, 2021", Authors => {
     {Name => "Boyana Martinova",
     Email=> "u1056124@utah.edu"
     },
@@ -67,7 +67,8 @@ export{
   "StrategyCurrent",  
   "SPairsFunction",
   "PointOptions", --options to be based to the RandomPoints package
-  "UseOnlyFastCodim"
+  "UseOnlyFastCodim",
+  "FastMinorsTutorial" --help file
 }
 
 protect MutableSmallest;
@@ -1328,6 +1329,17 @@ document {
     BR{},
     "Yuhui (Wei) Yao received funding from the University of Utah Mathematics Department REU program, while developing this package"
 }
+
+
+doc ///
+    Key
+        FastMinorsTutorial
+    Headline
+        A tutorial for how to use the strategy functions provided by this package.
+    Description
+        Text
+            In this tutorial we explore the different options of {\tt RegularInCodimension} on some complicated cone singularities.  We will also explore some other 
+///
 
 doc ///
     Key

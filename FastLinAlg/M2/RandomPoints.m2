@@ -1399,7 +1399,7 @@ isGBDone := (myGB) -> (
 );
 isCodimAtLeast = method(Options => {
     Verbose => false,
-    PairLimit => 100
+    PairLimit => 200
     --DegreeFunction => ( (t,i) -> ceiling((i+1)*t))
 });
 
@@ -1453,7 +1453,7 @@ isCodimAtLeast(ZZ, Ideal) := opts -> (n1, I1) -> (
 
 isDimAtMost = method(Options => {
     Verbose => false,
-    PairLimit => 100
+    PairLimit => 200
     --DegreeFunction => ( (t,i) -> ceiling((i+1)*t))    
 });
 

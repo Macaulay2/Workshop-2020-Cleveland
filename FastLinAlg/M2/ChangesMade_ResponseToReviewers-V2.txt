@@ -1,0 +1,12 @@
+This version has a number of further substantial improvements to the performance of the package (and which have been reflected in the paper).  Note Frank-Olaf Schreyer is now a co-author on the package (but not the paper).   We have also renamed the package to RandomPoints to emphasize the fact that we compute geometric points as well.  
+
+MAIN CHANGES: 
+
+-- When finding a point we now do not typically compute the dimension of the variety or the variety intersected with a linear space.  Instead, we do the following.  If V(I) \subseteq A^n, choose n linear equations (fairly sparse ones initially in the default strategy, and if that fails, we decrease the sparsity of the linear equations and try again until we find a point).  These will define a point in A^n.  If that point is in V(I), we are done.  Otherwise, we remove one linear space at a time until we have an intersection.  At which point, we either decompose the point using the built in decompose strategy or use the new MultiplicationTable strategy in the homogeneous case.  
+
+In many cases, this yields several orders of magnitude faster comptuation.  The slow part typically is the decomposition of the intersection into points.
+
+-- dimViaBezout now also uses a similar strategy.  We successively remove linear spaces until we have a non-trivial intersection.  Except by default we use non-sparse linear equations, potentially defined over a larger field.  By default, this is done 3 times, and then we essentially average the results.  Again, this appears to have substantial speed and accuracy improvements over our previous implementation since verifying non-intersection tends to be quite fast.
+
+
+
