@@ -674,6 +674,7 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
             DimensionFunction => opts.DimensionFunction,
             Verbose => false);
         if (tempPtsList === null) then return {}; --this returned there are no points at all
+        pointsList = pointsList | tempPtsList;
         if (#pointsList >= n1) then return pointsList;
     );
 
