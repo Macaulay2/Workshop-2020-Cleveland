@@ -570,7 +570,7 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
         if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 2a): attempting linear intersection with monomials + binomials.";
         tempPtsList = linearIntersectionNew(n1 - #pointsList, I1, 
             Homogeneous => opts.Homogeneous,          
-            Replacement => {0,0,d1Half, d1Half2, 0,0},        
+            Replacement => {0,d1Half, 0, d1Half2, 0,0},        
             ExtendField => opts.ExtendField,
             PointCheckAttempts => 5*(n1 - #pointsList),
             DecompositionStrategy => Decompose,        
