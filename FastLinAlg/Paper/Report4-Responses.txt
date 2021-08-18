@@ -1,0 +1,428 @@
+RandomPoints, version 1.5
+
+210208-Bisui-v4
+
+technical referee report
+
+=============================================================================
+
+NOTE:
+
+By mistake I wrote much of the following report based on version 3 of the
+article, so if any of the comments below are out of date, please ignore.
+
+=============================================================================
+
+comments on the paper:
+
+        The title gets set in all caps: 
+            RANDOMPOINTS PACKAGE FOR MACAULAY2
+        so probably it's better not to include the name of the package.  Perhaps something like
+            FINDING POINTS ON VARIETIES WITH MACAULAY2 
+        (Every article comes with a package, so saying that it's a package for doing that
+        is redundant.)
+
+
+The title has been changed.
+
+        In
+            We provide different strategies ...
+        the word "different" is redundant, for it is implied by the use of the plural.
+        What about 
+            We provide various strategies ...
+        or
+            We provide several strategies ...
+        ?
+        The same remark applies later on to
+                apply different strategies to generate
+        and to
+            a sequence of the different strategies below
+
+The phrase ``different strategies'' has been replaced as suggested where it appears in both the paper and documentation.  We think the original phrase ``different strategies'' noticed by the referee was removed in a previous version.
+
+
+        Insert a comma after "manner" in this:
+            Finding one such rational point or geometric point (...), in an algorithmically efficient manner is our primary motivation.
+
+This is done.
+
+        Why is "Stab" the abbreviation for "Stapleton" in the bibliography?
+        Why is "Staa" the abbreviation for "Stagliano" in the bibliography?
+
+This appears to have been because the bibtex entry created by the citations package did not include a year, and the bibtex style file we were using numbered them by "a", "b", etc.  We have added a year entry to the bibtex entries, which fixed the issue.
+
+
+        In
+
+            our aim here is to find one or more points quickly, even if it is not
+            rational
+
+        does "it" refer to the points or to the variety?  If to the points, what
+        explains the name of the package?  If to the variety, rephrase for clarity.
+
+We have rephrased, it referred to the point.
+
+            Change
+                as can built-in the function randomKRationalPoint
+            to
+                as can the built-in function randomKRationalPoint
+            or to
+                as can the core function randomKRationalPoint
+
+Changed to the latter suggestion.
+
+
+        Change
+            , our methods frequently appear to be faster and apply in the affine setting as well.
+        to a new sentence, as it doesn't make grammatical sense as the second part of
+        a compound sentence.  Or change the comma to an em dash.
+
+Done.  
+
+        remove the comma from
+                The second, adds said submatrix to an ideal
+
+Done.
+
+        In
+            where n is a positive integer denoting the number of desired points
+        it's the number that is desired, not the points, so rephrase to
+            where n is a positive integer denoting the number of points desired
+
+Changed.
+
+
+        Murky:
+            The user may also choose to provide some additional information depending on
+            the context which may help in faster computations, or whether a point is found
+            at all.
+        Rephrase to something like
+            The user may also choose to provide some additional information, which
+            may accelerate the computation and improve the probability that a point is founda.
+
+Changed.
+
+
+        In
+            between generic projects and hybrid projection / intersections.
+        change "projects" to "projections" and replace / by English words.
+
+This was changed substantially already.  The package no longer does generic projections.
+
+
+        Remove the comma in
+            For additional discussion, see Remark 2.2.2.
+
+This was already changed.
+
+        Change
+            GenericProjection projects to a hypersurface, via projectionToHypersurface and then uses the BruteForce strategy.
+        to
+            GenericProjection projects to a hypersurface via projectionToHypersurface and then uses the BruteForce strategy.
+        or
+            GenericProjection projects to a hypersurface (via projectionToHypersurface) and then uses the BruteForce strategy.
+
+This was already removed.
+
+
+        Spelling:
+                followed by a linear intersectio with that hypersurface
+
+This was already fixed.
+
+        Change
+            Notice that the speed, or success, varies depending on the strategy
+        to something like
+            The speed and the probability of success depend on the strategy
+
+This has been fixed.            
+
+
+        Change
+            When calling the strategy
+        to
+            When using the strategy
+        (Only functions are "called".)
+
+This was already changed.
+
+        Change
+            will tell the function ignore such points
+        to
+            will tell the function to ignore such points
+
+This has been fixed.
+
+        In
+            Providing codimension speeds up computations
+        don't put "codimension" in typewriter font.  And change to something like
+            Providing the codimension, if it's known, speeds up computations
+
+This has been removed since we no longer try to compute the dimension.            
+
+
+        Change
+            If codimension needs to be computed, 
+        to
+            If the codimension needs to be computed, 
+
+Likewise this has been changed since we no longer compute the codimension.
+
+        Change
+            A quick comment, while in many examples generic projection works well, there are some examples where it is many orders of magnitude slower.
+        to
+            A quick comment: while in many examples generic projection works well, there are some examples where it is many orders of magnitude slower.
+        Even better, to
+            While in many examples generic projection works well, there are some examples where it is many orders of magnitude slower.
+        (The comment is even quicker if three redundant words are removed.)
+
+This has been removed since generic projection is no longer done.
+
+        Change
+            , that is we set ProjectionAttempts=>0.
+        to
+            , that is, we set ProjectionAttempts=>0.
+
+This is no longer in the paper.
+
+        Change
+            To enable speed-ups as indicated
+        to
+            To enable speed ups as indicated
+
+This is no longer in the paper.
+
+        In this phrase
+            the ProjectionAttempts has been set to 0 in the Default strategy so that GenericProjection is not opted for unless specified by user.
+        the names of identifiers from the code are being misused, as though they were
+        English words.  Perhaps something like this instead:
+            the value of the option ProjectionAttempts has been set to 0 in the
+            default strategy, so that the generic projection strategy is not
+            selected, unless specified by user.
+
+This is no longer in the paper.
+
+
+        Change
+            and compute h^−1({x}) which is a linear space
+        to
+            and compute h^−1({x}), which is a linear space
+
+This has been changed.
+
+        Change
+            performing an intersection
+        to
+            intersecting
+        , as it is less verbose.
+
+This has been changed.
+
+
+        This is confusing:
+
+            we normally choose a linear space whose defining equations are particularly noncomplicated (i.e., with many linear or binomial terms)
+
+        Did you mean monomial instead of linear?  Did you mean "equations" instead of
+        "terms"?  (A "term" is one of the things in a sum.)  You could just say
+        something like this:
+
+            we normally choose a linear space whose defining equations have as few
+            terms as possible.
+
+This has been changed close to what was suggested.  Additionally, an example has been added.
+
+        Change
+            this seems give approximately the same performance
+        to
+            this seems to give approximately the same performance
+
+This was already fixed.
+
+        remove the comma from
+            computing the codimension of the given ideal, significantly slows down speed
+        Also, a computation either slows down, or the speed decreases, so say
+            significantly slows down the computation
+        or
+            significantly decreases the speed of the computation
+       
+We removed the command and changed it to ``is a significant bottleneck''.
+
+
+        The English is murky here:
+            successively higher dimensional random linear spaces
+        I suggest
+            random linear spaces of increasing dimension
+
+Changed.
+
+        Murky English:
+            if V (I) intersect a random line has a point,
+        Say instead
+            if the intersection of V(I) with a random line has a point,
+        (The word "intersect" is a verb.)
+
+Changed.
+
+
+        In
+            that rings are (R_1), 
+        the notation "(R_1)" is not an English word, so rephrase as
+            that rings satisfies Serre's condition (R_1), 
+        Similarly in
+            which is (R1)
+
+Changed
+
+In
+	some similar functionality computing partial Jacobian ideals
+do you mean this?:
+        some similar functionality for computing partial Jacobian ideals
+
+
+=============================================================================
+
+comments on the documentation:
+
+change
+	(ie, computing how a variable 
+to
+	(i.e., computing how a variable 
+
+
+change
+	only works with homogeneous ideals 
+to
+	works only with homogeneous ideals 
+
+
+change
+	calling the built in function dim.
+to
+	calling the built-in function dim.
+and
+	may switch to using the built in function
+to
+	may switch to using the built-in function
+and
+	 the built in dim function is much faster.
+to
+	 the built-in dim function is much faster.
+	 
+
+
+change
+	 with successively higher dimensional random linear spaces until there is an intersection.
+to
+	 with random linear spaces of increasing dimension until there is an intersection.
+
+
+change
+	 if $V(I)$ intersect a random line has a point, 
+to
+	 if the intersection of $V(I)$ with a random line has a point, 
+
+
+change
+	the function tries to guess a good size based on ambient ring.
+to
+	the function tries to guess a good size based on the ambient ring.
+
+
+Re:
+
+	If the option Homogeneous=>true then we use homogeneous linear spaces if the ideal itself is homogeneous. Otherwise our linear spaces are not homogeneous.
+
+This suggests that (0,0,...,0) will not be included as a rational point in the result.  Is
+that right?  Perhaps clarify.
+
+
+remove comma from
+       Various functions which produce points, or call functions which produce points
+
+
+change
+       will tell the function ignore such points. 
+to
+       will tell the function to ignore such points. 
+
+
+re:
+	showing a certain rings are R1 (regular in codimension 1). 
+and
+	Consider the following example which is R1 
+-- same remark as above
+
+
+change
+	 Then it plugs the point in the matrix 
+to
+	 Then it evaluates the matrix at the point
+
+
+change
+	you only need a a certain number of the forms in the map to be fully random
+to
+	you need only a certain number of the forms in the map to be fully random
+
+
+since each of the numbers in the list in
+
+      getRandomLinearForms(R, {2,0,0,0,0,0})
+
+has a different meaning, the use of some new optional arguments seems to be a
+good idea.  Otherwise the code looks obscure.
+
+
+remove the \tt and braces from headlines, as here:
+       The maximum number of coordinates to turn into non-monomial functions when calling {\tt randomCoordinateChange}
+
+
+change
+	When calling randomPoints, and functions that call it, with a BruteForce strategy, this denotes the number of threads to use in brute force point checking.
+to
+	When calling randomPoints and functions that call it with a BruteForce
+	strategy, this options allows the user to specify the number of threads
+	to use in brute force point checking.
+That clarify the use of "this".
+Similarly in
+	  When calling randomPoints, and functions that call it, with a
+	  BruteForce strategy strategy, this denotes the number of trials for
+	  brute force point checking. When calling it with a LinearIntersection
+	  strategy, this controls how many linear spaces are created.
+Also, observe "strategy strategy".
+
+
+change
+	Note, this function already checks whether the function is an isomorphism by computing the Jacobian.
+to
+	Note that this function already checks whether the function is an isomorphism by computing the Jacobian.
+
+
+change
+	Gives at most $n$ many point in a variety $V(I)$.
+to
+	This function gives at most $n$ points in a variety $V(I)$.
+You forgot to say that n is 1 if omitted.
+
+
+In
+
+	When calling randomPoints, set the strategy to one of these.
+
+the pronoun "these" has no antecedent.  What does it refer to?  Maybe change to :
+
+	When calling randomPoints, set the strategy to one of the following values.
+
+and then put the three options in a bulleted list.
+
+
+=============================================================================
+
+comments on the code:
+
+-- no comments --
+
+=============================================================================
+
+

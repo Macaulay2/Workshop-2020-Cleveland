@@ -45,7 +45,7 @@
 \usepackage{enumerate}
  
 \begin{document}
-\title{{RandomPoints} package for \emph{Macaulay2}}
+\title{Finding points on varieties with \emph{Macaulay2}}
 \author{Sankhaneel Bisui}
 \email{sbisui@tulane.edu}
 \address{Department of Mathematics, Tulane University, New Orleans, LA 70118}
@@ -77,18 +77,18 @@
 \maketitle
 
 \section{Introduction}
-    Let $I$ be an ideal in a polynomial ring $k[x_1,\dots, x_n]$ over a finite field $k$. Let $X:=V(I)$ denote the corresponding set of rational points in affine $n$-space. Finding one such rational point or geometric point (geometric meaning a point over some finite field extension), in an algorithmically efficient manner is our primary motivation for this package. The authors of the package are Sankhaneel Bisui, Zhan Jiang, Sarasij Maitra, Th\'ai Th\`anh Nguy$\tilde{\text{\^e}}$n, Frank-Olaf Schreyer, and Karl Schwede.
+    Let $I$ be an ideal in a polynomial ring $k[x_1,\dots, x_n]$ over a finite field $k$. Let $X:=V(I)$ denote the corresponding set of rational points in affine $n$-space. Finding one such rational point or geometric point (geometric meaning a point over some finite field extension), in an algorithmically efficient manner, is our primary motivation for this package. The authors of the package are Sankhaneel Bisui, Zhan Jiang, Sarasij Maitra, Th\'ai Th\`anh Nguy$\tilde{\text{\^e}}$n, Frank-Olaf Schreyer, and Karl Schwede.
 
-    There is an existing package called {\tt RationalPoints} \cite{RationalPointsSource}, which we took inspiration from, which aims to find \emph{all} the rational points of a variety; our aim here is to find one or more points quickly, even if it is not rational.  We note also that the package {\tt Cremona} \cite{CremonaSource} can find rational points on projective varieties, as can built-in the function {\tt randomKRationalPoint} \cite{M2}, our methods frequently appear to be faster and apply in the affine setting as well.
+    There is an existing package called {\tt RationalPoints} \cite{RationalPointsSource}, which we took inspiration from, which aims to find \emph{all} the rational points of a variety; our aim here is to find one or more points quickly, even if it the point we find is not rational.  We note also that the package {\tt Cremona} \cite{CremonaSource} can find rational points on projective varieties, as can the core function {\tt randomKRationalPoint} \cite{M2}.  Our methods frequently appear to be faster and apply in the affine setting as well.
 
-    We develop functions that apply different strategies to generate random rational and geometric points on the given variety. We also provide functions that will expedite the process of determining properties of the singular locus of $X$.% when combined with the functions provided in the package {\tt FastLinAlg}.  
+    We develop functions that apply various strategies to generate random rational and geometric points on the given variety. We also provide functions that will expedite the process of determining properties of the singular locus of $X$.% when combined with the functions provided in the package {\tt FastLinAlg}.  
 
     We provide the following core functions:
     \begin{itemize}    
     \item {\tt randomPoints}:  This tries to find a point in the vanishing set of an ideal. (\Cref{randomPoints})
     \item {\tt dimViaBezout}:  This tries to compute the dimension of an algebraic set by intersecting with hyperplanes.  (\Cref{subsec.DimViaBezout})
     \item {\tt projectionToHypersurface} and {\tt genericProjection}: These functions provide customizable projection. (\Cref{projectionfunctions}) 	
-    \item {\tt findANonZeroMinor} and {\tt extendIdealByNonZeroMinor}:  The first function finds a submatrix of a given matrix that is nonsingular at a point of a given ideal.  The second, adds said submatrix to an ideal, which is useful for computing partial Jacobian ideals.  (\Cref{findANonZeroMinor})          
+    \item {\tt findANonZeroMinor} and {\tt extendIdealByNonZeroMinor}:  The first function finds a submatrix of a given matrix that is nonsingular at a point of a given ideal.  The second adds said submatrix to an ideal, which is useful for computing partial Jacobian ideals.  (\Cref{findANonZeroMinor})          
     %\item :  This extends an ideal by a minor produced by \\{\tt findANonZeroMinor}. (\Cref{extendIdealByNonZeroMinor})	
     \end{itemize}
 
@@ -106,26 +106,27 @@
     -- {\tt randomPoints(n, I)} 
 
     \vspace{0.5em}
-    \noindent where $n$ is a positive integer denoting the number of desired points, and 
+    \noindent where $n$ is a positive integer denoting the number of points desired, and 
     $I$ is an ideal inside a polynomial ring.  If {$ n$} is omitted, then it is assumed to be 1.
 
 
     \subsection{Options}\label{strategydetails}
 
-    The user may also choose to provide some additional information depending on the context which may help in faster computations, or whether a point is found at all.
+    The user may also choose to provide some additional information, which
+    may accelerate the computation and improve the probability that a point is found.
 
     \begin{description}%[]
         \setlength{\itemsep}{5pt}
     \item[\tt Strategy => $\bullet$]   Here the $\bullet$ can be {\tt Default, BruteForce} or {\tt LinearIntersection} \\ .
 
     \begin{itemize}
-    \item {\tt Default} performs a sequence of the different strategies below, aimed at finding a point quickly.  It begins begins with brute force and moves to linear intersections with particularly simple linear forms, and gradually ramps up the randomness.  
+    \item {\tt Default} performs the strategies below in a sequence, with the aim of finding a point quickly.  It begins begins with brute force and moves to linear intersections with particularly simple linear forms, and gradually ramps up the randomness of the linear forms.  
     \item {\tt BruteForce} simply tries random points and sees if they are on the variety.
            
     \item {\tt LinearIntersection} intersects with a random linear space.  
     \end{itemize}
 
-    Notice that the speed, or success, varies depending on the strategy (see also \Cref{helper}).
+    The speed and the probability of success depend on the strategy (see also \Cref{helper}).
 
     \begin{example}\label{BruteForce}
         Consider the following example.
@@ -168,7 +169,7 @@ o6 = {{0, 10, 48}}
     \item[\tt ExtendField => Boolean] 
 
     Intersection with a general linear space will naturally find scheme theoretic points that are not rational over the base field.  
-    Setting {\tt ExtendField => true} will tell the function that such points are valid.  Setting {\tt ExtendField => false} will tell the function ignore such points.  
+    Setting {\tt ExtendField => true} will tell the function that such points are valid.  Setting {\tt ExtendField => false} will tell the function to ignore such points.  
     In fact, {\tt ExtendField => true} will also tell Macaulay2 to use linear spaces defined over a field extension, which can improve randomness properties.
     This sometimes can slow computation, and other times can substantially speed it up when the variety has few rational points.  For some applications, points over extended fields may also have better randomness properties.
 
@@ -326,11 +327,20 @@ In this case, we found a degree 4 point.
 
 \begin{remark}[Projecting to a hypersurface first]
     \label{rem.ProjectingToAHypersurfaceFirst}
-    Suppose $X \subseteq \bA^n$ is an algebraic set.  In a number of existing algorithms, one first does a generic (or even not very generic) projection $h : \bA^n \to \bA^m$ and so that $h(X)$ is a hypersurface (at least set theoretically).  Then one finds a point $x \in h(X)$ (say as above), and computes $h^{-1}(\{ x \})$ which is a linear space in $\bA^n$ that typically intersects $X$ in a rational point.   For example, this is done in {\tt randomKRationalPoint} in core Macaulay2.  Note that projecting to a hypersurface \emph{still is performing an intersection with a linear space}, since $h^{-1}(\{ x \})$ is linear, but it tries to choose the linear space intelligently.
+    Suppose $X \subseteq \bA^n$ is an algebraic set.  In a number of existing algorithms, one first does a generic (or even not very generic) projection $h : \bA^n \to \bA^m$ and so that $h(X)$ is a hypersurface (at least set theoretically).  Then one finds a point $x \in h(X)$ (say as above), and computes $h^{-1}(\{ x \})$, which is a linear space in $\bA^n$ that typically intersects $X$ in a rational point.   For example, this is done in {\tt randomKRationalPoint} in core Macaulay2.  Note that projecting to a hypersurface \emph{still is intersecting with a linear space}, since $h^{-1}(\{ x \})$ is linear, but it tries to choose the linear space intelligently.
 
     However, in our experience, doing this generic projection first yields slower results. First, one has to compute the dimension.  There are also numerous cases where computing this hypersurface $h(X)$ can be quite slow.  This particularly appears in cases when one is computing successive minors to identify the locus where some variety is nonsingular.  
 
-    On the other hand, instead of using a truly random linear space to intersect with, in the default strategy, we normally choose a linear space whose defining equations are particularly non-complicated (i.e., with many linear or binomial terms).  Such simple linear spaces are the ones implicitly considered in {\tt randomKRationalPoint} for instance since that generic projection is so simple.  In practice, our approach seems to give at least as good performance compared to projecting to a hypersurface, without the chance of the code getting hung up on the generic projection or dimension computations.  We also do successive intersections in a way that avoids computing the dimension as described above in \Cref{subsec.CommentOnPerformanceAndImplementation}.
+    On the other hand, instead of using a truly random linear space to intersect with, in the default strategy we initially try linear spaces  whose defining equations have as few
+    terms as possible   For example, in a ring with 10 variables, we first try binomial linear forms like
+    \[ 
+        -27 x_2 + 38 x_7
+    \]
+        instead of a random linear form like
+    \[
+        -28x_1-27x_2+29x_3+27x_4-28x_5+27x_6+38x_7-13x_8+21x_9-3x_{10}.
+    \]
+    Such simple linear spaces are the ones implicitly considered in {\tt randomKRationalPoint} for instance since that generic projection is so simple.  In practice, our approach seems to give at least as good performance compared to projecting to a hypersurface, without the chance of the code getting hung up on the generic projection or dimension computations.  We also do successive intersections in a way that avoids computing the dimension as described above in \Cref{subsec.CommentOnPerformanceAndImplementation}.
 \end{remark}
 
 
@@ -338,8 +348,8 @@ In this case, we found a degree 4 point.
 
 \subsection{\tt dimViaBezout:} 
 \label{subsec.DimViaBezout}
-We thank the Frank-Olaf Scheyer for pointing out that in most of the computations, computing the codimension of the given ideal, is a significant bottleneck. While we have avoided most dimension computations in our current implementation, we have also implemented a probibalistic dimension computation of $V(I)$.
-This function takes as input an ideal $I$ in a polynomial ring over a field and intersects $V(I)$ with successively higher dimensional random linear spaces until there is an intersection.  For example, if $V(I)$ intersect a random line has a point, then we expect that $V(I)$ contains a hypersurface.  If there was no intersection, this function tries a $2$-dimensional linear space, and so on.  This can speed up a number of computations.  The function also takes in optional inputs as described below:
+We thank the Frank-Olaf Scheyer for pointing out that in most of the computations, computing the codimension of the given ideal is a significant bottleneck. While we have avoided most dimension computations in our current implementation, we have also implemented a probibalistic dimension computation of $V(I)$.
+This function takes as input an ideal $I$ in a polynomial ring over a field and intersects $V(I)$ with random linear spaces of increasing dimension until there is an intersection.  For example, if the intersection of $V(I)$ with a random line has a point, then we expect that $V(I)$ contains a hypersurface.  If there was no intersection, this function tries a $2$-dimensional linear space, and so on.  This can speed up a number of computations.  The function also takes in optional inputs as described below:
 
 \begin{itemize}
 	\item {\tt DimensionIntersectionAttempts}: 
@@ -713,10 +723,10 @@ o5 : Ideal of R
     }}	
 \end{comment}
 
-One can use this function to show that rings are $(R_1)$, that is, regular in codimension $1$.
+One can use this function to show that rings are regular in codimension 1, that is, satisfy Serre's condition (R1).
 
 \begin{example}
-    Consider the following 3-dimensional example (which is $(R_1)$, regular in codimension 1) where computing the dimension of the singular locus takes around $30$ seconds as there are $15500$ minors of size $4 \times 4$ in the associated $7 \times 12$ Jacobian matrix.  However, we can use this function to quickly find interesting minors.
+    Consider the following 3-dimensional example (which is regular in codimension 1) where computing the dimension of the singular locus takes around $30$ seconds as there are $15500$ minors of size $4 \times 4$ in the associated $7 \times 12$ Jacobian matrix.  However, we can use this function to quickly find interesting minors.
   {{\small\color{blue}
   \begin{quote}
 \begin{verbatim}
@@ -760,7 +770,7 @@ o9 = 5
     In this particular example, there tend to be about $5$ associated primes when adding the first minor to $J$, and so one expects about $5$ steps as each minor will typically eliminate one of those primes.
 \end{example} 
 
-There is some similar functionality computing partial Jacobian ideals obtained via heuristics (as opposed to actually finding rational points) in the package {\tt FastLinAlg}, see \cite{FastLinAlgSource}.  That package now uses the functionality contained here in {\tt RandomPoints} in some of its functions.
+There is some similar functionality for computing partial Jacobian ideals obtained via heuristics (as opposed to actually finding rational or geometric points) in the package {\tt FastLinAlg}, see \cite{FastLinAlgSource}.  That package now uses the functionality contained here in {\tt RandomPoints} in some of its functions.
 
 % \end{enumerate}
 

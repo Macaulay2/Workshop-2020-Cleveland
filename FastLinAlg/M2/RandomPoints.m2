@@ -1828,7 +1828,7 @@ doc ///
 	    
             {\tt LinearIntersection} intersects with an random linear space.  Setting the {\tt DecompositionStrategy => MultiplicationTable} or {\tt DecompositionStrategy=>Decompose} will change how ideals corresponding to points are broken up into minimal primes which can have a substantial impact on speed.  Otherwise, the function chooses which strategy it thinks will be better.  See @TO DecompositionStrategy@.  
 
-            {\tt Default} performs a sequence of different strategies, with successively increasing complexity of the linear subspaces that are intersected.
+            {\tt Default} performs a sequence of distinct strategies, with successively increasing complexity of the linear subspaces that are intersected.
     SeeAlso
         randomPoints
         randomKRationalPoint
