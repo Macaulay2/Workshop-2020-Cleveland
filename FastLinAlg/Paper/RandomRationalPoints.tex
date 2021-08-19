@@ -79,7 +79,7 @@
 \section{Introduction}
     Let $I$ be an ideal in a polynomial ring $k[x_1,\dots, x_n]$ over a finite field $k$. Let $X:=V(I)$ denote the corresponding set of rational points in affine $n$-space. Finding one such rational point or geometric point (geometric meaning a point over some finite field extension), in an algorithmically efficient manner, is our primary motivation for this package. The authors of the package are Sankhaneel Bisui, Zhan Jiang, Sarasij Maitra, Th\'ai Th\`anh Nguy$\tilde{\text{\^e}}$n, Frank-Olaf Schreyer, and Karl Schwede.
 
-    There is an existing package called {\tt RationalPoints} \cite{RationalPointsSource}, which we took inspiration from, which aims to find \emph{all} the rational points of a variety; our aim here is to find one or more points quickly, even if it the point we find is not rational.  We note also that the package {\tt Cremona} \cite{CremonaSource} can find rational points on projective varieties, as can the core function {\tt randomKRationalPoint} \cite{M2}.  Our methods frequently appear to be faster and apply in the affine setting as well.
+    There is an existing package called {\tt RationalPoints} \cite{RationalPointsSource}, which we took inspiration from, which aims to find \emph{all} the rational points of a variety; our aim here is to find one or more points quickly, even if it is not rational.  We also note that the package {\tt Cremona} \cite{CremonaSource} can find rational points on projective varieties, as can the core function {\tt randomKRationalPoint} \cite{M2} -- our methods frequently appear to be faster and apply in the affine setting as well.
 
     We develop functions that apply various strategies to generate random rational and geometric points on the given variety. We also provide functions that will expedite the process of determining properties of the singular locus of $X$.% when combined with the functions provided in the package {\tt FastLinAlg}.  
 
@@ -185,8 +185,9 @@ o6 = {{0, 10, 48}}
     \item[\tt DimensionFunction => Function]
         Our current implementation does not need to know the dimension of $V(I)$.  However, there are places where we try to verify the dimension of an ideal before we decompose the ideal.  You can pass this function {\tt dim} (the default) or our probabilistic {\tt dimViaBezout} or any other dimension function you might prefer.
 
-    \item[\tt PointCheckAttempts => ZZ]
-
+    \item[\tt PointCheckAttempts => ZZ] 
+    
+    
     When calling {\tt randomPoints} with a {\tt BruteForce} strategy, this denotes the number of trials for brute force point checking.  It also controls how many linear spaces to simultaneously study in the {\tt LinearIntersection} strategy.
     
     \begin{example}
@@ -206,8 +207,8 @@ o7 = {{-43, 25, 29}}
     
 %    \vspace{1em}
     \item[\tt NumThreadsToUse => ZZ]
-
-    When calling {\tt randomPoints} with a {\tt BruteForce} strategy, this denotes the number of threads to use in brute force point checking.
+When calling  { \tt randomPoints} and functions that call it with a { \tt BruteForce} strategy, this options allows the user to specify the number of threads to use in brute force point checking.
+    
     \end{description}
     % Outputs
     % :List
@@ -230,7 +231,7 @@ o7 = {{-43, 25, 29}}
 
     The current version of the {\tt LinearIntersection} strategy no longer computes the dimension of the algebraic set.  Instead, it first finds a point defined by linear equations.  If the point is on the algebraic set, we are done.  If not, we throw away one of the forms and so now have a line and we see if this line intersects our algebraic set.  We continue in this way until we find a point.  This appears to avoid a number of bottlenecks in our previous implementation since Macaulay2 is relatively fast at identifying when a linear space and a variety do \emph{not} intersect.  
     
-    %Providing {\tt codimension} speeds up computations significantly as computing codimension using the default command {\tt codim} creates a bottleneck in some cases. If codimension needs to be computed, we  circumvent this issue using a probabilistic code to compute it (see \Cref{helper}). A quick comment, while in many examples generic projection works well, there are some examples where it is many orders of magnitude slower.  By default, generic projection is turned off in the default strategy, that is we set {\tt ProjectionAttempts=>0}.  See \autoref{rem.ProjectingToAHypersurfaceFirst} for additional related discussion.
+    %Providing {\tt codimension} speeds up computations significantly as computing codimension using the default command {\tt codim} creates a bottleneck in some cases. If codimension needs to be computed, we  circumvent this issue using a probabilistic code to compute it (see \Cref{helper}). A quick comment, while in many examples generic projection works well, there are some examples where it is many orders of magnitude slower.  By default, generic projection is turned off in the default strategy, that is we set {\tt ProjectionAttempts=>0}.  See \autoref{rem.ProjectingToAHypersurfaceFirst}  l related discussion.
 
 
     \begin{example}
@@ -348,8 +349,8 @@ In this case, we found a degree 4 point.
 
 \subsection{\tt dimViaBezout:} 
 \label{subsec.DimViaBezout}
-We thank the Frank-Olaf Scheyer for pointing out that in most of the computations, computing the codimension of the given ideal is a significant bottleneck. While we have avoided most dimension computations in our current implementation, we have also implemented a probibalistic dimension computation of $V(I)$.
-This function takes as input an ideal $I$ in a polynomial ring over a field and intersects $V(I)$ with random linear spaces of increasing dimension until there is an intersection.  For example, if the intersection of $V(I)$ with a random line has a point, then we expect that $V(I)$ contains a hypersurface.  If there was no intersection, this function tries a $2$-dimensional linear space, and so on.  This can speed up a number of computations.  The function also takes in optional inputs as described below:
+We thank Frank-Olaf Scheyer for pointing out that in most of the computations, computing the codimension of the given ideal is a significant bottleneck. While we have avoided most dimension computations in our current implementation, we have also implemented a probibalistic dimension computation of $V(I)$.
+This function takes as input an ideal $I$ in a polynomial ring over a field and intersects $V(I)$ with random linear spaces of increasing dimension until there is an intersection.  For example, if the intersection of $V(I)$ with a random line has a point,  then we expect that $V(I)$ contains a hypersurface.  If there was no intersection, this function tries a $2$-dimensional linear space, and so on.  This can speed up a number of computations.  The function also takes in optional inputs as described below:
 
 \begin{itemize}
 	\item {\tt DimensionIntersectionAttempts}: 
@@ -726,7 +727,7 @@ o5 : Ideal of R
 One can use this function to show that rings are regular in codimension 1, that is, satisfy Serre's condition (R1).
 
 \begin{example}
-    Consider the following 3-dimensional example (which is regular in codimension 1) where computing the dimension of the singular locus takes around $30$ seconds as there are $15500$ minors of size $4 \times 4$ in the associated $7 \times 12$ Jacobian matrix.  However, we can use this function to quickly find interesting minors.
+    Consider the following 3-dimensional example which is regular in codimension 1.  Note, in this example, computing the dimension of the singular locus takes around $30$ seconds as there are $15500$ minors of size $4 \times 4$ coming from the associated $7 \times 12$ Jacobian matrix.  However, we can use our function to quickly find interesting minors.
   {{\small\color{blue}
   \begin{quote}
 \begin{verbatim}
