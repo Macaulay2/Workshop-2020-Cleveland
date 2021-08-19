@@ -380,55 +380,62 @@ This has been changed.
 
 This was changed.
 
-since each of the numbers in the list in
+        since each of the numbers in the list in
 
-      getRandomLinearForms(R, {2,0,0,0,0,0})
+            getRandomLinearForms(R, {2,0,0,0,0,0})
 
-has a different meaning, the use of some new optional arguments seems to be a
-good idea.  Otherwise the code looks obscure.
+        has a different meaning, the use of some new optional arguments seems to be a
+        good idea.  Otherwise the code looks obscure.
 
+This has been changed.  Or rather now both ways of interacting with this function are now possible.
 
-remove the \tt and braces from headlines, as here:
-       The maximum number of coordinates to turn into non-monomial functions when calling {\tt randomCoordinateChange}
+        remove the \tt and braces from headlines, as here:
+            The maximum number of coordinates to turn into non-monomial functions when calling {\tt randomCoordinateChange}
 
+This has been changed, we checked all headlines.
 
-change
-	When calling randomPoints, and functions that call it, with a BruteForce strategy, this denotes the number of threads to use in brute force point checking.
-to
-	When calling randomPoints and functions that call it with a BruteForce
-	strategy, this options allows the user to specify the number of threads
-	to use in brute force point checking.
-That clarify the use of "this".
-Similarly in
-	  When calling randomPoints, and functions that call it, with a
-	  BruteForce strategy strategy, this denotes the number of trials for
-	  brute force point checking. When calling it with a LinearIntersection
-	  strategy, this controls how many linear spaces are created.
-Also, observe "strategy strategy".
+        change
+            When calling randomPoints, and functions that call it, with a BruteForce strategy, this denotes the number of threads to use in brute force point checking.
+        to
+            When calling randomPoints and functions that call it with a BruteForce
+            strategy, this options allows the user to specify the number of threads
+            to use in brute force point checking.
+        That clarify the use of "this".
+        Similarly in
+            When calling randomPoints, and functions that call it, with a
+            BruteForce strategy strategy, this denotes the number of trials for
+            brute force point checking. When calling it with a LinearIntersection
+            strategy, this controls how many linear spaces are created.
+        Also, observe "strategy strategy".
 
-
-change
-	Note, this function already checks whether the function is an isomorphism by computing the Jacobian.
-to
-	Note that this function already checks whether the function is an isomorphism by computing the Jacobian.
+These are both clarified.        
 
 
-change
-	Gives at most $n$ many point in a variety $V(I)$.
-to
-	This function gives at most $n$ points in a variety $V(I)$.
-You forgot to say that n is 1 if omitted.
+        change
+            Note, this function already checks whether the function is an isomorphism by computing the Jacobian.
+        to
+            Note that this function already checks whether the function is an isomorphism by computing the Jacobian.
+
+changed
 
 
-In
+        change
+            Gives at most $n$ many point in a variety $V(I)$.
+        to
+            This function gives at most $n$ points in a variety $V(I)$.
+        You forgot to say that n is 1 if omitted.
 
-	When calling randomPoints, set the strategy to one of these.
+fixed
 
-the pronoun "these" has no antecedent.  What does it refer to?  Maybe change to :
+        In
 
-	When calling randomPoints, set the strategy to one of the following values.
+            When calling randomPoints, set the strategy to one of these.
 
-and then put the three options in a bulleted list.
+        the pronoun "these" has no antecedent.  What does it refer to?  Maybe change to :
+
+            When calling randomPoints, set the strategy to one of the following values.
+
+        and then put the three options in a bulleted list.
 
 
 =============================================================================

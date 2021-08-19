@@ -40,6 +40,12 @@ export {
     "Replacement",
     "Full", 
     "Trinomial",
+    "ConstantForms",
+    "MonomialForms",
+    "BinomialForms",
+    "TrueMonomialForms", 
+    "TrinomialForms", 
+    "RandomForms",
     --"Default", --a valid value for [randomPoints, Strategy]
 	"BruteForce", --a valid value for [randomPoints, Strategy], documented,     
     "LinearIntersection",  --a valid value for [randomPoints, Strategy]
@@ -76,6 +82,18 @@ optRandomPoints := {
     DimensionFunction => dim,
     Verbose => false
 };
+
+optRandomLinearForms := {
+    Verify => false, 
+    Homogeneous => false, 
+    Verbose=>false, 
+    ConstantForms => 0, 
+    MonomialForms => 0, 
+    TrueMonomialForms => 0, 
+    BinomialForms => 0,
+    TrinomialForms => 0, 
+    RandomForms => 0
+    }
 
 optFindANonZeroMinor := optRandomPoints | {MinorPointAttempts => 5} | {ExtendField => true} | {Homogeneous => false}
 
@@ -392,7 +410,13 @@ saturateInGenericCoordinates(Ideal):= opts -> I1 -> (
 
 --The following gets a list of random forms in a ring.  You specify how many.  
 --if Verify is true, it will check to for linear independence of the monomial, binomial and randForms 
-getRandomLinearForms = method(Options => {Verify => false, Homogeneous => false, Verbose=>false});
+getRandomLinearForms = method(Options => optRandomLinearForms);
+
+getRandomLinearForms(Ring) := opts -> (R1) -> (
+    L1 := {opts.ConstantForms, opts.MonomialForms, opts.TrueMonomialForms, opts.BinomialForms, opts.TrinomialForms, opts.RandomForms};
+    getRandomLinearForms(R1, L1, opts)
+);
+
 getRandomLinearForms(Ring, List) := opts -> (R1, L1) ->(
     if (opts.Verbose) or (debugLevel > 0) then print concatenate("getRandomLinearForms: starting, options:", toString(L1));
     constForms := L1#0;
@@ -1513,19 +1537,45 @@ document {
 doc ///
     Key
         getRandomLinearForms
+        (getRandomLinearForms, Ring)
         (getRandomLinearForms, Ring, List)
         [getRandomLinearForms, Verify]
         [getRandomLinearForms, Homogeneous]
         [getRandomLinearForms, Verbose]
+        [getRandomLinearForms, ConstantForms]
+        [getRandomLinearForms, MonomialForms]
+        [getRandomLinearForms, TrueMonomialForms]
+        [getRandomLinearForms, BinomialForms]
+        [getRandomLinearForms, TrinomialForms]
+        [getRandomLinearForms, RandomForms]
+        ConstantForms
+        MonomialForms
+        TrueMonomialForms
+        BinomialForms
+        TrinomialForms
+        RandomForms
     Headline
         retrieve a list of random degree 1 and 0 forms of specified types
     Usage
+        getRandomLinearForms(R)
         getRandomLinearForms(R, L)
     Inputs
         R:Ring
             the ring where the forms should live
+        ConstantForms => ZZ
+            the number of constant degree 0 forms desired
+        MonomialForms => ZZ
+            the number of monomial linear forms (potentially with a constant if Homogeneous => false) desired
+        TrueMonomialForms => ZZ
+            the number of monomial linear forms desired
+        BinomialForms => ZZ
+            the number of binomial linear forms desired
+        TrinomialForms => ZZ
+            the number of trinomial linear forms desired
+        RandomForms => ZZ
+            the number of fully random linear forms desired
         L:List
-            a list with 6 entries, each a number of types of forms.  Constant forms, monomial forms (plus a constant term if {\tt Homogeneous => false}), monomial forms, binomial forms, trinomial forms, and random forms.
+            instead of using the options above, you pass a list with 6 entries, each a number of types of forms.  Constant forms, monomial forms (plus a constant term if {\tt Homogeneous => false}), monomial forms, binomial forms, trinomial forms, and random forms.
         Verify => Boolean
             whether to check if the output linear forms have Jacobian of maximal rank
         Verbose => Boolean
@@ -1539,31 +1589,44 @@ doc ///
         Text
             This will give you a list of random forms (ring elements) of the specified types.  This is useful, because in many cases, for instance when doing generic projection, you need only a certain number of the forms in the map to be fully random.  Furthermore, at the cost of some randomness, using monomial or binomial forms can be much faster.            
 
-            The types of form are specified via the second argument, a list with 5 entries.  The first entry is how many constant forms are allowed.
+            The types of form can either be specified with the options {\tt ConstantForms, MonomialForms, TrueMonomialForms, BinomialForms, TrinomialForms, RandomForms} or specified via the second argument, a list with 6 entries.  The first entry is how many constant forms are allowed, the second monomials, the third true monomials, the fourth binomials, the fifth trinomials, and the sixth random forms.
         Example
-            R = ZZ/31[a,b,c]
+            R = ZZ/101[a..g]
+            getRandomLinearForms(R, ConstantForms => 2)
             getRandomLinearForms(R, {2,0,0,0,0,0})
         Text
             The second entry in the list is how many monomial forms are returned.  Note if {\tt Homogeneous=>false} then these forms will usually have constant terms.
         Example
-            getRandomLinearForms(R, {0,2,0,0,0,0}, Homogeneous=>true)
+            getRandomLinearForms(R, MonomialForms => 2, Homogeneous=>true)
+            getRandomLinearForms(R, MonomialForms => 2, Homogeneous=>false)            
             getRandomLinearForms(R, {0,2,0,0,0,0}, Homogeneous=>false)
         Text
             Next, the third entry is how many monomial forms (without constant terms, even if {\tt Homogeneous=>false}).
         Example
+            getRandomLinearForms(R, TrueMonomialForms => 2, Homogeneous=>false)            
             getRandomLinearForms(R, {0,0,2,0,0,0}, Homogeneous=>false)
         Text
             The fourth entry is how many binomial forms should be returned.
         Example
-            getRandomLinearForms(R, {0,0,0,1,0,0}, Homogeneous=>true)
-            getRandomLinearForms(R, {0,0,0,1,0,0}, Homogeneous=>false)
+            getRandomLinearForms(R, BinomialForms => 2, Homogeneous=>true)
+            getRandomLinearForms(R, BinomialForms => 2, Homogeneous=>false)            
+            getRandomLinearForms(R, {0,0,0,2,0,0}, Homogeneous=>false)
+        Text
+            The fifth entry is how many trinomial forms should be returned.
+        Example
+            getRandomLinearForms(R, TrinomialForms => 2, Homogeneous=>true)
+            getRandomLinearForms(R, TrinomialForms => 2, Homogeneous=>false)  
+            getRandomLinearForms(R, {0,0,0,0,2,0}, Homogeneous=>false)
         Text
             The ultimate entry is how many truly random forms to produce.
         Example
-            getRandomLinearForms(R, {0,0,0,0,0,1}, Homogeneous=>true)
-            getRandomLinearForms(R, {0,0,0,0,0,1}, Homogeneous=>false)
+            getRandomLinearForms(R, RandomForms => 1, Homogeneous=>true)
+            getRandomLinearForms(R, RandomForms => 1, Homogeneous=>false)            
+            getRandomLinearForms(R, {0,0,0,0,0,1}, Homogeneous=>true)            
         Text
-            You may combine the different specifications to create a list of the desired type.  The order is randomized.
+            You may combine the different specifications to create a list of the desired type.  The order is randomized.  
+
+            Note that for binomial (respectively trinomial) forms, these are created by choosing two random variables which generate the ring.  It is possible that these will be the same variable and so a binomial form may instead be monomial.
 
             If the option {\tt Verify=>true}, then this will check the jacobian of the list of forms (discounting the constant forms), to make sure it has maximal rank.  Random forms in small numbers of variables over small fields will produce non-injective ring maps occasionally otherwise.        
 ///
@@ -1690,7 +1753,7 @@ doc ///
         Example 
             randomCoordinateChange(R, Homogeneous=>false)
         Text
-            Note, this function already checks whether the function is an isomorphism by computing the Jacobian.
+            Note that this function already checks whether the function is an isomorphism by computing the Jacobian.
 ///
 
 doc ///
@@ -1715,7 +1778,7 @@ doc ///
         [projectionToHypersurface, Homogeneous]
         Codimension
     Headline
-        Generic projection to a hypersurface
+        generic projection to a hypersurface
     Usage
         projectionToHypersurface I
         projectionToHypersurface R 
@@ -1758,7 +1821,7 @@ doc///
         [genericProjection, MaxCoordinatesToReplace]        
         [projectionToHypersurface, MaxCoordinatesToReplace]        
     Headline
-        The maximum number of coordinates to turn into non-monomial functions when calling {\tt randomCoordinateChange}
+        The maximum number of coordinates to turn into non-monomial functions when calling  randomCoordinateChange
     Description
         Text
             When calling {\tt randomCoordinateChange}, the user can specify that only a specified number of coordinates should be non-monomial.  Sometimes, generic coordinate changes where all coordinates are modified, can be very slow.  This is a way to mitigate for that.
@@ -1783,7 +1846,7 @@ doc ///
         Full
         Trinomial
     Headline
-        When changing coordinates, whether to replace variables by general degre 1 forms, binomials, etc.
+        when changing coordinates, whether to replace variables by random degre 1 forms, binomials, etc.
     Usage
         Replacement => Full
         Replacement => Monomial
@@ -1823,7 +1886,8 @@ doc ///
         values for the option Strategy when calling randomPoints
     Description
         Text
-            When calling {\tt randomPoints}, set the strategy to one of these.
+            When calling {\tt randomPoints}, set the strategy to one of the following values.
+            
             {\tt BruteForce} simply tries random points and sees if they are on the variety.
 	    
             {\tt LinearIntersection} intersects with an random linear space.  Setting the {\tt DecompositionStrategy => MultiplicationTable} or {\tt DecompositionStrategy=>Decompose} will change how ideals corresponding to points are broken up into minimal primes which can have a substantial impact on speed.  Otherwise, the function chooses which strategy it thinks will be better.  See @TO DecompositionStrategy@.  
@@ -1843,9 +1907,12 @@ doc///
         [findANonZeroMinor, NumThreadsToUse]
     Headline
         number of threads the the function will use in a brute force search for a point 
+    Usage
+        NumThreadsToUse => ZZ
+            how many threads to use
     Description
         Text
-            When calling {\tt randomPoints}, and functions that call it, with a {\tt BruteForce} strategy, this denotes the number of threads to use in brute force point checking.
+            When calling {\tt randomPoints} and functions that call it with a {\tt BruteForce} strategy, the option {\tt NumThreadsToUse => ZZ} allows the user to specify the number of threads to use in brute force point checking.
     Caveat
         Currently multi threading creates instability.  Use at your own risk.
     SeeAlso
@@ -1862,12 +1929,12 @@ doc///
         Number of times the the function will search for a point 
     Description
         Text
-            When calling {\tt randomPoints}, and functions that call it, with a {\tt BruteForce} strategy strategy, this denotes the number of trials for brute force point checking.  When calling it with a {\tt LinearIntersection} strategy, this controls how many linear spaces are created.
+            When calling {\tt randomPoints}, and functions that call it, with a {\tt BruteForce} strategy, the option {\tt PointCheckAttempts} denotes the number of trials for brute force point checking.  When calling {\tt randomPoints} with a {\tt LinearIntersection} strategy, the option {\tt PointCheckAttempts} controls how many linear spaces are created.
         Example
             R = ZZ/11[x,y,z];
             I = ideal(x,y);
-            randomPoints(I, PointCheckAttempts=>1)
-            randomPoints(I, PointCheckAttempts=>1000)
+            randomPoints(I, Strategy=>BruteForce, PointCheckAttempts=>1)
+            randomPoints(I, Strategy=>BruteForce, PointCheckAttempts=>1000)
     SeeAlso
         randomPoints
         extendIdealByNonZeroMinor
@@ -1925,7 +1992,7 @@ doc ///
             a list of points in the variety with possible repetitions.
     Description
         Text  
-           Gives at most $n$ many point in a variety $V(I)$. 
+           This function gives at most $n$ points in a variety $V(I)$.  If $n$ is omitted, then it assumes that $n = 1$.
         Example
             R = ZZ/5[t_1..t_3];
             I = ideal(t_1,t_2+t_3);
@@ -1933,7 +2000,7 @@ doc ///
             randomPoints(4, I, Strategy => Default)            
             randomPoints(4, I, Strategy => LinearIntersection)            
         Text
-            The default strategy switches between LinearIntersection and MultiplicationTable for the @TO DecompositionStrategy@ (after first trying a brute force strategy).
+            The default strategy switches between Decompose and MultiplicationTable for the @TO DecompositionStrategy@ (after first trying a brute force strategy).
         Text
             Using {\tt DecompositionStrategy => MultiplicationTable} (currently only implemented for Homogeneous ideals) is sometimes faster and other times not.  It tends to work better in rings with few variables.  Because of this, the default strategy runs {\tt MultiplicationTable} first in rings with fewer variables and runs {\tt Decompose} first in rings with more variables.
         Example
@@ -1954,7 +2021,7 @@ doc ///
         MinimumFieldSize
         DimensionIntersectionAttempts        
     Headline
-        computes the dimension of the given ideal $I$ probabilistically
+        computes the dimension of the given ideal probabilistically
     Usage
         dimViaBezout(I)
     Inputs
