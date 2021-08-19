@@ -274,97 +274,111 @@ Changed.
 
 Changed
 
-In
-	some similar functionality computing partial Jacobian ideals
-do you mean this?:
-        some similar functionality for computing partial Jacobian ideals
+        In
+            some similar functionality computing partial Jacobian ideals
+        do you mean this?:
+                some similar functionality for computing partial Jacobian ideals
 
+This has been changed.
 
 =============================================================================
 
 comments on the documentation:
 
-change
-	(ie, computing how a variable 
-to
-	(i.e., computing how a variable 
+        change
+            (ie, computing how a variable 
+        to
+            (i.e., computing how a variable 
 
+Fixed.
 
-change
-	only works with homogeneous ideals 
-to
-	works only with homogeneous ideals 
+        change
+            only works with homogeneous ideals 
+        to
+            works only with homogeneous ideals 
 
+Fixed.
 
-change
-	calling the built in function dim.
-to
-	calling the built-in function dim.
-and
-	may switch to using the built in function
-to
-	may switch to using the built-in function
-and
-	 the built in dim function is much faster.
-to
-	 the built-in dim function is much faster.
+        change
+            calling the built in function dim.
+        to
+            calling the built-in function dim.
+        and
+            may switch to using the built in function
+        to
+            may switch to using the built-in function
+        and
+            the built in dim function is much faster.
+        to
+            the built-in dim function is much faster.
 	 
+Fixed.
+
+        change
+            with successively higher dimensional random linear spaces until there is an intersection.
+        to
+            with random linear spaces of increasing dimension until there is an intersection.
+
+Changed.
+
+        change
+            if $V(I)$ intersect a random line has a point, 
+        to
+            if the intersection of $V(I)$ with a random line has a point, 
+
+Changed.  (We also changed "has a point" to "is nonempty")
+
+        change
+            the function tries to guess a good size based on ambient ring.
+        to
+            the function tries to guess a good size based on the ambient ring.
+
+Fixed.
+
+        Re:
+
+            If the option Homogeneous=>true then we use homogeneous linear spaces if the ideal itself is homogeneous. Otherwise our linear spaces are not homogeneous.
+
+        This suggests that (0,0,...,0) will not be included as a rational point in the result.  Is
+        that right?  Perhaps clarify.
+
+This function is computing the dimension not finding a rational point.  However, we have explained this in more detail.
 
 
-change
-	 with successively higher dimensional random linear spaces until there is an intersection.
-to
-	 with random linear spaces of increasing dimension until there is an intersection.
+        remove comma from
+            Various functions which produce points, or call functions which produce points
+
+Fixed.
+
+        change
+            will tell the function ignore such points. 
+        to
+            will tell the function to ignore such points. 
+
+Fixed.
 
 
-change
-	 if $V(I)$ intersect a random line has a point, 
-to
-	 if the intersection of $V(I)$ with a random line has a point, 
+        re:
+            showing a certain rings are R1 (regular in codimension 1). 
+        and
+            Consider the following example which is R1 
+        -- same remark as above
 
+R1 has been removed from the documentation.  The sentence was also clarified.
 
-change
-	the function tries to guess a good size based on ambient ring.
-to
-	the function tries to guess a good size based on the ambient ring.
+        change
+            Then it plugs the point in the matrix 
+        to
+            Then it evaluates the matrix at the point
 
+This has been changed.
 
-Re:
+        change
+            you only need a a certain number of the forms in the map to be fully random
+        to
+            you need only a certain number of the forms in the map to be fully random
 
-	If the option Homogeneous=>true then we use homogeneous linear spaces if the ideal itself is homogeneous. Otherwise our linear spaces are not homogeneous.
-
-This suggests that (0,0,...,0) will not be included as a rational point in the result.  Is
-that right?  Perhaps clarify.
-
-
-remove comma from
-       Various functions which produce points, or call functions which produce points
-
-
-change
-       will tell the function ignore such points. 
-to
-       will tell the function to ignore such points. 
-
-
-re:
-	showing a certain rings are R1 (regular in codimension 1). 
-and
-	Consider the following example which is R1 
--- same remark as above
-
-
-change
-	 Then it plugs the point in the matrix 
-to
-	 Then it evaluates the matrix at the point
-
-
-change
-	you only need a a certain number of the forms in the map to be fully random
-to
-	you need only a certain number of the forms in the map to be fully random
-
+This was changed.
 
 since each of the numbers in the list in
 

@@ -1537,7 +1537,7 @@ doc ///
             a list of random forms of the specified types
     Description
         Text
-            This will give you a list of random forms (ring elements) of the specified types.  This is useful, because in many cases, for instance when doing generic projection, you only need a a certain number of the forms in the map to be fully random.  Furthermore, at the cost of some randomness, using monomial or binomial forms can be much faster.            
+            This will give you a list of random forms (ring elements) of the specified types.  This is useful, because in many cases, for instance when doing generic projection, you need only a certain number of the forms in the map to be fully random.  Furthermore, at the cost of some randomness, using monomial or binomial forms can be much faster.            
 
             The types of form are specified via the second argument, a list with 5 entries.  The first entry is how many constant forms are allowed.
         Example
@@ -1584,7 +1584,7 @@ doc ///
             whether the base field is allowed to be extended
     Description
         Text
-            Various functions which produce points, or call functions which produce points, may naturally find scheme theoretic points that are not rational over the base field (for example, by intersecting with a random linear space).  Setting {\tt ExtendField => true} will tell the function that such points are valid.  Setting {\tt ExtendField => false} will tell the function ignore such points.  This sometimes can slow computation, and other times can speed it up.  In some cases, points over extended fields may also have better randomness properties for applications.
+            Various functions which produce points or call functions which produce points, may naturally find scheme theoretic points that are not rational over the base field (for example, by intersecting with a random linear space).  Setting {\tt ExtendField => true} will tell the function that such points are valid.  Setting {\tt ExtendField => false} will tell the function to ignore such points.  This sometimes can slow computation, and other times can speed it up.  In some cases, points over extended fields may also have better randomness properties for applications.
     SeeAlso
         randomPoints
         findANonZeroMinor
@@ -1884,7 +1884,7 @@ doc ///
         control how ideals of points are factored into minimal primes
     Description
         Text
-            In many cases using a multiplication table (ie, computing how a variable acts on residue fields of points in two different ways) can be used to more quickly decompose ideals.  This is turned on by setting {\tt DecompositionStrategy => MultiplicationTable}.  However, in other cases, especially when there are many variables, using {\tt DecompositionStrategy => Decompose} can be substantially faster.  Currently {\tt MultiplicationTable} only works with homogeneous ideals and will not find geometric points.
+            In many cases using a multiplication table (i.e., computing how a variable acts on residue fields of points in two different ways) can be used to more quickly decompose ideals.  This is turned on by setting {\tt DecompositionStrategy => MultiplicationTable}.  However, in other cases, especially when there are many variables, using {\tt DecompositionStrategy => Decompose} can be substantially faster.  Currently {\tt MultiplicationTable} works only with homogeneous ideals and will not find geometric points.
 ///
 
 doc ///
@@ -1969,7 +1969,7 @@ doc ///
             d = dimension of the ideal $I$
     Description
         Text
-            This intersects $V(I)$ with successively higher dimensional random linear spaces until there is an intersection.  For example, if $V(I)$ intersect a random line has a point, then we expect that $V(I)$ contains a hypersurface.  If there was no intersection, this function tries a 2-dimensional linear space, and so on.  This greatly speeds up some computations, although in other examples, the built in {\tt dim} function is much faster.
+            This intersects $V(I)$ with random linear spaces of increasing dimension until there is an intersection.  For example, if the intersection of $V(I)$ with a random line is nonempty, then we expect that $V(I)$ contains a hypersurface.  If there was no intersection, this function tries a 2-dimensional linear space, and so on.  This greatly speeds up some computations, although in other examples, the built-in {\tt dim} function is much faster.
         Example
             kk=ZZ/101;
             S=kk[y_0..y_8];
@@ -1977,9 +1977,9 @@ doc ///
             elapsedTime dimViaBezout(I)
             elapsedTime dim I
         Text
-            The user may set the {\tt MinimumFieldSize} to ensure that the field being worked over is big enough.  For instance, there are relatively few linear spaces over a field of characteristic 2, and this can cause incorrect results to be provided.  If no size is provided, the function tries to guess a good size based on ambient ring.
+            The user may set the {\tt MinimumFieldSize} to ensure that the field being worked over is big enough.  For instance, there are relatively few linear spaces over a field of characteristic 2, and this can cause incorrect results to be provided.  If no size is provided, the function tries to guess a good size based on the ambient ring.
         Text
-            If the option {\tt Homogeneous=>true} then we use homogeneous linear spaces if the ideal itself is homogeneous.  Otherwise our linear spaces are not homogeneous.
+            If the option {\tt Homogeneous=>true} then we use linear spaces defined by homogeneous polynomials if the ideal $I$ itself is homogeneous.  In that case, if $J$ defines the linear space, then we must saturate the ideal $I+J$ to determine if the intersection is nonempty.  This approach can impact performance either positively or negatively depending on the example.  To force intersections with linear spaces defined by non-homogeneous polynomials set {\tt Homogeneous=>false}.
         Text
             The user may also specify what sort of linear forms to intersect with via the @TO Replacement@ option.
     SeeAlso
@@ -1995,7 +1995,7 @@ doc ///
         DimensionFunction => myFunction
     Description
         Text
-            This package provides a custom dimension function for probabilistically computing the dimension, {\tt dimViaBezout}.  However, in some cases this can be substantially slower than calling the built in function {\tt dim}.  Thus the user may switch to using the built in function, or their own custom dimension function, via the option {\tt DimensionFunction => ...}.
+            This package provides a custom dimension function for probabilistically computing the dimension, {\tt dimViaBezout}.  However, in some cases this can be substantially slower than calling the built-in function {\tt dim}.  Thus the user may switch to using the built-in function, or their own custom dimension function, via the option {\tt DimensionFunction => ...}.
     SeeAlso
         dim
         dimViaBezout
@@ -2046,7 +2046,7 @@ doc ///
         Text
             Given an ideal, a matrix, an integer and a user defined Strategy, this function uses the 
             {\tt randomPoints} function to find a point in 
-            $V(I)$. Then it plugs the point in the matrix and tries to find
+            $V(I)$.  Then it evaluates the matrix at the point and tries to find
             a non-zero  minor of size equal to the given integer. It outputs the point and also one of the submatrices of interest
             along with the column and row indices that were used sequentially.              
         Example
@@ -2105,7 +2105,7 @@ doc ///
             M = jacobian(I);
             extendIdealByNonZeroMinor(2,M,I, Strategy => LinearIntersection)
         Text
-            One use for this function can be in showing a certain rings are R1 (regular in codimension 1).  Consider the following example which is R1 where computing the dimension of the singular locus takes around 30 seconds as there are 15500 minors of size $4 \times 4$ in the associated $7 \times 12$ Jacobian matrix.  However, we can use this function to quickly find interesting minors.  
+            One use for this function can be in showing a certain rings are regular in codimension 1.  Consider the following example which is regular in codimension 1.  In this case, computing the dimension of the singular locus takes around 30 seconds as there are 15500 minors of size $4 \times 4$ in the associated $7 \times 12$ Jacobian matrix.  However, we can use this function to quickly find interesting minors.  
         Example
             T = ZZ/101[x1,x2,x3,x4,x5,x6,x7];
             I =  ideal(x5*x6-x4*x7,x1*x6-x2*x7,x5^2-x1*x7,x4*x5-x2*x7,x4^2-x2*x6,x1*x4-x2*x5,x2*x3^3*x5+3*x2*x3^2*x7+8*x2^2*x5+3*x3*x4*x7-8*x4*x7+x6*x7,x1*x3^3*x5+3*x1*x3^2*x7+8*x1*x2*x5+3*x3*x5*x7-8*x5*x7+x7^2,x2*x3^3*x4+3*x2*x3^2*x6+8*x2^2*x4+3*x3*x4*x6-8*x4*x6+x6^2,x2^2*x3^3+3*x2*x3^2*x4+8*x2^3+3*x2*x3*x6-8*x2*x6+x4*x6,x1*x2*x3^3+3*x2*x3^2*x5+8*x1*x2^2+3*x2*x3*x7-8*x2*x7+x4*x7,x1^2*x3^3+3*x1*x3^2*x5+8*x1^2*x2+3*x1*x3*x7-8*x1*x7+x5*x7);
