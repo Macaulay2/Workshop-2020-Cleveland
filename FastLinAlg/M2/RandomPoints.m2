@@ -1,13 +1,13 @@
 
 newPackage(
         "RandomPoints",
-    	Version => "1.5.2",
-    	Date => "July 30th, 2021",
+    	Version => "1.5.3",
+    	Date => "May 17th, 2023",
     	Authors => {
-	     {Name => "Sankhaneel Bisui", Email => "sbisu@tulane.edu", HomePage=>"https://sites.google.com/view/sankhaneelbisui/home"},
+	     {Name => "Sankhaneel Bisui", Email => "Sankhaneel.Bisui@umanitoba.ca", HomePage=>"https://sites.google.com/view/sankhaneelbisui/home"},
          {Name => "Zhan Jiang", Email => "zoeng@umich.edu", HomePage => "http://www-personal.umich.edu/~zoeng/"},
-         {Name => "Sarasij Maitra", Email => "sm3vg@virginia.edu", HomePage => "https://sarasij93.github.io/"},         
-	     {Name=> "Thai Nguyen", Email =>"tnguyen11@tulane.edu", HomePage=>"https://sites.google.com/view/thainguyenmath "},
+         {Name => "Sarasij Maitra", Email => "maitra@math.utah.edu", HomePage => "https://sarasij93.github.io/"},         
+	     {Name=> "Thai Nguyen", Email =>"nguyt161(@mcmaster.ca", HomePage=>"https://sites.google.com/view/thainguyenmath "},
          {Name=> "Frank-Olaf Schreyer", Email =>"schreyer@math.uni-sb.de", HomePage=>"https://www.math.uni-sb.de/ag/schreyer/index.php/ "},
 	     {Name=>"Karl Schwede", Email=>"schwede@math.utah.edu", HomePage=>"https://www.math.utah.edu/~schwede/" }	     	     
 	     },
@@ -40,12 +40,6 @@ export {
     "Replacement",
     "Full", 
     "Trinomial",
-    "ConstantForms",
-    "MonomialForms",
-    "BinomialForms",
-    "TrueMonomialForms", 
-    "TrinomialForms", 
-    "RandomForms",
     --"Default", --a valid value for [randomPoints, Strategy]
 	"BruteForce", --a valid value for [randomPoints, Strategy], documented,     
     "LinearIntersection",  --a valid value for [randomPoints, Strategy]
@@ -82,18 +76,6 @@ optRandomPoints := {
     DimensionFunction => dim,
     Verbose => false
 };
-
-optRandomLinearForms := {
-    Verify => false, 
-    Homogeneous => false, 
-    Verbose=>false, 
-    ConstantForms => 0, 
-    MonomialForms => 0, 
-    TrueMonomialForms => 0, 
-    BinomialForms => 0,
-    TrinomialForms => 0, 
-    RandomForms => 0
-    }
 
 optFindANonZeroMinor := optRandomPoints | {MinorPointAttempts => 5} | {ExtendField => true} | {Homogeneous => false}
 
@@ -410,13 +392,7 @@ saturateInGenericCoordinates(Ideal):= opts -> I1 -> (
 
 --The following gets a list of random forms in a ring.  You specify how many.  
 --if Verify is true, it will check to for linear independence of the monomial, binomial and randForms 
-getRandomLinearForms = method(Options => optRandomLinearForms);
-
-getRandomLinearForms(Ring) := opts -> (R1) -> (
-    L1 := {opts.ConstantForms, opts.MonomialForms, opts.TrueMonomialForms, opts.BinomialForms, opts.TrinomialForms, opts.RandomForms};
-    getRandomLinearForms(R1, L1, opts)
-);
-
+getRandomLinearForms = method(Options => {Verify => false, Homogeneous => false, Verbose=>false});
 getRandomLinearForms(Ring, List) := opts -> (R1, L1) ->(
     if (opts.Verbose) or (debugLevel > 0) then print concatenate("getRandomLinearForms: starting, options:", toString(L1));
     constForms := L1#0;
@@ -475,7 +451,7 @@ getRandomLinearForms(Ring, List) := opts -> (R1, L1) ->(
         J1 := jacobian ideal formList;
         val := min(d, #formList);
         if (rank J1 < val) then ( 
-            if (opts.Verbose) or (debugLevel > 0) then print "getRandomLinearForms: forms were not random enough, trying again recusrively.";            
+            if (opts.Verbose) or (debugLevel > 0) then print "getRandomLinearForms: forms were not random enough, trying again recursively.";            
             return getRandomLinearForms(R1, L1, opts);
         );
     );
@@ -660,7 +636,7 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
     );    
 
     if (runDecomp) then (
-        if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 4): attempting linear intersection with triinomials.";
+        if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 4): attempting linear intersection with trinomials.";
         tempPtsList =  linearIntersectionNew(n1 - #pointsList, I1, 
             Homogeneous => opts.Homogeneous,          
             Replacement => Trinomial,        
@@ -1082,7 +1058,7 @@ dimViaBezout(Ideal) := opts-> I1 -> (
             cancel t2;
             return tr;            
         );
-        if opts.Verbose or debugLevel > 0 then print "dimViaBezout: Something went wrong with multithrading.";              
+        if opts.Verbose or debugLevel > 0 then print "dimViaBezout: Something went wrong with multithreading.";              
         return null;
         *-
         
@@ -1410,7 +1386,7 @@ findANonZeroMinor(ZZ, Matrix, Ideal) := opts -> (n,M,I)->(
     --Karl:  I modified the following.
     if (rank(M3)<n) then error "findANonZeroMinor:  Something went wrong, the matrix rank fell taking the first submatrix.  This indicates a bug in the program.";
     --this is what was written before:
-    --return (P,N1,N2,"findANonZeroMinor: Using the the second and third outputs failed to generate a random matrix of the given size, that has full rank when evaluated at the first output.");
+    --return (P,N1,N2,"findANonZeroMinor: Using the second and third outputs failed to generate a random matrix of the given size, that has full rank when evaluated at the first output.");
     N2rand := random(rowRankProfile(M3));
     N2new = {};
     for i from 0 to n-1 do(
@@ -1537,45 +1513,19 @@ document {
 doc ///
     Key
         getRandomLinearForms
-        (getRandomLinearForms, Ring)
         (getRandomLinearForms, Ring, List)
         [getRandomLinearForms, Verify]
         [getRandomLinearForms, Homogeneous]
         [getRandomLinearForms, Verbose]
-        [getRandomLinearForms, ConstantForms]
-        [getRandomLinearForms, MonomialForms]
-        [getRandomLinearForms, TrueMonomialForms]
-        [getRandomLinearForms, BinomialForms]
-        [getRandomLinearForms, TrinomialForms]
-        [getRandomLinearForms, RandomForms]
-        ConstantForms
-        MonomialForms
-        TrueMonomialForms
-        BinomialForms
-        TrinomialForms
-        RandomForms
     Headline
         retrieve a list of random degree 1 and 0 forms of specified types
     Usage
-        getRandomLinearForms(R)
         getRandomLinearForms(R, L)
     Inputs
         R:Ring
             the ring where the forms should live
-        ConstantForms => ZZ
-            the number of constant degree 0 forms desired
-        MonomialForms => ZZ
-            the number of monomial linear forms (potentially with a constant if Homogeneous => false) desired
-        TrueMonomialForms => ZZ
-            the number of monomial linear forms desired
-        BinomialForms => ZZ
-            the number of binomial linear forms desired
-        TrinomialForms => ZZ
-            the number of trinomial linear forms desired
-        RandomForms => ZZ
-            the number of fully random linear forms desired
         L:List
-            instead of using the options above, you pass a list with 6 entries, each a number of types of forms.  Constant forms, monomial forms (plus a constant term if {\tt Homogeneous => false}), monomial forms, binomial forms, trinomial forms, and random forms.
+            a list with 6 entries, each a number of types of forms.  Constant forms, monomial forms (plus a constant term if {\tt Homogeneous => false}), monomial forms, binomial forms, trinomial forms, and random forms.
         Verify => Boolean
             whether to check if the output linear forms have Jacobian of maximal rank
         Verbose => Boolean
@@ -1587,46 +1537,33 @@ doc ///
             a list of random forms of the specified types
     Description
         Text
-            This will give you a list of random forms (ring elements) of the specified types.  This is useful, because in many cases, for instance when doing generic projection, you need only a certain number of the forms in the map to be fully random.  Furthermore, at the cost of some randomness, using monomial or binomial forms can be much faster.            
+            This will give you a list of random forms (ring elements) of the specified types.  This is useful, because in many cases, for instance when doing generic projection, you only need a a certain number of the forms in the map to be fully random.  Furthermore, at the cost of some randomness, using monomial or binomial forms can be much faster.            
 
-            The types of form can either be specified with the options {\tt ConstantForms, MonomialForms, TrueMonomialForms, BinomialForms, TrinomialForms, RandomForms} or specified via the second argument, a list with 6 entries.  The first entry is how many constant forms are allowed, the second monomials, the third true monomials, the fourth binomials, the fifth trinomials, and the sixth random forms.
+            The types of form are specified via the second argument, a list with 5 entries.  The first entry is how many constant forms are allowed.
         Example
-            R = ZZ/101[a..g]
-            getRandomLinearForms(R, ConstantForms => 2)
+            R = ZZ/31[a,b,c]
             getRandomLinearForms(R, {2,0,0,0,0,0})
         Text
             The second entry in the list is how many monomial forms are returned.  Note if {\tt Homogeneous=>false} then these forms will usually have constant terms.
         Example
-            getRandomLinearForms(R, MonomialForms => 2, Homogeneous=>true)
-            getRandomLinearForms(R, MonomialForms => 2, Homogeneous=>false)            
+            getRandomLinearForms(R, {0,2,0,0,0,0}, Homogeneous=>true)
             getRandomLinearForms(R, {0,2,0,0,0,0}, Homogeneous=>false)
         Text
             Next, the third entry is how many monomial forms (without constant terms, even if {\tt Homogeneous=>false}).
         Example
-            getRandomLinearForms(R, TrueMonomialForms => 2, Homogeneous=>false)            
             getRandomLinearForms(R, {0,0,2,0,0,0}, Homogeneous=>false)
         Text
             The fourth entry is how many binomial forms should be returned.
         Example
-            getRandomLinearForms(R, BinomialForms => 2, Homogeneous=>true)
-            getRandomLinearForms(R, BinomialForms => 2, Homogeneous=>false)            
-            getRandomLinearForms(R, {0,0,0,2,0,0}, Homogeneous=>false)
-        Text
-            The fifth entry is how many trinomial forms should be returned.
-        Example
-            getRandomLinearForms(R, TrinomialForms => 2, Homogeneous=>true)
-            getRandomLinearForms(R, TrinomialForms => 2, Homogeneous=>false)  
-            getRandomLinearForms(R, {0,0,0,0,2,0}, Homogeneous=>false)
+            getRandomLinearForms(R, {0,0,0,1,0,0}, Homogeneous=>true)
+            getRandomLinearForms(R, {0,0,0,1,0,0}, Homogeneous=>false)
         Text
             The ultimate entry is how many truly random forms to produce.
         Example
-            getRandomLinearForms(R, RandomForms => 1, Homogeneous=>true)
-            getRandomLinearForms(R, RandomForms => 1, Homogeneous=>false)            
-            getRandomLinearForms(R, {0,0,0,0,0,1}, Homogeneous=>true)            
+            getRandomLinearForms(R, {0,0,0,0,0,1}, Homogeneous=>true)
+            getRandomLinearForms(R, {0,0,0,0,0,1}, Homogeneous=>false)
         Text
-            You may combine the different specifications to create a list of the desired type.  The order is randomized.  
-
-            Note that for binomial (respectively trinomial) forms, these are created by choosing two random variables which generate the ring.  It is possible that these will be the same variable and so a binomial form may instead be monomial.
+            You may combine the different specifications to create a list of the desired type.  The order is randomized.
 
             If the option {\tt Verify=>true}, then this will check the jacobian of the list of forms (discounting the constant forms), to make sure it has maximal rank.  Random forms in small numbers of variables over small fields will produce non-injective ring maps occasionally otherwise.        
 ///
@@ -1639,7 +1576,7 @@ doc ///
         [findANonZeroMinor, ExtendField]      
         [extendIdealByNonZeroMinor, ExtendField]  
     Headline
-        an option used to specify if extending the finite field is permissable here
+        an option used to specify if extending the finite field is permissible here
     Usage
         ExtendField => b
     Inputs
@@ -1647,7 +1584,7 @@ doc ///
             whether the base field is allowed to be extended
     Description
         Text
-            Various functions which produce points or call functions which produce points, may naturally find scheme theoretic points that are not rational over the base field (for example, by intersecting with a random linear space).  Setting {\tt ExtendField => true} will tell the function that such points are valid.  Setting {\tt ExtendField => false} will tell the function to ignore such points.  This sometimes can slow computation, and other times can speed it up.  In some cases, points over extended fields may also have better randomness properties for applications.
+            Various functions which produce points, or call functions which produce points, may naturally find scheme theoretic points that are not rational over the base field (for example, by intersecting with a random linear space).  Setting {\tt ExtendField => true} will tell the function that such points are valid.  Setting {\tt ExtendField => false} will tell the function ignore such points.  This sometimes can slow computation, and other times can speed it up.  In some cases, points over extended fields may also have better randomness properties for applications.
     SeeAlso
         randomPoints
         findANonZeroMinor
@@ -1753,7 +1690,7 @@ doc ///
         Example 
             randomCoordinateChange(R, Homogeneous=>false)
         Text
-            Note that this function already checks whether the function is an isomorphism by computing the Jacobian.
+            Note, this function already checks whether the function is an isomorphism by computing the Jacobian.
 ///
 
 doc ///
@@ -1778,7 +1715,7 @@ doc ///
         [projectionToHypersurface, Homogeneous]
         Codimension
     Headline
-        generic projection to a hypersurface
+        Generic projection to a hypersurface
     Usage
         projectionToHypersurface I
         projectionToHypersurface R 
@@ -1821,7 +1758,7 @@ doc///
         [genericProjection, MaxCoordinatesToReplace]        
         [projectionToHypersurface, MaxCoordinatesToReplace]        
     Headline
-        The maximum number of coordinates to turn into non-monomial functions when calling  randomCoordinateChange
+        The maximum number of coordinates to turn into non-monomial functions when calling {\tt randomCoordinateChange}
     Description
         Text
             When calling {\tt randomCoordinateChange}, the user can specify that only a specified number of coordinates should be non-monomial.  Sometimes, generic coordinate changes where all coordinates are modified, can be very slow.  This is a way to mitigate for that.
@@ -1846,7 +1783,7 @@ doc ///
         Full
         Trinomial
     Headline
-        when changing coordinates, whether to replace variables by random degre 1 forms, binomials, etc.
+        When changing coordinates, whether to replace variables by general degree 1 forms, binomials, etc.
     Usage
         Replacement => Full
         Replacement => Monomial
@@ -1854,7 +1791,7 @@ doc ///
         Replacement => Trinomial        
     Description
         Text
-            When calling various functions, setting {\tt Replacement => Full} will mean that coordinates are changed to a general degree 1 form.  If {\tt Replacement => Binomial}, the coordiates are only changed to bionomials, which can be much faster for certain applications.  Other options include {\tt Replacement => Monomial} and {\tt Replacement => Trinomial}.
+            When calling various functions, setting {\tt Replacement => Full} will mean that coordinates are changed to a general degree 1 form.  If {\tt Replacement => Binomial}, the coordinates are only changed to binomials, which can be much faster for certain applications.  Other options include {\tt Replacement => Monomial} and {\tt Replacement => Trinomial}.
         Example
             R = ZZ/101[a,b,c,d,e];            
             randomCoordinateChange(R, Replacement=>Monomial)
@@ -1873,20 +1810,30 @@ doc ///
         randomCoordinateChange
 ///
 
+doc ///
+    Key
+        [randomPoints, Strategy]
+        [findANonZeroMinor, Strategy]
+        [extendIdealByNonZeroMinor, Strategy]
+        Default
+        BruteForce        
+        LinearIntersection    
+        MultiplicationTable    
+    Headline
+        values for the option Strategy when calling randomPoints
+    Description
+        Text
+            When calling {\tt randomPoints}, set the strategy to one of these.
+            {\tt BruteForce} simply tries random points and sees if they are on the variety.
+	    
+            {\tt LinearIntersection} intersects with an random linear space.  Setting the {\tt DecompositionStrategy => MultiplicationTable} or {\tt DecompositionStrategy=>Decompose} will change how ideals corresponding to points are broken up into minimal primes which can have a substantial impact on speed.  Otherwise, the function chooses which strategy it thinks will be better.  See @TO DecompositionStrategy@.  
 
-
-document {
-        Key => {[randomPoints, Strategy], [findANonZeroMinor, Strategy], [extendIdealByNonZeroMinor, Strategy], Default, BruteForce, LinearIntersection, MultiplicationTable},
-        Headline => "values for the option Strategy when calling randomPoints",        
-        "When calling ", TT "randomPoints", ", set the strategy to one of the following values.",
-        BR{},
-        UL {
-            {TT "BruteForce", " simply tries random points and sees if they are on the variety."},
-            {TT "LinearIntersection", "  intersects with an random linear space.  Setting the ", TT " DecompositionStrategy => MultiplicationTable", " or ", TT " DecompositionStrategy=>Decompose", " will change how ideals corresponding to points are broken up into minimal primes which can have a substantial impact on speed.  Otherwise, the function chooses which strategy it thinks will be better.  See ", TO "DecompositionStrategy", "."},            
-            {TT "Default", " performs a sequence of distinct strategies, with successively increasing complexity of the linear subspaces that are intersected."}            
-	    },
-        SeeAlso => {"randomPoints"}
-}
+            {\tt Default} performs a sequence of different strategies, with successively increasing complexity of the linear subspaces that are intersected.
+    SeeAlso
+        randomPoints
+        randomKRationalPoint
+        projectionToHypersurface
+///
 
 doc///
     Key 
@@ -1895,13 +1842,10 @@ doc///
         [extendIdealByNonZeroMinor, NumThreadsToUse]
         [findANonZeroMinor, NumThreadsToUse]
     Headline
-        number of threads the the function will use in a brute force search for a point 
-    Usage
-        NumThreadsToUse => ZZ
-            how many threads to use
+        number of threads that the function will use in a brute force search for a point 
     Description
         Text
-            When calling {\tt randomPoints} and functions that call it with a {\tt BruteForce} strategy, the option {\tt NumThreadsToUse => ZZ} allows the user to specify the number of threads to use in brute force point checking.
+            When calling {\tt randomPoints}, and functions that call it, with a {\tt BruteForce} strategy, this denotes the number of threads to use in brute force point checking.
     Caveat
         Currently multi threading creates instability.  Use at your own risk.
     SeeAlso
@@ -1915,15 +1859,15 @@ doc///
         [extendIdealByNonZeroMinor,PointCheckAttempts ]
         [findANonZeroMinor, PointCheckAttempts]
     Headline
-        Number of times the the function will search for a point 
+        Number of times that the function will search for a point 
     Description
         Text
-            When calling {\tt randomPoints}, and functions that call it, with a {\tt BruteForce} strategy, the option {\tt PointCheckAttempts} denotes the number of trials for brute force point checking.  When calling {\tt randomPoints} with a {\tt LinearIntersection} strategy, the option {\tt PointCheckAttempts} controls how many linear spaces are created.
+            When calling {\tt randomPoints}, and functions that call it, with a {\tt BruteForce} strategy strategy, this denotes the number of trials for brute force point checking.  When calling it with a {\tt LinearIntersection} strategy, this controls how many linear spaces are created.
         Example
             R = ZZ/11[x,y,z];
             I = ideal(x,y);
-            randomPoints(I, Strategy=>BruteForce, PointCheckAttempts=>1)
-            randomPoints(I, Strategy=>BruteForce, PointCheckAttempts=>1000)
+            randomPoints(I, PointCheckAttempts=>1)
+            randomPoints(I, PointCheckAttempts=>1000)
     SeeAlso
         randomPoints
         extendIdealByNonZeroMinor
@@ -1940,7 +1884,7 @@ doc ///
         control how ideals of points are factored into minimal primes
     Description
         Text
-            In many cases using a multiplication table (i.e., computing how a variable acts on residue fields of points in two different ways) can be used to more quickly decompose ideals.  This is turned on by setting {\tt DecompositionStrategy => MultiplicationTable}.  However, in other cases, especially when there are many variables, using {\tt DecompositionStrategy => Decompose} can be substantially faster.  Currently {\tt MultiplicationTable} works only with homogeneous ideals and will not find geometric points.
+            In many cases using a multiplication table (ie, computing how a variable acts on residue fields of points in two different ways) can be used to more quickly decompose ideals.  This is turned on by setting {\tt DecompositionStrategy => MultiplicationTable}.  However, in other cases, especially when there are many variables, using {\tt DecompositionStrategy => Decompose} can be substantially faster.  Currently {\tt MultiplicationTable} only works with homogeneous ideals and will not find geometric points.
 ///
 
 doc ///
@@ -1981,7 +1925,7 @@ doc ///
             a list of points in the variety with possible repetitions.
     Description
         Text  
-           This function gives at most $n$ points in a variety $V(I)$.  If $n$ is omitted, then it assumes that $n = 1$.
+           Gives at most $n$ many point in a variety $V(I)$. 
         Example
             R = ZZ/5[t_1..t_3];
             I = ideal(t_1,t_2+t_3);
@@ -1989,7 +1933,7 @@ doc ///
             randomPoints(4, I, Strategy => Default)            
             randomPoints(4, I, Strategy => LinearIntersection)            
         Text
-            The default strategy switches between Decompose and MultiplicationTable for the @TO DecompositionStrategy@ (after first trying a brute force strategy).
+            The default strategy switches between LinearIntersection and MultiplicationTable for the @TO DecompositionStrategy@ (after first trying a brute force strategy).
         Text
             Using {\tt DecompositionStrategy => MultiplicationTable} (currently only implemented for Homogeneous ideals) is sometimes faster and other times not.  It tends to work better in rings with few variables.  Because of this, the default strategy runs {\tt MultiplicationTable} first in rings with fewer variables and runs {\tt Decompose} first in rings with more variables.
         Example
@@ -2010,7 +1954,7 @@ doc ///
         MinimumFieldSize
         DimensionIntersectionAttempts        
     Headline
-        computes the dimension of the given ideal probabilistically
+        computes the dimension of the given ideal $I$ probabilistically
     Usage
         dimViaBezout(I)
     Inputs
@@ -2025,7 +1969,7 @@ doc ///
             d = dimension of the ideal $I$
     Description
         Text
-            This intersects $V(I)$ with random linear spaces of increasing dimension until there is an intersection.  For example, if the intersection of $V(I)$ with a random line is nonempty, then we expect that $V(I)$ contains a hypersurface.  If there was no intersection, this function tries a 2-dimensional linear space, and so on.  This greatly speeds up some computations, although in other examples, the built-in {\tt dim} function is much faster.
+            This intersects $V(I)$ with successively higher dimensional random linear spaces until there is an intersection.  For example, if $V(I)$ intersect a random line has a point, then we expect that $V(I)$ contains a hypersurface.  If there was no intersection, this function tries a 2-dimensional linear space, and so on.  This greatly speeds up some computations, although in other examples, the built in {\tt dim} function is much faster.
         Example
             kk=ZZ/101;
             S=kk[y_0..y_8];
@@ -2033,9 +1977,9 @@ doc ///
             elapsedTime dimViaBezout(I)
             elapsedTime dim I
         Text
-            The user may set the {\tt MinimumFieldSize} to ensure that the field being worked over is big enough.  For instance, there are relatively few linear spaces over a field of characteristic 2, and this can cause incorrect results to be provided.  If no size is provided, the function tries to guess a good size based on the ambient ring.
+            The user may set the {\tt MinimumFieldSize} to ensure that the field being worked over is big enough.  For instance, there are relatively few linear spaces over a field of characteristic 2, and this can cause incorrect results to be provided.  If no size is provided, the function tries to guess a good size based on ambient ring.
         Text
-            If the option {\tt Homogeneous=>true} then we use linear spaces defined by homogeneous polynomials if the ideal $I$ itself is homogeneous.  In that case, if $J$ defines the linear space, then we must saturate the ideal $I+J$ to determine if the intersection is nonempty.  This approach can impact performance either positively or negatively depending on the example.  To force intersections with linear spaces defined by non-homogeneous polynomials set {\tt Homogeneous=>false}.
+            If the option {\tt Homogeneous=>true} then we use homogeneous linear spaces if the ideal itself is homogeneous.  Otherwise our linear spaces are not homogeneous.
         Text
             The user may also specify what sort of linear forms to intersect with via the @TO Replacement@ option.
     SeeAlso
@@ -2051,7 +1995,7 @@ doc ///
         DimensionFunction => myFunction
     Description
         Text
-            This package provides a custom dimension function for probabilistically computing the dimension, {\tt dimViaBezout}.  However, in some cases this can be substantially slower than calling the built-in function {\tt dim}.  Thus the user may switch to using the built-in function, or their own custom dimension function, via the option {\tt DimensionFunction => ...}.
+            This package provides a custom dimension function for probabilistically computing the dimension, {\tt dimViaBezout}.  However, in some cases this can be substantially slower than calling the built in function {\tt dim}.  Thus the user may switch to using the built in function, or their own custom dimension function, via the option {\tt DimensionFunction => ...}.
     SeeAlso
         dim
         dimViaBezout
@@ -2102,7 +2046,7 @@ doc ///
         Text
             Given an ideal, a matrix, an integer and a user defined Strategy, this function uses the 
             {\tt randomPoints} function to find a point in 
-            $V(I)$.  Then it evaluates the matrix at the point and tries to find
+            $V(I)$. Then it plugs the point in the matrix and tries to find
             a non-zero  minor of size equal to the given integer. It outputs the point and also one of the submatrices of interest
             along with the column and row indices that were used sequentially.              
         Example
@@ -2161,7 +2105,7 @@ doc ///
             M = jacobian(I);
             extendIdealByNonZeroMinor(2,M,I, Strategy => LinearIntersection)
         Text
-            One use for this function can be in showing a certain rings are regular in codimension 1.  Consider the following example which is regular in codimension 1.  In this case, computing the dimension of the singular locus takes around 30 seconds as there are 15500 minors of size $4 \times 4$ in the associated $7 \times 12$ Jacobian matrix.  However, we can use this function to quickly find interesting minors.  
+            One use for this function can be in showing a certain rings are R1 (regular in codimension 1).  Consider the following example which is R1 where computing the dimension of the singular locus takes around 30 seconds as there are 15500 minors of size $4 \times 4$ in the associated $7 \times 12$ Jacobian matrix.  However, we can use this function to quickly find interesting minors.  
         Example
             T = ZZ/101[x1,x2,x3,x4,x5,x6,x7];
             I =  ideal(x5*x6-x4*x7,x1*x6-x2*x7,x5^2-x1*x7,x4*x5-x2*x7,x4^2-x2*x6,x1*x4-x2*x5,x2*x3^3*x5+3*x2*x3^2*x7+8*x2^2*x5+3*x3*x4*x7-8*x4*x7+x6*x7,x1*x3^3*x5+3*x1*x3^2*x7+8*x1*x2*x5+3*x3*x5*x7-8*x5*x7+x7^2,x2*x3^3*x4+3*x2*x3^2*x6+8*x2^2*x4+3*x3*x4*x6-8*x4*x6+x6^2,x2^2*x3^3+3*x2*x3^2*x4+8*x2^3+3*x2*x3*x6-8*x2*x6+x4*x6,x1*x2*x3^3+3*x2*x3^2*x5+8*x1*x2^2+3*x2*x3*x7-8*x2*x7+x4*x7,x1^2*x3^3+3*x1*x3^2*x5+8*x1^2*x2+3*x1*x3*x7-8*x1*x7+x5*x7);
