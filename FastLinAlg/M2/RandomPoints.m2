@@ -415,6 +415,7 @@ getRandomLinearForms(Ring, List) := opts -> (R1, L1) ->(
     );
     doneFlag := false; --the following is run once, unless verify is set to true, then its run until a good example is found, failing a verify check keeps doneFlag = true.
     count := 0;
+    local newVal;
     --print "Loop start";
     while (not doneFlag)  do (
         formList = {};
@@ -467,13 +468,13 @@ getRandomLinearForms(Ring, List) := opts -> (R1, L1) ->(
         if (count % 5 == 0) then ( --if we are having trouble finding forms and lots are binomial/trinomial, mix things up a bit
             if (binomialForms > 0) then (
                 if (opts.Verbose) or (debugLevel > 0) then print "getRandomLinearForms: we had trouble finding binomial forms, turn some trinomial";
-                newVal := ceiling(binomialForms / 2);
+                newVal = ceiling(binomialForms / 2);
                 binomialForms = binomialForms - newVal;
                 trinomialForms = trinomialForms + newVal;
             )
             else if (trinomialForms > 0) then (
                 if (opts.Verbose) or (debugLevel > 0) then print "getRandomLinearForms: we had trouble finding trinomial forms, we turn some random";
-                newVal := ceiling(trinomialForms / 2);
+                newVal = ceiling(trinomialForms / 2);
                 trinomialForms = trinomialForms - newVal;
                 randForms = randForms + newVal;
             );
