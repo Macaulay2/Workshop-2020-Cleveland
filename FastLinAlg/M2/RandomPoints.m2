@@ -413,50 +413,75 @@ getRandomLinearForms(Ring, List) := opts -> (R1, L1) ->(
     if (opts.Verify) then (
         if (#tempList < monomialForms + trueMonomialForms + binomialForms) then (tempList = tempList | apply(monomialForms + trueMonomialForms + binomialForms - #tempList, i->(genList)#(random d)));
     );
-    if (opts.Homogeneous) then (
-        if (opts.Verbose) or (debugLevel > 0) then print "getRandomLinearForms: generating homogeneous forms.";
-        --monomialForms x,y,z
-        if (opts.Verify) then (formList = formList | apply(monomialForms, i -> (tempList)#i);)
-        else (formList = formList | apply(monomialForms, i -> (genList)#(random(d))););
-        --true monomialForms, which is the same as monomial forms in the homogeneous case
-        if (opts.Verify) then (formList = formList | apply(trueMonomialForms, i -> (tempList)#(i+monomialForms));)
-        else (formList = formList | apply(trueMonomialForms, i -> (genList)#(random(d))););
-        --binomial forms, x+by
-        if (opts.Verify) then (formList = formList | apply(binomialForms, i -> (tempList)#(i+monomialForms+trueMonomialForms) + (random(0, R1))*(genList)#(random(d)));) 
-        else (formList = formList | apply(binomialForms, i -> (genList)#(random(d)) + (random(0, R1))*(genList)#(random(d))););
-        --trinomial forms, x+by+cz
-        if (opts.Verify) then (formList = formList | apply(trinomialForms, i -> (tempList)#(i+monomialForms+trueMonomialForms) + (random(0, R1))*(genList)#(random(d))  + (random(0, R1))*(genList)#(random(d))  );) 
-        else (formList = formList | apply(trinomialForms, i -> (genList)#(random(d)) + (random(0, R1))*(genList)#(random(d)) + (random(0, R1))*(genList)#(random(d))  ););
-        --random forms
-        formList = formList | apply(randForms, i-> random(1, R1));
-    )
-    else(
-        if (opts.Verbose) or (debugLevel > 0) then print "getRandomLinearForms: generating non-homogeneous forms.";
-        --monomial forms, x+a
-        if (opts.Verify) then (formList = formList | apply(monomialForms, i -> random(0, R1) + (tempList)#i);)
-        else (formList = formList | apply(monomialForms, i -> random(0, R1) + (genList)#(random(d))););
-        --true monomial forms, x, y, z
-        if (opts.Verify) then (formList = formList | apply(trueMonomialForms, i -> (tempList)#(i+monomialForms));)
-        else (formList = formList | apply(trueMonomialForms, i -> (genList)#(random(d))););
-        --binomial forms, x+by+c        
-        if (opts.Verify) then (formList = formList | apply(binomialForms, i -> random(0, R1) + (tempList)#(i+monomialForms+trueMonomialForms) + (random(0, R1))*(genList)#(random(d)));) 
-        else (formList = formList | apply(binomialForms, i -> random(0, R1) + (genList)#(random(d)) + (random(0, R1))*(genList)#(random(d))););
-        --trinomial forms x+by+cz + d
-        if (opts.Verify) then (formList = formList | apply(trinomialForms, i -> random(0, R1) + (tempList)#(i+monomialForms+trueMonomialForms) + (random(0, R1))*(genList)#(random(d))  + (random(0, R1))*(genList)#(random(d)));) 
-        else (formList = formList | apply(trinomialForms, i -> random(0, R1) + (genList)#(random(d)) + (random(0, R1))*(genList)#(random(d)) + (random(0, R1))*(genList)#(random(d))));
-        --random forms
-        formList = formList | apply(randForms, i->random(0, R1) + random(1, R1));
-    );
-    if (opts.Verify) and (#formList > 0) then ( --if we are checking our work
-        J1 := jacobian ideal formList;
-        val := min(d, #formList);
-        if (rank J1 < val) then ( 
-            if (opts.Verbose) or (debugLevel > 0) then print "getRandomLinearForms: forms were not random enough, trying again recursively.";            
-            return getRandomLinearForms(R1, L1, opts);
+    doneFlag := false; --the following is run once, unless verify is set to true, then its run until a good example is found, failing a verify check keeps doneFlag = true.
+    count := 0;
+    --print "Loop start";
+    while (not doneFlag)  do (
+        formList = {};
+        if (opts.Homogeneous) then (
+            if (opts.Verbose) or (debugLevel > 0) then print "getRandomLinearForms: generating homogeneous forms.";
+            --monomialForms x,y,z
+            if (opts.Verify) then (formList = formList | apply(monomialForms, i -> (tempList)#i);)
+            else (formList = formList | apply(monomialForms, i -> (genList)#(random(d))););
+            --true monomialForms, which is the same as monomial forms in the homogeneous case
+            if (opts.Verify) then (formList = formList | apply(trueMonomialForms, i -> (tempList)#(i+monomialForms));)
+            else (formList = formList | apply(trueMonomialForms, i -> (genList)#(random(d))););
+            --binomial forms, x+by
+            if (opts.Verify) then (formList = formList | apply(binomialForms, i -> (tempList)#(i+monomialForms+trueMonomialForms) + (random(0, R1))*(genList)#(random(d)));) 
+            else (formList = formList | apply(binomialForms, i -> (genList)#(random(d)) + (random(0, R1))*(genList)#(random(d))););
+            --trinomial forms, x+by+cz
+            if (opts.Verify) then (formList = formList | apply(trinomialForms, i -> (tempList)#(i+monomialForms+trueMonomialForms) + (random(0, R1))*(genList)#(random(d))  + (random(0, R1))*(genList)#(random(d))  );) 
+            else (formList = formList | apply(trinomialForms, i -> (genList)#(random(d)) + (random(0, R1))*(genList)#(random(d)) + (random(0, R1))*(genList)#(random(d))  ););
+            --random forms
+            formList = formList | apply(randForms, i-> random(1, R1));
+        )
+        else(
+            if (opts.Verbose) or (debugLevel > 0) then print "getRandomLinearForms: generating non-homogeneous forms.";
+            --monomial forms, x+a
+            if (opts.Verify) then (formList = formList | apply(monomialForms, i -> random(0, R1) + (tempList)#i);)
+            else (formList = formList | apply(monomialForms, i -> random(0, R1) + (genList)#(random(d))););
+            --true monomial forms, x, y, z
+            if (opts.Verify) then (formList = formList | apply(trueMonomialForms, i -> (tempList)#(i+monomialForms));)
+            else (formList = formList | apply(trueMonomialForms, i -> (genList)#(random(d))););
+            --binomial forms, x+by+c        
+            if (opts.Verify) then (formList = formList | apply(binomialForms, i -> random(0, R1) + (tempList)#(i+monomialForms+trueMonomialForms) + (random(0, R1))*(genList)#(random(d)));) 
+            else (formList = formList | apply(binomialForms, i -> random(0, R1) + (genList)#(random(d)) + (random(0, R1))*(genList)#(random(d))););
+            --trinomial forms x+by+cz + d
+            if (opts.Verify) then (formList = formList | apply(trinomialForms, i -> random(0, R1) + (tempList)#(i+monomialForms+trueMonomialForms) + (random(0, R1))*(genList)#(random(d))  + (random(0, R1))*(genList)#(random(d)));) 
+            else (formList = formList | apply(trinomialForms, i -> random(0, R1) + (genList)#(random(d)) + (random(0, R1))*(genList)#(random(d)) + (random(0, R1))*(genList)#(random(d))));
+            --random forms
+            formList = formList | apply(randForms, i->random(0, R1) + random(1, R1));
         );
+        doneFlag = true;
+        if (opts.Verify) and (#formList > 0) then ( --if we are checking our work
+            J1 := jacobian ideal formList;
+            val := min(d, #formList);
+            --print (toString (rank J1) | ", " | toString (val));
+            if (rank J1 < val) then ( 
+                if (opts.Verbose) or (debugLevel > 0) then print "getRandomLinearForms: forms were not random enough, trying again via a loop.";
+                doneFlag = false;            
+                --return getRandomLinearForms(R1, L1, opts);
+            );
+        );
+        count = count+1;
+        if (count % 5 == 0) then ( --if we are having trouble finding forms and lots are binomial/trinomial, mix things up a bit
+            if (binomialForms > 0) then (
+                if (opts.Verbose) or (debugLevel > 0) then print "getRandomLinearForms: we had trouble finding binomial forms, turn some trinomial";
+                newVal := ceiling(binomialForms / 2);
+                binomialForms = binomialForms - newVal;
+                trinomialForms = trinomialForms + newVal;
+            )
+            else if (trinomialForms > 0) then (
+                if (opts.Verbose) or (debugLevel > 0) then print "getRandomLinearForms: we had trouble finding trinomial forms, we turn some random";
+                newVal := ceiling(trinomialForms / 2);
+                trinomialForms = trinomialForms - newVal;
+                randForms = randForms + newVal;
+            );
+        );
+        formList = formList | apply(constForms, i -> random(0, R1));
     );
-    formList = formList | apply(constForms, i -> random(0, R1));
-
+    --print count;
+    --print "Loop end";
     return random formList;
 );
 
