@@ -1,8 +1,8 @@
 
 newPackage(
         "RandomPoints",
-    	Version => "1.5.3",
-    	Date => "May 17th, 2023",
+    	Version => "1.5.4",
+    	Date => "October 1st, 2025",
     	Authors => {
 	     {Name => "Sankhaneel Bisui", Email => "Sankhaneel.Bisui@umanitoba.ca", HomePage=>"https://sites.google.com/view/sankhaneelbisui/home"},
          {Name => "Zhan Jiang", Email => "zoeng@umich.edu", HomePage => "http://www-personal.umich.edu/~zoeng/"},
@@ -13,7 +13,7 @@ newPackage(
 	     },
     	Headline => "find a point in a given variety over a finite field",
         PackageImports => {"SwitchingFields", "MinimalPrimes", "ConwayPolynomials"}, 
-		DebuggingMode => false, 
+		DebuggingMode => true, 
 		Reload=>false,
 		AuxiliaryFiles => false -- set to true if package comes with auxiliary files
     	)
@@ -36,12 +36,14 @@ export {
     "dimViaBezout",        
     --"dimViaBezoutInternal", 
 	"Codimension",
-	"MaxCoordinatesToReplace",    
+	"MaxCoordinatesToReplace",   
+    "MaxFormAttempts",  --NOT DOCUMENTED YET
     "Replacement",
     "Full", 
     "Trinomial",
     --"Default", --a valid value for [randomPoints, Strategy]
-	"BruteForce", --a valid value for [randomPoints, Strategy], documented,     
+	"BruteForce", --a valid value for [randomPoints, Strategy], documented,   
+    "BruteForceAttempts", --NOT DOCUMENTED YET  
     "LinearIntersection",  --a valid value for [randomPoints, Strategy]
     "MultiplicationTable", --a valid value for [randomPoints,DecompositionStrategy]	        
     "ExtendField", --an option controls whether the field is extended
@@ -71,6 +73,7 @@ optRandomPoints := {
     Replacement => Binomial,    
     ExtendField => false,
     PointCheckAttempts => 0,
+    BruteForceAttempts => 20,
     DecompositionStrategy => null,
     NumThreadsToUse => 1,
     DimensionFunction => dim,
@@ -392,7 +395,7 @@ saturateInGenericCoordinates(Ideal):= opts -> I1 -> (
 
 --The following gets a list of random forms in a ring.  You specify how many.  
 --if Verify is true, it will check to for linear independence of the monomial, binomial and randForms 
-getRandomLinearForms = method(Options => {Verify => false, Homogeneous => false, Verbose=>false});
+getRandomLinearForms = method(Options => {Verify => false, Homogeneous => false, Verbose=>false, MaxFormAttempts => 10});
 getRandomLinearForms(Ring, List) := opts -> (R1, L1) ->(
     if (opts.Verbose) or (debugLevel > 0) then print concatenate("getRandomLinearForms: starting, options:", toString(L1));
     constForms := L1#0;
@@ -417,7 +420,7 @@ getRandomLinearForms(Ring, List) := opts -> (R1, L1) ->(
     count := 0;
     local newVal;
     --print "Loop start";
-    while (not doneFlag)  do (
+    while (not doneFlag) and (count <= opts.MaxFormAttempts)  do (
         formList = {};
         if (opts.Homogeneous) then (
             if (opts.Verbose) or (debugLevel > 0) then print "getRandomLinearForms: generating homogeneous forms.";
@@ -527,10 +530,12 @@ randomPointViaDefaultStrategy(ZZ, Ideal) := List => opts -> (n1, I1) -> (
         );
     );
 
-    if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 0): trying a quick brute force with 20 attempts.";
-    pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
-            opts++{ Strategy=>BruteForce, PointCheckAttempts => 20 }
-        );
+    if (opts.BruteForceAttempts > 0) then (
+        if (opts.Verbose) or (debugLevel > 0) then print "randomPointViaDefaultStrategy(step 0): trying a quick brute force with opts.BruteForceAttempts attempts.";
+
+        pointsList = pointsList | randomPointsBranching(n1 - #pointsList, I1, 
+            opts++{ Strategy=>BruteForce, PointCheckAttempts => opts.BruteForceAttempts }
+        ););
     if (#pointsList >= n1) then return pointsList;
 
     if (runMult1) then (
